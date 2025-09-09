@@ -1,0 +1,6 @@
+.system-settings-btn:hover{
+     background-color: #81BDff !important;
+}
+.system-settings-btn{
+    transition: 0.5s;
+}

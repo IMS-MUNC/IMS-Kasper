@@ -1,0 +1,113 @@
+.notification-item{
+  position: relative;
+  padding: 10px;
+  border: 1px solid #E6E6E6;
+  border-radius: 8px;
+  margin-bottom: 5px;
+  background-color: #FBFBFB;
+  cursor: pointer;
+}
+.notification-item:hover {
+  border: 1.5px solid #BBE1FF !important;
+  background-color: #E3F3FF !important;
+  transition: background 0.2s, border 0.2s !important;
+}
+
+.notification-items{
+  position: relative;
+  display: flex;
+  padding: 12px 20px;
+  gap: 15px;
+  border-radius: 8px;
+  margin-bottom: 5px;
+  /* background-color: #FBFBFB; */
+  cursor: pointer;
+}
+.notification-items:hover {
+  border: 1.5px solid #BBE1FF !important;
+  /* background-color: #E3F3FF !important; */
+  /* transition: background 0.2s, border 0.2s !important; */
+}
+
+
+
+
+
+
+
+
+
+.notification-hover-group {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  /* border: 1px solid #e9ecef; */
+  border-radius: 8px;
+  /* background: #FBFBFB; */
+  margin-bottom: 15px;
+  padding: 12px 20px;
+  position: relative;
+  transition: box-shadow 0.2s, border 0.2s;
+}
+
+.notification-hover-group:hover {
+  border: 1.5px solid #1368EC;
+  box-shadow: 0 4px 8px rgba(19,104,236,0.08);
+}
+
+.notification-default-info {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 8px;
+  margin-left: auto;
+  margin-top: 0px;
+  transition: opacity 0.2s;
+}
+
+.notification-hover-actions {
+  display: none;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin-left: auto;
+  margin-top: 8px;
+}
+
+.notification-hover-group:hover .notification-default-info {
+  display: none;
+}
+
+.notification-hover-group:hover .notification-hover-actions {
+  display: flex;
+}
+
+.notification-action-btn {
+  width: 32px;
+  height: 32px;
+  border: none;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  /* background: #FBFBFB; */
+  color: #1368EC;
+  font-size: 14px;
+  transition: background 0.2s, transform 0.2s;
+}
+
+.notification-action-btn.mark-read {
+  background: #1368EC;
+  color: #fff;
+}
+
+.notification-action-btn.delete {
+  background: #dc3545;
+  color: #fff;
+}
+
+.notification-action-btn:hover {
+  transform: scale(1.1);
+  filter: brightness(1.1);
+}

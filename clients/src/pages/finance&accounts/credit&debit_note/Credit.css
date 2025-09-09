@@ -1,0 +1,28 @@
+.reason-select {
+  width: 100%;
+  padding: 10px 15px;
+  border: 1px solid #F1F1F1;
+  border-radius: 4px;
+  background-color: #FBFBFB;
+  color: #C2C2C2;
+  font-size: 14px;
+
+  /* background-image: url("data:image/svg+xml;charset=US-ASCII,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath fill='%23999' d='M0 0l5 6 5-6H0z'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 10px center;
+  background-size: 10px 6px; */
+  font-family: "Roboto", sans-serif;
+  font-weight: 400;
+}
+
+.reason-select:focus {
+  outline: none;
+  border-color: #ccc;
+}
+
+.reason-select option[value=""] {
+  color: #aaa; /* placeholder grey */
+}
+.checkbox-credit[type="checkbox"]{
+   accent-color: black;
+}

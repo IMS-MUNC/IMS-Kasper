@@ -1,0 +1,28 @@
+.top-content {
+  padding-bottom: 24px;
+  border-bottom: 1px solid var(--cf-border-color);
+}
+.bill-content {
+  margin-top: 24px;
+  padding-bottom: 24px;
+  border-bottom: 1px solid var(--cf-border-color);
+}
+
+.nav-tabs.nav-solid-primary li a.active {
+  background-color: #7539FF;
+  border-color: #7539FF;
+  color: #fff;
+  border-radius: 0;
+}
+
+.isax {
+  font-family: 'iconsax' !important;
+  speak: never;
+  font-style: normal;
+  font-weight: normal;
+  font-variant: normal;
+  text-transform: none;
+  line-height: 1;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}

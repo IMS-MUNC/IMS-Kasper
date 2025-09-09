@@ -1,0 +1,275 @@
+@import url("https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,100..900;1,100..900&display=swap");
+
+.sidebarm {
+  background-color: #ffffff;
+  /* height: 770px; */
+  width: 250px;
+  border-radius: 8px;
+  /* padding: 10px; */
+  border: 1px solid #e6e6e6;
+  box-shadow: rgba(149, 157, 165, 0.2) 0px 8px 24px;
+  border-radius: 8px;
+  /* padding-top: 10px; */
+}
+
+.user-box {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background-color: white;
+  padding: 10px;
+  border-radius: 10px;
+}
+
+.dp {
+  height: 50px;
+  width: 50px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.name {
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.emailhong {
+  font-size: 13px;
+  color: gray;
+}
+
+.compose {
+  background-color: #007aff;
+  color: white;
+  font-size: 16px;
+  padding: 10px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  border-radius: 8px;
+  gap: 8px;
+  cursor: pointer;
+}
+
+.section {
+  padding: 0 5px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.section-title {
+  font-family: "Roboto", sans-serif;
+  font-weight: 400;
+  color: #262626;
+  font-size: 14px;
+  line-height: 14px;
+  display: flex;
+  justify-content: space-between;
+}
+.sectionnnemmailc {
+  color: #676767;
+  font-family: "Roboto", sans-serif;
+  font-size: 14px;
+  line-height: 14px;
+  font-weight: 400;
+}
+
+.item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  color: #333;
+  padding: 6px 8px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.item svg {
+  margin-right: 10px;
+}
+
+.item:hover {
+  background-color: #e0e0e0;
+}
+
+.item.active {
+  background-color: #d6d6d6;
+  font-weight: 600;
+}
+
+.count {
+  font-size: 13px;
+  color: white;
+  background-color: #1368ec;
+  padding: 2px 6px;
+  border-radius: 12px;
+  font-weight: bold;
+  margin-left: auto;
+}
+
+.label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  padding: 4px 8px;
+}
+
+.dot {
+  appearance: none;
+  width: 14px;
+  height: 14px;
+  border-radius: 20%;
+  border: 2px solid gray;
+  background-color: white;
+  cursor: pointer;
+}
+.dot:checked {
+  background-color: currentColor;
+}
+
+.dot.work {
+  border-color: #ffd000;
+  color: #007aff;
+}
+
+.dot.external {
+  border-color: red;
+  color: red;
+}
+
+.dot.team {
+  border-color: green;
+  color: green;
+}
+.dot.applications {
+  border-color: #343c6f;
+  color: #343c6f;
+}
+.dot.design {
+  border-color: rgb(42, 42, 221);
+  color: rgb(42, 42, 221);
+}
+.plus {
+  background-color: white;
+  color: #007aff;
+  font-size: large;
+  cursor: pointer;
+}
+.projects {
+  font-size: large;
+  color: red;
+}
+
+.personal {
+  font-size: large;
+  color: #007aff;
+}
+
+.finance {
+  font-size: large;
+  color: green;
+}
+.projectk {
+  font-size: large;
+  color: rgb(255, 94, 0);
+}
+.border-bootom {
+  /* border-bottom: 1px solid #e8e9eb; */
+  padding-bottom: 18px;
+}
+/* models  */
+.modal-overlay2 {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background-color: rgba(0, 0, 0, 0.4);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 9999;
+  backdrop-filter: blur(4px); /* subtle blur effect */
+}
+
+.modal-content1 {
+  background-color: #ffffff;
+  padding: 2rem 1.5rem;
+  border-radius: 12px;
+  width: 360px;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.25);
+  animation: fadeInScale 0.3s ease-in-out;
+  font-family: "Poppins", sans-serif;
+}
+
+.modal-content1 h3 {
+  margin-bottom: 1rem;
+  font-size: 20px;
+  color: #333;
+  text-align: center;
+}
+
+.modal-content1 input {
+  width: 100%;
+  padding: 10px;
+  font-size: 15px;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  margin-top: 0.5rem;
+  outline: none;
+  transition: border-color 0.3s;
+}
+
+.modal-content1 input:focus {
+  border-color: #007aff;
+  box-shadow: 0 0 0 2px rgba(255, 165, 0, 0.2);
+}
+
+.modal-buttons {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 1.5rem;
+}
+
+.modal-buttons button {
+  padding: 8px 14px;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 500;
+  font-size: 14px;
+  transition: background-color 0.3s;
+}
+
+.modal-buttons button:first-child {
+  background-color: #007aff;
+  color: white;
+}
+
+.modal-buttons button:first-child:hover {
+  background-color: #007aff;
+}
+
+.modal-buttons button:last-child {
+  background-color: #eee;
+  color: #444;
+}
+
+.modal-buttons button:last-child:hover {
+  background-color: #ddd;
+}
+
+@keyframes fadeInScale {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}

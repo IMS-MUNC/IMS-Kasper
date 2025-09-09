@@ -1,0 +1,585 @@
+img {
+    max-width: 100%;
+    height: auto;
+    vertical-align: inherit;
+  }
+
+.login-wrapper {
+    width: 100%;
+    overflow: hidden;
+    height: 100vh;
+    -ms-flex-wrap: wrap;
+    flex-wrap: wrap;
+    display: -webkit-box;
+    display: -ms-flexbox;
+    display: flex;
+  }
+  .login-wrapper.bg-img {
+    background-image: url(../assets/img/authentication/loginbg.jpg);
+    background-repeat: no-repeat;
+    background-size: cover;
+    background-position: center;
+  }
+  .login-wrapper.bg-img .login-content {
+    background: rgba(255, 255, 255, 0.8);
+    backdrop-filter: blur(17px);
+  }
+  .login-wrapper.bg-img.register-wrap {
+    background-image: url(../assets/img/authentication/register.jpg);
+  }
+  .login-wrapper.bg-img.forgot-pass-wrap {
+    background-image: url(../assets/img/authentication/forget.jpg);
+  }
+  .login-wrapper.bg-img.reset-pass-wrap {
+    background-image: url(../img/authentication/reset-password-img.jpg);
+  }
+  .login-wrapper.bg-img.email-veri-wrap {
+    background-image: url(../img/authentication/email-verification-img.jpg);
+  }
+  @media (max-width: 991.96px) {
+    .login-wrapper.bg-img {
+      background-image: none;
+    }
+  }
+  .login-wrapper .login-content {
+    height: 100vh;
+    padding: 24px;
+    overflow: auto;
+    display: -webkit-box;
+    display: -ms-flexbox;
+    display: flex;
+    align-items: center;
+    -webkit-box-align: center;
+    -ms-flex-align: center;
+    justify-content: center;
+    -webkit-justify-content: center;
+    -ms-flex-pack: center;
+    flex-wrap: wrap;
+  }
+  .login-wrapper .login-content form {
+    width: 70%;
+  }
+  @media (max-width: 991.96px) {
+    .login-wrapper .login-content form {
+      width: 100%;
+    }
+  }
+  .login-wrapper .login-content.authent-content {
+    width: 50%;
+  }
+  @media (max-width: 991.96px) {
+    .login-wrapper .login-content.authent-content {
+      width: 100%;
+    }
+  }
+  .login-wrapper .login-content .login-logo {
+    display: block;
+    max-width: 250px;
+    margin: auto;
+  }
+  .login-wrapper .login-content .login-logo img {
+    margin-bottom: 25px;
+  }
+  @media (max-width: 991.96px) {
+    .login-wrapper .login-content .login-userset {
+      margin-top: 30px;
+    }
+  }
+  .login-wrapper .login-content .login-userset .my-4 {
+    margin-top: 50px !important;
+  }
+  .login-wrapper .login-content .login-userset .my-4 p {
+    font-size: 14px;
+    color: #092C4C;
+    margin-bottom: 0;
+    font-weight: 400;
+  }
+  .login-wrapper .login-content .login-userset form .otp-box {
+    margin-bottom: 34px;
+  }
+  .login-wrapper .login-content .login-userset form .otp-box input {
+    width: 74px;
+    height: 74px;
+    background: #ffffff;
+    border: 1px solid #E1E1E1;
+    border-radius: 8px;
+    text-align: center;
+    margin-right: 15px;
+    font-weight: 700;
+    font-size: 26px;
+    color: #000000;
+    outline: none;
+  }
+  @media (max-width: 574.98px) {
+    .login-wrapper .login-content .login-userset form .otp-box input {
+      width: 50px;
+      height: 50px;
+    }
+  }
+  .login-wrapper .login-content .login-userset form .otp-box input::placeholder {
+    color: #74788d;
+  }
+  .login-wrapper .login-content .login-userset form .otp-box input:last-child {
+    margin-right: 0px;
+  }
+  .login-wrapper .login-content .login-userset .Otp-expire {
+    border-radius: 8px;
+    background: rgba(255, 0, 0, 0.05);
+    padding: 10px 12px;
+    max-width: 200px;
+    margin: auto;
+  }
+  .login-wrapper .login-content .login-userset .Otp-expire p {
+    color: #FF0000;
+    font-size: 14px;
+    font-weight: 400;
+  }
+  .login-wrapper .login-content .login-userheading {
+    margin: 0 0 24px;
+  }
+  .login-wrapper .login-content .login-userheading h3 {
+    font-size: 24px;
+    font-weight: 700;
+    margin: 0 0 10px;
+    color: #000000;
+  }
+  .login-wrapper .login-content .login-userheading h4 {
+    font-size: 15px;
+    font-weight: 400;
+    color: #092C4C;
+    line-height: 1.4;
+  }
+  .login-wrapper .login-content .login-userheading .verfy-mail-content {
+    max-width: 400px;
+    margin-bottom: 40px;
+  }
+  .login-wrapper .login-content .form-login {
+    margin-bottom: 15px;
+  }
+  .login-wrapper .login-content .form-login label {
+    width: 100%;
+    color: #092C4C;
+    margin-bottom: 10px;
+    font-size: 15px;
+    font-weight: 400;
+  }
+  .login-wrapper .login-content .form-login .form-addons {
+    position: relative;
+  }
+  .login-wrapper .login-content .form-login .form-addons img {
+    position: absolute;
+    top: 16px;
+    right: 20px;
+  }
+  .login-wrapper .login-content .form-login input {
+    width: 100%;
+    height: 40px;
+    border: 1px solid rgba(145, 158, 171, 0.32);
+    border-radius: 5px;
+    padding: 0 15px;
+    -webkit-transition: all 0.2s ease;
+    -ms-transition: all 0.2s ease;
+    transition: all 0.2s ease;
+  }
+  .login-wrapper .login-content .form-login input:focus {
+    border: 1px solid #FE9F43;
+  }
+  .login-wrapper .login-content .form-login .btn-login {
+    width: 100%;
+    font-weight: 700;
+    font-size: 14px;
+    background: #FE9F43;
+    border-color: #FE9F43;
+    padding: 10px;
+    -webkit-transition: all 0.5s ease;
+    -ms-transition: all 0.5s ease;
+    transition: all 0.5s ease;
+    margin-top: 5px;
+    color: #ffffff;
+  }
+  .login-wrapper .login-content .form-login .btn-login:hover {
+    box-shadow: 0 50px #ffffff inset !important;
+    color: #FE9F43;
+  }
+  .login-wrapper .login-content .form-login .alreadyuser {
+    margin-bottom: 15px;
+  }
+  .login-wrapper .login-content .form-login .alreadyuser h4 {
+    font-size: 14px;
+    font-weight: 400;
+    color: #B8BCC9;
+  }
+  .login-wrapper .login-content .form-login .alreadyuser h4 a {
+    color: #FE9F43;
+    font-weight: 600;
+  }
+  .login-wrapper .login-content .form-login .custom-control.custom-checkbox {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  @media (max-width: 574.98px) {
+    .login-wrapper .login-content .form-login .custom-control.custom-checkbox {
+      justify-content: start;
+    }
+  }
+  .login-wrapper .login-content .form-login .custom-control.custom-checkbox .custom-control-input {
+    width: auto;
+    height: auto;
+  }
+  .login-wrapper .login-content .form-login .custom-control.custom-checkbox .custom-control-label {
+    margin-bottom: 0;
+    margin-left: 8px;
+  }
+  .login-wrapper .login-content .form-login .forgot-link {
+    color: #FF0000;
+    font-size: 15px;
+    font-weight: 600;
+  }
+  .login-wrapper .login-content .signinform {
+    margin-bottom: 23px;
+  }
+  .login-wrapper .login-content .signinform h4 {
+    font-size: 15px;
+    font-weight: 400;
+    color: #092C4C;
+  }
+  @media (max-width: 574.98px) {
+    .login-wrapper .login-content .signinform h4 {
+      font-size: 14px;
+    }
+  }
+  .login-wrapper .login-content .signinform h4 a {
+    color: #092C4C;
+    font-weight: 700;
+    font-size: 14px;
+  }
+  .login-wrapper .login-content .signinform .hover-a.resend {
+    color: #FF0000;
+  }
+  .login-wrapper .login-content .form-setlogin {
+    text-align: center;
+    position: relative;
+    color: #B8BCC9;
+    font-size: 14px;
+    font-weight: 400;
+    margin-bottom: 23px;
+  }
+  .login-wrapper .login-content .form-setlogin h4 {
+    position: relative;
+    font-size: 14px;
+    color: #646B72;
+    font-weight: 700;
+  }
+  .login-wrapper .login-content .form-setlogin h4:after {
+    content: "";
+    background: #B8BCC9;
+    width: 21px;
+    height: 1px;
+    position: absolute;
+    top: 10px;
+    left: 200px;
+  }
+  @media (max-width: 991.96px) {
+    .login-wrapper .login-content .form-setlogin h4:after {
+      height: 0px;
+    }
+  }
+  .login-wrapper .login-content .form-setlogin h4:before {
+    content: "";
+    background: #B8BCC9;
+    width: 21px;
+    height: 1px;
+    position: absolute;
+    top: 10px;
+    right: 200px;
+  }
+  @media (max-width: 991.96px) {
+    .login-wrapper .login-content .form-setlogin h4:before {
+      height: 0px;
+    }
+  }
+  .login-wrapper .login-content .form-setlogin.or-text {
+    max-width: 365px;
+    margin: auto;
+  }
+  .login-wrapper .login-content .toggle-password {
+    cursor: pointer;
+    width: 30px;
+    height: 30px;
+    color: #B8BCC9;
+    font-size: 18px;
+    display: -webkit-box;
+    display: -ms-flexbox;
+    display: flex;
+    align-items: center;
+    -webkit-box-align: center;
+    -ms-flex-align: center;
+    justify-content: center;
+    -webkit-justify-content: center;
+    -ms-flex-pack: center;
+    border-radius: 50%;
+    transform: translateY(-50%);
+    -webkit-transform: translateY(-50%);
+    -ms-transform: translateY(-50%);
+    position: absolute;
+    top: 50%;
+    right: 10px;
+  }
+  .login-wrapper .login-content .toggle-password:hover {
+    color: #FE9F43;
+  }
+  .login-wrapper .login-content .toggle-passwords {
+    cursor: pointer;
+    width: 30px;
+    height: 30px;
+    color: #B8BCC9;
+    font-size: 18px;
+    display: -webkit-box;
+    display: -ms-flexbox;
+    display: flex;
+    align-items: center;
+    -webkit-box-align: center;
+    -ms-flex-align: center;
+    justify-content: center;
+    -webkit-justify-content: center;
+    -ms-flex-pack: center;
+    border-radius: 50%;
+    transform: translateY(-50%);
+    -webkit-transform: translateY(-50%);
+    -ms-transform: translateY(-50%);
+    position: absolute;
+    top: 50%;
+    right: 10px;
+  }
+  .login-wrapper .login-content .toggle-passwords:hover {
+    color: #FE9F43;
+  }
+  .login-wrapper .login-content .pass-group {
+    position: relative;
+    font-size: 14px;
+  }
+  .login-wrapper .login-content .pass-group .fas {
+    font-size: 13px;
+    color: #939ea8;
+  }
+  .login-wrapper .login-content .form-sociallink {
+    margin-top: 25px;
+  }
+  .login-wrapper .login-content .form-sociallink ul {
+    display: -webkit-box;
+    display: -ms-flexbox;
+    display: flex;
+    align-items: center;
+    -webkit-box-align: center;
+    -ms-flex-align: center;
+    -ms-flex-wrap: wrap;
+    flex-wrap: wrap;
+  }
+  .login-wrapper .login-content .form-sociallink ul li {
+    text-align: center;
+    margin-right: 10px;
+  }
+  @media (max-width: 574.98px) {
+    .login-wrapper .login-content .form-sociallink ul li {
+      width: 100%;
+      margin-bottom: 20px;
+    }
+  }
+  .login-wrapper .login-content .form-sociallink ul li:last-child {
+    padding-right: 0;
+  }
+  @media (max-width: 574.98px) {
+    .login-wrapper .login-content .form-sociallink ul li:last-child {
+      padding-right: 0;
+    }
+  }
+  .login-wrapper .login-content .form-sociallink ul li a {
+    color: #092C4C;
+    width: 100%;
+    border: 1px solid rgba(145, 158, 171, 0.23);
+    background: #ffffff;
+    display: -webkit-box;
+    display: -ms-flexbox;
+    display: flex;
+    align-items: center;
+    -webkit-box-align: center;
+    -ms-flex-align: center;
+    justify-content: center;
+    -webkit-justify-content: center;
+    -ms-flex-pack: center;
+    border-radius: 10px;
+    margin: 0 10px 0 0;
+    padding: 15px 53px;
+    font-weight: 500;
+  }
+  .login-wrapper .login-content .form-sociallink ul li a:hover {
+    background: #FE9F43;
+    color: #ffffff;
+  }
+  .login-wrapper .login-content .form-sociallink ul li a img {
+    width: 24px;
+    height: 24px;
+  }
+  .login-wrapper .login-content .form-sociallink ul li .facebook-logo {
+    border-radius: 10px;
+    background: #1877F2;
+  }
+  .login-wrapper .login-content .form-sociallink ul li .apple-logo {
+    border-radius: 10px;
+    background: #000000;
+  }
+  .login-wrapper .login-content.user-login {
+    width: 100%;
+    padding: 0;
+    overflow: hidden;
+    flex-wrap: nowrap;
+    flex-direction: column;
+    height: auto;
+    margin: 50px 0;
+  }
+  .login-wrapper .login-content.user-login form {
+    width: 100%;
+  }
+  .login-wrapper .login-content.user-login .login-userset {
+    background: #ffffff;
+    box-shadow: 0px 4px 60px 0px rgba(190, 190, 190, 0.27);
+    margin: 0;
+    padding: 40px;
+    border: 1px solid #A6AAAF;
+  }
+  .login-wrapper .login-img {
+    background: #FFDABA;
+  }
+  @media (max-width: 991.96px) {
+    .login-wrapper .login-img {
+      display: none;
+    }
+  }
+  .login-wrapper .login-img img {
+    width: 100%;
+    height: 100vh;
+  }
+  .login-wrapper .login-userset .login-logo.login-info {
+    display: block;
+    max-width: 150px;
+    margin: auto;
+  }
+  .login-wrapper .login-logo {
+    max-width: 150px;
+    margin: auto;
+  }
+  
+  .login-wrapper.login-new {
+    overflow: auto;
+    height: 100vh;
+    display: -webkit-box;
+    display: -ms-flexbox;
+    display: flex;
+    align-items: center;
+    -webkit-box-align: center;
+    -ms-flex-align: center;
+    justify-content: center;
+    -webkit-justify-content: center;
+    -ms-flex-pack: center;
+    background-image: url(../assets/img/authentication/login-bg.png);
+    background-position: bottom center;
+    background-repeat: no-repeat;
+    background-size: 100% 500px;
+  }
+  .login-wrapper.login-new .login-content.user-login .login-userset form .otp-box {
+    margin-bottom: 34px;
+  }
+  .login-wrapper.login-new .login-content.user-login .login-userset form .otp-box input {
+    width: 74px;
+    height: 74px;
+    background: #ffffff;
+    border: 1px solid #E1E1E1;
+    border-radius: 8px;
+    text-align: center;
+    margin-right: 15px;
+    font-weight: 700;
+    font-size: 26px;
+    color: #000000;
+    outline: none;
+  }
+  @media (max-width: 574.98px) {
+    .login-wrapper.login-new .login-content.user-login .login-userset form .otp-box input {
+      width: 40px;
+      height: 40px;
+    }
+  }
+
+  .authentication-check .custom-checkbox .checkboxs span {
+    top: 0;
+  }
+  .authentication-check .checkboxs {
+    padding-left: 22px;
+  }
+  .authentication-check .checkboxs .checkmarks {
+    border-radius: 5px;
+    top: 4px;
+  }
+
+
+  .form-checked-outline:checked[type=checkbox] {
+    background-image: none;
+    position: relative;
+    background-color: transparent;
+  }
+
+
+  .checkboxs {
+    display: block;
+    position: relative;
+    padding-left: 35px;
+    margin-bottom: 12px;
+    cursor: pointer;
+    user-select: none;
+  }
+  .checkboxs input {
+    position: absolute;
+    opacity: 0;
+    cursor: pointer;
+    height: 0;
+    width: 0;
+  }
+  .checkboxs input ~ .checkmarks {
+    border: 1px solid #E6EAED;
+    background-color: #ffffff;
+    border-radius: 5px;
+  }
+  .checkboxs input:checked ~ .checkmarks {
+    background-color: #FE9F43;
+    border-color: #FE9F43;
+  }
+  .checkboxs input:checked ~ .checkmarks:after {
+    display: block;
+  }
+  .checkboxs .checkmarks {
+    height: 16px;
+    width: 16px;
+    position: absolute;
+    top: 0;
+    left: 0;
+  }
+  .checkboxs .checkmarks:after {
+    content: "";
+    position: absolute;
+    display: none;
+  }
+  .checkboxs .checkmarks:after {
+    left: 5px;
+    top: 2px;
+    width: 5px;
+    height: 8px;
+    border: solid #ffffff;
+    border-width: 0 2px 2px 0;
+    transform: rotate(45deg);
+    -webkit-transform: rotate(45deg);
+    -ms-transform: rotate(45deg);
+  }
+  .custom-control.custom-checkbox .checkboxs {
+    line-height: 1;
+  }
+

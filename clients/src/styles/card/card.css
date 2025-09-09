@@ -1,0 +1,11 @@
+.card .card-header {
+    border-color: #E6EAED;
+    position: relative;
+    background: transparent;
+    padding: 1rem 1.25rem 1rem;
+  }
+
+ .modal.show .modal-dialog.purchase {
+  max-width: 1140px;
+}
+

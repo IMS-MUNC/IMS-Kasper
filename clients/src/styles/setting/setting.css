@@ -1,0 +1,41 @@
+/* .settings-wrapper .settings-sidebar {
+    position: relative;
+    z-index: 1;
+    top: unset;
+    left: unset;
+    bottom: unset;
+    width: 309px;
+    margin-right: 24px;
+    border-right: 0;
+    border: 1px solid #E6EAED;
+    border-radius: 5px;
+}
+.sidebar, .settings-sidebar {
+    display: block;
+    background-color: #ffffff;
+    margin-top: 0;
+    z-index: 1001;
+    position: fixed;
+    top: 65px;
+    bottom: 0;
+    left: 0;
+    -webkit-transition: all 0.5s ease;
+    -ms-transition: all 0.5s ease;
+    transition: all 0.5s ease;
+    border-right: 1px solid #E6EAED;
+    width: 252px;
+}
+
+@media (max-width: 1199.96px) {
+    .settings-wrapper .settings-sidebar {
+        width: 200px;
+        margin-right: 15px;
+    }
+}
+
+
+@media (max-width: 1398.98px) {
+    .settings-wrapper .settings-sidebar {
+        width: 250px;
+    }
+} */

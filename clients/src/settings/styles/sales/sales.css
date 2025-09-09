@@ -1,0 +1,33 @@
+.modal .modal-dialog.add-centered {
+    display: flex;
+    align-items: center;
+    -webkit-box-align: center;
+    justify-content: center;
+    max-width: 1192px;
+}
+
+
+.input-blocks .input-groupicon .addonset {
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  line-height: 0;
+  transform: translateY(-50%);
+  -webkit-transform: translateY(-50%);
+  -ms-transform: translateY(-50%);
+}
+@media (max-width: 991.96px) {
+  .input-blocks .input-groupicon .addonset {
+    display: none;
+  }
+}
+
+
+.input-groupicon.select-code .addonset {
+  position: relative;
+}
+.input-groupicon.select-code .addonset img {
+  position: absolute;
+  bottom: 12px;
+  right: 12px;
+}

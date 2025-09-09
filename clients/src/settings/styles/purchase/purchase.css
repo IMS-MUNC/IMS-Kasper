@@ -1,0 +1,74 @@
+span .product-quantity {
+    width: 35px;
+    border: 0;
+    background-color: #dde0e8;
+    text-align: center;
+    height: 35px !important;
+}
+
+.total-order {
+    max-width: 430px;
+    width: 100%;
+    margin: 30px 30px 30px auto;
+}
+
+.total-order ul {
+    margin: 0;
+    padding: 0;
+}
+
+.total-order ul {
+    border: 1px solid #E6EAED;
+}
+
+.total-order ul li:first-child {
+    border-top: 1px solid #F9FAFB;
+}
+
+.total-order ul li {
+    display: -webkit-box;
+    display: -ms-flexbox;
+    display: flex;
+    align-items: center;
+    -webkit-box-align: center;
+    -ms-flex-align: center;
+    border: 1px solid #F9FAFB;
+    border-top: 0;
+}
+
+.total-order li {
+    border-bottom: 1px solid #E6EAED;
+}
+
+.border-bottom {
+    border-bottom: var(--bs-border-width) var(--bs-border-style) var(--bs-border-color) !important;
+}
+
+.total-order ul li h4 {
+    width: 50%;
+    color: #646B72;
+    font-size: 14px;
+    font-weight: 500;
+    padding: 10px;
+    border-right: 1px solid #F9FAFB;
+    background: #FAFBFE;
+}
+
+.total-order ul li h5 {
+    color: #646B72;
+    font-size: 14px;
+    padding: 10px;
+    font-weight: 400;
+    text-align: right;
+    width: 50%;
+}
+
+.total-order ul li.total h4 {
+    color: #4D555E;
+    font-weight: 700;
+}
+
+.total-order ul li.total h5 {
+    color: #092C4C;
+    font-weight: 700;
+}

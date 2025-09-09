@@ -1,0 +1,74 @@
+input[type="file"] {
+  display: none;
+}
+
+.custom-file-upload2 {
+  display: inline-block;
+  cursor: pointer;
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+  align-items: center;
+}
+
+input[type="file"] {
+  display: none;
+}
+
+.custom-file-upload3 {
+  display: inline-block;
+  cursor: pointer;
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+  align-items: center;
+}
+
+
+.chat-list-search-box{
+border: 1px solid rgb(225, 223, 223);
+border-radius: 5px;
+padding: 1px 5px;
+display: flex;
+justify-content: space-between;
+align-items: center;
+margin-top: 10px;
+height: 40px;
+margin-bottom: 15px;
+}
+
+
+.chat-list-search-input{
+border: none;
+outline: none;
+width: 250px;
+font-size: small;
+}
+
+
+.chat-list-usersection{
+overflow-y: auto;
+height: calc(100vh - 32vh);
+padding: 0px 10px 0px 0px;
+}
+::-webkit-scrollbar {
+width: 5px;
+}
+::-webkit-scrollbar-track {
+background: #f1f1f1; 
+}
+::-webkit-scrollbar-thumb {
+background: #a7a7a7;
+border-radius: 3px;
+}
+
+
+.chat-list-user{
+display: flex;
+justify-content: space-between;
+padding: 15px 20px;
+/* border: 1px solid rgb(225, 223, 223); */
+border-radius: 5px;
+/* box-shadow: 2px 2px 5px 2px rgb(217, 218, 218); */
+margin: 8px 0px;
+}

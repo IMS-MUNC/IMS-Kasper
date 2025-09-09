@@ -1,0 +1,83 @@
+.fn-conatiner{
+    background-color: #F7F7F7;
+}
+
+.table tr {
+  padding: 1.5rem;  /* Adjust padding to increase row height */
+ 
+}
+/* .table tr .badge{
+     font-size: 1rem; 
+     background-color: #3FB783;
+     
+} */
+
+.badge-success {
+     font-size: 1rem; 
+  background-color: #28a745; /* Green background */
+}
+
+.badge-danger {
+     font-size: 1rem; 
+  background-color: #dc3545; /* Red background */
+}
+
+
+.container-mn{
+    
+    margin-top: 2vh;
+    margin-left: 2vw;
+    margin-right: 2vw;
+    background-color: white;
+    border-radius: 10px;
+}
+.iconsms{
+    display: flex;
+    gap: 7%;
+/* align-items: center;
+    justify-content: center; */
+   
+}
+.iconsms button{
+    border: 1px solid rgb(220, 213, 213);
+    /* font-size:larger; */
+    background-color: white;
+    border-radius: 8px;
+     padding: 2px 5px;
+    
+}
+/* .theadfs{
+      background-color: red;
+} */
+
+/*  */
+thead.tableheader th  {
+    background-color: #F7F7F7;
+}
+
+.settings{
+    background-color: #FF9F40;
+    color: white;
+    border-radius: 50%;
+    position: fixed;
+    top: 190px;
+    right: 5px;
+    padding: 9px 10px;
+    font-size: 1.5rem;
+    justify-content: center;
+   
+    display: flex;
+}
+.downt{
+    fontSize: 1.2rem;
+     background-color: #FF9F40;
+     color: white;
+     padding: 4px 12px;
+     border-radius: 50%;
+     
+
+}
+/* .btn-dark {
+  background-color: #212529;
+  color: white;
+} */

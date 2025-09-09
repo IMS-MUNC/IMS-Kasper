@@ -1,0 +1,427 @@
+.page-wrapper .content {
+  /* padding: 24px; */
+  padding-bottom: 24px;
+  padding-bottom: 0;
+  min-height: calc(100vh - 105px);
+}
+
+.page-header {
+  display: -webkit-box;
+  display: -ms-flexbox;
+  display: flex;
+  align-items: center;
+  -webkit-box-align: center;
+  -ms-flex-align: center;
+  justify-content: space-between;
+  -webkit-justify-content: space-between;
+  -ms-flex-pack: space-between;
+  margin-bottom: 24px;
+}
+
+.page-header .add-item.d-flex {
+  margin-right: auto;
+}
+
+.table-top-head {
+  display: -webkit-box;
+  display: -ms-flexbox;
+  display: flex;
+  align-items: center;
+  -webkit-box-align: center;
+  -ms-flex-align: center;
+  justify-content: center;
+  -webkit-justify-content: center;
+  -ms-flex-pack: center;
+}
+
+@media (max-width: 574.98px) {
+  .table-top-head.low-stock-top-head {
+    flex-wrap: wrap;
+    justify-content: start;
+  }
+}
+
+.table-top-head.low-stock-top-head li {
+  margin-bottom: 10px;
+}
+
+.table-top-head.low-stock-top-head li:last-child {
+  margin-right: 0;
+}
+
+.table-top-head li {
+  margin-right: 8px;
+  flex-shrink: 0;
+  list-style: none;
+}
+
+.table-top-head li:last-child {
+  margin-right: 0;
+}
+
+.table-top-head li #collapse-header {
+  margin-right: 0;
+}
+
+@media (max-width: 991.96px) {
+  .table-top-head li #collapse-header {
+    display: none;
+  }
+
+
+}
+
+
+.table-top-head li .icon-btn {
+  height: 35px;
+  width: 35px;
+  display: -webkit-box;
+  display: -ms-flexbox;
+  display: flex;
+  align-items: center;
+  -webkit-box-align: center;
+  -ms-flex-align: center;
+  justify-content: center;
+  -webkit-justify-content: center;
+  -ms-flex-pack: center;
+  border: 1px solid #E6EAED;
+  background: #ffffff;
+  border-radius: 5px;
+  padding: 4px;
+}
+
+.table-top-head li a img {
+  width: 20px;
+}
+
+.table-top-head li a svg {
+  color: #092C4C;
+}
+
+.table-top-head li a.btn-primary svg {
+  color: #ffffff;
+}
+
+.table-top-head li a:hover {
+  background: #e3e3e3;
+}
+
+.table-top-head li a label {
+  margin-right: 10px;
+}
+
+.table-top-head li a.btn-secondary {
+  background-color: #092C4C;
+  color: #ffffff;
+  padding: 3px 11px;
+  font-weight: 500;
+  font-size: 13px;
+}
+
+.table-top-head li a.btn-secondary:hover {
+  background-color: #FE9F43;
+}
+
+.table-top-head li a.btn-secondary svg {
+  width: 16px;
+  margin-right: 5px;
+  color: #ffffff;
+}
+
+@media (max-width: 766.98px) {
+  .table-top-head li a.btn-secondary {
+    font-size: 14px;
+  }
+}
+
+.table-top-head li a .action-edit.sales-action {
+  color: #3577f1;
+}
+
+.table-top-head li .status-toggle {
+  height: 38px;
+  display: -webkit-box;
+  display: -ms-flexbox;
+  display: flex;
+  align-items: center;
+  -webkit-box-align: center;
+  -ms-flex-align: center;
+  justify-content: center;
+  -webkit-justify-content: center;
+  -ms-flex-pack: center;
+  border: 1px solid #D3D5D7;
+  background: #ffffff;
+  border-radius: 8px;
+  padding: 6px 10px;
+}
+
+.table-top-head li .status-toggle label {
+  margin-right: 10px;
+}
+
+.accordion-item {
+  color: #646B72 !important;
+  background-color: #ffffff !important;
+  border: 1px solid #E6EAED !important;
+  border-radius: 10px !important;
+}
+
+.accordion-button::after {
+  content: ">";
+  font-family: "Fontawesome";
+  font-size: 12px;
+  line-height: 1;
+  background-color: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 3.125rem;
+  color: #646B72;
+}
+
+.accordion-button {
+  background-color: #d61010;
+  color: #646B72;
+  padding: 1rem 1.25rem !important;
+}
+
+.accordion-item .accordion-header {
+  cursor: pointer;
+}
+
+.accordion-body {
+  padding: 1.25rem !important;
+  color: #9595b5;
+}
+
+.summer-description-box .card .card-header {
+  padding: 8px;
+  border-bottom: 1px solid rgba(145, 158, 171, 0.32);
+}
+
+
+/* === Clean Custom Styling for Bootstrap <select> === */
+
+
+.form-control {
+  border-color: #E6EAED !important;
+  color: #212B36 !important;
+  background-color: #ffffff !important;
+  font-size: 0.875rem !important;
+  font-weight: 400 !important;
+  line-height: 1.6 !important;
+  border-radius: 0.35rem !important;
+  padding: 0.45rem 0.85rem !important;
+}
+
+.form-control:focus {
+  border-color: #FE9F43 !important;
+  box-shadow: none !important;
+}
+
+
+.form-select {
+  height: 38px;
+  border: 1px solid rgba(145, 158, 171, 0.3);
+  border-radius: 5px;
+  color: #646B72;
+  padding-left: 0.85rem;
+  font-size: 14px;
+  font-weight: 400;
+  background-color: #fff;
+}
+
+.form-select:focus {
+  border-color: #FE9F43 !important;
+  box-shadow: none !important;
+}
+
+/* Optional: Add hover effect for better UX */
+.form-select:hover {
+  border-color: #FE9F43;
+}
+
+/* If you want a small down-arrow style */
+.form-select {
+  background-image: url("data:image/svg+xml;charset=US-ASCII,%3Csvg xmlns='http://www.w3.org/2000/svg' width='4' height='5'%3E%3Cpath fill='none' stroke='%23646B72' d='M1 0l2 2.5L1 5'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 0.75rem center;
+  background-size: 10px;
+}
+
+.edit-product .form-label {
+  color: #212B36;
+  margin-bottom: 6px;
+}
+
+/* pricing */
+
+
+.custom_radio,
+.custom_radio_one {
+  color: #646B72;
+  position: relative;
+  font-size: 14px;
+  padding-left: 25px;
+  margin-bottom: 10px;
+  cursor: pointer;
+  user-select: none;
+  font-weight: 400;
+}
+
+.custom_radio input,
+.custom_radio_one input {
+  position: absolute;
+  opacity: 0;
+  padding: 0;
+}
+
+.custom_radio.active input~.checkmark {
+  background-color: #FE9F43;
+}
+
+.custom_radio .checkmark,
+.custom_radio_one .checkmark {
+  position: absolute;
+  top: 2px;
+  left: 0;
+  height: 16px;
+  width: 16px;
+  background-color: transparent;
+  background-color: #E6EAED;
+  border-radius: 50%;
+  -webkit-transition: all 0.3s ease-in-out;
+  -ms-transition: all 0.3s ease-in-out;
+  transition: all 0.3s ease-in-out;
+}
+
+.custom_radio,
+.custom_radio_one {
+  color: #646B72;
+  font-size: 14px;
+  cursor: pointer;
+  font-weight: 400;
+}
+
+.custom_radio .checkmark:after,
+.custom_radio_one .checkmark:after {
+  display: block;
+  content: "";
+  position: absolute;
+  top: 4px;
+  left: 4px;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #ffffff;
+  visibility: visible;
+  transform: scale(1);
+  -webkit-transform: scale(1);
+  -ms-transform: scale(1);
+  -webkit-transition: all 0.3s ease-in-out;
+  -ms-transition: all 0.3s ease-in-out;
+  transition: all 0.3s ease-in-out;
+}
+
+/* image setion */
+.add-list {
+  width: 100%;
+}
+
+.add-choosen {
+  display: flex;
+}
+
+.image-upload input[type="file"] {
+  width: 100%;
+  opacity: 0;
+  height: 100%;
+  position: relative;
+  z-index: 9;
+  cursor: pointer;
+  color: #A6AAAF;
+}
+
+.image-upload.image-upload-two {
+  margin-bottom: 0;
+  /* width: 120px; */
+  /* height: 120px; */
+  border: 1px dashed rgba(145, 158, 171, 0.32);
+}
+
+.image-upload {
+  border: 1px solid rgba(145, 158, 171, 0.32);
+  position: relative;
+  margin-bottom: 35px;
+  border-radius: 5px;
+}
+
+.add-choosen .phone-img {
+  position: relative;
+  width: 120px;
+  height: 120px;
+  border-radius: 10px;
+  border: 1px solid var(--Stroke, rgba(145, 158, 171, 0.3));
+  text-align: center;
+  margin-left: 20px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.image-upload.image-upload-two .image-uploads {
+  padding: 43px 0;
+}
+
+.image-upload .image-uploads {
+  text-align: center;
+  width: 100%;
+  padding: 5px 0;
+  border-radius: 5px;
+  position: absolute;
+  top: 0;
+}
+
+.image-upload .image-uploads h4 {
+  font-size: 14px;
+  font-weight: 500;
+  color: #A6AAAF;
+}
+
+
+.accordion-item:first-of-type {
+  border-top-left-radius: 0.35rem !important;
+  border-top-right-radius: 0.35rem !important;
+}
+
+.add-newplus span {
+  font-size: 14px;
+  font-style: normal;
+  font-weight: 500;
+  color: #FE9F43;
+}
+
+.add-newplus {
+  display: flex;
+  justify-content: space-between;
+}
+
+.add-choosen .phone-img a {
+  position: absolute;
+  right: 3px;
+  top: 3px;
+  background: #FF0000;
+  border-radius: 3px;
+  width: 16px;
+  height: 16px;
+  color: #ffffff;
+  display: -webkit-box;
+  display: -ms-flexbox;
+  display: flex;
+  align-items: center;
+  -webkit-box-align: center;
+  -ms-flex-align: center;
+  justify-content: center;
+  -webkit-justify-content: center;
+  -ms-flex-pack: center;
+}

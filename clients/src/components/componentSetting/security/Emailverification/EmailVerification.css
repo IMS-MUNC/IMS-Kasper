@@ -1,0 +1,203 @@
+/* .verifymodal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 999;
+}
+
+.verifymodal-box {
+  background: #fff;
+  border-radius: 10px;
+  width: 500px;
+  padding: 24px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+  animation: fadeIn 0.3s ease;
+}
+
+.verifymodal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.verifymodal-header h2 {
+  margin: 0;
+  font-size: 20px;
+}
+
+.verifyclose-btn {
+  background: none;
+  border: none;
+  font-size: 20px;
+  cursor: pointer;
+  color: red;
+}
+
+.verifymodal-form {
+  margin-top: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.verifymodal-form label {
+  display: flex;
+  flex-direction: column;
+  font-weight: 500;
+}
+
+.verifymodal-form input {
+  padding: 10px;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+}
+
+.verifyrequired {
+  color: red;
+}
+
+.verifyinfo-msg {
+  font-size: 13px;
+  color: #555;
+  margin-top: -10px;
+}
+
+.verifyotp-field {
+  position: relative;
+}
+
+.verifyotp-field input {
+  width: 100%;
+}
+
+.verifytoggle-otp {
+  position: absolute;
+  right: 10px;
+  top: 10px;
+  cursor: pointer;
+}
+
+.verifymodal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 20px;
+}
+
+.verifycancel-btn {
+  background-color: #002D62;
+  color: white;
+  padding: 10px 18px;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+.verifysave-btn {
+  background-color: #f4a024;
+  color: white;
+  padding: 10px 18px;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: scale(0.95); }
+  to { opacity: 1; transform: scale(1); }
+} */
+
+.pphnnemail-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.3);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+.pphnnemail-card {
+  background: white;
+  padding: 20px;
+  border-radius: 6px;
+  width: 400px;
+  text-align: center;
+}
+
+.pphnnemail-card,
+.eerrerhead {
+  margin-bottom: 15px;
+  color: #262626;
+  font-size: 18px;
+}
+
+.pphnnemail-card,
+.enterlabeler {
+  display: block;
+  margin-bottom: 6px;
+  font-weight: 400;
+  text-align: left;
+}
+
+.pphnnemail-otp-input {
+  width: 100%;
+  padding: 8px;
+  margin-bottom: 15px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+}
+
+.pphnnemail-btn {
+  padding: 8px 16px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.pphnnemail-btn.black {
+  background: black;
+  color: white;
+}
+
+.pphnnemail-info {
+  margin: 10px 0;
+}
+
+.pphnnemail-otp-boxes {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.pphnnemail-otp-boxes .pphnnemail-otp-input {
+  width: 40px;
+  height: 40px;
+  text-align: center;
+  font-size: 18px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+}
+
+.pphnnemail-resend {
+  font-size: 14px;
+  color: #666;
+  margin-bottom: 15px;
+}
+
+.pphnnemail-resend,
+.seededagain {
+  color: blue;
+  cursor: pointer;
+}
+
+.pphnnemail-success {
+  padding: 20px;
+}

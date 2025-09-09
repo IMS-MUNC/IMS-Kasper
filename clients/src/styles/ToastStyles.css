@@ -1,0 +1,24 @@
+/* Success Toast */
+.Toastify__toast--success {
+    background-color: #28a745; /* Green */
+    color: #fff;
+  }
+  
+  /* Error Toast */
+  .Toastify__toast--error {
+    background-color: #dc3545; /* Red */
+    color: #fff;
+  }
+  
+  /* Warning Toast */
+  .Toastify__toast--warning {
+    background-color: #ffc107; /* Yellow */
+    color: #000;
+  }
+  
+  /* Info Toast */
+  .Toastify__toast--info {
+    background-color: #0dcaf0; /* Cyan Blue */
+    color: #000;
+  }
+  

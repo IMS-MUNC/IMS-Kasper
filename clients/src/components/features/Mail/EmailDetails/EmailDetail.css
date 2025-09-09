@@ -1,0 +1,262 @@
+.toggle-meta {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 20px;
+  vertical-align: middle;
+  margin: 0px;
+  padding: 0;
+  color: #979797;
+}
+
+.email-meta {
+  position: absolute;
+  top:5;
+  background: white;
+  padding: 10px;
+  border-radius: 6px;
+  margin-top: 10px;
+  margin-bottom: 20px;
+  font-size: 14px;
+  width: 350px;
+  box-shadow: rgba(0, 0, 0, 0.24) 0px 3px 8px;
+  margin-left: 200px;
+}
+
+.email-detail {
+  padding: 20px;
+  background: white;
+  border-radius: 8px;
+}
+
+.email-detail .emailsub {
+  font-size: 24px;
+}
+
+.email-detail button {
+  margin-bottom: 8px;
+}
+
+.subject-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 10px;
+  margin-bottom: 10px;
+}
+
+.subject-left .emailsub {
+  margin: 0;
+}
+
+.subject-right {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: #555;
+  font-size: 16px;
+}
+
+.email-time {
+  font-size: 14px;
+  color: gray;
+}
+
+.icon {
+  cursor: pointer;
+  font-size: 18px;
+}
+
+.attachment-preview-section {
+  margin-top: 20px;
+}
+
+.attachment-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+
+.attachment-card {
+  position: relative;
+  width: 150px;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 0 4px rgba(0, 0, 0, 0.1);
+  background: #fff;
+  transition: transform 0.3s ease;
+}
+
+.attachment-card:hover {
+  transform: translateY(-4px);
+}
+
+.attachment-thumb {
+  width: 100%;
+  height: 100px;
+  object-fit: cover;
+}
+
+.attachment-pdf-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100px;
+  background-color: #f2f2f2;
+}
+
+.attachment-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100px;
+  background: rgba(0, 0, 0, 0.4);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 10px;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.attachment-card:hover .attachment-overlay {
+  opacity: 1;
+}
+
+.overlay-btn {
+  background: white;
+  border-radius: 50%;
+  padding: 6px;
+  font-size: 16px;
+  text-decoration: none;
+  color: #000;
+  box-shadow: 0 0 3px rgba(0, 0, 0, 0.2);
+}
+
+.attachment-name {
+  padding: 8px;
+  text-align: center;
+  font-size: 14px;
+  font-weight: 500;
+  background-color: #fafafa;
+}
+
+.hover-actions {
+  opacity: 0;
+}
+
+div:hover .hover-actions {
+  opacity: 1;
+}
+
+
+.attachment-card {
+  position: relative;
+  width: 160px;
+  height: 160px;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  overflow: hidden;
+  background-color: #f8f8f8;
+  cursor: pointer;
+  transition: box-shadow 0.3s ease;
+}
+
+.attachment-card:hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+.attachment-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.attachment-hover-icons {
+  position: absolute;
+  bottom: 8px;
+  left: 8px;
+  right: 8px;
+  display: flex;
+  justify-content: space-around;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  background: rgba(0, 0, 0, 0.6);
+  border-radius: 4px;
+  padding: 4px;
+}
+
+.attachment-card:hover .attachment-hover-icons {
+  opacity: 1;
+}
+
+.icon-button {
+  color: #fff;
+  text-decoration: none;
+  font-size: 18px;
+  padding: 4px;
+}
+
+.file-name {
+  position: absolute;
+  bottom: 0;
+  background: rgba(255, 255, 255, 0.9);
+  width: 100%;
+  font-size: 12px;
+  padding: 4px;
+  text-align: center;
+  color: #333;
+  font-weight: 500;
+}
+
+
+.attachment-box {
+  position: relative;
+  width: 150px;
+  border: 1px solid #ccc;
+  border-radius: 10px;
+  padding: 10px;
+  background-color: #f8f8f8;
+  text-align: center;
+  overflow: hidden;
+  transition: box-shadow 0.3s ease;
+}
+
+.attachment-box:hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.attachment-img {
+  width: 100%;
+  height: 100px;
+  object-fit: contain;
+  border-radius: 5px;
+  display: block;
+  margin: 0 auto;
+}
+
+.hover-download-btn {
+  position: absolute;
+  top: 40px;
+  right: 48px;
+  display: flex;
+  gap: 8px;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  z-index: 2;
+}
+
+.attachment-box:hover .hover-download-btn {
+  opacity: 0.6;
+}
+
+.hover-download-btn .acker {
+  color: black;
+  background: gray;
+  padding: 6px;
+  border-radius: 10%;
+  font-size: 18px;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.2);
+  text-decoration: none;
+}

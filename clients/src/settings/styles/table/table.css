@@ -1,0 +1,146 @@
+table .edit-delete-action {
+  display: -webkit-box;
+  display: -ms-flexbox;
+  display: flex;
+  align-items: center;
+  -webkit-box-align: center;
+  -ms-flex-align: center;
+  justify-content: center;
+  -webkit-justify-content: center;
+  -ms-flex-pack: center;
+}
+
+table tbody td.action-table-data a {
+  border: 1px solid #e6eaed;
+  background-color: #ffffff;
+  border-radius: 5px;
+  display: -webkit-box;
+  display: -ms-flexbox;
+  display: flex;
+  align-items: center;
+  -webkit-box-align: center;
+  -ms-flex-align: center;
+  justify-content: center;
+  -webkit-justify-content: center;
+  -ms-flex-pack: center;
+  padding: 8px;
+}
+.edit-delete-action a:hover {
+  background-color: #e6eaed;
+}
+table tbody td.action-table-data a .feather-edit {
+  color: #212b36;
+  width: 14px;
+  height: 14px;
+}
+table tbody td.action-table-data a .feather-trash-2 {
+  color: #212b36;
+  width: 14px;
+  height: 14px;
+}
+
+.table-top-head li a img {
+  width: 20px;
+}
+
+.table td {
+  vertical-align: middle !important;
+  line-height: 1.462 !important;
+  font-size: 0.813rem !important;
+  padding: 10px 20px !important;
+  white-space: nowrap !important;
+}
+.table th {
+  padding: 10px 20px !important;
+  padding-right: 20px !important;
+  vertical-align: middle !important;
+  line-height: 1.462 !important;
+  font-size: 0.813rem !important;
+  white-space: nowrap !important;
+  
+}
+.table thead tr th {
+  font-weight: 600;
+  font-size: 14px;
+  background-color: #e6eaed;
+  color: #212b36;
+}
+
+
+.table tbody tr td a {
+  color: #212B36 !important;
+  font-size: 14px;
+  font-weight: 500;
+  line-height: normal;
+}
+
+.profile-pic-upload .profile-pic {
+  width: 120px;
+  height: 120px;
+  border: 1px dashed #E6EAED;
+  display: -webkit-box;
+  display: -ms-flexbox;
+  display: flex;
+  align-items: center;
+  -webkit-box-align: center;
+  -ms-flex-align: center;
+  justify-content: center;
+  -webkit-justify-content: center;
+  -ms-flex-pack: center;
+  border-radius: 10px;
+  margin-right: 24px;
+  position: relative;
+  flex-shrink: 0;
+}
+
+.profile-pic-upload {
+  display: -webkit-box;
+  display: -ms-flexbox;
+  display: flex;
+  align-items: center;
+  -webkit-box-align: center;
+  -ms-flex-align: center;
+  margin-bottom: 24px;
+}
+.new-employee-field .image-upload .image-uploads h4 {
+  font-size: 13px;
+  color: #ffffff;
+  line-height: normal;
+}
+
+.profile-pic-upload .profile-pic span {
+  display: -webkit-box;
+  display: -ms-flexbox;
+  display: flex;
+  align-items: center;
+  -webkit-box-align: center;
+  -ms-flex-align: center;
+  justify-content: center;
+  -webkit-justify-content: center;
+  -ms-flex-pack: center;
+  flex-direction: column;
+}
+
+.modal .close, .modal .btn-close {
+  display: -webkit-box;
+  display: -ms-flexbox;
+  display: flex;
+  align-items: center;
+  -webkit-box-align: center;
+  -ms-flex-align: center;
+  justify-content: center;
+  -webkit-justify-content: center;
+  -ms-flex-pack: center;
+  color: #ffffff;
+  opacity: 1;
+  width: 20px;
+  height: 20px;
+  border: 0;
+  font-weight: 700;
+  background-color: #FF0000;
+  border-radius: 50px;
+}
+
+.modal .modal-body {
+  padding: 20px;
+}

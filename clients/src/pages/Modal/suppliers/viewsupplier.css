@@ -1,0 +1,18 @@
+.content.content-two {
+    padding-bottom: 24px;
+}
+
+.card-body {
+    flex: 1 1 auto;
+    padding: var(--cf-card-spacer-y) var(--cf-card-spacer-x);
+    color: var(--cf-card-color);
+}
+.position-relative {
+    position: relative !important;
+}
+
+.avatar img {
+    width: auto;
+    height: auto;
+    border-radius: 0.3rem;
+}

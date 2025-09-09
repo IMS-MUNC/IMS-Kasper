@@ -1,0 +1,142 @@
+/* .pl-container {
+  font-family: Arial, sans-serif;
+  padding: 20px;
+}
+
+.top-text {
+  text-align: center;
+  margin-bottom: 20px;
+  font-size: 14px;
+  color: #262626;
+   font-family: "Roboto", sans-serif;
+  font-weight: 400;
+}
+
+.calendar-container {
+  padding: 20px;
+  border-radius: 8px;
+  text-align: center;
+}
+
+.month-label {
+  font-weight: bold;
+  margin-bottom: 10px;
+}
+
+.calendar-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 8px;
+}
+
+.calendar-week {
+  display: flex;
+  gap: 6px;
+  justify-content: center;
+}
+
+.calendar-day {
+  width: 30px;
+  height: 30px;
+  border-radius: 4px;
+  line-height: 30px;
+  font-size: 13px;
+  text-align: center;
+    background-color: #dbdee1;
+  color: #262626;
+ 
+}
+
+.calendar-day.min-sales {
+  background-color: #dbdee1;
+  color: #262626;
+}
+
+.calendar-day.more-sales {
+ 
+}
+
+.day-labels {
+  display: flex;
+  justify-content: center;
+  gap: 30px;
+  font-size: 12px;
+  color: #666;
+  margin-top: 10px;
+}
+
+.legend {
+  margin-top: 20px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+}
+
+.legend-box {
+  width: 20px;
+  height: 20px;
+  border-radius: 4px;
+}
+
+.legend-box.light {
+  background: #d9eaff;
+}
+
+.legend-box.mid {
+  background: #4d90fe;
+}
+
+.legend-box.dark {
+  background: #1368ec;
+}
+
+.stats-box {
+  margin-top: 30px;
+  background: white;
+  padding: 20px 50px;
+  border-radius: 8px;
+}
+
+.time-period-select {
+  margin-bottom: 20px;
+}
+
+.select-time-link {
+  color: #1368ec;
+  text-decoration: none;
+  font-size: 14px;
+}
+
+.stats-row {
+  display: flex;
+  justify-content: space-around;
+  flex-wrap: wrap;
+}
+
+.stat-item {
+  text-align: center;
+  min-width: 100px;
+}
+
+.label {
+  color: #999;
+  font-size: 12px;
+  margin-bottom: 4px;
+}
+
+.value {
+  font-weight: bold;
+  font-size: 16px;
+}
+
+
+ */
+
+
+
+.custom-grid .invisible {
+  visibility: hidden;
+}

@@ -1,0 +1,118 @@
+.add-image-upload {
+    display: -webkit-box;
+    display: -ms-flexbox;
+    display: flex;
+    align-items: center;
+    -webkit-box-align: center;
+    -ms-flex-align: center;
+    margin-bottom: 24px;
+  }
+
+  .add-image-upload .add-image {
+    width: 120px;
+    height: 120px;
+    border: 1px dashed #E6EAED;
+    display: -webkit-box;
+    display: -ms-flexbox;
+    display: flex;
+    align-items: center;
+    -webkit-box-align: center;
+    -ms-flex-align: center;
+    justify-content: center;
+    -webkit-justify-content: center;
+    -ms-flex-pack: center;
+    border-radius: 10px;
+    margin-right: 24px;
+    position: relative;
+    flex-shrink: 0;
+  }
+
+  .image-upload input[type="file"] {
+    width: 100%;
+    opacity: 0;
+    height: 100%;
+    position: relative;
+    z-index: 9;
+    cursor: pointer;
+    color: #A6AAAF;
+  }
+  .new-employee-field .image-upload {
+    width: 120px;
+    height: 38px;
+    border: 0;
+    background-color: #FE9F43;
+  }
+  .image-upload {
+    border: 1px solid rgba(145, 158, 171, 0.32);
+    position: relative;
+    margin-bottom: 35px;
+    border-radius: 5px;
+  }
+  .new-employee-field .image-upload .image-uploads {
+    top: 8px;
+    padding: 0;
+  }
+
+  .image-upload .image-uploads {
+    text-align: center;
+    width: 100%;
+    /* padding: 20px 0; */
+    border-radius: 5px;
+    position: absolute;
+    top: 0;
+  }
+
+
+  .checktoggle {
+    background-color: rgba(115, 103, 240, 0.2);
+    border-radius: 12px;
+    cursor: pointer;
+    display: block;
+    font-size: 0;
+    height: 13px;
+    margin-bottom: 0;
+    position: relative;
+    width: 25px;
+  }
+
+  .status-toggle.modal-status label {
+    height: 15px;
+    width: 32px;
+    /* background-color: #B9B9C3; */
+    /* background-color: red; */
+  }
+  .status-toggle.modal-status label::after {
+    top: 7px;
+  }
+  
+  .checktoggle::after {
+    content: " ";
+    display: block;
+    transform: translate(2px, -50%);
+    width: 10px;
+    height: 10px;
+    background-color: #ffffff;
+    transition: left 300ms ease, transform 300ms ease;
+    border-radius: 50%;
+    transform: translate(2px, -50%);
+    -webkit-transform: translate(2px, -50%);
+    -ms-transform: translate(2px, -50%);
+    position: absolute;
+    top: 50%;
+    left: 0;
+  }
+
+  .check {
+    display: block;
+    margin: 0;
+    padding: 0;
+    width: 6px;
+    height: 0;
+    visibility: hidden;
+    opacity: 0;
+    pointer-events: none;
+    position: absolute;
+  }
+  .check:checked + .checktoggle {
+    background-color: #3EB780;
+  }
