@@ -10,7 +10,7 @@ import EmojiPicker from "emoji-picker-react";
 import EmailModal from "../EmailModal/EmailModal.jsx";
 import { HiOutlineDotsHorizontal } from "react-icons/hi";
 import axios from "axios";
-import { Link } from "react-router-dom";
+import { Link } from "react-router-dom"
 
 import { BsEyeFill } from "react-icons/bs";
 import { MdFileDownload } from "react-icons/md";
