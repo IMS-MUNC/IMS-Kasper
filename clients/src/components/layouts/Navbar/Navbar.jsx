@@ -119,7 +119,7 @@ function Navbar() {
       // Don't disconnect on component unmount, let it stay connected
       // Only disconnect if the user logs out or the app is closed
     };
-  }, [userId, token, connectSocket]);
+  }, [userId, token]);
 
   // if (!user) return <p>Loading user profile...</p>;
 

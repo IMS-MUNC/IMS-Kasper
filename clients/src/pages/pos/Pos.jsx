@@ -1142,8 +1142,10 @@ const handleSubmit = async (e) => {
   return ( //page code starts from here-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 <div className="pos-five">
+
   <div className="page-wrapper pos-pg-wrapper ms-0">
   <div className="content pos-design p-0">
+
     <div className="row pos-wrapper">
       {/* Products */}
       <div className="col-md-12 col-lg-7 col-xl-8 d-flex">
@@ -1158,7 +1160,7 @@ const handleSubmit = async (e) => {
                     // flexDirection:'column',
                     marginLeft:'10px',
                     borderLeft: selectedCategory === null ? '1px solid #0051CF' : '',
-                    backgroundColor: selectedCategory === null ? '#F7F7F7' : 'transparent',
+                    backgroundColor: selectedCategory === null ? 'white' : 'transparent',
                     borderRadius:'8px',
                     // padding:'2px 5px',
                     fontWeight:'600',
@@ -1166,7 +1168,7 @@ const handleSubmit = async (e) => {
                   }}
                   onClick={handleAllItemsClick}
                 >
-                  All Items
+                  &nbsp;All Items
                 </div>
 
     {/* categories */}
@@ -1184,12 +1186,12 @@ const handleSubmit = async (e) => {
                       // padding:'2px 5px',
                       borderRadius:'8px',
                       borderLeft:  selectedCategory && selectedCategory._id === category._id ? '1px solid #0051CF' : '',
-                      backgroundColor: selectedCategory && selectedCategory._id === category._id ? '#F7F7F7' : 'transparent',
+                      backgroundColor: selectedCategory && selectedCategory._id === category._id ? 'white' : 'transparent',
                       fontWeight: selectedCategory && selectedCategory._id === category._id ? '600' : 'normal'
                     }}
                     onClick={() => handleCategoryClick(category)}
                   >
-                    {category.categoryName}
+                    &nbsp;{category.categoryName}
                   </span>
                   )))}
                 </div>
@@ -1453,9 +1455,155 @@ const handleSubmit = async (e) => {
       </div>
       {/* /Products */}
       {/* Order Details */}
+
        {/* billing section */}
       <div className="col-md-12 col-lg-5 col-xl-4 ps-0 theiaStickySidebar  position-relative">
-          
+
+          <div style={{width:'100%',display:'flex',justifyContent:'space-between',alignItems:'center',padding:'0px 20px',borderBottom:'1px solid #ccc'}}>
+          <div style={{fontSize:'20px',fontWeight:'600'}}>
+            Cart
+          </div>
+          <div style={{display:'flex',gap:'15px',alignItems:'center'}}>
+              <div 
+                style={{
+                  display:'flex',
+                  flexDirection:'column',
+                  alignItems:'center',
+                  cursor:'pointer',
+                  borderRight:'1px solid #ccc',
+                  paddingRight:'15px',
+                  backgroundColor: bagCharge > 0 ? '#E3F3FF' : 'transparent',
+                  borderRadius: bagCharge > 0 ? '8px' : '0px',
+                  padding: '5px 15px'
+                }}
+                onClick={handleBagPopupChange}
+              >
+              <SlHandbag/> 
+              <span style={{fontSize:'10px'}}>Add Bag</span>
+            </div>
+            <div style={{display:'flex',flexDirection:'column',alignItems:'center',cursor:'pointer',borderRight:'1px solid #ccc',paddingRight:'15px'}} onClick={handlePopupChange}>
+              <GoPersonAdd/> 
+              <span style={{fontSize:'10px'}} >Customer</span>
+            </div>
+            <div 
+              style={{
+                display:'flex',
+                flexDirection:'column',
+                alignItems:'center',
+                cursor:'pointer'
+              }} 
+              onClick={() => {
+                setSelectedItems([]);
+                setSelectedCustomer(null);
+                setBagCharge(0);
+                setAmountReceived('');
+                setSearchQuery('');
+                setSearchResults([]);
+                setShowDropdown(false);
+                // Reset totals
+                setSubTotal(0);
+                setTotalAmount(0);
+                setRoundedAmount(0);
+                setTotalTax(0);
+                setTotalItems(0);
+                setTotalQuantity(0);
+                setDiscount(0);
+                                    // Close all popups
+                    setCashPopup(false);
+                    setCardPopup(false);
+                    setUpiPopup(false);
+                    // Refresh transactions
+                    fetchPosSales();
+                    // Reset category filter
+                    setSelectedCategory(null);
+                    setProducts(allProducts);
+                    // Reset updown state
+                    setUpdown(false);
+                    // Reset search drop state
+                    setSearchDrop(false);
+                    // Reset filter values
+                    setCategoryValue('');
+                    setSocketValue('');
+                    setWarehouseValue('');
+                    setExprationValue('');
+                    // Reset OTP state
+                    setOtp(['', '', '', '']);
+                    // Reset address fields
+                    setCountry('');
+                    setState('');
+                    setCity('');
+                    setPinCode('');
+                    setSelectedCountry('');
+                    setSelectedState('');
+                    setSelectedCity('');
+                    // Reset form data
+                    if (formRef.current) {
+                      formRef.current.reset();
+                    }
+                    // Reset active tabs
+                    const initialTabs = allProducts.reduce((acc, product) => {
+                      acc[product._id] = "general";
+                      return acc;
+                    }, {});
+                    setActiveTabs(initialTabs);
+                    // Reset search query
+                    setSearchQuery('');
+                    // Reset search results
+                    setSearchResults([]);
+                    setShowDropdown(false);
+                    // Reset popup states
+                    setPopup(false);
+                    setAddCustomerPopup(false);
+                    setDiscountPopup(false);
+                    // Reset transaction popup
+                    setTransactionPopup(false);
+                    // Reset selected sale
+                    setSelectedSale(null);
+                    // Reset current page
+                    setCurrentPage(1);
+                    // Reset total pages
+                    setTotalPages(1);
+                    // Reset total sales
+                    setTotalSales(0);
+                    // Reset loading state
+                    setLoading(false);
+                    // Reset pos sales
+                    setPosSales([]);
+                    // Reset amount received
+                    setAmountReceived('');
+                    // Reset search query
+                    setSearchQuery('');
+                    // Reset search results
+                    setSearchResults([]);
+                    setShowDropdown(false);
+                    // Reset popup states
+                    setPopup(false);
+                    setAddCustomerPopup(false);
+                    setDiscountPopup(false);
+                    // Reset transaction popup
+                    setTransactionPopup(false);
+                    // Reset selected sale
+                    setSelectedSale(null);
+                    // Reset current page
+                    setCurrentPage(1);
+                    // Reset total pages
+                    setTotalPages(1);
+                    // Reset total sales
+                    setTotalSales(0);
+                    // Reset loading state
+                    setLoading(false);
+                    // Reset pos sales
+                    setPosSales([]);
+                    // Reset amount received
+                    setAmountReceived('');
+                  }}
+            >
+              <RiDeleteBinLine/>
+              <span style={{fontSize:'10px'}}>Remove All</span>
+            </div>
+          </div>
+        </div>
+
           {/* customer */}
           <div style={{display:'flex',width:'100%',padding:'10px 10px',gap:'10px',borderBottom:'1px solid #ccc',height:'70px',backgroundColor: selectedCustomer ? '#E3F3FF' : '',}}>
             {selectedCustomer ? (
@@ -1736,6 +1884,7 @@ const handleSubmit = async (e) => {
 
       {/* /Order Details */}
     </div>
+
     <div className="pos-footer bg-white p-3 border-top">
       <div className="d-flex align-items-center justify-content-center flex-wrap gap-2">
         <a href='/pos' target='_blank' className="btn btn-orange d-inline-flex align-items-center justify-content-center" ><i className="ti ti-player-pause me-2" />Hold</a>
@@ -1746,8 +1895,10 @@ const handleSubmit = async (e) => {
         <a onClick={handleTransactionPopupChange}  className="btn btn-danger d-inline-flex align-items-center justify-content-center" ><i className="ti ti-refresh-dot me-2"/>Transaction</a>
       </div>
     </div>
+
   </div>
 </div>
+
 {/* ALL POPUPS */}
 
       {/* customers popup */}

@@ -30,7 +30,9 @@ const SOCKET_URL = BASE_URL;
 // const socket = io("http://localhost:5000"); // same as backend port
 
 const Chat = () => {
+  console.log('🔍 Chat component rendered');
   const [users, setUsers] = useState([]);
+  console.log('🔍 Initial unreadCounts state:', {});
   const [onlineUsers, setOnlineUsers] = useState([]);
   const [selectedUser, setSelectedUser] = useState(null);
   const [error, setError] = useState('');
@@ -38,6 +40,11 @@ const Chat = () => {
   const [message, setMessage] = useState('');
   const [readStatus, setReadStatus] = useState({});
   const [unreadCounts, setUnreadCounts] = useState({}); // Track unread counts per user
+  
+  // Debug unreadCounts changes
+  useEffect(() => {
+    console.log('🔍 unreadCounts state changed:', unreadCounts);
+  }, [unreadCounts]);
   const [searchQuery, setSearchQuery] = useState(''); // Search query for filtering friends
   const [searchSuggestions, setSearchSuggestions] = useState([]); // Search suggestions dropdown
   const [showSearchDropdown, setShowSearchDropdown] = useState(false); // Show/hide search dropdown
@@ -73,14 +80,6 @@ const Chat = () => {
   };
 
   const { connectSocket, getSocket } = useSocket();
-
-  // console.log("User object:", user);
-  // console.log("User ID:", currentUserId);
-  // console.log("User ID type:", typeof currentUserId);
-  // console.log("User ID length:", currentUserId?.length);
-  // console.log("Users:", users);
-  // console.log("Online users:", onlineUsers);
-  // console.log("Online users count:", onlineUsers.length);
 
   const handleLogout = () => {
     localStorage.removeItem('token');
@@ -418,8 +417,15 @@ const Chat = () => {
 
   const calculateUnreadCount = (userId) => {
     const userMessages = messages[userId] || [];
-    const unreadCount = userMessages.filter(msg => msg.from === userId && !msg.read).length;
-    // console.log(`Unread count for user ${userId}:`, unreadCount, 'Messages:', userMessages.length);
+    const unreadMessages = userMessages.filter(msg => msg.from === userId && !msg.read);
+    const unreadCount = unreadMessages.length;
+    console.log(`calculateUnreadCount for ${userId}:`, {
+      totalMessages: userMessages.length,
+      messagesFromUser: userMessages.filter(msg => msg.from === userId).length,
+      unreadFromUser: unreadCount,
+      currentUserId,
+      sampleMessages: userMessages.slice(0, 2).map(m => ({ from: m.from, read: m.read, message: m.message?.substring(0, 20) }))
+    });
     return unreadCount;
   };
 
@@ -631,7 +637,6 @@ const Chat = () => {
           usersWithConversations.forEach(userItem => {
             const unreadCount = calculateUnreadCount(userItem._id);
             initialUnreadCounts[userItem._id] = unreadCount;
-            // console.log(`Initial unread count for ${userItem._id}:`, unreadCount);
           });
           setUnreadCounts(initialUnreadCounts);
 
@@ -820,17 +825,6 @@ const Chat = () => {
           ...prev,
           [selectedUser._id]: 0
         }));
-
-        // Force recalculation of unread counts after a delay
-        setTimeout(() => {
-          const newUnreadCounts = {};
-          Object.keys(messages).forEach(userId => {
-            const count = calculateUnreadCount(userId);
-            newUnreadCounts[userId] = count;
-            // console.log(`User ${userId}: ${count} unread messages`);
-          });
-          setUnreadCounts(newUnreadCounts);
-        }, 200);
       } catch (err) {
         setError(err.message);
       }
@@ -1293,28 +1287,28 @@ const Chat = () => {
                       <div
                         key={userItem._id}
                         style={{
+                          display: 'flex',
+                          justifyContent: 'space-between',
+                          alignItems: 'center',
                           padding: '12px 15px',
                           cursor: 'pointer',
                           borderBottom: '1px solid #f0f0f0',
-                          display: 'flex',
-                          alignItems: 'center',
-                          gap: '10px',
-                          hover: {
-                            backgroundColor: '#f5f5f5'
-                          }
+                          gap: '10px'
                         }}
                         onMouseEnter={(e) => e.target.style.backgroundColor = '#f5f5f5'}
                         onMouseLeave={(e) => e.target.style.backgroundColor = 'transparent'}
                         onClick={() => selectUserFromSearch(userItem)}
                       >
+
+                        <div style={{display:'flex',gap:'5px'}}>
                         {/* User Avatar */}
                         {userItem.profileImage ? (
                           <img
                             src={userItem.profileImage}
                             alt={userItem.firstName}
                             style={{
-                              width: '32px',
-                              height: '32px',
+                              width: '40px',
+                              height: '40px',
                               borderRadius: '50%',
                               objectFit: 'cover',
                               border: '2px solid #ddd'
@@ -1327,8 +1321,8 @@ const Chat = () => {
                         ) : (
                           <div
                             style={{
-                              width: '32px',
-                              height: '32px',
+                              width: '40px',
+                              height: '40px',
                               borderRadius: '50%',
                               backgroundColor: '#007AFF',
                               color: 'white',
@@ -1345,14 +1339,18 @@ const Chat = () => {
                         )}
 
                         {/* User Info */}
-                        <div style={{ flex: 1 }}>
-                          <div style={{ fontWeight: 'bold', fontSize: '14px' }}>
+                        <div style={{}}>
+                          <span style={{ fontWeight: 'bold', fontSize: '14px' }}>
                             {userItem.firstName} {userItem.lastName}
-                          </div>
-                          <div style={{ fontSize: '12px', color: '#666' }}>
+                            <br/>
+                            <span style={{ fontSize: '12px', color: '#666' }}>
                             {userItem.email}
-                          </div>
+                            </span>
+                          </span>
+                          
                         </div>
+                        
+                      </div>
 
                         {/* Start Conversation Button */}
                         <div style={{
@@ -1536,23 +1534,27 @@ const Chat = () => {
                               {getLastMessageStatus(userItem._id)}
                             </span>
                           )}
-                          {unreadCounts[userItem._id] > 0 && (
-                            <span style={{
-                              backgroundColor: 'orange',
-                              color: 'white',
-                              borderRadius: '50%',
-                              width: '20px',
-                              height: '20px',
-                              display: 'flex',
-                              alignItems: 'center',
-                              justifyContent: 'center',
-                              fontSize: '12px',
-                              fontWeight: 'bold',
-                              minWidth: '20px'
-                            }}>
-                              {unreadCounts[userItem._id]}
-                            </span>
-                          )}
+                          {(() => {
+                            const count = unreadCounts[userItem._id] || 0;
+                            console.log(`Badge check for user ${userItem._id} (${userItem.firstName}): count=${count}, show=${count > 0}`);
+                            return count > 0 ? (
+                              <span style={{
+                                backgroundColor: 'orange',
+                                color: 'white',
+                                borderRadius: '50%',
+                                width: '20px',
+                                height: '20px',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                fontSize: '12px',
+                                fontWeight: 'bold',
+                                minWidth: '20px'
+                              }}>
+                                {count}
+                              </span>
+                            ) : null;
+                          })()}
                         </div>
                       </div>
 
@@ -1710,7 +1712,7 @@ const Chat = () => {
                       className="settings-dropdown-container"
                       style={{
                         position: "absolute",
-                        top: "120px",
+                        top: "50px",
                         right: "100px",
                         zIndex: "100",
                       }}
@@ -2217,7 +2219,7 @@ const Chat = () => {
                         className="file-dropdown-container"
                         style={{
                           position: "absolute",
-                          top: "-200px",
+                          top: "-178px",
                           right: "130px",
                           zIndex: "100",
                         }}
