@@ -741,7 +741,7 @@
 
 
 import React from 'react'
-// import '../styles/setting/setting.css'
+import '../styles/setting/setting.css'
 import { useSidebar } from '../Context/sidetoggle/SidebarContext';
 import { TbDeviceDesktop, TbDeviceMobile, TbLogout, TbSettings, TbSettings2, TbSettingsDollar, TbWorld } from 'react-icons/tb';
 import { Link,Outlet } from 'react-router-dom';
@@ -793,22 +793,6 @@ const Setting = () => {
                         </a>
                          {openMenus.generalSettings && (
                               <ul>
-                                {/* <li>
-                                  <Link
-                                    to="/Purchase-settings"
-                                    onClick={handleLinkClick}
-                                  >
-                                    Purchase
-                                  </Link>
-                                </li>
-                                <li>
-                                  <Link
-                                    to="/warehouse-settings"
-                                    onClick={handleLinkClick}
-                                  >
-                                    Warehouse
-                                  </Link>
-                                </li> */}
                                 <li>
                                   <Link
                                     to={`profile/${id}`}
@@ -825,16 +809,6 @@ const Setting = () => {
                                     Security
                                   </Link>
                                 </li>
-                                {/* <li>
-                                  <Link to="/notification" onClick={handleLinkClick}>
-                                    Notifications
-                                  </Link>
-                                </li>
-                                <li>
-                                  <Link to="/connected-apps" onClick={handleLinkClick}>
-                                    Connected Apps
-                                  </Link>
-                                </li> */}
                               </ul>
                             )}
                           </li>
@@ -849,11 +823,6 @@ const Setting = () => {
                         </a>
                          {openMenus.websiteSettings && (
                               <ul>
-                                {/* <li>
-                                  <Link to="/system-settings" onClick={handleLinkClick}>
-                                    System Settings
-                                  </Link>
-                                </li> */}
                                 <li>
                                   <Link
                                     to="/company-settings"
@@ -870,274 +839,19 @@ const Setting = () => {
                                     Localization
                                   </Link>
                                 </li>
-                                {/* <li>
-                                  <Link to="/prefixes" onClick={handleLinkClick}>
-                                    Prefixes
-                                  </Link>
-                                </li>
-                                <li>
-                                  <Link to="/preference" onClick={handleLinkClick}>
-                                    Preference
-                                  </Link>
-                                </li>
-                                <li>
-                                  <Link to="/appearance" onClick={handleLinkClick}>
-                                    Appearance
-                                  </Link>
-                                </li>
-                                <li>
-                                  <Link
-                                    to="/social-authentication"
-                                    onClick={handleLinkClick}
-                                  >
-                                    Social Authentication
-                                  </Link>
-                                </li>
-                                <li>
-                                  <Link
-                                    to="/language-settings"
-                                    onClick={handleLinkClick}
-                                  >
-                                    Language
-                                  </Link>
-                                </li> */}
                               </ul>
                             
                             )}
-                     
                       </li>
-
-                      {/* <li className={`submenu ${openMenus.appSettings ? "open" : ""  }`}>
-                        <a className={`subdrop ${openMenus.appSettings ? "active" : "" }`}  onClick={() => toggleMenu("appSettings", true)}>
-                          <TbDeviceMobile className=" fs-18" />
-                          <span className="fs-14 fw-medium ms-2">App Settings</span>
-                          <span className={`menu-arrow ${openMenus.appSettings ? "rotated" : ""}`} />
-                        </a>
-                         {openMenus.appSettings && (
-                           <ul>
-                          <li><Link to="/invoice-settings" onClick={handleLinkClick}>Invoice Settings</Link></li>            
-                          <li><Link to="/invoice-template" >Invoice Templates</Link></li>
-                          <li><Link to="printer-settings">Printer </Link></li>
-                          <li><Link to="pos-settings">POS</Link></li>
-                          <li><Link to="signatures">Signatures</Link></li>
-                          <li><Link to="custom-fields">Custom Fields</Link></li>
-                        </ul>
-                             
-                            )}
-                      </li>
-
-                      <li className={`submenu ${openMenus.systemSettings ? "open" : ""  }`}>
-                        <a className={`subdrop ${openMenus.systemSettings ? "active" : ""  }`}
-                              onClick={() => toggleMenu("systemSettings", true)}>
-                              
-                          <TbDeviceDesktop className=" fs-18" />
-                          <span className="fs-14 fw-medium ms-2">System Settings</span>
-                          <span className={`menu-arrow ${openMenus.systemSettings ? "rotated" : ""}`} />
-                        </a>
-                        {openMenus.systemSettings && (
-                        <ul>
-                          <li className="submenu submenu-two"><a href="javascript:void(0);">Email<span className="menu-arrow inside-submenu" /></a>
-                            <ul>
-                              <li><a href="email-settings.html">Email Settings</a></li>
-                              <li><a href="email-templates.html">Email Templates</a></li>
-                            </ul>
-                          </li>
-                          <li className="submenu submenu-two"><a href="javascript:void(0);">SMS<span className="menu-arrow inside-submenu" /></a>
-                            <ul>
-                              <li><a href="sms-settings.html">SMS Settings</a></li>
-                              <li><a href="sms-templates.html">SMS Templates</a></li>
-                            </ul>
-                          </li>
-                          <li><a href="otp-settings.html">OTP</a></li>
-                          <li><a href="gdpr-settings.html">GDPR Cookies</a></li>
-                        </ul>
-                        )}
-                      </li>
-
-                      <li className={`submenu ${openMenus.financialSettings ? "open" : ""  }`}>
-                        <a className={`subdrop ${openMenus.financialSettings ? "active" : "" }`}onClick={() => toggleMenu("financialSettings", true)}>  
-                          <TbSettingsDollar className=" fs-18" />
-                          <span className="fs-14 fw-medium ms-2">Financial Settings</span>
-                          <span className={`menu-arrow ${openMenus.financialSettings ? "rotated" : ""}`} />
-                        </a>
-                        {openMenus.financialSettings && (
-                           <ul>
-                          <li><a href="payment-gateway-settings.html">Payment Gateway</a></li>
-                          <li><a href="bank-settings-grid.html">Bank Accounts </a></li>
-                          <li><a href="tax-rates.html">Tax Rates</a></li>
-                          <li><a href="currency-settings.html">Currencies</a></li>
-                        </ul>)}
-                       
-                      </li>
-                      <li className={`submenu ${openMenus.otherSettings ? "open" : ""  }`}>
-                        <a className={`subdrop ${openMenus.otherSettings ? "active" : "" }`}onClick={() => toggleMenu("otherSettings", true)}>
-   
-                          <TbSettings2 className="fs-18" />
-                          <span className="fs-14 fw-medium ms-2">Other Settings</span>
-                          <span className={`menu-arrow ${openMenus.otherSettings ? "rotated" : ""}`} />
-                        </a>
-                        {openMenus.otherSettings && (<ul>
-                          <li><a href="storage-settings.html">Storage</a></li>
-                          <li><a href="ban-ip-address.html">Ban IP Address </a></li>
-                        </ul>)}
-                        
-                      </li> */}
                     </ul>								
                   </li>
                 </ul>
               </div>
             </div>
           </div>
-          {/* <div className="card flex-fill mb-0">
-            <div className="card-header">
-              <h4 className="fs-18 fw-bold">Profile</h4>
-            </div>
-            <div className="card-body">
-              <form action="https://dreamspos.dreamstechnologies.com/html/template/general-settings.html">
-                <div className="card-title-head">
-                  <h6 className="fs-16 fw-bold mb-3">
-                    <span className="fs-16 me-2"><i className="ti ti-user" /></span> 
-                    Basic Information
-                  </h6>
-                </div>
-                <div className="profile-pic-upload">
-                  <div className="profile-pic">
-                    <span>
-                      <i className="ti ti-circle-plus mb-1 fs-16" /> Add Image
-                    </span>
-                  </div>
-                  <div className="new-employee-field">
-                    <div className="mb-0">
-                      <div className="image-upload mb-0">
-                        <input type="file" />
-                        <div className="image-uploads">
-                          <h4>Upload Image</h4>
-                        </div>
-                      </div>
-                      <span className="fs-13 fw-medium mt-2">
-                        Upload an image below 2 MB, Accepted File format JPG, PNG
-                      </span>
-                    </div>
-                  </div>
-                </div>
-                <div className="row mb-3">
-                  <div className="col-md-4">
-                    <div className="mb-3">
-                      <label className="form-label">
-                        First Name <span className="text-danger">*</span>
-                      </label>
-                      <input type="text" className="form-control" />
-                    </div>
-                  </div>
-                  <div className="col-md-4">
-                    <div className="mb-3">
-                      <label className="form-label">
-                        Last Name <span className="text-danger">*</span>
-                      </label>
-                      <input type="text" className="form-control" />
-                    </div>
-                  </div>
-                  <div className="col-md-4">
-                    <div className="mb-3">
-                      <label className="form-label">
-                        User Name <span className="text-danger">*</span>
-                      </label>
-                      <input type="text" className="form-control" />
-                    </div>
-                  </div>
-                  <div className="col-md-4">
-                    <div className="mb-3">
-                      <label className="form-label">
-                        Phone Number <span className="text-danger">*</span>
-                      </label>
-                      <input type="text" className="form-control" />
-                    </div>
-                  </div>
-                  <div className="col-md-4">
-                    <div className="mb-3">
-                      <label className="form-label">
-                        Email <span className="text-danger">*</span>
-                      </label>
-                      <input type="email" className="form-control" />
-                    </div>
-                  </div>
-                </div>
-                <div className="card-title-head">
-                  <h6 className="fs-16 fw-bold mb-3">
-                    <span className="fs-16 me-2"><i className="ti ti-map-pin" /></span> 
-                    Address Information
-                  </h6>
-                </div>
-                <div className="row">
-                  <div className="col-md-12">
-                    <div className="mb-3">
-                      <label className="form-label">
-                        Address <span className="text-danger">*</span>
-                      </label>
-                      <input type="email" className="form-control" />
-                    </div>
-                  </div>
-                  <div className="col-md-6">
-                    <div className="mb-3">
-                      <label className="form-label">
-                        Country <span className="text-danger">*</span>
-                      </label>
-                      <select className="select">
-                        <option>Select</option>
-                        <option>USA</option>
-                        <option>India</option>
-                        <option>French</option>
-                        <option>Australia</option>
-                      </select>
-                    </div>
-                  </div>
-                  <div className="col-md-6">
-                    <div className="mb-3">
-                      <label className="form-label">
-                        State <span className="text-danger">*</span>
-                      </label>
-                      <select className="select">
-                        <option>Select</option>
-                        <option>Alaska</option>
-                        <option>Mexico</option>
-                        <option>Tasmania</option>
-                      </select>
-                    </div>
-                  </div>
-                  <div className="col-md-6">
-                    <div className="mb-3">
-                      <label className="form-label">
-                        City <span className="text-danger">*</span>
-                      </label>
-                      <select className="select">
-                        <option>Select</option>
-                        <option>Anchorage</option>
-                        <option>Tijuana</option>
-                        <option>Hobart</option>
-                      </select>
-                    </div>
-                  </div>
-                  <div className="col-md-6">
-                    <div className="mb-3">
-                      <label className="form-label">
-                        Postal Code <span className="text-danger">*</span>
-                      </label>
-                      <input type="text" className="form-control" />
-                    </div>
-                  </div>
-                </div>
-                <div className="text-end settings-bottom-btn mt-0">
-                  <button type="button" className="btn btn-secondary me-2">Cancel</button>
-                  <button type="submit" className="btn btn-primary">Save Changes</button>
-                </div>
-              </form>
-            </div>
-          </div> */}
           <div className=""><Outlet/></div>
         </div>
       </div>
-
-      {/* <div className="col-xl-8 col-lg-8 col-md-12">Outlet</div> */}
     </div>
   </div>
 
@@ -1147,23 +861,4 @@ const Setting = () => {
 }
 
 export default Setting
-
-
-
-
-// import React from 'react'
-// import { ToastContainer, toast } from 'react-toastify';
-
-// const Setting = () => {
-//   const notify = () => toast("Wow so easy!");
-
-//   return (
-//     <div>
-//     <button onClick={notify}>Notify!</button>
-//     <ToastContainer />
-//   </div>
-//   )
-// }
-
-// export default Setting
 

@@ -228,15 +228,7 @@ const Sidebar = () => {
                 </span>
                 <span>{emails.length}</span>
           </NavLink>
-           {/* {showMore && (
-            <>
-            </>
-          )}
-
-          <div className="item" onClick={() => setshowMore((prev) => !prev)}>
-            {showMore ? "Show Less" : "Show More"}{" "}
-            {!showMore && <FaAngleDown />} {showMore && <FaAngleUp />}{" "}
-          </div> */}
+          
         </div>
       </div>
         {/* {showLabelModal && (

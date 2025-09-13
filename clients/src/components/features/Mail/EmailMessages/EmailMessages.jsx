@@ -74,65 +74,6 @@ const EmailMessages = ({
     fetchUsers();
   }, []);
 
-  // useEffect(() => {
-  //   if (users.length === 0) return;
-  //   const fetchEmail = async () => {
-  //     try {
-  //       const token = localStorage.getItem("token");
-  //       const res = await axios.get(`${BASE_URL}/api/email/mail/receive`, {
-  //         headers: {
-  //           Authorization: `Bearer ${token}`,
-  //         },
-  //       });
-  //       console.log("📩 EMAILS RECEIVED FROM BACKEND:", res.data.data);
-
-  //       const formattedData = res.data.data.map((email) => {
-  //         const senderName = email.from?.firstName
-  //           ? `${email.from.firstName} ${email.from.lastName || ''}`.trim()
-  //           : "Unknown";
-  //         const profileImage = email.from?.profileImage?.url || email.from?.profileImage || null;
-  //         const initials = senderName.split(" ").map((w) => w[0]).join("").toUpperCase().slice(0, 2);
-  //         return {
-  //           ...email,
-  //           sender: {
-  //             name: senderName,
-  //             profileImage,
-  //             initials,
-  //             backgroundColor: "#5e35b1",
-  //           },
-  //           subject: email.subject,
-  //           messagePreview: (email.body || "").slice(0, 140) + "...", //trim preview
-  //           time:
-  //             email.createdAt && !isNaN(new Date(email.createdAt))
-  //               ? new Intl.DateTimeFormat("en-GB", {
-  //                 day: "2-digit",
-  //                 month: "short",
-  //                 year: "numeric",
-  //                 hour: "2-digit",
-  //                 minute: "2-digit",
-  //                 hour12: true,
-  //               }).format(new Date(email.createdAt))
-  //               : "Invalid Date",
-  //           status: { dotColor: "red" },
-  //           folders: {
-  //             galleryCount: email.attachments?.length || 0,
-  //           },
-  //           tags: {
-  //             starred: email.starred,
-  //             extraLabelCount: 0,
-  //           },
-  //         };
-  //       });
-
-  //       console.log("✅ FINAL FORMATTED EMAILS FOR STATE:", formattedData);
-  //       setEmails(formattedData);
-  //     } catch (error) {
-  //       console.error("❌ Failed to fetch emails", error);
-  //     }
-  //   };
-  //   fetchEmail();
-  // }, [users]);
-
   const formatEmails = (emailsArray, mailboxType) => {
     return emailsArray.map(email => {
       const isSent = mailboxType === "sent";
@@ -200,7 +141,7 @@ const EmailMessages = ({
     ? filteredEmails || []
     : isDeletedPage
       ? filteredEmails || []
-       : displayMailboxName.toLowerCase() === "starred"
+      : displayMailboxName.toLowerCase() === "starred"
         ? filteredEmails || []
         : displayMailboxName.toLowerCase() === "sent"
           ? sentEmails : displayMailboxName.toLowerCase() === "allemails" ? [...inboxEmails, ...sentEmails].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt)) : inboxEmails;
@@ -549,10 +490,22 @@ const EmailMessages = ({
                       {email.sender.initials}
                     </span> */}
                     {/* </div> */}
-                    <div
+                    {/* <div
                       style={{ display: "flex", flexDirection: 'column' }}
                       onClick={() => { if (isDraftPage && onDraftClick) { onDraftClick(email); } else { setSelectedEmail(email) } }}
+                    > */}
+                    <div
+                      style={{ display: "flex", flexDirection: 'column' }}
+                      onClick={() => {
+                        if (!isDraftPage) {
+                          setSelectedEmail(email);
+                          if (handleEmailClick) handleEmailClick(email._id); // ⬅️ call markAsRead
+                        } else if (onDraftClick) {
+                          onDraftClick(email);
+                        }
+                      }}
                     >
+
                       <span
                         style={{
                           color: "#262626",

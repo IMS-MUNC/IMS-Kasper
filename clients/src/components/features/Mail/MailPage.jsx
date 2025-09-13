@@ -4,9 +4,11 @@ import { Outlet } from 'react-router-dom'
 
 const MailPage = () => {
   return (
-    <div >
-      <Sidebar />
-      <Outlet />
+    <div className='page-wrapper' style={{ display: 'flex', width: '100%' }}>
+      <div className="content">
+        <Sidebar />
+        <Outlet />
+      </div>
     </div>
   )
 }
