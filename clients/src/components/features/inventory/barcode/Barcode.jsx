@@ -17,6 +17,7 @@ function Barcode() {
     expiryDate: "",
     quantity: "",
     barcode: "",
+    uniqueBarcodes: [],
     showProductName: false,
     showSku: false,
     showPrice: false,
@@ -90,8 +91,8 @@ const response = await axios.get(
       sku: selectedProduct.sku || '',
       price: selectedProduct.sellingPrice || '',
       quantity: selectedProduct.quantity || '',
-      img: selectedProduct.images[0].url || '',
-      expiryDate: selectedProduct.variants.Expiry[0] || '0',
+      img: selectedProduct.images && selectedProduct.images[0] ? selectedProduct.images[0].url : '',
+      expiryDate: selectedProduct.variants && selectedProduct.variants.Expiry && selectedProduct.variants.Expiry[0] ? selectedProduct.variants.Expiry[0] : '',
       barcode: selectedProduct.itemBarcode || '',
       barcodeImg: '',
     }));
@@ -126,6 +127,7 @@ const response = await axios.get(
       quantity: "",
       barcode: "",
       barcodeImg: "",
+      uniqueBarcodes: [],
       showProductName: false,
       showSku: false,
       showPrice: false,
@@ -156,13 +158,20 @@ const response = await axios.get(
       return;
     }
 
+    // Helper function to safely get expiry date
+    const getExpiryDate = (selectedProduct) => {
+      return selectedProduct.variants && selectedProduct.variants.Expiry && selectedProduct.variants.Expiry[0] 
+        ? selectedProduct.variants.Expiry[0] 
+        : 'N/A';
+    };
+
     const barcodeNaming = (product, selectedProduct) => {
       if (product.showProductName && product.showQuantity && product.showSku && product.showPrice && product.showExpiryDate) {
         var name = selectedProduct.productName;
         var sku = selectedProduct.sku;
         var price = selectedProduct.sellingPrice;
         var quantity = selectedProduct.quantity;
-        var expiry = selectedProduct.variants.Expiry[0];
+        var expiry = getExpiryDate(selectedProduct);
         return `Name:${name},SKU:${sku},Price:${price},QTY:${quantity},Exp:${expiry}`;
       } else if (product.showProductName && product.showQuantity && product.showSku && product.showPrice) {
         var name = selectedProduct.productName;
@@ -174,19 +183,19 @@ const response = await axios.get(
         var name = selectedProduct.productName;
         var sku = selectedProduct.sku;
         var quantity = selectedProduct.quantity;
-        var expiry = selectedProduct.variants.Expiry[0];
+        var expiry = getExpiryDate(selectedProduct);
         return `Name:${name},SKU${sku},QTY:${quantity},Exp:${expiry}`;
       } else if (product.showProductName && product.showQuantity && product.showPrice && product.showExpiryDate) {  
         var name = selectedProduct.productName;
         var price = selectedProduct.sellingPrice;
         var quantity = selectedProduct.quantity;
-        var expiry = selectedProduct.variants.Expiry[0];
+        var expiry = getExpiryDate(selectedProduct);
         return `Name:${name},Price:${price},QTY:${quantity},Exp:${expiry}`;
       } else if (product.showProductName && product.showSku && product.showPrice && product.showExpiryDate) {
         var name = selectedProduct.productName;
         var sku = selectedProduct.sku;
         var price = selectedProduct.sellingPrice;
-        var expiry = selectedProduct.variants.Expiry[0];
+        var expiry = getExpiryDate(selectedProduct);
         return `Name:${name},SKU:${sku},Price:${price},Exp:${expiry}`;
       } else if (product.showProductName && product.showSku && product.showPrice) {
         var name = selectedProduct.productName;
@@ -196,7 +205,7 @@ const response = await axios.get(
       } else if (product.showProductName && product.showSku && product.showExpiryDate) {
         var name = selectedProduct.productName;
         var sku = selectedProduct.sku;
-        var expiry = selectedProduct.variants.Expiry[0];
+        var expiry = getExpiryDate(selectedProduct);
         return `Name:${name},SKU:${sku},Exp:${expiry}`;
       } else if (product.showProductName && product.showQuantity && product.showPrice) {
         var name = selectedProduct.productName;
@@ -206,7 +215,7 @@ const response = await axios.get(
       } else if (product.showProductName && product.showQuantity && product.showExpiryDate) {
         var name = selectedProduct.productName;
         var quantity = selectedProduct.quantity;
-        var expiry = selectedProduct.variants.Expiry[0];
+        var expiry = getExpiryDate(selectedProduct);
         return `Name:${name},QTY:${quantity},Exp:${expiry}`;
       } else if (product.showProductName && product.showSku) {
         var name = selectedProduct.productName;
@@ -218,7 +227,7 @@ const response = await axios.get(
         return `Name:${name},Price:${price}`;
       } else if (product.showProductName && product.showExpiryDate) {
         var name = selectedProduct.productName;
-        var expiry = selectedProduct.variants.Expiry[0];
+        var expiry = getExpiryDate(selectedProduct);
         return `Name:${name},Exp:${expiry}`;
       } else if (product.showProductName && product.showQuantity) {
         var name = selectedProduct.productName;
@@ -227,7 +236,7 @@ const response = await axios.get(
       } else if (product.showSku && product.showPrice && product.showExpiryDate) {
         var sku = selectedProduct.sku;
         var price = selectedProduct.sellingPrice;
-        var expiry = selectedProduct.variants.Expiry[0];
+        var expiry = getExpiryDate(selectedProduct);
         return `SKU:${sku},Price:${price},Exp:${expiry}`;
       } else if (product.showSku && product.showPrice) {
         var sku = selectedProduct.sku;
@@ -235,7 +244,7 @@ const response = await axios.get(
         return `SKU:${sku},Price:${price}`;
       } else if (product.showSku && product.showExpiryDate) {
         var sku = selectedProduct.sku;
-        var expiry = selectedProduct.variants.Expiry[0];
+        var expiry = getExpiryDate(selectedProduct);
         return `SKU:${sku},Exp:${expiry}`;
       } else if (product.showSku && product.showQuantity) {
         var sku = selectedProduct.sku;
@@ -243,14 +252,14 @@ const response = await axios.get(
         return `SKU:${sku},QTY:${quantity}`;
       } else if (product.showPrice && product.showExpiryDate) {
         var price = selectedProduct.sellingPrice;
-        var expiry = selectedProduct.variants.Expiry[0];
+        var expiry = getExpiryDate(selectedProduct);
         return `Price:${price},Exp:${expiry}`;
       } else if (product.showPrice && product.showQuantity) {
         var price = selectedProduct.sellingPrice;
         var quantity = selectedProduct.quantity;
         return `Price:${price},QTY:${quantity}`;
       } else if (product.showExpiryDate && product.showQuantity) {
-        var expiry = selectedProduct.variants.Expiry[0];
+        var expiry = getExpiryDate(selectedProduct);
         var quantity = selectedProduct.quantity;
         return `Exp:${expiry},QTY:${quantity}`;
       } else if (product.showProductName) {
@@ -260,31 +269,39 @@ const response = await axios.get(
       } else if (product.showPrice) {
         return "Price:"+selectedProduct.sellingPrice;
       } else if (product.showExpiryDate) {
-        return "Exp:"+selectedProduct.variants.Expiry[0];
+        return "Exp:"+getExpiryDate(selectedProduct);
       } else if (product.showQuantity) {
         return "QTY:"+selectedProduct.quantity;
       } else {
-        return "Name:"+selectedProduct.productName || "SKU:"+selectedProduct.sku || "Price:"+selectedProduct.sellingPrice || "Exp:"+selectedProduct.variants.Expiry[0] || "QTY:"+selectedProduct.quantity || '';
+        return "Name:"+selectedProduct.productName || "SKU:"+selectedProduct.sku || "Price:"+selectedProduct.sellingPrice || "Exp:"+getExpiryDate(selectedProduct) || "QTY:"+selectedProduct.quantity || '';
       }
     }
 
     // const barcodeValue =  barcodeNaming(product, selectedProduct);
-    // const barcodeValue =  Math.floor(100000000000 + Math.random() * 900000000000).toString();
-    const barcodeValue = selectedProduct.itemBarcode;
-
+    // Generate unique barcodes for each barcode to be printed
+    const barcodeCount = numberOfBarcodes || 1;
+    const uniqueBarcodes = [];
+    
+    for (let i = 0; i < barcodeCount; i++) {
+      uniqueBarcodes.push(Math.floor(100000000000 + Math.random() * 900000000000).toString());
+    }
+    
+    // Use the first barcode for the product state (for display purposes)
+    const primaryBarcode = uniqueBarcodes[0];
+    
     setProduct((prev) => ({
       ...prev,
-      barcode: barcodeValue,
-      barcodeImg: barcodeValue,
+      barcode: primaryBarcode,
+      barcodeImg: primaryBarcode,
+      uniqueBarcodes: uniqueBarcodes, // Store all unique barcodes
     }));
 
     setTimeout(() => {
-      const barcodeCount = numberOfBarcodes || 1;
       for (let i = 0; i < barcodeCount; i++) {
         const barcodeId = `barcode-svg-${i}`;
         const barcodeElement = document.getElementById(barcodeId);
         if (barcodeElement) {
-          JsBarcode(barcodeElement, barcodeValue, {
+          JsBarcode(barcodeElement, uniqueBarcodes[i], {
             format: "CODE128",
             lineColor: "#000",
             width: 1,
@@ -395,7 +412,7 @@ const response = await axios.get(
               .map((_, index) => {
                 const barcodeId = `barcode-print-${index}`;
                 return `
-                  JsBarcode("#${barcodeId}", "${product.barcode}", {
+                  JsBarcode("#${barcodeId}", "${product.uniqueBarcodes[index] || product.barcode}", {
                     format: "CODE39",
                     lineColor: "#000",
                     width: 1,
@@ -457,6 +474,10 @@ const response = await axios.get(
     setProduct((prev) => ({ ...prev, barcode: "" }));
   };
 
+  const handlePopupClose = () => {
+    setIsFormOpen(false); // open popup
+  };
+
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (formRef.current && !formRef.current.contains(event.target)) {
@@ -471,7 +492,8 @@ const response = await axios.get(
   }, []);
 
   return (
-    <div style={{margin:'0px',padding:'20px',fontFamily:'sans-serif'}}>
+    <div style={{marginTop:'60px',padding:'20px',fontFamily:'sans-serif'}}>
+
       {/* Add CSS for loading animation */}
       <style>
         {`
@@ -483,8 +505,8 @@ const response = await axios.get(
       </style>
 
       {/* path */}
-      <div style={{fontSize:'large'}}>
-        <span className="ap-name">Print Barcode</span>
+      <div style={{fontSize:'large',marginLeft:'80px',marginBottom:'20px'}}>
+        <span className="ap-name" style={{fontWeight:'600'}}>Print Barcode</span>
       </div>
 
       <div style={{maxWidth:'750px',margin:'auto',padding:'16px 32px',fontFamily:'sans-serif'}}>
@@ -586,14 +608,19 @@ const response = await axios.get(
                   <table style={{width:'100%',borderCollapse:'collapse'}}>
                     <thead style={{backgroundColor:'#E6E6E6'}}>
                       <tr style={{ color: "#676767", }}>
-                        <th style={{padding:'8px',borderTopLeftRadius:'8px'}}><input type="checkbox" /> Variant</th>
+                        <th style={{padding:'8px',borderTopLeftRadius:'8px'}}> Variant</th>
                         <th>Price</th>
                         <th style={{borderTopRightRadius:'8px'}}>Quantity</th>
                       </tr>
                     </thead>
                     <tbody>
                       <tr>
-                        <td style={{padding:'8px'}}><input type="checkbox" /> <img src={selectedProduct.images[0].url} style={{width:'30px',height:'30px',borderRadius:'6px'}} /> {selectedProduct.productName}</td>
+                        <td style={{padding:'8px'}}>
+                          {selectedProduct.images && selectedProduct.images[0] && (
+                            <img src={selectedProduct.images[0].url} style={{width:'30px',height:'30px',borderRadius:'6px'}} />
+                          )} 
+                          {selectedProduct.productName}
+                        </td>
                         <td>₹{selectedProduct.sellingPrice || '0'}.00</td>
                         <td>{selectedProduct.quantity || '0'}</td>
                       </tr>
@@ -643,7 +670,7 @@ const response = await axios.get(
                     <div style={{width:'100%'}}>
                         <div>Page Type & Size</div>
                         <select type="text" style={{border:'1px solid #ccc',color: "#999797ff", backgroundColor: "#FBFBFB",padding:'6px',borderRadius:'8px',width:'100%'  }}>
-                            <option>Roll</option>
+                            <option>A4</option>
                         </select>
                     </div>
                 </div>
@@ -752,8 +779,9 @@ const response = await axios.get(
             overflowY: 'auto',
           }}>
             <div ref={formRef} style={{width:'760px',height:'auto',margin:'auto',marginTop:'80px',marginBottom:'80px',backgroundColor:'white',border:'1px solid #E1E1E1',borderRadius:'8px',padding:'10px 16px',overflowY:'auto'}}>
-              <div style={{position:'fixed',width:'710px',display:'flex',justifyContent:'space-between',alignItems:'center',borderBottom:'1px solid #E1E1E1',backgroundColor:'#fff',zIndex:'100',marginTop:'-10px',padding:'10px 16px'}}>
-                <FaFilePdf style={{fontSize:'25px', color:'red',cursor:'pointer'}} onClick={handleDownloadPDF} />
+              <div style={{position:'fixed',width:'725px',display:'flex',justifyContent:'space-between',alignItems:'center',borderBottom:'1px solid #E1E1E1',backgroundColor:'#fff',zIndex:'100',marginTop:'-10px',padding:'10px 0px'}}>
+                <div style={{display:'flex',gap:'10px'}}>
+                <FaFilePdf style={{fontSize:'30px', color:'red',cursor:'pointer'}} onClick={handleDownloadPDF} />
 
                 <button
                   onClick={handlePrint}
@@ -761,7 +789,7 @@ const response = await axios.get(
                   style={{
                     padding: "6px 12px",
                     borderRadius: "5px",
-                    backgroundColor: selectedProduct ? "red" : "#f5f5f5",
+                    backgroundColor: selectedProduct ? "#007BFF" : "#f5f5f5",
                     color: selectedProduct ? "white" : "#999",
                     cursor: selectedProduct ? "pointer" : "not-allowed",
                     boxShadow: "0px 0px 5px rgba(0, 0, 0, 0.3)",
@@ -770,6 +798,10 @@ const response = await axios.get(
                 >
                   Print
                 </button>
+                </div>
+                <div style={{}}>
+                  <span style={{backgroundColor:'red',color:'white',padding:'5px 11px',borderRadius:'50%',cursor:'pointer',fontSize:'20px'}} onClick={handlePopupClose}>x</span>
+                </div>
               </div>
 
               <div ref={printRef} className='row' style={{marginTop:'60px',marginLeft:'1px'}}>
@@ -813,6 +845,7 @@ const response = await axios.get(
           </div>
         )}
       </div>
+
     </div>
   );
 }

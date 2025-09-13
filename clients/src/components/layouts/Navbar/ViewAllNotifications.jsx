@@ -365,7 +365,7 @@ const ViewAllNotifications = () => {
         )}
       </div>
 
-      <div style={{ marginTop: '5px', overflowY: 'auto', maxHeight: 'calc(100vh - 160px)', borderRadius: '8px', backgroundColor: 'white' }}>
+      <div style={{ marginTop: '5px', overflowY: 'auto', height: '80vh', borderRadius: '8px', backgroundColor: 'white' }}>
         {!user ? (
           <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '60px 20px', textAlign: 'center', color: '#6c757d' }}>
             <FaBell style={{ fontSize: '48px', color: '#dee2e6', marginBottom: '16px' }} />

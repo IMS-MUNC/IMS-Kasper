@@ -24,10 +24,12 @@ export const SocketProvider = ({ children }) => {
     // console.log('🔔 Initializing socket connection to:', url);
     
     socket.current = io(url, {
-      transports: ['websocket', 'polling'],
+      transports: ['websocket'],
+      upgrade: true,
       reconnection: true,
-      reconnectionAttempts: 5,
-      reconnectionDelay: 1000,
+      reconnectionAttempts: 3,
+      reconnectionDelay: 2000,
+      reconnectionDelayMax: 5000,
       timeout: 20000,
       forceNew: false
     });

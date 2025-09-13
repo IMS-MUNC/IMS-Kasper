@@ -2,7 +2,8 @@
 
 const Product = require("../models/productModels");
 const cloudinary = require("../utils/cloudinary/cloudinary");
-
+const multer = require("multer");
+const upload = multer({ dest: "uploads/" }); // Configure storage as needed
 
 
 exports.createProduct = async (req, res) => {
