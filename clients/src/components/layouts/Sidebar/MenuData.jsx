@@ -356,7 +356,7 @@ export const getMenuData = () => {
           key: "websiteSettings",
           subItems: [
             { label: "Company Settings", path: "/company-settings" },
-            { label: "Localization", path: "/localization-settings" },
+            { label: "Localization", path: "/language-settings" },
             // { label: "Prefixes", path: "/prefixes" },
             // { label: "Appearance", path: "/appearance" },
             // { label: "System Settings", path: "/system-settings" },

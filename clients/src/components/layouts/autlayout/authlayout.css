@@ -17,12 +17,11 @@
 }
 
 /* Main content area */
-.main-content {
-  flex: 1;
-  padding: 20px;
-  transition: margin-left 0.3s ease;
-  margin-top: 65px;
-}
+/* .main-content {
+    flex: 1;
+    padding: 20px;
+    transition: margin-left 0.3s ease;
+  } */
 
 /* Adjust main content when sidebar is collapsed */
 /* .sidebar.collapsed ~ .right-section .main-content {
