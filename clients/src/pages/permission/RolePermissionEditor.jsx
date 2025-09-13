@@ -4,6 +4,7 @@ import BASE_URL from "../config/config";
 import "../../styles/permissions.css"; // Ensure this includes switch styling
 import { IoIosArrowDown } from "react-icons/io";
 import { IoIosArrowUp } from "react-icons/io";
+import { toast } from "react-toastify";
 
 
 
@@ -208,7 +209,9 @@ const Permission = () => {
 
   const handleSubmit = async () => {
     if (!selectedRole?._id) {
-      alert("Please select a role.");
+      toast.info("Please select a role.", {
+        position:'top-center'
+      });
       return;
     }
 
@@ -223,10 +226,14 @@ const Permission = () => {
           }
         },
       );
-      alert("Permissions updated successfully.");
+      toast.success("Permissions updated successfully.", {
+        position:'top-center'
+      });
     } catch (err) {
       console.error("Error updating permissions", err);
-      alert("Failed to update permissions.");
+      toast.error("Failed to update permissions.", {
+        position:'top-center'
+      });
     }
   };
 
