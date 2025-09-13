@@ -1,3 +1,4 @@
+//
 import React, { useRef, useState, useEffect } from "react";
 import { BiBuilding } from "react-icons/bi";
 import company_icon from "../../../assets/images/upload.webP";
@@ -6,8 +7,8 @@ import { RxCross2 } from "react-icons/rx";
 import "./Compansettings.css";
 import axios from "axios";
 import { toast } from "react-toastify";
-import "react-toastify/dist/ReactToastify.css";
-import { Country, State, City } from "country-state-city";
+import "react-toastify/dist/ReactToastify.css"
+import { Country, State, City } from "country-state-city"
 import BASE_URL from "../../../pages/config/config";
 import CompyIc from "../../../assets/images/cmnyi.png";
 import CompyLg from "../../../assets/images/cmnyp.png";
@@ -21,9 +22,8 @@ const Companysettings = () => {
   const [countryList, setCountryList] = useState([]);
   const [stateList, setStateList] = useState([]);
   const [cityList, setCityList] = useState([]);
-
+  const token = localStorage.getItem("token")
   const [isUpdating, setIsUpdating] = useState(false);
-const token = localStorage.getItem("token");
 
   useEffect(() => {
     setCountryList(Country.getAllCountries());
@@ -63,8 +63,6 @@ const token = localStorage.getItem("token");
     companydescription: "",
   });
 
-
-  console.log(formData)
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData((prev) => ({
@@ -73,61 +71,15 @@ const token = localStorage.getItem("token");
     }));
   };
 
-  // const handleSubmit = async (e) => {
-  //   e.preventDefault();
-  //   const form = new FormData();
-  //   Object.entries(formData).forEach(([key, value]) => {
-  //     form.append(key, value)
-  //   });
-  //   if (imageFiles.companyIcon) form.append("companyIcon", imageFiles.companyIcon)
-  //   if (imageFiles.companyFavicon) form.append("companyFavicon", imageFiles.companyFavicon);
-  //   if (imageFiles.companyLogo) form.append("companyLogo", imageFiles.companyLogo);
-  //   if (imageFiles.companyDarkLogo) form.append("companyDarkLogo", imageFiles.companyDarkLogo);
-
-  //   try {
-  //     const res = await axios.post("http://localhost:5174/api/companyprofile/send", form);
-  //     console.log("Form Data", formData)
-  //     localStorage.setItem("companyinfo", JSON.stringify(formData))
-  //     if (res.status === 201) {
-  //       setFormData({
-  //         companyName: "",
-  //         companyemail: "",
-  //         companyphone: "",
-  //         companyfax: "",
-  //         companywebsite: "",
-  //         companyaddress: "",
-  //         companycountry: "",
-  //         companystate: "",
-  //         companycity: "",
-  //         companypostalcode: "",
-  //       })
-  //       toast.success("Data saved successfully", {
-  //         position: "top-center"
-  //       })
-  //     }
-  //   } catch (error) {
-  //     toast.error("Error while saving company info", error)
-  //   }
-  // }
-
-  // fetch company profile
-
   const fetchCompanyProfile = async () => {
     try {
-      const res = await axios.get(`${BASE_URL}/api/companyprofile/get`,{
-         headers: {
-        Authorization: `Bearer ${token}`,
-      },
+      const res = await axios.get(`${BASE_URL}/api/companyprofile/get`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
       });
-      let profile = null;
-      // Handle different possible response structures
-      if (res.data && res.data.data) {
-        profile = res.data.data;
-      } else if (Array.isArray(res.data) && res.data.length > 0) {
-        profile = res.data[0];
-      } else if (res.data && typeof res.data === 'object') {
-        profile = res.data;
-      }
+      console.log("Fetched company profile data:", res.data);
+      const profile = res.data.data;
       if (profile) {
         setFormData({
           companyName: profile.companyName || "",
@@ -144,16 +96,15 @@ const token = localStorage.getItem("token");
           cin: profile.cin || "",
           companydescription: profile.companydescription || "",
         });
+        //set dependent dropdown
         setSelectedCountry(profile.companycountry || "");
         setSelectedState(profile.companystate || "");
         setSelectedCity(profile.companycity || "");
+
         setIsUpdating(true);
-      } else {
-        toast.error("No company profile found.");
       }
     } catch (error) {
-      toast.error("Error fetching company profile.");
-      console.error(error);
+      toast.error("No existing company profile or error fetching it:", error);
     }
   };
   useEffect(() => {
@@ -190,10 +141,10 @@ const token = localStorage.getItem("token");
       form.append("companyDarkLogo", imageFiles.companyDarkLogo);
 
     try {
-      const res = await axios.post(`${BASE_URL}/api/companyprofile/send`, form,{
-         headers: {
-        Authorization: `Bearer ${token}`,
-      },
+      const res = await axios.post(`${BASE_URL}/api/companyprofile/send`, form, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
       });
       console.log("Form Data", formData);
       localStorage.setItem("companyinfo", JSON.stringify(formData));
@@ -239,14 +190,13 @@ const token = localStorage.getItem("token");
   ];
 
   return (
-    <div className="page-container">
-      <div className="content">
-        <div className="company-settings-container">
+    <div>
+      <div className="company-settings-container">
         <form onSubmit={handleSubmit}>
-          <div className="cmmpyprofilesettinng">
+          <div className="cmmpyprofilesettinng" style={{ padding: '10px 10px 0px 10px' }}>
             <div>
               <h1 className="cfnnysthead">Company Settings</h1>
-              <hr style={{ margin: "0", height: "1px", color: "#bdbdbdff" }} />
+              <hr style={{ margin: "5px", height: "1px", color: "#bdbdbdff" }} />
             </div>
 
             <div className="company-info pt-1 pb-3">
@@ -464,12 +414,12 @@ const token = localStorage.getItem("token");
               </div>
             </div>
           </div>
-          <div className="cmmpyprofilesettinng">
+          <div className="cmmpyprofilesettinng" style={{ padding: '10px 10px 0px 10px' }}>
             <div className="">
               <div>
                 <h1 className="cfnnysthead">Company Information</h1>
                 <hr
-                  style={{ margin: "0", height: "1px", color: "#bdbdbdff" }}
+                  style={{ margin: "5px", height: "1px", color: "#bdbdbdff" }}
                 />
               </div>
               <div
@@ -510,7 +460,7 @@ const token = localStorage.getItem("token");
                   </div>
                 </div>
 
-                <div style={{ display: "flex", gap: "20px" }}>
+                <div className="cntryprfle">
                   <div
                     style={{
                       display: "flex",
@@ -651,12 +601,12 @@ const token = localStorage.getItem("token");
               </div>
             </div>
           </div>
-          <div className="cmmpyprofilesettinng">
+          <div className="cmmpyprofilesettinng" style={{ padding: '10px 10px 5px 10px' }}>
             <div className="company-images">
               <div>
                 <h1 className="cfnnysthead">Branding</h1>
                 <hr
-                  style={{ margin: "0", height: "1px", color: "#bdbdbdff" }}
+                  style={{ margin: "5px", height: "1px", color: "#bdbdbdff" }}
                 />
               </div>
               {companyimageData.map((item, index) => (
@@ -855,7 +805,6 @@ const token = localStorage.getItem("token");
             </div>
           </div>
         </form>
-      </div>
       </div>
     </div>
   );

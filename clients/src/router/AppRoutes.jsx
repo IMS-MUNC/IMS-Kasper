@@ -151,9 +151,9 @@ const AppRoutes = () => {
       <Route path="/forgot-password" element={<ForgotPassword />} />
       <Route path="/reset-password/:token" element={<ResetPassword />} />
       <Route path="/change-password" element={<ChangePassword />} />
-      <Route path="/logout" element={<Logout />} />   
+      <Route path="/logout" element={<Logout />} />
       <Route path="/otp" element={<OtpVerification />} />
-     
+
 
       <Route
         element={
@@ -165,7 +165,7 @@ const AppRoutes = () => {
         <Route path="/home" element={<Dashboard />} />
         <Route path="/dashboard" element={<Dashboard />} />
         {/* <Route path="/general-settings" element={<Setting />} /> */}
-        
+
         <Route path="/" element={<Setting />}>
           <Route path="profile/:id" element={<UserProfiles />} />
           <Route path="security-settings" element={<Security />} />
@@ -173,18 +173,18 @@ const AppRoutes = () => {
           <Route path="connectedapps" element={<ConnectedApps />} />
           <Route path="system-settings" element={<SystemSettings />} />
           <Route path="company-settings" element={<Companysettings />} />
-          <Route path="localization-settings" element={<Localization />} />
+          <Route path="language-settings" element={<Localization />} />
           <Route path="prefixes" element={<Prefixes />} />
           <Route path="preferance" element={<Preferance />} />
           <Route path="appearance" element={<Appearance />} />
           <Route path="socialauth" element={<SocialAuthentications />} />
           <Route path="language" element={<Language />} />
           <Route path="invoice-settings" element={<InvoiceSettings />} />
-            <Route path="/Purchase-settings" element={<PurchaseSettings />} />
-        <Route path="/warehouse-settings" element={<RackSettings />} />
+          <Route path="/Purchase-settings" element={<PurchaseSettings />} />
+          <Route path="/warehouse-settings" element={<RackSettings />} />
         </Route>
-        
-        
+
+
         <Route path="/profile" element={<Profile />} />
         <Route path="/product" element={<Product />} />
         <Route path="/product/edit/:id" element={<ProductEdit />} />
@@ -216,11 +216,11 @@ const AppRoutes = () => {
         <Route path="/debit-note" element={<DebitNote />} />
         <Route path="/credit-note" element={<CreditNote />} />
 
-         <Route path="/activities" element={<Activities />} />
+        <Route path="/activities" element={<Activities />} />
         <Route path="/ViewAllNotifications" element={<ViewAllNotifications />} />
         <Route path="/barcode" element={<Barcode />} />
 
-      
+
 
 
         {/* purchase */}
@@ -257,7 +257,7 @@ const AppRoutes = () => {
         <Route path="/WarehouseDetails/:id" element={<WarehouseDetails />} />
         <Route path="/Godown/:id" element={<Godown />} />
         <Route path="/selectpage" element={<SelectPage />} />
-          <Route path="/stock-movement-log" element={<StockMovementLog />} />
+        <Route path="/stock-movement-log" element={<StockMovementLog />} />
 
 
         {/* customer */}
@@ -287,7 +287,7 @@ const AppRoutes = () => {
         </Route>
 
 
- {/* ------------------ Finance & Accounts ------------------ */}
+        {/* ------------------ Finance & Accounts ------------------ */}
         <Route path="/balance-sheet" element={<BalanceSheet />} />
         <Route path="/profit&loss" element={<ProfitLoss />} />
         <Route
@@ -302,7 +302,7 @@ const AppRoutes = () => {
         <Route path="/expense-report" element={<ExpenseReport />} />
         <Route path="/add_expenses" element={<ExpenseForm />} />
         <Route path="/expenseformedit" element={<ExpenseFormEdit />} />
-        <Route path="/expensereportproduct-modal" element={<ExpenseReportProductModal/>}/>
+        <Route path="/expensereportproduct-modal" element={<ExpenseReportProductModal />} />
         <Route path="/bc" element={<BC />} />
         <Route path="/payment-history" element={<PaymentHistory />} />
         <Route path="/credit&debit-note" element={<CreditDebitNotes />} />
@@ -311,15 +311,15 @@ const AppRoutes = () => {
 
 
       </Route>
-       {/* <Route path="/pos" element={<Pos />} /> */}
-       {/* <Route path="/pos" element={<NewPos/>} /> */}
-          {/* POS with header */}
-        <Route path="/pos" element={
-          <>
-            <PosHeader />
-            <Pos />
-          </>
-        } />
+      {/* <Route path="/pos" element={<Pos />} /> */}
+      {/* <Route path="/pos" element={<NewPos/>} /> */}
+      {/* POS with header */}
+      <Route path="/pos" element={
+        <>
+          <PosHeader />
+          <Pos />
+        </>
+      } />
     </Routes>
   );
 };

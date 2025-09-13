@@ -42,10 +42,10 @@ const Localization = () => {
   };
   const fetchLocalization = async () => {
     try {
-      const res = await axios.get(`${BASE_URL}/api/localizationsetting/get`,{
-         headers: {
-        Authorization: `Bearer ${token}`,
-      },
+      const res = await axios.get(`${BASE_URL}/api/localizationsetting/get`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
       });
       console.log("Fetched Localization data:", res.data.data);
       setFormData(res.data.data);
@@ -173,79 +173,21 @@ const Localization = () => {
   };
 
   return (
-  <div className=" card flex-fill mb-0">
-    <div className="content">
-        <div>
-      <div className="">
+    <div>
+      <div className="localization-container">
         <div>
           <h1
-            className=""
+            className="localization-containerhone"
             style={{ fontSize: "17px" }}
           >
             {/* {t("localization")} */}
             Regional Preferences
           </h1>
-          <hr style={{ margin: "0", height: "1px", color: "#bdbdbdff" }} />
+          <hr style={{ margin: "5px", height: "1px", color: "#bdbdbdff" }} />
         </div>
         <div>
           <form onSubmit={handleSubmit}>
             <div className="basic-information-content px-3">
-              {/* <label
-                htmlFor=""
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  gap: "5px",
-                  fontWeight: "600",
-                  padding: "18px 0",
-                }}
-              >
-                <HiOutlineListBullet style={{ color: "#007AFF" }} />
-                {t("basic_info")}
-              </label> */}
-              {/* <div
-                style={{
-                  display: "flex",
-                  justifyContent: "space-between",
-                  padding: "12px 0",
-                }}
-              >
-                <div style={{ display: "flex", flexDirection: "column" }}>
-                  <span>{t("language")}</span>
-                  <span style={{ color: "rgb(92, 91, 91)" }}>
-                    {t("select_language")}
-                  </span>
-                </div>
-                <div>
-                  <select
-                    name="language"
-                    onChange={(e) => {
-                      const selectedLang = e.target.value;
-                      handleChange(e)
-                      i18n.changeLanguage(selectedLang)
-                    }}
-                    value={formData.language}
-                    style={{
-                      border: "1px solid rgb(203, 198, 198)",
-                      padding: "8px 5px",
-                      borderRadius: "5px",
-                      width: "250px",
-                    }}
-                  >
-                    <option value="">Select</option>
-                    <option value="en">English</option>
-                    <option value="hi">Hindi</option>
-                  </select>
-                </div>
-              </div> */}
-              {/* <div
-                style={{
-                  display: "flex",
-                  justifyContent: "space-between",
-                  padding: "12px 0",
-                }}
-              >
-              </div> */}
               <div
                 style={{
                   display: "flex",
@@ -266,12 +208,12 @@ const Localization = () => {
 
                   > <img src={CompyIc} alt='itmimg' style={{ width: 20, height: 20, objectFit: "contain" }} /></span>
                   <div style={{ display: "flex", flexDirection: "column" }}>
-                    <span className="localizatreck">{t("date_format")}</span>
+                    <span className="localizatreck">{t("Date Format")}</span>
                     <span
                       className="localizatreckdes"
                       style={{ color: "rgb(92, 91, 91)" }}
                     >
-                      {t("select_date_format")}
+                      {t("Select date format")}
                     </span>
                   </div>
                 </div>
@@ -294,51 +236,8 @@ const Localization = () => {
                       </option>
                     ))}
                   </select>
-                  {/* {formData.dateformat && (
-                    <div style={{ marginTop: "10px", color: "gray" }}>
-                      Today’s date: <strong>{formattedDate}</strong>
-                    </div>
-                  )} */}
                 </div>
               </div>
-              {/* <div
-                style={{
-                  display: "flex",
-                  justifyContent: "space-between",
-                  padding: "12px 0",
-                }}
-              >
-                <div style={{ display: "flex", flexDirection: "column" }}>
-                  <span className="localizatreck">{t("timezone")}</span>
-                  <span className="localizatreckdes" style={{ color: "rgb(92, 91, 91)" }}>
-                    {t("select_timezone")}
-                  </span>
-                </div>
-                <div>
-                  <select
-                    name="timezone"
-                    value={formData.timezone}
-                    onChange={handleChange}
-                    style={{
-                      border: "1px solid rgb(203, 198, 198)",
-                      padding: "8px 5px",
-                      borderRadius: "5px",
-                      width: "250px",
-                    }}
-                  >
-                    <option value="">Select TimeZone</option>
-                    <option value="Asia/Kolkata">UTC+5:30 (Asia/Kolkata)</option>
-                    <option value="America/New_York">UTC-5:00 (America/New_York)</option>
-
-
-                  </select>
-                  {formData.timezone && (
-                    <div className="" style={{ marginTop: '10px', color: 'gray' }}>
-                      Current Time in <strong>{formData.timezone}</strong>:{localTime}
-                    </div>
-                  )}
-                </div>
-              </div> */}
               <div
                 style={{
                   display: "flex",
@@ -359,9 +258,9 @@ const Localization = () => {
 
                   > <img src={CompyIc} alt='itmimg' style={{ width: 20, height: 20, objectFit: "contain" }} /></span>
                   <div style={{ display: "flex", flexDirection: "column" }}>
-                    <span className="localizatreck">{t("time_format")}</span>
+                    <span className="localizatreck">{t("Time Format")}</span>
                     <span className="localizatreckdes">
-                      {t("select_time_format")}
+                      {t("Select time format")}
                     </span>
                   </div>
                 </div>
@@ -404,9 +303,9 @@ const Localization = () => {
 
                   > <img src={CompyIc} alt='itmimg' style={{ width: 20, height: 20, objectFit: "contain" }} /></span>
                   <div style={{ display: "flex", flexDirection: "column" }}>
-                    <span className="localizatreck">{t("financial_year")}</span>
+                    <span className="localizatreck">{t("Financial year")}</span>
                     <span className="localizatreckdes">
-                      {t("select_financial_year")}
+                      {t("Select financial year")}
                     </span>
                   </div>
                 </div>
@@ -452,9 +351,9 @@ const Localization = () => {
 
                   > <img src={CompyIc} alt='itmimg' style={{ width: 20, height: 20, objectFit: "contain" }} /></span>
                   <div style={{ display: "flex", flexDirection: "column" }}>
-                    <span className="localizatreck">{t("starting_month")}</span>
+                    <span className="localizatreck">{t("Starting month")}</span>
                     <span className="localizatreckdes">
-                      {t("select_starting_month")}
+                      {t("Select starting month")}
                     </span>
                   </div>
                 </div>
@@ -484,9 +383,9 @@ const Localization = () => {
 
             <div className="currency-settings-content px-3">
               <h1 className="localization-containerhone">
-                {t("currency_settings")}
+                {t("Currency Settings")}
               </h1>
-              <hr style={{ margin: "0", height: '1px', color: '#bdbdbdff' }} />
+              <hr style={{ margin: "5px", height: '1px', color: '#bdbdbdff' }} />
               <div
                 style={{
                   display: "flex",
@@ -507,9 +406,9 @@ const Localization = () => {
 
                   > <img src={Curny} alt='itmimg' style={{ width: 20, height: 20, objectFit: "contain" }} /></span>
                   <div style={{ display: "flex", flexDirection: "column" }}>
-                    <span className="localizatreck">{t("currency")}</span>
+                    <span className="localizatreck">{t("Currency")}</span>
                     <span className="localizatreckdes">
-                      {t("select_currency")}
+                      {t("Select currency")}
                     </span>
                   </div>
                 </div>
@@ -552,9 +451,9 @@ const Localization = () => {
 
                   > <img src={Curny} alt='itmimg' style={{ width: 20, height: 20, objectFit: "contain" }} /></span>
                   <div style={{ display: "flex", flexDirection: "column" }}>
-                    <span className="localizatreck">{t("currency_symbol")}</span>
+                    <span className="localizatreck">{t("Currency symbol")}</span>
                     <span className="localizatreckdes">
-                      {t("select_currency_symbol")}
+                      {t("Select currency symbol")}
                     </span>
                   </div>
                 </div>
@@ -597,13 +496,13 @@ const Localization = () => {
                   > <img src={Curny} alt='itmimg' style={{ width: 20, height: 20, objectFit: "contain" }} /></span>
                   <div style={{ display: "flex", flexDirection: "column" }}>
                     <span className="localizatreck">
-                      {t("currency_position")}
+                      {t("Currency position")}
                     </span>
                     <span
                       className="localizatreckdes"
                       style={{ color: "rgb(92, 91, 91)" }}
                     >
-                      {t("select_currency_position")}
+                      {t("Select currency position")}
                     </span>
                   </div>
                 </div>
@@ -647,10 +546,10 @@ const Localization = () => {
                   > <img src={Curny} alt='itmimg' style={{ width: 20, height: 20, objectFit: "contain" }} /></span>
                   <div style={{ display: "flex", flexDirection: "column" }}>
                     <span className="localizatreck">
-                      {t("decimal_separator")}
+                      {t("Decimal separator")}
                     </span>
                     <span className="localizatreckdes">
-                      {t("select_decimal_separator")}
+                      {t("select decimal separator")}
                     </span>
                   </div>
                 </div>
@@ -694,13 +593,13 @@ const Localization = () => {
                   > <img src={Curny} alt='itmimg' style={{ width: 20, height: 20, objectFit: "contain" }} /></span>
                   <div style={{ display: "flex", flexDirection: "column" }}>
                     <span className="localizatreck">
-                      {t("thousand_separator")}
+                      {t("Thousand separator")}
                     </span>
                     <span
                       className="localizatreckdes"
                       style={{ color: "rgb(92, 91, 91)" }}
                     >
-                      {t("select_thousand_separator")}
+                      {t("Select thousand separator")}
                     </span>
                   </div>
                 </div>
@@ -736,7 +635,6 @@ const Localization = () => {
               <button
                 type="submit"
                 onClick={() => window.location.reload()}
-                // className="settingbtn"
                 style={{
                   border: "1px solid #E6E6E6",
                   borderRadius: "4px",
@@ -750,7 +648,6 @@ const Localization = () => {
               </button>
               <button
                 type="submit"
-                // className="settingbtn"
                 style={{
                   border: "1px solid #676767",
                   borderRadius: "4px",
@@ -767,8 +664,6 @@ const Localization = () => {
         </div>
       </div>
     </div>
-    </div>
-  </div>
   );
 };
 

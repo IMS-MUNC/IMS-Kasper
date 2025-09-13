@@ -1,0 +1,32 @@
+.mainsetting {
+  height: calc(100vh - 60px);
+}
+.genersettingdropdown:hover {
+  background-color: #81bdff;
+  color: #007aff;
+}
+.genersettingdropdown {
+  transition: 0.5s;
+}
+
+@import url("https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,100..900;1,100..900&display=swap");
+.left-setting-sidebar {
+  background-color: #ffffff;
+  /* height: 770px; */
+  width: 250px;
+  border-radius: 8px;
+  padding: 10px;
+  border: 1px solid #e6e6e6;
+  box-shadow: rgba(149, 157, 165, 0.2) 0px 8px 24px;
+  border-radius: 8px;
+  flex: 0 0 200px; /* fixed sidebar width */
+  min-width: 210px;
+}
+.settingssh1 {
+  font-weight: 400;
+  font-size: 14px;
+  line-height: 14px;
+  letter-spacing: 0%;
+  color: #262626;
+  font-family: "Roboto", sans-serif;
+}
