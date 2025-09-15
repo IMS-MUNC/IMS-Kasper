@@ -1,26 +1,93 @@
 import React, { useEffect, useState } from 'react';
+import { Link, useNavigate } from "react-router-dom";
 import { exportToExcel, exportToPDF } from './exportUtils';
+import BASE_URL from "../../../../pages/config/config";
 import axios from 'axios';
 import { FaFileExcel, FaFilePdf } from 'react-icons/fa';
 import { TbEdit, TbRefresh, TbTrash } from 'react-icons/tb';
+import jsPDF from 'jspdf';
+import { autoTable } from 'jspdf-autotable';
+import * as XLSX from 'xlsx';
 
 const ExpriedProduct = () => {
   // Columns for export
   const exportColumns = ['sku', 'productName', 'manufactured', 'expiry', 'quantity', 'supplierName', 'warehouseName'];
+  
+  // Sort state
+  const [sortBy, setSortBy] = useState('Last 7 Days');
+  const [sortOrder, setSortOrder] = useState('desc');
+
+  const navigate = useNavigate();
+
+  // Sort function
+  const sortProducts = (productsToSort) => {
+    return [...productsToSort].sort((a, b) => {
+      switch (sortBy) {
+        case 'Recently Added':
+          const dateA = new Date(a.createdAt || a.created_at || 0);
+          const dateB = new Date(b.createdAt || b.created_at || 0);
+          return sortOrder === 'desc' ? dateB - dateA : dateA - dateB;
+        case 'Ascending':
+          return a.productName.localeCompare(b.productName);
+        case 'Descending':
+          return b.productName.localeCompare(a.productName);
+        case 'Last Month':
+        case 'Last 7 Days':
+        default:
+          // Sort by expiry date
+          const getExpiryDate = (product) => {
+            const expiryArr = product.variants?.get?.('Expiry') || product.variants?.['Expiry'] || product.variants?.get?.('expiry') || product.variants?.['expiry'];
+            if (!expiryArr || expiryArr.length === 0) return new Date(0);
+            const dateStr = expiryArr[0];
+            if (typeof dateStr === "string") {
+              const dateMatch = dateStr.match(/^(\d{1,2})[-/](\d{1,2})[-/](\d{4})$/);
+              if (dateMatch) {
+                const [, day, month, year] = dateMatch;
+                return new Date(year, month - 1, day);
+              }
+            }
+            return new Date(0);
+          };
+          const expiryA = getExpiryDate(a);
+          const expiryB = getExpiryDate(b);
+          return sortOrder === 'desc' ? expiryB - expiryA : expiryA - expiryB;
+      }
+    });
+  };
+
+  // Handle sort selection
+  const handleSortChange = (newSortBy) => {
+    setSortBy(newSortBy);
+    if (newSortBy === 'Ascending' || newSortBy === 'Descending') {
+      setSortOrder(newSortBy === 'Ascending' ? 'asc' : 'desc');
+    }
+  };
 
   // Prepare export data
   const getExportData = () => {
     return products.filter(product => {
-      const expiryArr = product.variants?.get?.('Expiry') || product.variants?.['Expiry'];
+      const expiryArr = product.variants?.get?.('Expiry') || product.variants?.['Expiry'] || product.variants?.get?.('expiry') || product.variants?.['expiry'];
       if (!expiryArr || expiryArr.length === 0) return false;
       return expiryArr.some(dateStr => {
-        const [day, month, year] = dateStr.split('-').map(Number);
-        if (!day || !month || !year) return false;
-        const expDate = new Date(year, month - 1, day);
-        const today = new Date();
-        const tenDaysLater = new Date();
-        tenDaysLater.setDate(today.getDate() + 10);
-        return expDate >= today && expDate <= tenDaysLater;
+        // Handle multiple date formats: DD-MM-YYYY, D-M-YYYY, DD/MM/YYYY, etc.
+        if (typeof dateStr === "string") {
+          // Try DD-MM-YYYY or D-M-YYYY format
+          const dateMatch = dateStr.match(/^(\d{1,2})[-/](\d{1,2})[-/](\d{4})$/);
+          if (dateMatch) {
+            const [, day, month, year] = dateMatch.map(Number);
+            if (day && month && year && day <= 31 && month <= 12) {
+              const expDate = new Date(year, month - 1, day);
+              const today = new Date();
+              today.setHours(0, 0, 0, 0);
+              expDate.setHours(0, 0, 0, 0);
+              
+              if (!isNaN(expDate.getTime())) {
+                return expDate < today; // Check if expired
+              }
+            }
+          }
+        }
+        return false;
       });
     }).map(product => ({
       sku: product.sku || 'N/A',
@@ -66,25 +133,128 @@ const ExpriedProduct = () => {
   useEffect(() => {
     if (!loading && products.length > 0 && !warned) {
       const today = new Date();
-      const tenDaysLater = new Date(today);
-      tenDaysLater.setDate(today.getDate() + 10);
-      const soonToExpire = products.filter(product => {
-        const expiryArr = product.variants?.get?.('Expiry') || product.variants?.['Expiry'];
+      today.setHours(0, 0, 0, 0); // Set to start of today
+      const expiredProducts = products.filter(product => {
+        const expiryArr = product.variants?.get?.('Expiry') || product.variants?.['Expiry'] || product.variants?.get?.('expiry') || product.variants?.['expiry'];
         if (!expiryArr || expiryArr.length === 0) return false;
         return expiryArr.some(dateStr => {
-          // Accept formats like '30-08-2025'
-          const [day, month, year] = dateStr.split('-').map(Number);
-          if (!day || !month || !year) return false;
-          const expDate = new Date(year, month - 1, day);
-          return expDate >= today && expDate <= tenDaysLater;
+          // Handle multiple date formats: DD-MM-YYYY, D-M-YYYY, DD/MM/YYYY, etc.
+          if (typeof dateStr === "string") {
+            // Try DD-MM-YYYY or D-M-YYYY format
+            const dateMatch = dateStr.match(/^(\d{1,2})[-/](\d{1,2})[-/](\d{4})$/);
+            if (dateMatch) {
+              const [, day, month, year] = dateMatch.map(Number);
+              if (day && month && year && day <= 31 && month <= 12) {
+                const expDate = new Date(year, month - 1, day);
+                const today = new Date();
+                today.setHours(0, 0, 0, 0);
+                expDate.setHours(0, 0, 0, 0);
+                
+                if (!isNaN(expDate.getTime())) {
+                  return expDate < today; // Check if expired
+                }
+              }
+            }
+          }
+          return false;
         });
       });
-      if (soonToExpire.length > 0) {
-        window.toast && window.toast.warn('Some products are expiring within 10 days!');
+      if (expiredProducts.length > 0) {
+        window.toast && window.toast.error(`${expiredProducts.length} products have expired!`);
         setWarned(true);
       }
     }
   }, [loading, products, warned]);
+
+  //download pdf-------------------------------------------------------------------------------------------------------------------------------------------
+
+  const handlePdf = () => {
+    const expiredProductsData = getExportData();
+    const doc = new jsPDF();
+    doc.text("Expired Products", 14, 15);
+    const tableColumns = ["SKU", "Product Name", "Manufactured", "Expiry", "Quantity", "Supplier", "Warehouse"];
+
+    const tableRows = expiredProductsData.map((e) => [
+      e.sku,
+      e.productName,
+      e.manufactured,
+      e.expiry,
+      e.quantity,
+      e.supplierName,
+      e.warehouseName,
+    ]);
+
+    autoTable(doc, {
+      head: [tableColumns],
+      body: tableRows,
+      startY: 20,
+      styles: {
+        fontSize: 8,
+      },
+      headStyles: {
+        fillColor: [155, 155, 155],
+        textColor: "white",
+      },
+      theme: "striped",
+    });
+
+    doc.save("expired-products.pdf");
+  };
+
+  //download excel---------------------------------------------------------------------------------------------------------------------------------------------------------
+
+  const handleExcel = () => {
+    const expiredProductsData = getExportData();
+    const tableColumns = ["SKU", "Product Name", "Manufactured", "Expiry", "Quantity", "Supplier", "Warehouse"];
+
+    const tableRows = expiredProductsData.map((e) => [
+      e.sku,
+      e.productName,
+      e.manufactured,
+      e.expiry,
+      e.quantity,
+      e.supplierName,
+      e.warehouseName,
+    ]);
+
+    const data = [tableColumns, ...tableRows];
+
+    const worksheet = XLSX.utils.aoa_to_sheet(data);
+
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, "ExpiredProducts");
+
+    XLSX.writeFile(workbook, "expired-products.xlsx");
+  };
+
+  //product delete---------------------------------------------------------------------------------------------------------------------------------------------
+  
+  const handleDelete = async (product) => {
+    console.log("Deleting product:", product);
+    if (
+      window.confirm(`Are you sure you want to delete ${product.productName}?`)
+    ) {
+      try {
+        const token = localStorage.getItem("token");
+        await axios.delete(`${BASE_URL}/api/products/${product._id}`, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+        setProducts((prevProducts) =>
+          prevProducts.filter((p) => p._id !== product._id)
+        );
+        
+        alert("Product deleted successfully!");
+      } catch (err) {
+        console.error("Failed to delete product:", err.response?.data || err);
+        alert(
+          `Failed to delete product: ${err.response?.data?.message || err.message
+          }`
+        );
+      }
+    }
+  };
 
   return (
    <div className="page-wrapper">
@@ -98,17 +268,17 @@ const ExpriedProduct = () => {
       </div>
       <ul className="table-top-head">
         <li>
-          <a onClick={handlePDFExport} title="Download PDF" ><FaFilePdf className="fs-20" style={{color:"red"}} /></a>
+          <a onClick={handlePdf} title="Download PDF" ><FaFilePdf className="fs-20" style={{color:"red"}} /></a>
         </li>
         <li>
-          <a onClick={handleExcelExport} title="Download Excel" ><FaFileExcel className="fs-20" style={{color:"green"}}/></a>
+          <a onClick={handleExcel} title="Download Excel" ><FaFileExcel className="fs-20" style={{color:"green"}}/></a>
         </li>
         <li>
-          <a data-bs-toggle="tooltip" data-bs-placement="top" title="Refresh"><TbRefresh className="ti ti-refresh" /></a>
+          <button data-bs-toggle="tooltip" data-bs-placement="top" title="Refresh" onClick={() => location.reload()} className="fs-20" style={{backgroundColor:'white', color:'', padding:'5px 5px', display:'flex', alignItems:'center', border:'1px solid #e8eaebff', cursor:'pointer',borderRadius:'4px'}}><TbRefresh className="ti ti-refresh" /></button>
         </li>
-        <li>
+        {/* <li>
           <a data-bs-toggle="tooltip" data-bs-placement="top" title="Collapse" id="collapse-header"><i className="ti ti-chevron-up" /></a>
-        </li>
+        </li> */}
       </ul>
     </div>
     {/* /product list */}
@@ -120,7 +290,7 @@ const ExpriedProduct = () => {
           </div>
         </div>
         <div className="d-flex table-dropdown my-xl-auto right-content align-items-center flex-wrap row-gap-3">
-          <div className="dropdown me-2">
+          {/* <div className="dropdown me-2">
             <a className="dropdown-toggle btn btn-white btn-md d-inline-flex align-items-center" data-bs-toggle="dropdown">
               Product
             </a>
@@ -138,26 +308,26 @@ const ExpriedProduct = () => {
                 <a className="dropdown-item rounded-1">Apple Series 5 Watch</a>
               </li>
             </ul>
-          </div>
+          </div> */}
           <div className="dropdown">
             <a className="dropdown-toggle btn btn-white btn-md d-inline-flex align-items-center" data-bs-toggle="dropdown">
-              Sort By : Last 7 Days
+              Sort By : {sortBy}
             </a>
-            <ul className="dropdown-menu  dropdown-menu-end p-3">
+            <ul className="dropdown-menu dropdown-menu-end p-3">
               <li>
-                <a className="dropdown-item rounded-1">Recently Added</a>
+                <a className="dropdown-item rounded-1" onClick={() => handleSortChange('Recently Added')} style={{cursor: 'pointer'}}>Recently Added</a>
               </li>
               <li>
-                <a className="dropdown-item rounded-1">Ascending</a>
+                <a className="dropdown-item rounded-1" onClick={() => handleSortChange('Ascending')} style={{cursor: 'pointer'}}>Ascending</a>
               </li>
               <li>
-                <a className="dropdown-item rounded-1">Desending</a>
+                <a className="dropdown-item rounded-1" onClick={() => handleSortChange('Descending')} style={{cursor: 'pointer'}}>Descending</a>
               </li>
               <li>
-                <a className="dropdown-item rounded-1">Last Month</a>
+                <a className="dropdown-item rounded-1" onClick={() => handleSortChange('Last Month')} style={{cursor: 'pointer'}}>Last Month</a>
               </li>
               <li>
-                <a className="dropdown-item rounded-1">Last 7 Days</a>
+                <a className="dropdown-item rounded-1" onClick={() => handleSortChange('Last 7 Days')} style={{cursor: 'pointer'}}>Last 7 Days</a>
               </li>
             </ul>
           </div>
@@ -185,20 +355,32 @@ const ExpriedProduct = () => {
               </tr>
             </thead>
             <tbody>
-              {products.filter(product => {
-                const expiryArr = product.variants?.get?.('Expiry') || product.variants?.['Expiry'];
+              {sortProducts(products.filter(product => {
+                const expiryArr = product.variants?.get?.('Expiry') || product.variants?.['Expiry']  || product.variants?.get?.('expiry') || product.variants?.['expiry'];
                 if (!expiryArr || expiryArr.length === 0) return false;
-                // Only show products with at least one expiry date within next 10 days
+                // Only show products that are already expired
                 return expiryArr.some(dateStr => {
-                  const [day, month, year] = dateStr.split('-').map(Number);
-                  if (!day || !month || !year) return false;
-                  const expDate = new Date(year, month - 1, day);
-                  const today = new Date();
-                  const tenDaysLater = new Date();
-                  tenDaysLater.setDate(today.getDate() + 10);
-                  return expDate >= today && expDate <= tenDaysLater;
+                  // Handle multiple date formats: DD-MM-YYYY, D-M-YYYY, DD/MM/YYYY, etc.
+                  if (typeof dateStr === "string") {
+                    // Try DD-MM-YYYY or D-M-YYYY format
+                    const dateMatch = dateStr.match(/^(\d{1,2})[-/](\d{1,2})[-/](\d{4})$/);
+                    if (dateMatch) {
+                      const [, day, month, year] = dateMatch.map(Number);
+                      if (day && month && year && day <= 31 && month <= 12) {
+                        const expDate = new Date(year, month - 1, day);
+                        const today = new Date();
+                        today.setHours(0, 0, 0, 0);
+                        expDate.setHours(0, 0, 0, 0);
+                        
+                        if (!isNaN(expDate.getTime())) {
+                          return expDate < today; // Show only expired products
+                        }
+                      }
+                    }
+                  }
+                  return false;
                 });
-              }).map(product => (
+              })).map(product => (
                 <tr key={product._id}>
                   <td>
                     <label className="checkboxs">
@@ -224,10 +406,10 @@ const ExpriedProduct = () => {
                   <td>{product.warehouseName || 'N/A'}</td>
                   <td className="action-table-data">
                     <div className="edit-delete-action">
-                      <a data-bs-toggle="modal" data-bs-target="#edit-expired-product" className="me-2 p-2">
+                      <a data-bs-toggle="modal" data-bs-target="#edit-expired-product" className="me-2 p-2" onClick={() => navigate(`/product/edit/${product._id}`)}>
                         <TbEdit data-feather="edit" className="feather-edit" />
                       </a>
-                      <a data-bs-toggle="modal" data-bs-target="#delete-modal" className="p-2">
+                      <a data-bs-toggle="modal" data-bs-target="#delete-modal" className="p-2" onClick={() => handleDelete(product)}>
                         <TbTrash data-feather="trash-2" className="feather-trash-2" />
                       </a>
                     </div>
