@@ -320,73 +320,11 @@ const EmailModal = ({
         </div>
 
         <div className="mailmdl-modal-body" style={{ margin: "10px" }}>
-        <div>
-          <div
-            className="mailmdl-to-field"
-            style={{ display: "flex", alignItems: "center", gap: "10px" }}
-          >
-            <label
-              style={{
-                color: "#676767",
-                fontWeight: 400,
-                fontSize: "16px",
-                lineHeight: "10px",
-                letterSpacing: "0",
-                marginTop: "10px",
-              }}
+          <div>
+            <div
+              className="mailmdl-to-field"
+              style={{ display: "flex", alignItems: "center", gap: "10px" }}
             >
-              To:
-            </label>
-            {/* <hr style={{width:'100%', height:'1px'}} /> */}
-            <input
-              className="mailmdl"
-              type="text"
-              list="email-suggestions"
-              value={to}
-              onChange={(e) => setTo(e.target.value)}
-              style={{
-                border: "none",
-                borderBottom: "1px solid #D9D9D9",
-                outline: "none",
-                background: "transparent",
-                fontSize: "16px",
-                marginLeft: "-10px",
-                padding: "4px 0",
-                width: "100%",
-              }}
-            />
-            <span
-              style={{
-                color: "#676767",
-                fontWeight: 400,
-                fontSize: "16px",
-                lineHeight: "10px",
-                letterSpacing: "0",
-                cursor: "pointer",
-              }}
-              className="cc-bcc"
-              onClick={() => setShowCc(!showCc)}
-            >
-              Cc
-            </span>
-            <span
-              style={{
-                color: "#676767",
-                fontWeight: 400,
-                fontSize: "16px",
-                lineHeight: "10px",
-                letterSpacing: "0",
-                cursor: "pointer",
-              }}
-              className=""
-              onClick={() => setShowBcc(!showBcc)}
-            >
-              Bcc
-            </span>
-          </div>
-          {/* for cc */}
-          {showCc && (
-            <div className="mailmdl-to-field">
               <label
                 style={{
                   color: "#676767",
@@ -394,65 +332,127 @@ const EmailModal = ({
                   fontSize: "16px",
                   lineHeight: "10px",
                   letterSpacing: "0",
+                  marginTop: "10px",
                 }}
-                htmlFor=""
               >
-                Cc:
+                To:
               </label>
+              {/* <hr style={{width:'100%', height:'1px'}} /> */}
               <input
                 className="mailmdl"
                 type="text"
                 list="email-suggestions"
-                // placeholder="Add Cc"
-                value={cc}
-                onChange={(e) => setCc(e.target.value)}
+                value={to}
+                onChange={(e) => setTo(e.target.value)}
                 style={{
                   border: "none",
                   borderBottom: "1px solid #D9D9D9",
                   outline: "none",
                   background: "transparent",
                   fontSize: "16px",
+                  marginLeft: "-10px",
                   padding: "4px 0",
                   width: "100%",
                 }}
               />
-            </div>
-          )}
-          {/* for Bcc */}
-          {showBcc && (
-            <div className="mailmdl-to-field">
-              <label
+              <span
                 style={{
                   color: "#676767",
                   fontWeight: 400,
                   fontSize: "16px",
                   lineHeight: "10px",
                   letterSpacing: "0",
+                  cursor: "pointer",
                 }}
-                htmlFor=""
+                className="cc-bcc"
+                onClick={() => setShowCc(!showCc)}
               >
-                Bcc:
-              </label>
-              <input
-                className="mailmdl"
-                type="text"
-                list="email-suggestions"
-                // placeholder="Add Bcc"
-                value={bcc}
-                onChange={(e) => setBcc(e.target.value)}
+                Cc
+              </span>
+              <span
                 style={{
-                  border: "none",
-                  borderBottom: "1px solid #D9D9D9",
-                  outline: "none",
-                  background: "transparent",
+                  color: "#676767",
+                  fontWeight: 400,
                   fontSize: "16px",
-                  padding: "4px 0",
-                  width: "100%",
+                  lineHeight: "10px",
+                  letterSpacing: "0",
+                  cursor: "pointer",
                 }}
-              />
+                className=""
+                onClick={() => setShowBcc(!showBcc)}
+              >
+                Bcc
+              </span>
             </div>
-          )}
-           <datalist id="email-suggestions">
+            {/* for cc */}
+            {showCc && (
+              <div className="mailmdl-to-field">
+                <label
+                  style={{
+                    color: "#676767",
+                    fontWeight: 400,
+                    fontSize: "16px",
+                    lineHeight: "10px",
+                    letterSpacing: "0",
+                  }}
+                  htmlFor=""
+                >
+                  Cc:
+                </label>
+                <input
+                  className="mailmdl"
+                  type="text"
+                  list="email-suggestions"
+                  // placeholder="Add Cc"
+                  value={cc}
+                  onChange={(e) => setCc(e.target.value)}
+                  style={{
+                    border: "none",
+                    borderBottom: "1px solid #D9D9D9",
+                    outline: "none",
+                    background: "transparent",
+                    fontSize: "16px",
+                    padding: "4px 0",
+                    width: "100%",
+                  }}
+                />
+              </div>
+            )}
+            {/* for Bcc */}
+            {showBcc && (
+              <div className="mailmdl-to-field">
+                <label
+                  style={{
+                    color: "#676767",
+                    fontWeight: 400,
+                    fontSize: "16px",
+                    lineHeight: "10px",
+                    letterSpacing: "0",
+                  }}
+                  htmlFor=""
+                >
+                  Bcc:
+                </label>
+                <input
+                  className="mailmdl"
+                  type="text"
+                  list="email-suggestions"
+                  // placeholder="Add Bcc"
+                  value={bcc}
+                  onChange={(e) => setBcc(e.target.value)}
+                  style={{
+                    border: "none",
+                    borderBottom: "1px solid #D9D9D9",
+                    outline: "none",
+                    background: "transparent",
+                    fontSize: "16px",
+                    padding: "4px 0",
+                    width: "100%",
+                  }}
+                />
+              </div>
+            )}
+            <datalist id="email-suggestions">
               {emailHistory.map((email, i) => (
                 <option key={i} value={email} />
               ))}
@@ -557,7 +557,7 @@ const EmailModal = ({
                 className="mailmdlbutton"
                 onClick={() => setShowLinkInput((prev) => !prev)}
               >
-                <AiOutlineLink />
+                {/* <AiOutlineLink /> */}
               </button>
               <button
                 className="mailmdlbutton"

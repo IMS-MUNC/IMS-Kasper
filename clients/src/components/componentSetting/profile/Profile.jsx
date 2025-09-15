@@ -74,7 +74,6 @@ const UserProfile = () => {
 
 
   // fetch user
-  useEffect(() => {
     const fetchUser = async () => {
       if (!id) return;
       try {
@@ -94,22 +93,26 @@ const UserProfile = () => {
         console.error("Error fetching user", error);
         toast.error("Failed to load user");
       }
-    };
+  };
+  useEffect(() => {
     fetchUser();
   }, [id]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!imageFiles) return toast.warn("Please select an image");
+    if (!imageFiles.profileImage) return toast.warn("Please select an image");
     const formData = new FormData();
     formData.append("profileImage", imageFiles.profileImage);
     try {
       const userId = userData._id;
-      await axios.put(`${BASE_URL}/api/user/update/${userId}`, formData, {
-        headers: {
-          "Content-Type": "multipart/form-data", Authorization: `Bearer ${token}`,
-        },
+    const res =  await axios.put(`${BASE_URL}/api/user/update/${userId}`, formData, {
+        headers: { Authorization: `Bearer ${token}` },
       });
+      if (res.data?.profileImage?.url) {
+      setPreviewUrl(res.data.profileImage.url);
+    } else {
+      await fetchUser();
+      }
       toast.success("Profile image updates");
     } catch (error) {
       toast.error("Failed to update image");

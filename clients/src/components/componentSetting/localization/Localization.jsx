@@ -221,6 +221,7 @@ const Localization = () => {
                   <select
                     className="timmmmgeinput"
                     value={formData.dateformat}
+                    name="dateformat"
                     onChange={handleChange}
                     style={{
                       border: "1px solid rgb(203, 198, 198)",

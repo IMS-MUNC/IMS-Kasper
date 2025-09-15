@@ -103,7 +103,7 @@ export const getMenuData = () => {
     {
       section: t("main"),
       key: "main",
-      items: [           
+      items: [
         { label: t("dashboard"), path: "/dashboard", icon: <MdOutlineDashboard className="icons" /> },
         // {
         //   key: "dashboard",
@@ -121,8 +121,7 @@ export const getMenuData = () => {
           icon: <TbBrandAppleArcade className="icons" />,
           subItems: [
             { label: t("chat"), path: "/chat" },
-            { label: t("mail"), path: "/mail" },
-           
+            { label: t("mail"), path: "/mail/inbox" },
           ],
         },
       ],
@@ -157,14 +156,14 @@ export const getMenuData = () => {
           path: "/customers",
           icon: <TbUsersGroup className="icons" />,
         },
-   
+
         {
           label: t("suppliers"),
           path: "/suppliers",
           icon: <TbUserDollar className="icons" />,
         },
-      
-          {
+
+        {
 
           path: "/warehouse",
           icon: <TbBuildingWarehouse className="icons" />,
@@ -292,7 +291,7 @@ export const getMenuData = () => {
           path: "/pos",
           icon: <MdOutlinePointOfSale className="icons" />,
         },
-       
+
       ],
     },
     {
@@ -344,7 +343,7 @@ export const getMenuData = () => {
           subItems: [
             // { label: "Purchase", path: "/Purchase-settings" },
             // { label: "Warehouse", path: "/warehouse-settings" },
-            { label: "Profile", path: "/general-settings" },
+            { label: t("profile"), path: `/profile/${id}` },
             { label: "Security", path: "/security-settings" },
             // { label: "Notifications", path: "/notification" },
             // { label: "Connected Apps", path: "/connected-apps" },
@@ -360,11 +359,11 @@ export const getMenuData = () => {
             // { label: "Prefixes", path: "/prefixes" },
             // { label: "Appearance", path: "/appearance" },
             // { label: "System Settings", path: "/system-settings" },
-          
+
           ],
         },
-      
-       
+
+
       ],
     },
 
@@ -383,16 +382,16 @@ export const getMenuData = () => {
           path: "/purchase-report",
           icon: <FaRegFileAlt className="icons" />,
         },
-       
+
       ],
     },
-       // finance & acount section
+    // finance & acount section
     {
       section: "Finance & Accounts",
       key: "Finance & Accounts",
 
       items: [
-        
+
         {
           label: "Balance Sheet",
           path: "/balance-sheet",
@@ -429,15 +428,15 @@ export const getMenuData = () => {
           icon: <MdOutlineSpeakerNotes className="icons" />,
         },
 
-         {
+        {
           label: "Logout",
           icon: <TbLogout className="icons" />,
           path: "/logout",
         },
-       
+
       ],
     },
-  
+
 
   ];
 };
