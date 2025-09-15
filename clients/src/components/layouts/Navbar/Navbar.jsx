@@ -1,5 +1,3 @@
-
-
 import React, { useContext, useEffect, useRef, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 // import "../../../styles/auth.css";
@@ -21,9 +19,11 @@ import { toast } from "react-toastify"
 import "react-toastify/dist/ReactToastify.css"
 import { io } from 'socket.io-client';
 import { useAuth } from '../../auth/AuthContext';
+import {useInbox} from "../../../components/features/Mail/SideBar/InboxContext"
 
 
 function Navbar() {
+  const { inboxCount, fetchInboxCount } = useInbox();
     // state for company logo
   const [companyImages, setCompanyImages] = useState(null)
   const [isDarkMode, setIsDarkMode] = useState(false)
@@ -247,7 +247,14 @@ function Navbar() {
       favicon.type = "image/png";
       favicon.href = companyImages.companyFavicon
     }
-  }, [companyImages])
+    }, [companyImages])
+  
+  useEffect(() => {
+    const interval = setInterval(() => {
+      fetchInboxCount();
+    }, 5000);
+    return () => clearInterval(interval)
+  }, []);
 
 
 
@@ -412,9 +419,11 @@ function Navbar() {
 
           {/* Email */}
           <li className="nav-item nav-item-box">
-            <Link to="/mail">
-              <TbMail />
-              <span className="badge rounded-pill">1</span>
+            <Link to="/mail/inbox" className='position-relative'>
+                  <TbMail />
+                  {inboxCount > 0 && (
+                    <span className="badge rounded-pill">{inboxCount}</span>
+                    )}
             </Link>
           </li>
           {/* Notifications */}
@@ -447,13 +456,13 @@ function Navbar() {
             </div>
           </li>
           {/* Settings */}
-          {/* <li className="nav-item nav-item-box">
+          <li className="nav-item nav-item-box">
             <Link to={`profile/${id}`}><TbSettings className="ti" /></Link>
-          </li> */}
-          {/* Settings */}
-                  <li className="nav-item nav-item-box">
-            <Link to="/general-settings"><TbSettings className="ti" /></Link>
           </li>
+          {/* Settings */}
+                  {/* <li className="nav-item nav-item-box">
+            <Link to="/general-settings"><TbSettings className="ti" /></Link>
+          </li> */}
 
           {/* Profile */}
           {userData ? (
