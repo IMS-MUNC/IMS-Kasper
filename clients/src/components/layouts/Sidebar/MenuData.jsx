@@ -103,7 +103,7 @@ export const getMenuData = () => {
     {
       section: t("main"),
       key: "main",
-      items: [           
+      items: [
         { label: t("dashboard"), path: "/dashboard", icon: <MdOutlineDashboard className="icons" /> },
         // {
         //   key: "dashboard",
@@ -121,8 +121,7 @@ export const getMenuData = () => {
           icon: <TbBrandAppleArcade className="icons" />,
           subItems: [
             { label: t("chat"), path: "/chat" },
-            { label: t("mail"), path: "/mail" },
-           
+            { label: t("mail"), path: "/mail/inbox" },
           ],
         },
       ],
@@ -144,8 +143,8 @@ export const getMenuData = () => {
         { label: t("variantAttributes"), path: "/variant-attributes", icon: <MdChecklist className="icons" /> },
         { label: t("warranties"), path: "/warranty", icon: <MdVerified className="icons" /> },
         { label: t("printBarcode"), path: "/barcode", icon: <CiBarcode className="icons" /> },
-        { label: "Debit", path: "/debit-note", icon: <MdQrCode className="icons" /> },
-        { label: "Credit", path: "/credit-note", icon: <MdQrCode className="icons" /> },
+        // { label: "Debit", path: "/debit-note", icon: <MdQrCode className="icons" /> },
+        // { label: "Credit", path: "/credit-note", icon: <MdQrCode className="icons" /> },
       ],
     },
     {
@@ -157,14 +156,14 @@ export const getMenuData = () => {
           path: "/customers",
           icon: <TbUsersGroup className="icons" />,
         },
-   
+
         {
           label: t("suppliers"),
           path: "/suppliers",
           icon: <TbUserDollar className="icons" />,
         },
-      
-          {
+
+        {
 
           path: "/warehouse",
           icon: <TbBuildingWarehouse className="icons" />,
@@ -206,6 +205,7 @@ export const getMenuData = () => {
           path: "/purchase-returns",
           icon: <TbFileUpload className="icons" />,
         },
+        { label: "Debit Note", path: "/debit-note", icon: <MdQrCode className="icons" /> },
       ],
     },
 
@@ -213,18 +213,18 @@ export const getMenuData = () => {
       section: t("Stock"),
       key: "stock",
       items: [
+        // {
+        //   label: t("Purchase Stocks"),
+        //   path: "/stock",
+        //   icon: <TbShoppingBag className="icons" />,
+        // },
+        // {
+        //   label: t("Purchase Return Stocks"),
+        //   path: "/return-stock",
+        //   icon: <TbShoppingBag className="icons" />,
+        // },
         {
-          label: t("Purchase Stocks"),
-          path: "/stock",
-          icon: <TbShoppingBag className="icons" />,
-        },
-        {
-          label: t("Purchase Return Stocks"),
-          path: "/return-stock",
-          icon: <TbShoppingBag className="icons" />,
-        },
-        {
-          label: t("Manage Stock"),
+          label: t("Purchase Stock"),
           path: "/manage-stocks",
           icon: <TbShoppingBag className="icons" />,
         },
@@ -233,11 +233,11 @@ export const getMenuData = () => {
           path: "/stock-adjustment",
           icon: <TbFileUnknown className="icons" />,
         },
-        {
-          label: t("Stock Transfer"),
-          path: "/stock-transfer",
-          icon: <TbFileUpload className="icons" />,
-        },
+        // {
+        //   label: t("Stock Transfer"),
+        //   path: "/stock-transfer",
+        //   icon: <TbFileUpload className="icons" />,
+        // },
       ],
     },
 
@@ -264,6 +264,7 @@ export const getMenuData = () => {
               label: t("Sales History"),
               path: "/sales-log",
             },
+            { label: "Credit", path: "/credit-note", icon: <MdQrCode className="icons" /> },
             {
               label: t("posOrders"),
               path: "/pos",
@@ -282,17 +283,17 @@ export const getMenuData = () => {
           path: "/sales-returns",
           icon: <TbReceiptRefund className="icons" />,
         },
-        {
-          label: t("quotation"),
-          path: "/quotation-list",
-          icon: <TbFileDescription className="icons" />,
-        },
+        // {
+        //   label: t("quotation"),
+        //   path: "/quotation-list",
+        //   icon: <TbFileDescription className="icons" />,
+        // },
         {
           label: t("pos"),
           path: "/pos",
           icon: <MdOutlinePointOfSale className="icons" />,
         },
-       
+
       ],
     },
     {
@@ -344,7 +345,7 @@ export const getMenuData = () => {
           subItems: [
             // { label: "Purchase", path: "/Purchase-settings" },
             // { label: "Warehouse", path: "/warehouse-settings" },
-            { label: "Profile", path: "/general-settings" },
+            { label: t("profile"), path: `/profile/${id}` },
             { label: "Security", path: "/security-settings" },
             // { label: "Notifications", path: "/notification" },
             // { label: "Connected Apps", path: "/connected-apps" },
@@ -360,11 +361,11 @@ export const getMenuData = () => {
             // { label: "Prefixes", path: "/prefixes" },
             // { label: "Appearance", path: "/appearance" },
             // { label: "System Settings", path: "/system-settings" },
-          
+
           ],
         },
-      
-       
+
+
       ],
     },
 
@@ -383,16 +384,16 @@ export const getMenuData = () => {
           path: "/purchase-report",
           icon: <FaRegFileAlt className="icons" />,
         },
-       
+
       ],
     },
-       // finance & acount section
+    // finance & acount section
     {
       section: "Finance & Accounts",
       key: "Finance & Accounts",
 
       items: [
-        
+
         {
           label: "Balance Sheet",
           path: "/balance-sheet",
@@ -429,15 +430,15 @@ export const getMenuData = () => {
           icon: <MdOutlineSpeakerNotes className="icons" />,
         },
 
-         {
+        {
           label: "Logout",
           icon: <TbLogout className="icons" />,
           path: "/logout",
         },
-       
+
       ],
     },
-  
+
 
   ];
 };

@@ -3,122 +3,7 @@ const User = require("../models/usersModels.js");
 const nodemailer = require("nodemailer");
 const fs = require("fs");
 const path = require("path");
-
-// const sendEmail = async (req, res) => {
-//   try {
-//     const { to, cc, bcc, from, subject, body, date, name, starred, bin } =
-//       req.body;
-
-//     const attachments = (req.files.attachments || []).map((file) => file.path);
-//     const images = (req.files.images || []).map((file) => file.path);
-
-//     // Ensure cc and bcc are always arrays
-//     const validCC = Array.isArray(cc) ? cc : cc ? [cc] : [];
-//     const validBCC = Array.isArray(bcc) ? bcc : bcc ? [bcc] : [];
-
-//     // Log for debugging
-//     console.log("Sending to:", to);
-//     console.log("CC:", validCC);
-//     console.log("BCC:", validBCC);
-//     console.log("CC is valid array:", Array.isArray(validCC));
-//     console.log("CC joined:", validCC && validCC.join(","));
-
-//     // get logged in user Id and email
-//     let senderEmail = req.user?.email || from || process.env.EMAIL_USER;
-//     senderEmail = senderEmail.toLowerCase();
-//     // check if sender exists in users collection
-//     const existingUser = await User.findOne({ email: senderEmail }).select(
-//       "firstName lastName email profileImage"
-//     );
-//     // normalize sender object
-//     const sender = existingUser
-//       ? {
-//           email: existingUser.email,
-//           firstName: existingUser.firstName || "",
-//           lastName: existingUser.lastName || "",
-//           profileImage: existingUser.profileImage || "",
-//         }
-//       : {
-//           email: senderEmail,
-//           firstName: "Unknown",
-//           lastName: "",
-//           profileImage: null,
-//         };
-// // Determine email type based on logged-in user
-// let type = "sent"; // default for sender
-
-// const currentUserEmail = req.user?.email.toLowerCase();
-
-// // Check if current user is in recipients
-// const recipients = [
-//   ...(Array.isArray(to) ? to : [to]),
-//   ...validCC,
-//   ...validBCC
-// ].map(e => e.toLowerCase());
-
-// if (recipients.includes(currentUserEmail)) {
-//   type = "inbox";
-// }
-
-//     const email = new EmailModal({
-//       to,
-//       cc: validCC,
-//       bcc: validBCC,
-//       from: sender,
-//       subject,
-//       body,
-//       attachments,
-//       date,
-//       image: images,
-//       name,
-//       starred,
-//       bin,
-//       type,
-//     });
-
-//     const savedEmail = await email.save();
-
-//     const transporter = nodemailer.createTransport({
-//       host: "smtp.gmail.com",
-//       port: 465,
-//       secure: true, // Use SSL
-//       auth: {
-//         user: process.env.EMAIL_USER,
-//         pass: process.env.EMAIL_PASS,
-//       },
-//       tls: {
-//         rejectUnauthorized: false,
-//       },
-//     });
-
-//     const mailOptions = {
-//       from: sender?.email,
-//       to: Array.isArray(to) ? to.join(",") : to,
-//       cc: validCC.length > 0 ? validCC.join(",") : undefined,
-//       bcc: validBCC.length > 0 ? validBCC.join(",") : undefined,
-//       subject,
-//       html: `<div style="white-space: pre-wrap;">${body}</div>`,
-//       attachments: [
-//         ...attachments.map((file) => ({ path: file })),
-//         ...images.map((img) => ({ path: img })),
-//       ],
-//     };
-
-//     await transporter.sendMail(mailOptions);
-
-//     res
-//       .status(201)
-//       .json({ success: true, message: "Email sent", data: savedEmail });
-//     // console.log("FILES RECEIVED:", req.files);
-//   } catch (error) {
-//     res.status(500).json({
-//       success: false,
-//       message: "Failed to send email",
-//       error: error.message,
-//     });
-//     console.log("ERROR", error);
-//   }
-// };
+const axios = require("axios");
 
 const sendEmail = async (req, res) => {
   try {
@@ -167,7 +52,31 @@ const sendEmail = async (req, res) => {
         user: process.env.EMAIL_USER,
         pass: process.env.EMAIL_PASS, // app password
       },
-    });
+         });
+    
+        // 🔥 Convert Cloudinary files into real buffers for attachments
+    const fetchFileBuffer = async (url) => {
+      const response = await axios.get(url, { responseType: "arraybuffer" });
+      return Buffer.from(response.data, "binary");
+    };
+
+    const attachments = [];
+
+    // Process docs / PDFs
+    for (const file of normalizedAttachments) {
+      attachments.push({
+        filename: file.split("/").pop(), // last part of URL
+        content: await fetchFileBuffer(file),
+      });
+    }
+
+    // Process images (still as URLs is fine, but buffer works too)
+    for (const img of normalizedImages) {
+      attachments.push({
+        filename: img.split("/").pop(),
+        content: await fetchFileBuffer(img),
+      });
+    }
 
     const mailOptions = {
       from: sender.email,

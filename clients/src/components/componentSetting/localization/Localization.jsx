@@ -196,7 +196,7 @@ const Localization = () => {
                 }}
               >
                 <div style={{ display: 'flex', gap: '10px' }}>
-                  <span
+                  {/* <span
                     style={{
                       backgroundColor: " #F1F1F1",
                       width: "35px",
@@ -206,7 +206,7 @@ const Localization = () => {
                       alignItems: "center",
                     }}
 
-                  > <img src={CompyIc} alt='itmimg' style={{ width: 20, height: 20, objectFit: "contain" }} /></span>
+                  > <img src={CompyIc} alt='itmimg' style={{ width: 20, height: 20, objectFit: "contain" }} /></span> */}
                   <div style={{ display: "flex", flexDirection: "column" }}>
                     <span className="localizatreck">{t("Date Format")}</span>
                     <span
@@ -221,6 +221,7 @@ const Localization = () => {
                   <select
                     className="timmmmgeinput"
                     value={formData.dateformat}
+                    name="dateformat"
                     onChange={handleChange}
                     style={{
                       border: "1px solid rgb(203, 198, 198)",
@@ -246,7 +247,7 @@ const Localization = () => {
                 }}
               >
                 <div style={{ display: 'flex', gap: '10px' }}>
-                  <span
+                  {/* <span
                     style={{
                       backgroundColor: " #F1F1F1",
                       width: "35px",
@@ -256,7 +257,7 @@ const Localization = () => {
                       alignItems: "center",
                     }}
 
-                  > <img src={CompyIc} alt='itmimg' style={{ width: 20, height: 20, objectFit: "contain" }} /></span>
+                  > <img src={CompyIc} alt='itmimg' style={{ width: 20, height: 20, objectFit: "contain" }} /></span> */}
                   <div style={{ display: "flex", flexDirection: "column" }}>
                     <span className="localizatreck">{t("Time Format")}</span>
                     <span className="localizatreckdes">
@@ -291,7 +292,7 @@ const Localization = () => {
                 }}
               >
                 <div style={{ display: 'flex', gap: '10px' }}>
-                  <span
+                  {/* <span
                     style={{
                       backgroundColor: " #F1F1F1",
                       width: "35px",
@@ -301,7 +302,7 @@ const Localization = () => {
                       alignItems: "center",
                     }}
 
-                  > <img src={CompyIc} alt='itmimg' style={{ width: 20, height: 20, objectFit: "contain" }} /></span>
+                  > <img src={CompyIc} alt='itmimg' style={{ width: 20, height: 20, objectFit: "contain" }} /></span> */}
                   <div style={{ display: "flex", flexDirection: "column" }}>
                     <span className="localizatreck">{t("Financial year")}</span>
                     <span className="localizatreckdes">
@@ -339,7 +340,7 @@ const Localization = () => {
                 }}
               >
                 <div style={{ display: 'flex', gap: '10px' }}>
-                  <span
+                  {/* <span
                     style={{
                       backgroundColor: " #F1F1F1",
                       width: "35px",
@@ -349,7 +350,7 @@ const Localization = () => {
                       alignItems: "center",
                     }}
 
-                  > <img src={CompyIc} alt='itmimg' style={{ width: 20, height: 20, objectFit: "contain" }} /></span>
+                  > <img src={CompyIc} alt='itmimg' style={{ width: 20, height: 20, objectFit: "contain" }} /></span> */}
                   <div style={{ display: "flex", flexDirection: "column" }}>
                     <span className="localizatreck">{t("Starting month")}</span>
                     <span className="localizatreckdes">
@@ -394,7 +395,7 @@ const Localization = () => {
                 }}
               >
                 <div style={{ display: 'flex', gap: '10px' }}>
-                  <span
+                  {/* <span
                     style={{
                       backgroundColor: " #F1F1F1",
                       width: "35px",
@@ -404,7 +405,7 @@ const Localization = () => {
                       alignItems: "center",
                     }}
 
-                  > <img src={Curny} alt='itmimg' style={{ width: 20, height: 20, objectFit: "contain" }} /></span>
+                  > <img src={Curny} alt='itmimg' style={{ width: 20, height: 20, objectFit: "contain" }} /></span> */}
                   <div style={{ display: "flex", flexDirection: "column" }}>
                     <span className="localizatreck">{t("Currency")}</span>
                     <span className="localizatreckdes">
@@ -439,7 +440,7 @@ const Localization = () => {
                 }}
               >
                 <div style={{ display: 'flex', gap: '10px' }}>
-                  <span
+                  {/* <span
                     style={{
                       backgroundColor: " #F1F1F1",
                       width: "35px",
@@ -449,7 +450,7 @@ const Localization = () => {
                       alignItems: "center",
                     }}
 
-                  > <img src={Curny} alt='itmimg' style={{ width: 20, height: 20, objectFit: "contain" }} /></span>
+                  > <img src={Curny} alt='itmimg' style={{ width: 20, height: 20, objectFit: "contain" }} /></span> */}
                   <div style={{ display: "flex", flexDirection: "column" }}>
                     <span className="localizatreck">{t("Currency symbol")}</span>
                     <span className="localizatreckdes">
@@ -483,7 +484,7 @@ const Localization = () => {
                 }}
               >
                 <div style={{ display: 'flex', gap: '10px' }}>
-                  <span
+                  {/* <span
                     style={{
                       backgroundColor: " #F1F1F1",
                       width: "35px",
@@ -493,7 +494,7 @@ const Localization = () => {
                       alignItems: "center",
                     }}
 
-                  > <img src={Curny} alt='itmimg' style={{ width: 20, height: 20, objectFit: "contain" }} /></span>
+                  > <img src={Curny} alt='itmimg' style={{ width: 20, height: 20, objectFit: "contain" }} /></span> */}
                   <div style={{ display: "flex", flexDirection: "column" }}>
                     <span className="localizatreck">
                       {t("Currency position")}
@@ -533,7 +534,7 @@ const Localization = () => {
                 }}
               >
                 <div style={{ display: 'flex', gap: '10px' }}>
-                  <span
+                  {/* <span
                     style={{
                       backgroundColor: " #F1F1F1",
                       width: "35px",
@@ -543,7 +544,7 @@ const Localization = () => {
                       alignItems: "center",
                     }}
 
-                  > <img src={Curny} alt='itmimg' style={{ width: 20, height: 20, objectFit: "contain" }} /></span>
+                  > <img src={Curny} alt='itmimg' style={{ width: 20, height: 20, objectFit: "contain" }} /></span> */}
                   <div style={{ display: "flex", flexDirection: "column" }}>
                     <span className="localizatreck">
                       {t("Decimal separator")}
@@ -580,7 +581,7 @@ const Localization = () => {
                 }}
               >
                 <div style={{ display: 'flex', gap: '10px' }}>
-                  <span
+                  {/* <span
                     style={{
                       backgroundColor: " #F1F1F1",
                       width: "35px",
@@ -590,7 +591,7 @@ const Localization = () => {
                       alignItems: "center",
                     }}
 
-                  > <img src={Curny} alt='itmimg' style={{ width: 20, height: 20, objectFit: "contain" }} /></span>
+                  > <img src={Curny} alt='itmimg' style={{ width: 20, height: 20, objectFit: "contain" }} /></span> */}
                   <div style={{ display: "flex", flexDirection: "column" }}>
                     <span className="localizatreck">
                       {t("Thousand separator")}

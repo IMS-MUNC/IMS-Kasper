@@ -14,11 +14,21 @@ const storage = multer.diskStorage({
 const fileFilter = function (req, file, cb) {
   const ext = path.extname(file.originalname).toLowerCase();
   const allowedExtensions = [".png", ".jpg", ".jpeg", ".gif", ".csv", ".xlsx", ".pdf"];
-  if (!allowedExtensions.includes(ext)) {
-    return cb(new Error("Only image, CSV, Excel, or PDF files are allowed"), false)
+  const allowedMimes = [
+    "image/png",
+    "image/jpg",
+    "image/jpeg",
+    "image/gif",
+    "text/csv",
+    "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", // xlsx
+    "application/pdf",
+  ];
+  if (allowedExtensions.includes(ext) || allowedMimes.includes(file.mimetype)) {
+    cb(null, true);
+  } else {
+    cb(new Error("Only image, CSV, Excel, or PDF files are allowed"), false);
   }
-  cb(null, true);
-}
+};
 
 const upload = multer({
   storage,

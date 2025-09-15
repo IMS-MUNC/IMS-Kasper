@@ -4,10 +4,14 @@ import Sidebar from "../SideBar/Sidebar"
 
 const MailPage = () => {
   return (
-    <div style={{ display: 'flex', width: '100%', gap: '15px' }}>
-      <Sidebar />
-      <Outlet />
+    // <div style={{ display: 'flex', width: '100%', gap: '15px' }}>
+    <div className="page-wrapper">
+      <div className="content" style={{ display: 'flex', width: '100%', gap: '15px' }}>
+        <Sidebar />
+        <Outlet />
+      </div>
     </div>
+    // </div>
   )
 }
 

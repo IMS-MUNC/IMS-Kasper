@@ -192,7 +192,7 @@ const Companysettings = () => {
   return (
     <div>
       <div className="company-settings-container">
-        <form onSubmit={handleSubmit}>
+        <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
           <div className="cmmpyprofilesettinng" style={{ padding: '10px 10px 0px 10px' }}>
             <div>
               <h1 className="cfnnysthead">Company Settings</h1>

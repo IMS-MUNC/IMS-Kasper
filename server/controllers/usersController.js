@@ -35,11 +35,10 @@ exports.createUser = async (req, res) => {
 
     let profileImage = null;
 
-    if (req.files && req.files.length > 0) {
-      const imageUploadPromises = req.files.map((file) =>
-        cloudinary.uploader.upload(file.path, { folder: "profile_images" })
-      );
-      const uploadedImages = await Promise.all(imageUploadPromises);
+    if (req.file) {
+      const uploadedImages = await cloudinary.uploader.upload(req.file.path, {
+        folder: "profile_images",
+      });
       profileImage = {
         url: uploadedImages[0].secure_url,
         public_id: uploadedImages[0].public_id,
@@ -59,7 +58,7 @@ exports.createUser = async (req, res) => {
       postalcode,
       address,
       password: hashedPassword,
-      passwordChangedAt:new Date(),
+      passwordChangedAt: new Date(),
       profileImage,
       role,
       status,
@@ -87,7 +86,6 @@ exports.getAllUsers = async (req, res) => {
   }
 };
 
- 
 // GET USER BY ID
 exports.getUserById = async (req, res) => {
   try {
@@ -99,7 +97,6 @@ exports.getUserById = async (req, res) => {
     res.status(500).json({ message: "Server error", error });
   }
 };
-
 
 exports.userData = async (req, res) => {
   const id = req.params.id;
@@ -119,8 +116,6 @@ exports.userData = async (req, res) => {
     res.status(500).send("Internal Server Error");
   }
 };
-
-
 
 // UPDATE USER
 exports.updateUser = async (req, res) => {
@@ -218,13 +213,14 @@ exports.deleteUser = async (req, res) => {
   }
 };
 
-
 // GET ACTIVE USERS
 exports.getActiveUsers = async (req, res) => {
   try {
     // If using boolean: { status: true }
     // If using string: { status: "Active" }
-    const activeUsers = await User.find({ status: "Active" }).populate("role").sort({ createdAt: -1 });
+    const activeUsers = await User.find({ status: "Active" })
+      .populate("role")
+      .sort({ createdAt: -1 });
 
     res.status(200).json({
       message: "Active users fetched successfully",
@@ -241,18 +237,20 @@ exports.getActiveUsers = async (req, res) => {
 exports.searchUsersByEmail = async (req, res) => {
   try {
     const { email } = req.query;
-    
+
     if (!email || email.trim().length === 0) {
-      return res.status(400).json({ message: "Email query parameter is required" });
+      return res
+        .status(400)
+        .json({ message: "Email query parameter is required" });
     }
 
     const users = await User.find({
       email: { $regex: email, $options: "i" },
-      status: "Active"
+      status: "Active",
     })
-    .select('firstName lastName email profileImage _id')
-    .limit(10)
-    .sort({ firstName: 1 });
+      .select("firstName lastName email profileImage _id")
+      .limit(10)
+      .sort({ firstName: 1 });
 
     res.status(200).json({
       message: "Users found successfully",
@@ -264,8 +262,6 @@ exports.searchUsersByEmail = async (req, res) => {
     res.status(500).json({ message: "Server error", error });
   }
 };
-
-
 
 // GET ACTIVE USERS
 exports.getActiveUsers = async (req, res) => {
@@ -309,14 +305,12 @@ exports.toggleTwoFactor = async (req, res) => {
     }
     user.twoFactorEnabled = !user.twoFactorEnabled;
     await user.save();
-    return res
-      .status(200)
-      .json({
-        message: `Two-factor authentication ${
-          user.twoFactorEnabled ? "enabled" : "disabled"
-        } successfully`,
-        twoFactorEnabled: user.twoFactorEnabled,
-      });
+    return res.status(200).json({
+      message: `Two-factor authentication ${
+        user.twoFactorEnabled ? "enabled" : "disabled"
+      } successfully`,
+      twoFactorEnabled: user.twoFactorEnabled,
+    });
   } catch (error) {
     console.error("Toggle 2FA error", error);
     return res.status(500).json({ message: "Server error" });
@@ -331,10 +325,10 @@ exports.toggleAccountStatus = async (req, res) => {
   try {
     const user = await User.findById(id);
     if (!user) return res.status(404).json({ message: "User not found" });
-    user.status = user.status ===  "Active" ? "Inactive" : "Active";
+    user.status = user.status === "Active" ? "Inactive" : "Active";
     await user.save();
     res.status(200).json({
-    status: user.status
+      status: user.status,
     });
   } catch (error) {
     console.error("Toggle error:", error);
