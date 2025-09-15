@@ -704,14 +704,14 @@ const fetchCustomers = async () => {
         totalAmount: Number(roundedAmount || 0)
       };
 
-      console.log('Frontend sending sale data:', saleData);
-      console.log('Data types:', {
-        customerId: typeof saleData.customerId,
-        itemsLength: saleData.items.length,
-        paymentMethod: typeof saleData.paymentMethod,
-        subtotal: typeof saleData.subtotal,
-        totalAmount: typeof saleData.totalAmount
-      });
+      // console.log('Frontend sending sale data:', saleData);
+      // console.log('Data types:', {
+      //   customerId: typeof saleData.customerId,
+      //   itemsLength: saleData.items.length,
+      //   paymentMethod: typeof saleData.paymentMethod,
+      //   subtotal: typeof saleData.subtotal,
+      //   totalAmount: typeof saleData.totalAmount
+      // });
 
       const token = localStorage.getItem("token");
       const response = await axios.post(`${BASE_URL}/api/pos-sales/create`, saleData, {
@@ -813,7 +813,7 @@ const fetchCustomers = async () => {
           Authorization: `Bearer ${token}`,
         },
       });
-      console.log("Fetched company profile data:", res.data);
+      // console.log("Fetched company profile data:", res.data);
       const profile = res.data.data;
       if (profile) {
         setCompanyData({
@@ -850,7 +850,7 @@ const fetchCustomers = async () => {
         try {
             const qrCodeString = await QRCode.toDataURL(JSON.stringify(paymentData));
             // You can then display this qrCodeString (Data URL) in an <img> tag or save it as an image.
-            console.log(qrCodeString);
+            // console.log(qrCodeString);
         } catch (err) {
             console.error(err);
         }

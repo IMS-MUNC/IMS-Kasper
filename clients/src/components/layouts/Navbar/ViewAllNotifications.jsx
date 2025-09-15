@@ -195,7 +195,7 @@ const ViewAllNotifications = () => {
     }
 
     // Validate that all selected notifications exist in the current notifications list
-    const validSelectedIds = selectedNotifications.filter(id => 
+    const validSelectedIds = selectedNotifications.filter(id =>
       notifications.some(notification => notification._id === id)
     );
 
@@ -216,10 +216,10 @@ const ViewAllNotifications = () => {
       console.log('Deleting selected notifications:', validSelectedIds);
       console.log('User ID:', userId);
       const token = getToken();
-      
+
       const requestData = { userId, notificationIds: validSelectedIds };
       console.log('Request data:', requestData);
-      
+
       const response = await axios.delete(
         `${BASE_URL}/api/notifications/bulk-delete`,
         {
@@ -278,223 +278,233 @@ const ViewAllNotifications = () => {
   }, [userId]);
 
   return (
-    <div className='page-wrapper' 
+    <div className='page-wrapper'
     // style={{ padding: '0px 20px', height: '88vh' }}
     >
-   <div className="content">
-       <style>
-        {`
+      <div className="content">
+        <style>
+          {`
           @keyframes spin {
             0% { transform: rotate(0deg); }
             100% { transform: rotate(360deg); }
           }
         `}
-      </style>
+        </style>
 
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-        <div>
-          <span style={{ fontSize: '22px', fontWeight: '700' }}>All Notifications</span>
-          <br />
-        </div>
-        {notifications.length > 0 && (
-          <div style={{ display: 'flex', gap: '10px' }}>
-            {unreadCount > 0 && (
-              <button
-                onClick={markAllAsRead}
-                style={{
-                  background: 'white',
-                  color: '#1368EC',
-                  border: 'none',
-                  padding: '8px 16px',
-                  borderRadius: '6px',
-                  fontSize: '14px',
-                  fontWeight: '500',
-                  cursor: 'pointer',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '8px'
-                }}
-              >
-                <FaCheckDouble />
-                Mark All as Read
-              </button>
-            )}
-            {selectedNotifications.length === 0 && (
-              <button
-                onClick={() => setDeleteConfirm({ type: 'all' })}
-                style={{
-                  background: 'white',
-                  color: '#dc3545',
-                  border: 'none',
-                  padding: '8px 16px',
-                  borderRadius: '6px',
-                  fontSize: '14px',
-                  fontWeight: '500',
-                  cursor: 'pointer',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '8px'
-                }}
-              >
-                <FaTrash />
-                Delete All
-              </button>
-            )}
-            {selectedNotifications.length > 0 && (
-              <button
-                onClick={() => setDeleteConfirm({ type: 'selected' })}
-                style={{
-                  background: 'white',
-                  color: '#dc3545',
-                  border: 'none',
-                  padding: '8px 16px',
-                  borderRadius: '6px',
-                  fontSize: '14px',
-                  fontWeight: '500',
-                  cursor: 'pointer',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '8px'
-                }}
-              >
-                <FaTrash />
-                Delete Selected ({selectedNotifications.length})
-              </button>
-            )}
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+          <div>
+            <span style={{ fontSize: '22px', fontWeight: '700' }}>All Notifications</span>
+            <br />
           </div>
-        )}
-      </div>
-
-      <div style={{ marginTop: '5px', overflowY: 'auto', height: '80vh', borderRadius: '8px', backgroundColor: 'white' }}>
-        {!user ? (
-          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '60px 20px', textAlign: 'center', color: '#6c757d' }}>
-            <FaBell style={{ fontSize: '48px', color: '#dee2e6', marginBottom: '16px' }} />
-            <h3 style={{ margin: '0 0 8px 0', fontSize: '20px', fontWeight: '600', color: '#495057' }}>Please log in</h3>
-            <p style={{ margin: 0, fontSize: '14px', color: '#6c757d' }}>Please log in to view notifications</p>
-          </div>
-        ) : loading ? (
-          <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', padding: '40px' }}>
-            <div style={{ textAlign: 'center' }}>
-              <div style={{ width: '40px', height: '40px', border: '4px solid #f3f3f3', borderTop: '4px solid #667eea', borderRadius: '50%', animation: 'spin 1s linear infinite', margin: '0 auto 16px' }}></div>
-              <p style={{ color: '#6c757d' }}>Loading notifications...</p>
-            </div>
-          </div>
-        ) : error ? (
-          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '60px 20px', textAlign: 'center', color: '#6c757d' }}>
-            <FaBell style={{ fontSize: '48px', color: '#dee2e6', marginBottom: '16px' }} />
-            <h3 style={{ margin: '0 0 8px 0', fontSize: '20px', fontWeight: '600', color: '#495057' }}>Error loading notifications</h3>
-            <p style={{ margin: 0, fontSize: '14px', color: '#6c757d' }}>{error}</p>
-            <button
-              onClick={() => fetchNotifications()}
-              style={{
-                marginTop: '16px',
-                background: '#667eea',
-                color: 'white',
-                border: 'none',
-                padding: '8px 16px',
-                borderRadius: '6px',
-                fontSize: '14px',
-                fontWeight: '500',
-                cursor: 'pointer'
-              }}
-            >
-              Try Again
-            </button>
-          </div>
-        ) : notifications.length === 0 ? (
-          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '60px 20px', textAlign: 'center', color: '#6c757d' }}>
-            <FaBell style={{ fontSize: '48px', color: '#dee2e6', marginBottom: '16px' }} />
-            <h3 style={{ margin: '0 0 8px 0', fontSize: '20px', fontWeight: '600', color: '#495057' }}>No notifications</h3>
-            <p style={{ margin: 0, fontSize: '14px', color: '#6c757d' }}>You're all caught up! No new notifications.</p>
-          </div>
-        ) : (
-          <>
-            {notifications.map((notification) => (
-              <div key={notification._id} className='notification-items notification-hover-group'>
-                <input
-                  type="checkbox"
-                  checked={selectedNotifications.includes(notification._id)}
-                  onChange={() => handleCheckboxChange(notification._id)}
-                  style={{ marginRight: '12px', verticalAlign: 'middle' }}
-                />
-                <div>
-                  {notification.sender?.profileImage ? (
-                    Array.isArray(notification.sender.profileImage) && notification.sender.profileImage.length > 0 ? (
-                      <img
-                        src={notification.sender.profileImage[0].url}
-                        alt="Sender"
-                        style={{ width: '50px', height: '50px', borderRadius: '50%', objectFit: 'cover' }}
-                        onError={(e) => {
-                          e.target.style.display = 'none';
-                          e.target.nextSibling.style.display = 'flex';
-                        }}
-                      />
-                    ) : typeof notification.sender.profileImage === 'string' ? (
-                      <img
-                        src={notification.sender.profileImage}
-                        alt="Sender"
-                        style={{ width: '50px', height: '50px', borderRadius: '50%', objectFit: 'cover' }}
-                        onError={(e) => {
-                          e.target.style.display = 'none';
-                          e.target.nextSibling.style.display = 'flex';
-                        }}
-                      />
-                    ) : null
-                  ) : null}
-                  <div style={{
-                    width: '50px',
-                    height: '50px',
-                    borderRadius: '50%',
-                    backgroundColor: '#007AFF',
-                    display: (notification.sender?.profileImage &&
-                      ((Array.isArray(notification.sender.profileImage) && notification.sender.profileImage.length > 0) ||
-                        typeof notification.sender.profileImage === 'string')) ? 'none' : 'flex',
+          {notifications.length > 0 && (
+            <div style={{ display: 'flex', gap: '10px' }}>
+              {unreadCount > 0 && (
+                <button
+                  onClick={markAllAsRead}
+                  style={{
+                    background: 'white',
+                    color: '#1368EC',
+                    border: 'none',
+                    padding: '8px 16px',
+                    borderRadius: '6px',
+                    fontSize: '14px',
+                    fontWeight: '500',
+                    cursor: 'pointer',
+                    display: 'flex',
                     alignItems: 'center',
-                    justifyContent: 'center',
-                    color: 'white',
-                    fontSize: '16px',
-                    fontWeight: '600'
-                  }}>
-                    {notification.sender?.firstName?.slice(0, 2).toUpperCase() || 'NA'}
-                  </div>
-                </div>
-                <div style={{ flex: 1 }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                    <div>
-                      <span style={{ fontWeight: '600', color: 'black' }}>
-                        {notification.sender?.firstName} {notification.sender?.lastName}
-                      </span>
-                      <br />
-                      <span style={{ fontWeight: '400', color: '#6c757d' }}>
-                        {notification.message}
-                      </span>
+                    gap: '8px'
+                  }}
+                >
+                  <FaCheckDouble />
+                  Mark All as Read
+                </button>
+              )}
+              {selectedNotifications.length === 0 && (
+                <button
+                  onClick={() => setDeleteConfirm({ type: 'all' })}
+                  style={{
+                    background: 'white',
+                    color: '#dc3545',
+                    border: 'none',
+                    padding: '8px 16px',
+                    borderRadius: '6px',
+                    fontSize: '14px',
+                    fontWeight: '500',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '8px'
+                  }}
+                >
+                  <FaTrash />
+                  Delete All
+                </button>
+              )}
+              {selectedNotifications.length > 0 && (
+                <button
+                  onClick={() => setDeleteConfirm({ type: 'selected' })}
+                  style={{
+                    background: 'white',
+                    color: '#dc3545',
+                    border: 'none',
+                    padding: '8px 16px',
+                    borderRadius: '6px',
+                    fontSize: '14px',
+                    fontWeight: '500',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '8px'
+                  }}
+                >
+                  <FaTrash />
+                  Delete Selected ({selectedNotifications.length})
+                </button>
+              )}
+            </div>
+          )}
+        </div>
+
+        <div style={{ marginTop: '5px', overflowY: 'auto', height: '80vh', borderRadius: '8px', backgroundColor: 'white' }}>
+          {!user ? (
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '60px 20px', textAlign: 'center', color: '#6c757d' }}>
+              <FaBell style={{ fontSize: '48px', color: '#dee2e6', marginBottom: '16px' }} />
+              <h3 style={{ margin: '0 0 8px 0', fontSize: '20px', fontWeight: '600', color: '#495057' }}>Please log in</h3>
+              <p style={{ margin: 0, fontSize: '14px', color: '#6c757d' }}>Please log in to view notifications</p>
+            </div>
+          ) : loading ? (
+            <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', padding: '40px' }}>
+              <div style={{ textAlign: 'center' }}>
+                <div style={{ width: '40px', height: '40px', border: '4px solid #f3f3f3', borderTop: '4px solid #667eea', borderRadius: '50%', animation: 'spin 1s linear infinite', margin: '0 auto 16px' }}></div>
+                <p style={{ color: '#6c757d' }}>Loading notifications...</p>
+              </div>
+            </div>
+          ) : error ? (
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '60px 20px', textAlign: 'center', color: '#6c757d' }}>
+              <FaBell style={{ fontSize: '48px', color: '#dee2e6', marginBottom: '16px' }} />
+              <h3 style={{ margin: '0 0 8px 0', fontSize: '20px', fontWeight: '600', color: '#495057' }}>Error loading notifications</h3>
+              <p style={{ margin: 0, fontSize: '14px', color: '#6c757d' }}>{error}</p>
+              <button
+                onClick={() => fetchNotifications()}
+                style={{
+                  marginTop: '16px',
+                  background: '#667eea',
+                  color: 'white',
+                  border: 'none',
+                  padding: '8px 16px',
+                  borderRadius: '6px',
+                  fontSize: '14px',
+                  fontWeight: '500',
+                  cursor: 'pointer'
+                }}
+              >
+                Try Again
+              </button>
+            </div>
+          ) : notifications.length === 0 ? (
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '60px 20px', textAlign: 'center', color: '#6c757d' }}>
+              <FaBell style={{ fontSize: '48px', color: '#dee2e6', marginBottom: '16px' }} />
+              <h3 style={{ margin: '0 0 8px 0', fontSize: '20px', fontWeight: '600', color: '#495057' }}>No notifications</h3>
+              <p style={{ margin: 0, fontSize: '14px', color: '#6c757d' }}>You're all caught up! No new notifications.</p>
+            </div>
+          ) : (
+            <>
+              {notifications.map((notification) => (
+                <div key={notification._id} className='notification-items notification-hover-group'>
+                  <input
+                    type="checkbox"
+                    checked={selectedNotifications.includes(notification._id)}
+                    onChange={() => handleCheckboxChange(notification._id)}
+                    style={{ marginRight: '12px', verticalAlign: 'middle' }}
+                  />
+                  <div>
+                    {notification.sender?.profileImage?.url ? (
+                      <img
+                        src={notification.sender.profileImage.url}
+                        alt="Sender"
+                        style={{ width: '50px', height: '50px', borderRadius: '50%', objectFit: 'cover' }}
+                        onError={(e) => {
+                          e.target.style.display = 'none';
+                          e.target.nextSibling.style.display = 'flex';
+                        }}
+                      />
+                    ) : null}
+                    <div
+                      style={{
+                        width: '50px',
+                        height: '50px',
+                        borderRadius: '50%',
+                        backgroundColor: '#007AFF',
+                        display: notification.sender?.profileImage?.url ? 'none' : 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        color: 'white',
+                        fontSize: '16px',
+                        fontWeight: '600',
+                      }}
+                    >
+                      {notification.sender?.firstName?.slice(0, 2).toUpperCase() || 'NA'}
                     </div>
                   </div>
-                </div>
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '10px' }}>
-                  <div className='notification-default-info'>
-                    <span style={{ fontWeight: '400', color: '#6c757d' }}>
-                      {formatTimestamp(notification.timestamp)}
-                    </span>
-                    {!notification.read && (
-                      <span style={{
-                        color: 'white',
-                        fontSize: '10px',
-                        marginTop: '8px',
-                        width: '8px',
-                        height: '8px',
-                        marginLeft: '8px',
-                        backgroundColor: '#FFD700',
-                        borderRadius: '50%',
-                        border: '1px solid white',
-                        boxShadow: '0 0 4px rgba(0,0,0,0.2)',
-                        display: 'inline-block',
-                        verticalAlign: 'middle',
-                      }}></span>
-                    )}
+                  <div style={{ flex: 1 }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                      <div>
+                        <span style={{ fontWeight: '600', color: 'black' }}>
+                          {notification.sender?.firstName} {notification.sender?.lastName}
+                        </span>
+                        <br />
+                        <span style={{ fontWeight: '400', color: '#6c757d' }}>
+                          {notification.message}
+                        </span>
+                      </div>
+                    </div>
                   </div>
-                  <div className='notification-hover-actions'>
-                    {!notification.read && (
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '10px' }}>
+                    <div className='notification-default-info'>
+                      <span style={{ fontWeight: '400', color: '#6c757d' }}>
+                        {formatTimestamp(notification.timestamp)}
+                      </span>
+                      {!notification.read && (
+                        <span style={{
+                          color: 'white',
+                          fontSize: '10px',
+                          marginTop: '8px',
+                          width: '8px',
+                          height: '8px',
+                          marginLeft: '8px',
+                          backgroundColor: '#FFD700',
+                          borderRadius: '50%',
+                          border: '1px solid white',
+                          boxShadow: '0 0 4px rgba(0,0,0,0.2)',
+                          display: 'inline-block',
+                          verticalAlign: 'middle',
+                        }}></span>
+                      )}
+                    </div>
+                    <div className='notification-hover-actions'>
+                      {!notification.read && (
+                        <button
+                          style={{
+                            width: '32px',
+                            height: '32px',
+                            border: 'none',
+                            borderRadius: '6px',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            cursor: 'pointer',
+                            background: '#FBFBFB',
+                            color: '#1368EC',
+                            fontSize: '15px',
+                            transition: 'all 0.3s ease'
+                          }}
+                          className='notification-action-btn mark-read'
+                          onClick={() => markAsRead(notification._id)}
+                          title="Mark as read"
+                        >
+                          <FaCheck />
+                        </button>
+                      )}
                       <button
                         style={{
                           width: '32px',
@@ -506,183 +516,161 @@ const ViewAllNotifications = () => {
                           justifyContent: 'center',
                           cursor: 'pointer',
                           background: '#FBFBFB',
-                          color: '#1368EC',
+                          color: '#dc3545',
                           fontSize: '15px',
                           transition: 'all 0.3s ease'
                         }}
-                        className='notification-action-btn mark-read'
-                        onClick={() => markAsRead(notification._id)}
-                        title="Mark as read"
+                        className='notification-action-btn delete'
+                        onClick={() => setDeleteConfirm({ notificationId: notification._id })}
+                        title="Delete notification"
                       >
-                        <FaCheck />
+                        <FaTrash />
                       </button>
-                    )}
-                    <button
-                      style={{
-                        width: '32px',
-                        height: '32px',
-                        border: 'none',
-                        borderRadius: '6px',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        cursor: 'pointer',
-                        background: '#FBFBFB',
-                        color: '#dc3545',
-                        fontSize: '15px',
-                        transition: 'all 0.3s ease'
-                      }}
-                      className='notification-action-btn delete'
-                      onClick={() => setDeleteConfirm({ notificationId: notification._id })}
-                      title="Delete notification"
-                    >
-                      <FaTrash />
-                    </button>
+                    </div>
                   </div>
                 </div>
-              </div>
-            ))}
-            {totalPages > 1 && (
-              <div style={{
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: '16px',
-                padding: '20px 0',
-                borderTop: '1px solid #f1f3f4',
-                marginTop: '20px'
-              }}>
-                <button
-                  style={{
-                    background: currentPage === 1 ? '#6c757d' : '#667eea',
-                    color: 'white',
-                    border: 'none',
-                    padding: '8px 16px',
-                    borderRadius: '6px',
-                    fontSize: '14px',
-                    fontWeight: '500',
-                    cursor: currentPage === 1 ? 'not-allowed' : 'pointer',
-                    opacity: currentPage === 1 ? 0.6 : 1
-                  }}
-                  disabled={currentPage === 1}
-                  onClick={() => fetchNotifications(currentPage - 1)}
-                >
-                  Previous
-                </button>
-                <span style={{ fontSize: '14px', color: '#6c757d', fontWeight: '500' }}>
-                  Page {currentPage} of {totalPages}
-                </span>
-                <button
-                  style={{
-                    background: currentPage === totalPages ? '#6c757d' : '#667eea',
-                    color: 'white',
-                    border: 'none',
-                    padding: '8px 16px',
-                    borderRadius: '6px',
-                    fontSize: '14px',
-                    fontWeight: '500',
-                    cursor: currentPage === totalPages ? 'not-allowed' : 'pointer',
-                    opacity: currentPage === totalPages ? 0.6 : 1
-                  }}
-                  disabled={currentPage === totalPages}
-                  onClick={() => fetchNotifications(currentPage + 1)}
-                >
-                  Next
-                </button>
-              </div>
-            )}
-          </>
-        )}
-      </div>
+              ))}
+              {totalPages > 1 && (
+                <div style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '16px',
+                  padding: '20px 0',
+                  borderTop: '1px solid #f1f3f4',
+                  marginTop: '20px'
+                }}>
+                  <button
+                    style={{
+                      background: currentPage === 1 ? '#6c757d' : '#667eea',
+                      color: 'white',
+                      border: 'none',
+                      padding: '8px 16px',
+                      borderRadius: '6px',
+                      fontSize: '14px',
+                      fontWeight: '500',
+                      cursor: currentPage === 1 ? 'not-allowed' : 'pointer',
+                      opacity: currentPage === 1 ? 0.6 : 1
+                    }}
+                    disabled={currentPage === 1}
+                    onClick={() => fetchNotifications(currentPage - 1)}
+                  >
+                    Previous
+                  </button>
+                  <span style={{ fontSize: '14px', color: '#6c757d', fontWeight: '500' }}>
+                    Page {currentPage} of {totalPages}
+                  </span>
+                  <button
+                    style={{
+                      background: currentPage === totalPages ? '#6c757d' : '#667eea',
+                      color: 'white',
+                      border: 'none',
+                      padding: '8px 16px',
+                      borderRadius: '6px',
+                      fontSize: '14px',
+                      fontWeight: '500',
+                      cursor: currentPage === totalPages ? 'not-allowed' : 'pointer',
+                      opacity: currentPage === totalPages ? 0.6 : 1
+                    }}
+                    disabled={currentPage === totalPages}
+                    onClick={() => fetchNotifications(currentPage + 1)}
+                  >
+                    Next
+                  </button>
+                </div>
+              )}
+            </>
+          )}
+        </div>
 
-      {deleteConfirm && (
-        <div
-          style={{
-            position: 'fixed',
-            top: 0,
-            left: 0,
-            width: '100%',
-            height: '100%',
-            background: 'rgba(0,0,0,0.5)',
-            display: 'flex',
-            justifyContent: 'center',
-            alignItems: 'center',
-            zIndex: 1000,
-          }}
-        >
+        {deleteConfirm && (
           <div
             style={{
-              background: 'white',
-              padding: '20px',
-              borderRadius: '8px',
-              boxShadow: '0 4px 15px rgba(0,0,0,0.2)',
-              textAlign: 'center',
-              width: '300px',
+              position: 'fixed',
+              top: 0,
+              left: 0,
+              width: '100%',
+              height: '100%',
+              background: 'rgba(0,0,0,0.5)',
+              display: 'flex',
+              justifyContent: 'center',
+              alignItems: 'center',
+              zIndex: 1000,
             }}
           >
-            <FaExclamationTriangle style={{ fontSize: '40px', color: '#dc3545', marginBottom: '10px' }} />
-            <h3 style={{ marginBottom: '10px', color: '#343a40' }}>
-              {deleteConfirm.type === 'all'
-                ? 'Confirm Delete All'
-                : deleteConfirm.type === 'selected'
-                  ? 'Confirm Delete Selected'
-                  : 'Confirm Deletion'}
-            </h3>
-            <p style={{ marginBottom: '20px', color: '#6c757d' }}>
-              {deleteConfirm.type === 'all'
-                ? 'Are you sure you want to delete all notifications? This action cannot be undone.'
-                : deleteConfirm.type === 'selected'
-                  ? 'Are you sure you want to delete selected notifications? This action cannot be undone.'
-                  : 'Are you sure you want to delete this notification? This action cannot be undone.'}
-            </p>
-            <div style={{ display: 'flex', justifyContent: 'space-around' }}>
-              <button
-                style={{
-                  background: '#dc3545',
-                  color: 'white',
-                  border: 'none',
-                  padding: '8px 16px',
-                  borderRadius: '6px',
-                  fontSize: '14px',
-                  fontWeight: '500',
-                  cursor: 'pointer',
-                }}
-                onClick={() => {
-                  if (deleteConfirm.type === 'all') {
-                    deleteAllNotifications();
-                  } else if (deleteConfirm.type === 'selected') {
-                    deleteSelectedNotifications();
-                  } else {
-                    deleteNotification(deleteConfirm.notificationId);
-                  }
-                }}
-              >
+            <div
+              style={{
+                background: 'white',
+                padding: '20px',
+                borderRadius: '8px',
+                boxShadow: '0 4px 15px rgba(0,0,0,0.2)',
+                textAlign: 'center',
+                width: '300px',
+              }}
+            >
+              <FaExclamationTriangle style={{ fontSize: '40px', color: '#dc3545', marginBottom: '10px' }} />
+              <h3 style={{ marginBottom: '10px', color: '#343a40' }}>
                 {deleteConfirm.type === 'all'
-                  ? 'Delete All'
+                  ? 'Confirm Delete All'
                   : deleteConfirm.type === 'selected'
-                    ? 'Delete Selected'
-                    : 'Delete'}
-              </button>
-              <button
-                style={{
-                  background: '#6c757d',
-                  color: 'white',
-                  border: 'none',
-                  padding: '8px 16px',
-                  borderRadius: '6px',
-                  fontSize: '14px',
-                  fontWeight: '500',
-                  cursor: 'pointer',
-                }}
-                onClick={() => setDeleteConfirm(null)}
-              >
-                Cancel
-              </button>
+                    ? 'Confirm Delete Selected'
+                    : 'Confirm Deletion'}
+              </h3>
+              <p style={{ marginBottom: '20px', color: '#6c757d' }}>
+                {deleteConfirm.type === 'all'
+                  ? 'Are you sure you want to delete all notifications? This action cannot be undone.'
+                  : deleteConfirm.type === 'selected'
+                    ? 'Are you sure you want to delete selected notifications? This action cannot be undone.'
+                    : 'Are you sure you want to delete this notification? This action cannot be undone.'}
+              </p>
+              <div style={{ display: 'flex', justifyContent: 'space-around' }}>
+                <button
+                  style={{
+                    background: '#dc3545',
+                    color: 'white',
+                    border: 'none',
+                    padding: '8px 16px',
+                    borderRadius: '6px',
+                    fontSize: '14px',
+                    fontWeight: '500',
+                    cursor: 'pointer',
+                  }}
+                  onClick={() => {
+                    if (deleteConfirm.type === 'all') {
+                      deleteAllNotifications();
+                    } else if (deleteConfirm.type === 'selected') {
+                      deleteSelectedNotifications();
+                    } else {
+                      deleteNotification(deleteConfirm.notificationId);
+                    }
+                  }}
+                >
+                  {deleteConfirm.type === 'all'
+                    ? 'Delete All'
+                    : deleteConfirm.type === 'selected'
+                      ? 'Delete Selected'
+                      : 'Delete'}
+                </button>
+                <button
+                  style={{
+                    background: '#6c757d',
+                    color: 'white',
+                    border: 'none',
+                    padding: '8px 16px',
+                    borderRadius: '6px',
+                    fontSize: '14px',
+                    fontWeight: '500',
+                    cursor: 'pointer',
+                  }}
+                  onClick={() => setDeleteConfirm(null)}
+                >
+                  Cancel
+                </button>
+              </div>
             </div>
           </div>
-        </div>
-      )}
-   </div>
+        )}
+      </div>
     </div>
   );
 };
