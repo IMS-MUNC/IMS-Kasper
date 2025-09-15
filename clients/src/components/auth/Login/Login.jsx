@@ -206,7 +206,7 @@ const logDeviceSession = (userId) => {
 
                 <div className="login-userheading">
                   <h3>Sign In</h3>
-                  <h4 className="fs-16">Access the Dreamspos panel using your email and passcode.</h4>
+                  <h4 className="fs-16">Access the munches panel using your email and passcode.</h4>
                 </div>
 
                 {/* Email */}
