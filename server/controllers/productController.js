@@ -1,5 +1,3 @@
-
-
 const Product = require("../models/productModels");
 const cloudinary = require("../utils/cloudinary/cloudinary");
 const multer = require("multer");
@@ -425,6 +423,7 @@ exports.getProductStock = async (req, res) => {
 // };
 
 // GET /api/products/purchase-return-stock
+
 exports.getPurchaseReturnStock = async (req, res) => {
   try {
     const products = await Product.find()
@@ -489,61 +488,161 @@ exports.getProductById = async (req, res) => {
 };
 
 // Update Product
+// exports.updateProduct = async (req, res) => {
+//   try {
+//     // Build update object only with present fields
+//     const updateObj = {};
+//     // Accept both subcategory and subCategory, but only if defined and not empty
+//     // Only set subcategory if it looks like a valid ObjectId (24 hex chars)
+//     const isValidObjectId = (val) => typeof val === 'string' && /^[a-fA-F0-9]{24}$/.test(val);
+//     console.log('REQ BODY subcategory:', req.body.subcategory, 'subCategory:', req.body.subCategory);
+//     if (isValidObjectId(req.body.subcategory)) {
+//       updateObj.subcategory = req.body.subcategory;
+//       console.log('UPDATE OBJ subcategory set to:', req.body.subcategory);
+//     } else if (isValidObjectId(req.body.subCategory)) {
+//       updateObj.subcategory = req.body.subCategory;
+//       console.log('UPDATE OBJ subcategory set to:', req.body.subCategory);
+//     } else {
+//       console.log('UPDATE OBJ subcategory NOT SET');
+//     }
+//     // Parse variants if sent as string
+//     if (req.body.variants) {
+//       try {
+//         updateObj.variants = typeof req.body.variants === 'string' ? JSON.parse(req.body.variants) : req.body.variants;
+//       } catch (e) {
+//         updateObj.variants = req.body.variants;
+//       }
+//     }
+//     // Handle images if uploaded
+//     let images = [];
+//     if (req.files && req.files.length > 0) {
+//       const imageUploadPromises = req.files.map((file) =>
+//         cloudinary.uploader.upload(file.path, { folder: "product_images" })
+//       );
+//       const uploadedImages = await Promise.all(imageUploadPromises);
+//       images = uploadedImages.map((img) => ({ url: img.secure_url, public_id: img.public_id }));
+//       updateObj.images = images;
+//     }
+//     // Add all other fields if present
+//     [
+//       "productName", "sku", "brand", "category", "supplier", "itemBarcode", "store", "warehouse", "purchasePrice", "sellingPrice", "wholesalePrice", "retailPrice", "quantity", "unit", "taxType", "tax", "discountType", "discountValue", "quantityAlert", "description", "seoTitle", "seoDescription", "itemType", "isAdvanced", "trackType", "isReturnable", "leadTime", "reorderLevel", "initialStock", "serialNumber", "batchNumber", "returnable", "expirationDate", "hsn"
+//     ].forEach((field) => {
+//       if (typeof req.body[field] !== 'undefined') updateObj[field] = req.body[field];
+//     });
+
+//     const updatedProduct = await Product.findByIdAndUpdate(
+//       req.params.id,
+//       updateObj,
+//       { new: true }
+//     );
+//     if (!updatedProduct)
+//       return res.status(404).json({ message: "Product not found" });
+//     res.status(200).json(updatedProduct);
+//   } catch (err) {
+//     res.status(400).json({ message: err.message });
+//   }
+// };
+
 exports.updateProduct = async (req, res) => {
   try {
-    // Build update object only with present fields
-    const updateObj = {};
-    // Accept both subcategory and subCategory, but only if defined and not empty
-    // Only set subcategory if it looks like a valid ObjectId (24 hex chars)
-    const isValidObjectId = (val) => typeof val === 'string' && /^[a-fA-F0-9]{24}$/.test(val);
-    console.log('REQ BODY subcategory:', req.body.subcategory, 'subCategory:', req.body.subCategory);
-    if (isValidObjectId(req.body.subcategory)) {
-      updateObj.subcategory = req.body.subcategory;
-      console.log('UPDATE OBJ subcategory set to:', req.body.subcategory);
-    } else if (isValidObjectId(req.body.subCategory)) {
-      updateObj.subcategory = req.body.subCategory;
-      console.log('UPDATE OBJ subcategory set to:', req.body.subCategory);
-    } else {
-      console.log('UPDATE OBJ subcategory NOT SET');
-    }
-    // Parse variants if sent as string
-    if (req.body.variants) {
-      try {
-        updateObj.variants = typeof req.body.variants === 'string' ? JSON.parse(req.body.variants) : req.body.variants;
-      } catch (e) {
-        updateObj.variants = req.body.variants;
-      }
-    }
-    // Handle images if uploaded
-    let images = [];
+    const {
+      productName,
+      sku,
+      brand,
+      category,
+      subcategory,
+      supplier,
+      itemBarcode,
+      store,
+      warehouse,
+      purchasePrice,
+      sellingPrice,
+      wholesalePrice,
+      retailPrice,
+      quantity,
+      unit,
+      taxType,
+      tax,
+      discountType,
+      discountValue,
+      quantityAlert,
+      description,
+      seoTitle,
+      seoDescription,
+      hsn,
+      variants: variantsString
+    } = req.body;
+
+ // Parse variants if sent as JSON string
+    const variants = variantsString ? JSON.parse(variantsString) : {};
+
+    // Upload new images if provided
+    let newImages = [];
     if (req.files && req.files.length > 0) {
-      const imageUploadPromises = req.files.map((file) =>
-        cloudinary.uploader.upload(file.path, { folder: "product_images" })
+      const uploadedImages = await Promise.all(
+        req.files.map(file => cloudinary.uploader.upload(file.path, { folder: "product_images" }))
       );
-      const uploadedImages = await Promise.all(imageUploadPromises);
-      images = uploadedImages.map((img) => ({ url: img.secure_url, public_id: img.public_id }));
-      updateObj.images = images;
+      newImages = uploadedImages.map(img => ({ url: img.secure_url, public_id: img.public_id }));
     }
-    // Add all other fields if present
-    [
-      "productName", "sku", "brand", "category", "supplier", "itemBarcode", "store", "warehouse", "purchasePrice", "sellingPrice", "wholesalePrice", "retailPrice", "quantity", "unit", "taxType", "tax", "discountType", "discountValue", "quantityAlert", "description", "seoTitle", "seoDescription", "itemType", "isAdvanced", "trackType", "isReturnable", "leadTime", "reorderLevel", "initialStock", "serialNumber", "batchNumber", "returnable", "expirationDate", "hsn"
-    ].forEach((field) => {
-      if (typeof req.body[field] !== 'undefined') updateObj[field] = req.body[field];
-    });
+
+    // Merge existing images from frontend
+    let existingImages = [];
+    if (req.body.existingImages) {
+  const parsed = JSON.parse(req.body.existingImages);
+
+  // Make sure each item is an object with url & public_id
+  existingImages = parsed.map(img => {
+    if (typeof img === "string") {
+      return { url: img, public_id: "" }; // no public_id if not sent
+    } else {
+      return img;
+    }
+  });
+}
+
+    const allImages = [...existingImages, ...newImages];
+    
 
     const updatedProduct = await Product.findByIdAndUpdate(
       req.params.id,
-      updateObj,
+      {
+       ...req.body,
+       images: allImages,
+       variants
+      },
       { new: true }
     );
+
     if (!updatedProduct)
       return res.status(404).json({ message: "Product not found" });
+
     res.status(200).json(updatedProduct);
   } catch (err) {
     res.status(400).json({ message: err.message });
   }
 };
+exports.deleteProductImage = async(req, res) => {
+  try {
+    const {id} = req.params;
+    const {public_id} = req.body;
+    if(!public_id) return res.status(400).json({message:"public_id is required"})
+      // delete from cloudinary
+    await cloudinary.uploader.destroy(public_id)
+    // remove from mongodb
+    const updatedProduct = await Product.findByIdAndUpdate(
+      id,
+      {$pull:{images:{public_id}}},
+      {new: true}
+    );
+    if (!updatedProduct) return res.status(404).json({ message: "Product not found" });
 
+    res.status(200).json({ message: "Image deleted", images: updatedProduct.images });
+  }
+  catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+
+}
 // Delete Product
 exports.deleteProduct = async (req, res) => {
   try {

@@ -419,7 +419,7 @@ function Navbar() {
 
           {/* Email */}
           <li className="nav-item nav-item-box">
-            <Link to="/mail" className='position-relative'>
+            <Link to="/mail/inbox" className='position-relative'>
                   <TbMail />
                   {inboxCount > 0 && (
                     <span className="badge rounded-pill">{inboxCount}</span>
@@ -456,13 +456,13 @@ function Navbar() {
             </div>
           </li>
           {/* Settings */}
-          {/* <li className="nav-item nav-item-box">
+          <li className="nav-item nav-item-box">
             <Link to={`profile/${id}`}><TbSettings className="ti" /></Link>
-          </li> */}
-          {/* Settings */}
-                  <li className="nav-item nav-item-box">
-            <Link to="/general-settings"><TbSettings className="ti" /></Link>
           </li>
+          {/* Settings */}
+                  {/* <li className="nav-item nav-item-box">
+            <Link to="/general-settings"><TbSettings className="ti" /></Link>
+          </li> */}
 
           {/* Profile */}
           {userData ? (
