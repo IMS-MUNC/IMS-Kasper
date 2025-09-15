@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import Popup from './popup';
+// import Popup from './popup';
 import { FaSearch, FaArrowRight } from 'react-icons/fa';
 import { MdArrowForwardIos } from 'react-icons/md';
 import { RiArrowUpDownLine } from 'react-icons/ri';

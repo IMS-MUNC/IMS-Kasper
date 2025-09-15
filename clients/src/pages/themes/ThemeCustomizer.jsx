@@ -12,7 +12,7 @@ import ThemeColorPicker from './colorPicker/ThemeColorPicker';
 import { IoIosCloseCircleOutline } from 'react-icons/io';
 import Default from '../../assets/img/theme/icon/default.svg';
 import Mini from '../../assets/img/theme/icon/mini.svg';
-import TwoColumn from '../../assets/img/theme/icon/two-Column.svg';
+// import TwoColumn from '../../assets/img/theme/icon/two-Column.svg';
 import Horizontal from '../../assets/img/theme/icon/horizontal.svg';
 import Detached from '../../assets/img/theme/icon/detached.svg';
 import RTL from '../../assets/img/theme/icon/rtl.svg';

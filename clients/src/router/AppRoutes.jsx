@@ -69,7 +69,7 @@ import Hsn from "../components/features/inventory/hsn/Hsn.jsx";
 import Warehouse from "../components/features/warehouse/Warehouse.jsx";
 import RackSettings from "../settings/warehouse/RackSettings.jsx";
 import SidebarSettings from "../settings/sidebar/SidebarSettings.jsx";
-import Variant from "../components/features/variant/Variant.JSX";
+import Variant from "../components/features/variant/varient.jsx";
 import AdminDashboard from "../components/Dashboard/Admin/AdminDashboard.jsx";
 import ThemeCustomizer from "../pages/themes/ThemeCustomizer.jsx";
 import LanguageSwitcher from "../utils/LanguageSwitch/LanguageSwitcher.jsx";

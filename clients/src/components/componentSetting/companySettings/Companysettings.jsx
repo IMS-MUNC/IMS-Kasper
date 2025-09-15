@@ -1,7 +1,7 @@
 //
 import React, { useRef, useState, useEffect } from "react";
 import { BiBuilding } from "react-icons/bi";
-import company_icon from "../../../assets/images/upload.webP";
+// import company_icon from "../../../assets/images/upload.webP";
 import { HiOutlineUpload } from "react-icons/hi";
 import { RxCross2 } from "react-icons/rx";
 import "./Compansettings.css";

@@ -1,4 +1,4 @@
-const Warranty = require("../models/VariantModel");
+const Warranty = require("../models/variantModel");
 
 const createVariant = async (req, res) => {
     try {

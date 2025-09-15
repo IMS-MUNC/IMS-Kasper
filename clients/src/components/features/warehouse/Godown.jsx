@@ -12,7 +12,7 @@ import { IoSearch } from "react-icons/io5";
 
 import { RiArrowUpDownLine } from "react-icons/ri";
 // import "./Godown.css";
-import Popup from "./popup";
+// import Popup from "./popup";
 import { Link, useParams } from "react-router-dom";
 
 import BASE_URL from "../../../pages/config/config";

@@ -115,7 +115,7 @@ import { setThemeColor, restoreThemeColor } from '../../../utils/setThemeColor';
 import PerfectScrollbar from 'react-perfect-scrollbar';
 import 'react-perfect-scrollbar/dist/css/styles.css';
 import { getMenuData } from "./MenuData.jsx";
-import { horizontalSidebarMenu } from "./horizontalSidebarData.jsx";
+// import { horizontalSidebarMenu } from "./horizontalSidebarData.jsx";
 import { Link } from 'react-router-dom';
 import { useSidebar } from "../../../Context/sidetoggle/SidebarContext";
 import axios from 'axios';

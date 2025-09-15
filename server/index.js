@@ -73,7 +73,7 @@ app.use(express.json());
 //   credentials: true,
 // };
 const corsOptions = {
-  origin: ["http://localhost:3001", "http://localhost:3000"],
+  origin: ["http://192.168.1.49:3001"],
   methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "HEAD"],
   credentials: true,
 };
