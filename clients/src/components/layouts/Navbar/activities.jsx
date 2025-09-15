@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react'
+import React, { useState, useEffect, useRef, useMemo } from 'react'
 import { Link } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { TbBell, TbCirclePlus, TbCommand, TbDeviceLaptop, TbDotsVertical, TbFileText, TbLanguage, TbLogout, TbMail, TbMaximize, TbSearch, TbSettings, TbUserCircle } from 'react-icons/tb';
@@ -16,7 +16,15 @@ const Activities = ({ onNotificationsRead }) => {
   const [unreadCount, setUnreadCount] = useState(0);
   const [loading, setLoading] = useState(true);
 
-  const user = JSON.parse(localStorage.getItem('user'));
+  const user = useMemo(() => {
+    try {
+      const userData = localStorage.getItem('user');
+      return userData ? JSON.parse(userData) : null;
+    } catch (error) {
+      console.error('Error parsing user data:', error);
+      return null;
+    }
+  }, []);
   const backendurl = BASE_URL;
   const socket = useRef(null);
 
@@ -258,30 +266,35 @@ const Activities = ({ onNotificationsRead }) => {
               >
                 <div style={{ textDecoration: 'none' }} onClick={() => markAsRead(notification._id)}>
                   <div className="media d-flex">
-                    <span className="avatar flex-shrink-0">
-                      {notification.sender?.profileImage ? (
-                        Array.isArray(notification.sender.profileImage) && notification.sender.profileImage.length > 0 ? (
-                          <img alt="Profile" src={notification.sender.profileImage[0].url} style={{ width: '50px', height: '50px', borderRadius: '50%' }} />
-                        ) : (
-                          <img alt="Profile" src={notification.sender.profileImage} style={{ width: '50px', height: '50px', borderRadius: '50%' }} />
-                        )
-                      ) : (
-                        <div style={{
+                    <div>
+                      {notification.sender?.profileImage?.url ? (
+                        <img
+                          src={notification.sender.profileImage.url}
+                          alt="Sender"
+                          style={{ width: '50px', height: '50px', borderRadius: '50%', objectFit: 'cover' }}
+                          onError={(e) => {
+                            e.target.style.display = 'none';
+                            e.target.nextSibling.style.display = 'flex';
+                          }}
+                        />
+                      ) : null}
+                      <div
+                        style={{
                           width: '50px',
                           height: '50px',
                           borderRadius: '50%',
                           backgroundColor: '#007AFF',
-                          color: 'white',
-                          display: 'flex',
+                          display: notification.sender?.profileImage?.url ? 'none' : 'flex',
                           alignItems: 'center',
                           justifyContent: 'center',
-                          fontSize: '14px',
-                          fontWeight: 'bold'
-                        }}>
-                          {notification.sender?.firstName?.slice(0, 2).toUpperCase() || 'NA'}
-                        </div>
-                      )}
-                    </span>
+                          color: 'white',
+                          fontSize: '16px',
+                          fontWeight: '600',
+                        }}
+                      >
+                        {notification.sender?.firstName?.slice(0, 2).toUpperCase() || 'NA'}
+                      </div>
+                    </div>
                     <div className="flex-grow-1">
                       <p className="noti-details" style={{ textDecoration: 'none', marginLeft: '5px', marginTop: '5px' }}>
                         <div style={{ display: 'flex', justifyContent: 'space-between' }}>

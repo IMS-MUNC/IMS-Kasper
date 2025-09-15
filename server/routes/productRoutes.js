@@ -10,7 +10,7 @@ const {
   searchProductsByName,
   importProducts,
   getProductStock,
-getUpcomingExpiryProducts,
+  getUpcomingExpiryProducts,
   getPurchaseReturnStock,
 } = require("../controllers/productController");
 
