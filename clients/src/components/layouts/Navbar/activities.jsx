@@ -266,46 +266,35 @@ const Activities = ({ onNotificationsRead }) => {
               >
                 <div style={{ textDecoration: 'none' }} onClick={() => markAsRead(notification._id)}>
                   <div className="media d-flex">
-                    
-                      {notification.sender?.profileImage ? (
-                    Array.isArray(notification.sender.profileImage) && notification.sender.profileImage.length > 0 ? (
-                      <img
-                        src={notification.sender.profileImage[0].url}
-                        alt="Sender"
-                        style={{ width: '50px', height: '50px', borderRadius: '50%', objectFit: 'cover' }}
-                        onError={(e) => {
-                          e.target.style.display = 'none';
-                          e.target.nextSibling.style.display = 'flex';
+                    <div>
+                      {notification.sender?.profileImage?.url ? (
+                        <img
+                          src={notification.sender.profileImage.url}
+                          alt="Sender"
+                          style={{ width: '50px', height: '50px', borderRadius: '50%', objectFit: 'cover' }}
+                          onError={(e) => {
+                            e.target.style.display = 'none';
+                            e.target.nextSibling.style.display = 'flex';
+                          }}
+                        />
+                      ) : null}
+                      <div
+                        style={{
+                          width: '50px',
+                          height: '50px',
+                          borderRadius: '50%',
+                          backgroundColor: '#007AFF',
+                          display: notification.sender?.profileImage?.url ? 'none' : 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          color: 'white',
+                          fontSize: '16px',
+                          fontWeight: '600',
                         }}
-                      />
-                    ) : typeof notification.sender.profileImage === 'string' ? (
-                      <img
-                        src={notification.sender.profileImage}
-                        alt="Sender"
-                        style={{ width: '50px', height: '50px', borderRadius: '50%', objectFit: 'cover' }}
-                        onError={(e) => {
-                          e.target.style.display = 'none';
-                          e.target.nextSibling.style.display = 'flex';
-                        }}
-                      />
-                    ) : null
-                  ) : null}
-                  <div style={{
-                    width: '50px',
-                    height: '50px',
-                    borderRadius: '50%',
-                    backgroundColor: '#007AFF',
-                    display: (notification.sender?.profileImage &&
-                      ((Array.isArray(notification.sender.profileImage) && notification.sender.profileImage.length > 0) ||
-                        typeof notification.sender.profileImage === 'string')) ? 'none' : 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    color: 'white',
-                    fontSize: '16px',
-                    fontWeight: '600'
-                  }}>
-                    {notification.sender?.firstName?.slice(0, 2).toUpperCase() || 'NA'}
-                  </div>
+                      >
+                        {notification.sender?.firstName?.slice(0, 2).toUpperCase() || 'NA'}
+                      </div>
+                    </div>
                     <div className="flex-grow-1">
                       <p className="noti-details" style={{ textDecoration: 'none', marginLeft: '5px', marginTop: '5px' }}>
                         <div style={{ display: 'flex', justifyContent: 'space-between' }}>
