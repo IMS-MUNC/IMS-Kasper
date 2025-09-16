@@ -123,7 +123,7 @@
 //           Authorization: `Bearer ${token}`,
 //         },
 //         },
-        
+
 //       );
 //       console.log("Editing Countries ID:", editingCategories?._id);
 
@@ -491,7 +491,7 @@
 //           </div>
 //         </div>
 //         {/* /product list */}
-        
+
 //       </div>
 //       {/* <CategoryModal
 //         modalId="categoryModal"
@@ -542,7 +542,7 @@
 //           onSubmit={handleSubmit}
 //           submitLabel="Add Category"
 //         />
-    
+
 //         <CategoryModal
 //           modalId="edit-category"
 //           title="Edit category"
@@ -705,8 +705,8 @@ const Category = () => {
     if (Object.keys(newErrors).length > 0) return;
     try {
       const token = localStorage.getItem("token")
-      const cleanName = sanitizeInput(editingCategories.categoryName);
-      const cleanSlug = sanitizeInput(editingCategories.categorySlug);
+      const cleanName = sanitizeInput(editCategoryName);
+      const cleanSlug = sanitizeInput(editCategorySlug);
 
       await axios.put(
         `${BASE_URL}/api/category/categories/${editingCategories._id}`,
@@ -722,7 +722,7 @@ const Category = () => {
       );
       // console.log("Editing Countries ID:", editingCategories?._id);
 
-      toast.success("State updated");
+      toast.success("Category updated successfully");
       setEditMode(false);
       setEditingCategories(null);
       setEditCategoryName("");
@@ -1007,7 +1007,8 @@ const Category = () => {
                 />
               </div>
             </div>
-            <div className="d-flex table-dropdown my-xl-auto right-content align-items-center flex-wrap row-gap-3">
+            {/* status */}
+            {/* <div className="d-flex table-dropdown my-xl-auto right-content align-items-center flex-wrap row-gap-3">
               <div className="dropdown">
                 <a
                   href="javascript:void(0);"
@@ -1035,7 +1036,7 @@ const Category = () => {
                   </li>
                 </ul>
               </div>
-            </div>
+            </div> */}
           </div>
           <div className="card-body p-0">
             <div className="table-responsive">
@@ -1119,7 +1120,11 @@ const Category = () => {
                           </span>
                         </td>
                         <td>{category.categorySlug}</td>
-                        <td>{new Date(category.createdAt).toLocaleString()}</td>
+                        <td>{new Date(category.createdAt).toLocaleDateString("en-GB", {
+                          day: "2-digit",
+                          month: "short",
+                          year: "numeric"
+                        })}</td>
 
                         <td className="action-table-data">
                           <div className="edit-delete-action">
@@ -1176,72 +1181,72 @@ const Category = () => {
               </table>
             </div>
             {/* pagination */}
-           
-              {/* <div>
+
+            {/* <div>
             Showing {indexOfFirstItem + 1}-
             {Math.min(indexOfLastItem, filteredCategories.length)} of{" "}
             {filteredCategories.length}
           </div> */}
-              <div
-                className="d-flex justify-content-end gap-3"
-                style={{ padding: "10px 20px" }}
+            <div
+              className="d-flex justify-content-end gap-3"
+              style={{ padding: "10px 20px" }}
+            >
+              <select
+                value={itemsPerPage}
+                onChange={(e) => {
+                  setItemsPerPage(Number(e.target.value));
+                  setCurrentPage(1);
+                }}
+                className="form-select w-auto"
               >
-                <select
-                  value={itemsPerPage}
-                  onChange={(e) => {
-                    setItemsPerPage(Number(e.target.value));
-                    setCurrentPage(1);
-                  }}
-                  className="form-select w-auto"
-                >
-                  <option value={10}>10 Per Page</option>
-                  <option value={25}>25 Per Page</option>
-                  <option value={50}>50 Per Page</option>
-                  <option value={100}>100 Per Page</option>
-                </select>
-                <span
+                <option value={10}>10 Per Page</option>
+                <option value={25}>25 Per Page</option>
+                <option value={50}>50 Per Page</option>
+                <option value={100}>100 Per Page</option>
+              </select>
+              <span
+                style={{
+                  backgroundColor: "white",
+                  boxShadow: "rgb(0 0 0 / 4%) 0px 3px 8px",
+                  padding: "7px",
+                  borderRadius: "5px",
+                  border: "1px solid #e4e0e0ff",
+                  color: "gray",
+                }}
+              >
+                {filteredCategories.length === 0
+                  ? "0 of 0"
+                  : `${(currentPage - 1) * itemsPerPage + 1}-${Math.min(
+                    currentPage * itemsPerPage,
+                    filteredCategories.length
+                  )} of ${filteredCategories.length}`}
+                <button
                   style={{
+                    border: "none",
+                    color: "grey",
                     backgroundColor: "white",
-                    boxShadow: "rgb(0 0 0 / 4%) 0px 3px 8px",
-                    padding: "7px",
-                    borderRadius: "5px",
-                    border: "1px solid #e4e0e0ff",
-                    color: "gray",
                   }}
+                  onClick={() =>
+                    setCurrentPage((prev) => Math.max(prev - 1, 1))
+                  }
+                  disabled={currentPage === 1}
                 >
-                  {filteredCategories.length === 0
-                    ? "0 of 0"
-                    : `${(currentPage - 1) * itemsPerPage + 1}-${Math.min(
-                        currentPage * itemsPerPage,
-                        filteredCategories.length
-                      )} of ${filteredCategories.length}`}
-                  <button
-                    style={{
-                      border: "none",
-                      color: "grey",
-                      backgroundColor: "white",
-                    }}
-                    onClick={() =>
-                      setCurrentPage((prev) => Math.max(prev - 1, 1))
-                    }
-                    disabled={currentPage === 1}
-                  >
-                    <GrFormPrevious />
-                  </button>{" "}
-                  <button
-                    style={{ border: "none", backgroundColor: "white" }}
-                    onClick={() =>
-                      setCurrentPage((prev) => Math.min(prev + 1, totalPages))
-                    }
-                    disabled={currentPage === totalPages}
-                  >
-                    <MdNavigateNext />
-                  </button>
-                </span>
-              </div>
+                  <GrFormPrevious />
+                </button>{" "}
+                <button
+                  style={{ border: "none", backgroundColor: "white" }}
+                  onClick={() =>
+                    setCurrentPage((prev) => Math.min(prev + 1, totalPages))
+                  }
+                  disabled={currentPage === totalPages}
+                >
+                  <MdNavigateNext />
+                </button>
+              </span>
+            </div>
 
-              {/* rece */}
-            
+            {/* rece */}
+
           </div>
         </div>
         {/* /product list */}
