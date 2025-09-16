@@ -32,7 +32,7 @@ router.post("/import", upload.single("file"), authMiddleware,importProducts);
 router.get("/search", authMiddleware,searchProductsByName); // ✅ must come before /products/:id
 router.get("/", authMiddleware,getAllProducts);         // Read All
 router.get("/:id", authMiddleware,getProductById);      // Read Single
-router.put("/:id", authMiddleware, updateProduct);
+router.put("/:id", upload.array("images", 10), authMiddleware, updateProduct);
 router.delete("/:id",authMiddleware, deleteProductImage)// Update
 router.delete("/pro/:id",authMiddleware, deleteProduct);    // Delete
 

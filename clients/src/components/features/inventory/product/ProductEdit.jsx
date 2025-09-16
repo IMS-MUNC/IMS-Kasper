@@ -10,6 +10,7 @@ import Select from "react-select";
 import { MdImageSearch } from "react-icons/md";
 import sanitizeHtml from "sanitize-html";
 
+
 // // Commented out: Regex patterns for validation
 const regexPatterns = {
   productName: /^[a-zA-Z0-9\s\-_&()]{2,100}$/, // Alphanumeric, spaces, some special chars, 2-100 chars
@@ -105,7 +106,7 @@ const ProductEdit = () => {
     expirationDate: "",
     hsn: "",
   });
-   const [errors, setErrors] = useState({}); 
+  const [errors, setErrors] = useState({});
   const [loading, setLoading] = useState(true);
   // Dropdown states
   const [selectedCategory, setSelectedCategory] = useState(null);
@@ -146,19 +147,22 @@ const ProductEdit = () => {
 
   useEffect(() => {
     const fetchProduct = async () => {
-        try {
+      try {
         const token = localStorage.getItem("token");
-            const res = await axios.get(`${BASE_URL}/api/products/${id}`, {
-            headers: { Authorization: `Bearer ${localStorage.getItem("token")}` }
+        const res = await axios.get(`${BASE_URL}/api/products/${id}`, {
+          headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
         });
         const data = res.data;
-          const sanitizedData = {
+        const sanitizedData = {
           ...data,
           productName: sanitizeHtml(data.productName || "", sanitizeOptions),
           sku: sanitizeHtml(data.sku || "", sanitizeOptions),
           description: sanitizeHtml(data.description || "", sanitizeOptions),
           seoTitle: sanitizeHtml(data.seoTitle || "", sanitizeOptions),
-          seoDescription: sanitizeHtml(data.seoDescription || "", sanitizeOptions),
+          seoDescription: sanitizeHtml(
+            data.seoDescription || "",
+            sanitizeOptions
+          ),
           serialNumber: sanitizeHtml(data.serialNumber || "", sanitizeOptions),
           batchNumber: sanitizeHtml(data.batchNumber || "", sanitizeOptions),
           itemBarcode: sanitizeHtml(data.itemBarcode || "", sanitizeOptions),
@@ -170,10 +174,10 @@ const ProductEdit = () => {
         if (data.brand) {
           setBrandId(data.brand._id || data.brand);
         }
-        
+
         if (data.subcategory) {
-  setSubCategoryId(data.subcategory._id || data.subcategory);
-}
+          setSubCategoryId(data.subcategory._id || data.subcategory);
+        }
         if (data.category) {
           setCategoryId(data.category._id || data.category);
         }
@@ -217,23 +221,23 @@ const ProductEdit = () => {
   // Fetch dropdown options (categories, brands, units, suppliers, warehouses, HSN)
   useEffect(() => {
     const fetchCategories = async () => {
-        try {
+      try {
         const token = localStorage.getItem("token");
-            const res = await axios.get(`${BASE_URL}/api/category/categories`, {
-            headers: {
-          Authorization: `Bearer ${token}`, // ✅ token sent properly
-        },
+        const res = await axios.get(`${BASE_URL}/api/category/categories`, {
+          headers: {
+            Authorization: `Bearer ${token}`, // ✅ token sent properly
+          },
         });
         const options = res.data.map((category) => ({
           value: category._id,
-          label: sanitizeHtml(category.categoryName,sanitizeOptions),
+          label: sanitizeHtml(category.categoryName, sanitizeOptions),
           // label: category.categoryName,
         }));
         setCategories(options);
-      } catch (error) { }
+      } catch (error) {}
     };
     const fetchBrands = async () => {
-        try {
+      try {
         const token = localStorage.getItem("token");
         const res = await axios.get(`${BASE_URL}/api/brands/active-brands`, {
           headers: { Authorization: `Bearer ${token}` },
@@ -245,74 +249,80 @@ const ProductEdit = () => {
           // label: brand.brandName,
         }));
         setBrandOptions(options);
-      } catch (error) { }
+      } catch (error) {}
     };
     const fetchUnits = async () => {
-        try {
-        const token = localStorage.getItem("token")
-            const res = await axios.get(`${BASE_URL}/api/unit/units/status/active`, {
+      try {
+        const token = localStorage.getItem("token");
+        const res = await axios.get(
+          `${BASE_URL}/api/unit/units/status/active`,
+          {
             headers: {
-          Authorization: `Bearer ${token}`, // ✅ token sent properly
-        },
-        });
+              Authorization: `Bearer ${token}`, // ✅ token sent properly
+            },
+          }
+        );
         const options = res.data.units.map((unit) => ({
           value: unit.shortName,
-          label: sanitizeHtml(`${unit.unitsName} (${unit.shortName})`, sanitizeOptions), // Commented out: Sanitization
+          label: sanitizeHtml(
+            `${unit.unitsName} (${unit.shortName})`,
+            sanitizeOptions
+          ), // Commented out: Sanitization
           // label: `${unit.unitsName} (${unit.shortName})`,
         }));
         setUnitsOptions(options);
-      } catch (error) { }
+      } catch (error) {}
     };
     const fetchSuppliers = async () => {
-        try {
-        const token = localStorage.getItem("token")
-            const res = await axios.get(`${BASE_URL}/api/suppliers/active`, {
-            headers: {
-          Authorization: `Bearer ${token}`, // ✅ token sent properly
-        },
+      try {
+        const token = localStorage.getItem("token");
+        const res = await axios.get(`${BASE_URL}/api/suppliers/active`, {
+          headers: {
+            Authorization: `Bearer ${token}`, // ✅ token sent properly
+          },
         });
         const options = res.data.suppliers.map((supplier) => ({
           value: supplier._id,
-           label: sanitizeHtml(
+          label: sanitizeHtml(
             `${supplier.firstName}${supplier.lastName} (${supplier.supplierCode})`,
             sanitizeOptions
           ), // Commented out: Sanitization
           // label: `${supplier.firstName}${supplier.lastName} (${supplier.supplierCode})`,
         }));
         setOptions(options);
-      } catch (error) { }
+      } catch (error) {}
     };
     const fetchWarehouses = async () => {
-        try {
-        const token = localStorage.getItem("token")
-            const res = await axios.get(`${BASE_URL}/api/warehouse/active`, {
-            headers: {
-          Authorization: `Bearer ${token}`, // ✅ token sent properly
-        },
+      try {
+        const token = localStorage.getItem("token");
+        const res = await axios.get(`${BASE_URL}/api/warehouse/active`, {
+          headers: {
+            Authorization: `Bearer ${token}`, // ✅ token sent properly
+          },
         });
         if (res.data.success) {
           const options = res.data.data.map((wh) => ({
             value: wh._id,
-             label: sanitizeHtml(wh.warehouseName, sanitizeOptions),
+            label: sanitizeHtml(wh.warehouseName, sanitizeOptions),
             // label: wh.warehouseName,
           }));
           setOptionsWare(options);
         }
-      } catch (error) { }
+      } catch (error) {}
     };
     const fetchHSN = async () => {
-        try {
-        const token = localStorage.getItem("token")
-            const res = await axios.get(`${BASE_URL}/api/hsn/all`, {
-            headers: {
-          Authorization: `Bearer ${token}`, // ✅ token sent properly
-        },
+      try {
+        const token = localStorage.getItem("token");
+        const res = await axios.get(`${BASE_URL}/api/hsn/all`, {
+          headers: {
+            Authorization: `Bearer ${token}`, // ✅ token sent properly
+          },
         });
         console.log("hsnd", res.data.data);
         if (res.data.success) {
           const options = res.data.data.map((item) => ({
             value: item._id,
-             label: sanitizeHtml(
+            label: sanitizeHtml(
               `${item.hsnCode} - ${item.description || ""}`,
               sanitizeOptions
             ),
@@ -320,7 +330,7 @@ const ProductEdit = () => {
           }));
           setOptionsHsn(options);
         }
-      } catch (error) { }
+      } catch (error) {}
     };
 
     fetchCategories();
@@ -353,16 +363,16 @@ const ProductEdit = () => {
     }
   }, [categoryId, categories]);
 
-
   // Subcategory fetch logic
   const fetchSubcategoriesByCategory = async (categoryId) => {
-      try {
-        const token = localStorage.getItem("token")
+    try {
+      const token = localStorage.getItem("token");
       const res = await axios.get(
-          `${BASE_URL}/api/subcategory/by-category/${categoryId}`, {
-            headers: {
-          Authorization: `Bearer ${token}`, // ✅ token sent properly
-        },
+        `${BASE_URL}/api/subcategory/by-category/${categoryId}`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`, // ✅ token sent properly
+          },
         }
       );
       console.log("sbcategryfd", res.data);
@@ -426,7 +436,7 @@ const ProductEdit = () => {
   const subCategoryChange = (selectedOption) =>
     setSelectedsubCategory(selectedOption);
 
-    const validateInput = (name, value) => {
+  const validateInput = (name, value) => {
     if (regexPatterns[name]) {
       return regexPatterns[name].test(value) ? "" : `Invalid ${name}`;
     }
@@ -438,7 +448,7 @@ const ProductEdit = () => {
   //    const sanitizedValue = type !== "checkbox" ? sanitizeHtml(value, sanitizeOptions) : value; // Commented out: Sanitization
   //   const error = type !== "checkbox" ? validateInput(name, sanitizedValue) : ""; // Commented out: Validation
   //   setErrors((prev) => ({ ...prev, [name]: error })); // Commented out: Error state update
-    
+
   //   setFormData((prev) => ({
   //     ...prev,
   //     [name]: type === "checkbox" ? checked : sanitizedValue,
@@ -446,8 +456,10 @@ const ProductEdit = () => {
   // };
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
-    const sanitizedValue = type !== "checkbox" ? sanitizeHtml(value, sanitizeOptions) : value;
-    const error = type !== "checkbox" ? validateInput(name, sanitizedValue) : "";
+    const sanitizedValue =
+      type !== "checkbox" ? sanitizeHtml(value, sanitizeOptions) : value;
+    const error =
+      type !== "checkbox" ? validateInput(name, sanitizedValue) : "";
     setErrors((prev) => ({ ...prev, [name]: error }));
     setFormData((prev) => ({
       ...prev,
@@ -477,7 +489,7 @@ const ProductEdit = () => {
   //   }
   // };
 
-    const inputChange = (key, value) => {
+  const inputChange = (key, value) => {
     const sanitizedValue = sanitizeHtml(value, sanitizeOptions);
     if (step === 3) {
       const parsedValues = sanitizedValue
@@ -495,7 +507,7 @@ const ProductEdit = () => {
     }
   };
   // Step validation logic
-    const validateStep = () => {
+  const validateStep = () => {
     if (step === 0) {
       return (
         formData.productName &&
@@ -516,8 +528,12 @@ const ProductEdit = () => {
             !errors.reorderLevel &&
             formData.initialStock &&
             !errors.initialStock &&
-            ((formData.trackType === "serial" && formData.serialNumber && !errors.serialNumber) ||
-              (formData.trackType === "batch" && formData.batchNumber && !errors.batchNumber) ||
+            ((formData.trackType === "serial" &&
+              formData.serialNumber &&
+              !errors.serialNumber) ||
+              (formData.trackType === "batch" &&
+                formData.batchNumber &&
+                !errors.batchNumber) ||
               formData.trackType === "status")))
       );
     }
@@ -561,8 +577,8 @@ const ProductEdit = () => {
     setStepStatus(updatedStatus);
     if (isValid && step < steps.length - 1) {
       setStep((prev) => prev + 1);
-    }
-    else if (!isValid) { // Commented out: Error toast for validation
+    } else if (!isValid) {
+      // Commented out: Error toast for validation
       toast.error("Please correct the errors in the form");
     }
   };
@@ -585,17 +601,19 @@ const ProductEdit = () => {
   //     .slice(0, 3)}-${randomNum}`;
   //     const sanitizedSKU = sanitizeHtml(sku, sanitizeOptions); // Commented out: Sanitization
   //   const error = validateInput("sku", sanitizedSKU); // Commented out: Validation
-  //   setErrors((prev) => ({ ...prev, sku: error })); // 
+  //   setErrors((prev) => ({ ...prev, sku: error })); //
   //   setFormData((prevProduct) => ({
   //     ...prevProduct,
   //     sku,
   //   }));
   // };
-   const generateSKU = () => {
+  const generateSKU = () => {
     const category = formData.category || "GEN";
     const name = formData.productName || "PRD";
     const randomNum = Math.floor(Math.random() * 9000) + 1000;
-    const sku = `${category.toUpperCase().slice(0, 3)}-${name.toUpperCase().slice(0, 3)}-${randomNum}`;
+    const sku = `${category.toUpperCase().slice(0, 3)}-${name
+      .toUpperCase()
+      .slice(0, 3)}-${randomNum}`;
     const sanitizedSKU = sanitizeHtml(sku, sanitizeOptions);
     const error = validateInput("sku", sanitizedSKU);
     setErrors((prev) => ({ ...prev, sku: error }));
@@ -623,7 +641,8 @@ const ProductEdit = () => {
       selectedsubCategory?.value || ""
     );
     e.preventDefault();
-        if (!validateStep()) { // Commented out: Validation check
+    if (!validateStep()) {
+      // Commented out: Validation check
       toast.error("Please correct the errors before submitting");
       return;
     }
@@ -703,12 +722,12 @@ const ProductEdit = () => {
       .map((img) => img.url); // only URL
 
     formPayload.append("existingImages", JSON.stringify(existingImageUrls));
-      try {
-        const token = localStorage.getItem("token")
+    try {
+      const token = localStorage.getItem("token");
       await axios.put(`${BASE_URL}/api/products/${id}`, formPayload, {
-          headers: {
+        headers: {
           Authorization: `Bearer ${token}`,
-          },
+        },
       });
       toast.success("Product updated successfully!");
       navigate("/product");
@@ -757,12 +776,13 @@ const ProductEdit = () => {
                 data-bs-placement="top"
                 title="Refresh"
                 className="icon-btn"
+                onClick={() => location.reload()}
               >
                 <TbRefresh />
               </button>
             </li>
             <li>
-              <button
+              {/* <button
                 type="button"
                 data-bs-toggle="tooltip"
                 data-bs-placement="top"
@@ -771,14 +791,16 @@ const ProductEdit = () => {
                 className="icon-btn"
               >
                 <TbChevronUp />
-              </button>
+              </button> */}
             </li>
           </div>
 
           <div className="page-btn mt-0">
             <div className="d-flex gap-2">
               {/* <Link to="/product"></Link>{t("backToProduct")} */}
-              <Link to="/product"><a className="btn btn-primary" >Back to Product</a></Link>
+              <Link to="/product">
+                <a className="btn btn-primary">Back to Product</a>
+              </Link>
             </div>
           </div>
         </div>
@@ -794,26 +816,28 @@ const ProductEdit = () => {
             return (
               <div key={index} className="step-wrapper">
                 <div
-                  className={`circle ${isComplete
-                    ? "complete"
-                    : isIncomplete
+                  className={`circle ${
+                    isComplete
+                      ? "complete"
+                      : isIncomplete
                       ? "incomplete"
                       : isActive
-                        ? "active"
-                        : ""
-                    }`}
+                      ? "active"
+                      : ""
+                  }`}
                 >
                   {index + 1}
                 </div>
                 <div className="step-text">{label}</div>
                 {index < steps.length - 1 && (
                   <div
-                    className={`progress-line ${status === "complete"
-                      ? "line-complete"
-                      : status === "incomplete"
+                    className={`progress-line ${
+                      status === "complete"
+                        ? "line-complete"
+                        : status === "incomplete"
                         ? "line-incomplete"
                         : "line-pending"
-                      }`}
+                    }`}
                   />
                 )}
               </div>
@@ -873,15 +897,18 @@ const ProductEdit = () => {
                       <input
                         type="text"
                         name="productName"
-                        className={`form-control ${errors.productName ? "is-invalid" : ""}`} // Commented out: Validation class
-                       
+                        className={`form-control ${
+                          errors.productName ? "is-invalid" : ""
+                        }`} // Commented out: Validation class
                         // className="form-control"
                         value={formData.productName}
                         onChange={handleChange}
                         placeholder={t("enterProductName")}
                       />
                       {errors.productName && ( // Commented out: Error feedback
-                        <div className="invalid-feedback">{errors.productName}</div>
+                        <div className="invalid-feedback">
+                          {errors.productName}
+                        </div>
                       )}
                     </div>
 
@@ -999,23 +1026,30 @@ const ProductEdit = () => {
                         <input
                           type="text"
                           name="sku"
-                            className={`form-control ${errors.sku ? "is-invalid" : ""}`} // Commented out: Validation class
+                          className={`form-control ${
+                            errors.sku ? "is-invalid" : ""
+                          }`} // Commented out: Validation class
                           // className="form-control"
                           value={formData.sku}
                           onChange={(e) =>
                             setFormData({ ...formData, sku: e.target.value })
                           }
                           placeholder={t("enterSKU")}
-                          style={{marginBottom:'10px'}}
+                          style={{ marginBottom: "10px" }}
                         />
-                         {errors.sku && ( // Commented out: Error feedback
+                        {errors.sku && ( // Commented out: Error feedback
                           <div className="invalid-feedback">{errors.sku}</div>
                         )}
                         <button
                           type="submit"
                           onClick={generateSKU}
                           className="btn-primaryadd"
-                          style={{padding:'5px 10px', border:'1px solid gray', borderRadius:'5px', color:'#808690'}}
+                          style={{
+                            padding: "5px 10px",
+                            border: "1px solid gray",
+                            borderRadius: "5px",
+                            color: "white",
+                          }}
                         >
                           {t("generate")}
                         </button>
@@ -1112,7 +1146,7 @@ const ProductEdit = () => {
                           value={formData.itemBarcode}
                           readOnly
                           placeholder={t("itemBarcodePlaceholder")}
-                          style={{marginBottom:'10px'}}
+                          style={{ marginBottom: "10px" }}
                         />
                         <button
                           type="button"
@@ -1123,7 +1157,12 @@ const ProductEdit = () => {
                               itemBarcode: generateBarcode(),
                             }))
                           }
-                          style={{padding:'5px 10px', border:'1px solid gray', borderRadius:'5px', color:'#808690'}}
+                          style={{
+                            padding: "5px 10px",
+                            border: "1px solid gray",
+                            borderRadius: "5px",
+                            color: "white",
+                          }}
                         >
                           {t("generate")}
                         </button>
@@ -1201,15 +1240,19 @@ const ProductEdit = () => {
                           <label className="form-label">{t("leadTime")}</label>
                           <input
                             type="number"
-                            className={`form-control ${errors.leadTime ? "is-invalid" : ""}`} // Commented out: Validation class
+                            className={`form-control ${
+                              errors.leadTime ? "is-invalid" : ""
+                            }`} // Commented out: Validation class
                             // className="form-control"
                             placeholder={t("enterLeadTime")}
                             name="leadTime"
                             value={formData.leadTime}
                             onChange={handleChange}
                           />
-                           {errors.leadTime && ( // Commented out: Error feedback
-                            <div className="invalid-feedback">{errors.leadTime}</div>
+                          {errors.leadTime && ( // Commented out: Error feedback
+                            <div className="invalid-feedback">
+                              {errors.leadTime}
+                            </div>
                           )}
                         </div>
 
@@ -1219,15 +1262,19 @@ const ProductEdit = () => {
                           </label>
                           <input
                             type="number"
-                            className={`form-control ${errors.reorderLevel ? "is-invalid" : ""}`}
+                            className={`form-control ${
+                              errors.reorderLevel ? "is-invalid" : ""
+                            }`}
                             // className="form-control"
                             placeholder={t("enterReorderLevel")}
                             name="reorderLevel"
                             value={formData.reorderLevel}
                             onChange={handleChange}
                           />
-                           {errors.reorderLevel && ( // Commented out: Error feedback
-                            <div className="invalid-feedback">{errors.reorderLevel}</div>
+                          {errors.reorderLevel && ( // Commented out: Error feedback
+                            <div className="invalid-feedback">
+                              {errors.reorderLevel}
+                            </div>
                           )}
                         </div>
 
@@ -1237,15 +1284,19 @@ const ProductEdit = () => {
                           </label>
                           <input
                             type="number"
-                            className={`form-control ${errors.initialStock ? "is-invalid" : ""}`}
+                            className={`form-control ${
+                              errors.initialStock ? "is-invalid" : ""
+                            }`}
                             // className="form-control"
                             placeholder={t("enterInitialStock")}
                             name="initialStock"
                             value={formData.initialStock}
                             onChange={handleChange}
                           />
-                           {errors.initialStock && ( // Commented out: Error feedback
-                            <div className="invalid-feedback">{errors.initialStock}</div>
+                          {errors.initialStock && ( // Commented out: Error feedback
+                            <div className="invalid-feedback">
+                              {errors.initialStock}
+                            </div>
                           )}
                         </div>
 
@@ -1336,7 +1387,9 @@ const ProductEdit = () => {
                             </label>
                             <input
                               type="text"
-                               className={`form-control ${errors.serialNumber ? "is-invalid" : ""}`} 
+                              className={`form-control ${
+                                errors.serialNumber ? "is-invalid" : ""
+                              }`}
                               // className="form-control"
                               placeholder={t("enterSerialNumber")}
                               name="serialNumber"
@@ -1344,7 +1397,9 @@ const ProductEdit = () => {
                               onChange={handleChange}
                             />
                             {errors.serialNumber && ( // Commented out: Error feedback
-                              <div className="invalid-feedback">{errors.serialNumber}</div>
+                              <div className="invalid-feedback">
+                                {errors.serialNumber}
+                              </div>
                             )}
                           </div>
                         )}
@@ -1355,7 +1410,9 @@ const ProductEdit = () => {
                             <label className="form-label">{t("batchNo")}</label>
                             <input
                               type="text"
-                              className={`form-control ${errors.batchNumber ? "is-invalid" : ""}`}
+                              className={`form-control ${
+                                errors.batchNumber ? "is-invalid" : ""
+                              }`}
                               // className="form-control"
                               placeholder={t("enterBatchNumber")}
                               name="batchNumber"
@@ -1363,7 +1420,9 @@ const ProductEdit = () => {
                               onChange={handleChange}
                             />
                             {errors.batchNumber && ( // Commented out: Error feedback
-                              <div className="invalid-feedback">{errors.batchNumber}</div>
+                              <div className="invalid-feedback">
+                                {errors.batchNumber}
+                              </div>
                             )}
                           </div>
                         )}
@@ -1437,19 +1496,24 @@ const ProductEdit = () => {
                     </label>
                     <input
                       type="number"
-                      className={`form-control ${errors[field.name] ? "is-invalid" : ""}`} // Commented out: Validation class
+                      className={`form-control ${
+                        errors[field.name] ? "is-invalid" : ""
+                      }`} // Commented out: Validation class
                       // className="form-control"
                       name={field.name}
                       value={formData[field.name] || ""}
                       onChange={handleChange}
                       placeholder={t(
-                        `enter${field.name.charAt(0).toUpperCase() +
-                        field.name.slice(1)
+                        `enter${
+                          field.name.charAt(0).toUpperCase() +
+                          field.name.slice(1)
                         }`
                       )}
                     />
-                     {errors[field.name] && ( // Commented out: Error feedback
-                      <div className="invalid-feedback">{errors[field.name]}</div>
+                    {errors[field.name] && ( // Commented out: Error feedback
+                      <div className="invalid-feedback">
+                        {errors[field.name]}
+                      </div>
                     )}
                   </div>
                 ))}
@@ -1461,14 +1525,16 @@ const ProductEdit = () => {
                   </label>
                   <input
                     type="number"
-                    className={`form-control ${errors.quantity ? "is-invalid" : ""}`}
+                    className={`form-control ${
+                      errors.quantity ? "is-invalid" : ""
+                    }`}
                     // className="form-control"
                     name="quantity"
                     value={formData.quantity}
                     onChange={handleChange}
                     placeholder={t("enterQuantity")}
                   />
-                   {errors.quantity && ( // Commented out: Error feedback
+                  {errors.quantity && ( // Commented out: Error feedback
                     <div className="invalid-feedback">{errors.quantity}</div>
                   )}
                 </div>
@@ -1503,7 +1569,7 @@ const ProductEdit = () => {
                   </select>
                 </div>
 
-                <div className=" col-sm-6 col-12 mb-3">
+                <div className="col-sm-6 col-12 mb-3">
                   <label className="form-label">
                     {t("taxRate")}
                     <span className="text-danger">*</span>
@@ -1515,11 +1581,11 @@ const ProductEdit = () => {
                     onChange={handleChange}
                   >
                     <option value="">{t("select")}</option>
-                    <option>{t("igst8")}</option>
-                    <option>{t("gst5")}</option>
-                    <option>{t("sgst4")}</option>
-                    <option>{t("cgst16")}</option>
-                    <option>{t("gst18")}</option>
+                    <option value="8">{t("igst8")}</option>
+                    <option value="5">{t("gst5")}</option>
+                    <option value="4">{t("sgst4")}</option>
+                    <option value="16">{t("cgst16")}</option>
+                    <option value="18">{t("gst18")}</option>
                   </select>
                 </div>
 
@@ -1547,15 +1613,19 @@ const ProductEdit = () => {
                   </label>
                   <input
                     type="number"
-                    className={`form-control ${errors.discountValue ? "is-invalid" : ""}`}
+                    className={`form-control ${
+                      errors.discountValue ? "is-invalid" : ""
+                    }`}
                     // className="form-control"
                     name="discountValue"
                     value={formData.discountValue}
                     onChange={handleChange}
                     placeholder={t("enterDiscountValue")}
                   />
-                    {errors.discountValue && ( // Commented out: Error feedback
-                    <div className="invalid-feedback">{errors.discountValue}</div>
+                  {errors.discountValue && ( // Commented out: Error feedback
+                    <div className="invalid-feedback">
+                      {errors.discountValue}
+                    </div>
                   )}
                 </div>
 
@@ -1566,15 +1636,19 @@ const ProductEdit = () => {
                   </label>
                   <input
                     type="number"
-                    className={`form-control ${errors.quantityAlert ? "is-invalid" : ""}`} // Commented out: Validation class
+                    className={`form-control ${
+                      errors.quantityAlert ? "is-invalid" : ""
+                    }`} // Commented out: Validation class
                     // className="form-control"
                     name="quantityAlert"
                     value={formData.quantityAlert}
                     onChange={handleChange}
                     placeholder={t("enterQuantityAlert")}
                   />
-                     {errors.quantityAlert && ( // Commented out: Error feedback
-                    <div className="invalid-feedback">{errors.quantityAlert}</div>
+                  {errors.quantityAlert && ( // Commented out: Error feedback
+                    <div className="invalid-feedback">
+                      {errors.quantityAlert}
+                    </div>
                   )}
                 </div>
               </div>
@@ -1584,6 +1658,7 @@ const ProductEdit = () => {
             {step === 2 && (
               <>
                 <div
+                  style={{ width: "100%", height: "100%" }}
                   {...getRootProps({
                     className:
                       "dropzone p-4 text-center image-upload image-upload-two mb-3",
@@ -1601,7 +1676,7 @@ const ProductEdit = () => {
                       <img
                         src={file.url || file.preview}
                         className="img-thumbnail"
-                        style={{ height: 120, objectFit: "cover" }}
+                        style={{ height: 100, width:100, objectFit: "cover" }}
                       />
                       <button
                         type="button"
@@ -1613,6 +1688,8 @@ const ProductEdit = () => {
                           borderRadius: "50%",
                           backgroundColor: "red",
                           color: "white",
+                          width:'20px',
+                          height:'20px'
                         }}
                         onClick={() => handleRemoveImage(file)}
                       >
@@ -1626,14 +1703,16 @@ const ProductEdit = () => {
                   <label>{t("description")}</label>
                   <textarea
                     name="description"
-                    className={`form-control ${errors.description ? "is-invalid" : ""}`} 
+                    className={`form-control ${
+                      errors.description ? "is-invalid" : ""
+                    }`}
                     // className="form-control"
                     maxLength={300}
                     value={formData.description}
                     onChange={handleChange}
                     placeholder={t("enterDescription")}
                   />
-                   {errors.description && ( // Commented out: Error feedback
+                  {errors.description && ( // Commented out: Error feedback
                     <div className="invalid-feedback">{errors.description}</div>
                   )}
                 </div>
@@ -1644,13 +1723,15 @@ const ProductEdit = () => {
                     <input
                       type="text"
                       name="seoTitle"
-                      className={`form-control ${errors.seoTitle ? "is-invalid" : ""}`} // Commented out: Validation class
+                      className={`form-control ${
+                        errors.seoTitle ? "is-invalid" : ""
+                      }`} // Commented out: Validation class
                       // className="form-control"
                       value={formData.seoTitle || ""}
                       onChange={handleChange}
                       placeholder={t("enterSeoMetaTitle")}
                     />
-                         {errors.seoTitle && ( // Commented out: Error feedback
+                    {errors.seoTitle && ( // Commented out: Error feedback
                       <div className="invalid-feedback">{errors.seoTitle}</div>
                     )}
                   </div>
@@ -1661,14 +1742,18 @@ const ProductEdit = () => {
                     <input
                       type="text"
                       name="seoDescription"
-                      className={`form-control ${errors.seoDescription ? "is-invalid" : ""}`}
+                      className={`form-control ${
+                        errors.seoDescription ? "is-invalid" : ""
+                      }`}
                       // className="form-control"
                       value={formData.seoDescription || ""}
                       onChange={handleChange}
                       placeholder={t("enterSeoMetaDescription")}
                     />
                     {errors.seoDescription && ( // Commented out: Error feedback
-                      <div className="invalid-feedback">{errors.seoDescription}</div>
+                      <div className="invalid-feedback">
+                        {errors.seoDescription}
+                      </div>
                     )}
                   </div>
                 </div>
@@ -1683,10 +1768,11 @@ const ProductEdit = () => {
                     <button
                       type="button"
                       key={tab}
-                      className={`variant-tab btn btn-sm ${activeTab === tab
-                        ? "btn-success"
-                        : "btn-outline-secondary"
-                        }`}
+                      className={`variant-tab btn btn-sm ${
+                        activeTab === tab
+                          ? "btn-success"
+                          : "btn-outline-secondary"
+                      }`}
                       onClick={() => setActiveTab(tab)}
                     >
                       {tab}
