@@ -40,6 +40,7 @@
     "jspdf": "^3.0.2",
     "jspdf-autotable": "^5.0.2",
     "multer": "^2.0.2",
+    "papaparse": "^5.5.3",
     "popper.js": "^1.16.1",
     "qrcode": "^1.5.4",
     "react": "^18.3.1",

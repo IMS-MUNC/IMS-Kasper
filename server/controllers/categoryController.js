@@ -5,8 +5,8 @@ const Category = require("../models/categoryModels");
 exports.createCategory = async (req, res) => {
     try {
       const { categoryName, categorySlug } = req.body;
-      if (!categoryName || !categorySlug) {
-        return res.status(400).json({ message: "All fields required." });
+      if (!categoryName) {
+        return res.status(400).json({ message: "categoryName is required." });
       }
   
       const exists = await Category.findOne({
