@@ -713,11 +713,12 @@ const Category = () => {
         {
           categoryName: cleanName,
           categorySlug: cleanSlug,
-        
-        headers: {
-          Authorization: `Bearer ${token}`,
         },
-      }
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
       );
       // console.log("Editing Countries ID:", editingCategories?._id);
 
