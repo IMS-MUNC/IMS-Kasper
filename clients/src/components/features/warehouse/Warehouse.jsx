@@ -7,6 +7,10 @@ import { FaHeart } from "react-icons/fa";
 import { FaArrowRight } from "react-icons/fa";
 import { Link } from "react-router-dom";
 import BASE_URL from "../../../pages/config/config";
+import Polygon from "../../../assets/images/Polygon-2.png";
+import Poly from "../../../assets/images/Polygon-1.png";
+import Polygont from "../../../assets/images/Polygon3.png";
+import Polygo from "../../../assets/images/Polygon4.png";
 import AddWarehouseModal from "../../../pages/Modal/warehouse/AddWarehouseModal";
 import axios from "axios";
 
@@ -198,111 +202,178 @@ const toggleFavourite = async (warehouse) => {
                 
                 <div className="col-3" key={item._id}>
                   <div
-                    style={{
-                      backgroundColor: "rgb(255 255 255)",
-                      padding: "10px",
-                      borderRadius: "8px",
-                      display: "flex",
-                      justifyContent: "space-between",
-                      alignItems: "flex-start",
-                      marginBottom: "30px",
-                      height: "150px", 
-                      position: "relative", 
-                    }}
-                  >
-                    {/* WH-006 and Heart - Left Side */}
-                    <div
-                      style={{
-                        display: "flex",
-                        justifyContent: "space-between",
-                        width: "100%",
-                        marginBottom: "10px",
-                      }}
-                    >
-                      {/* Left: WH-006 */}
-                      <div
                         style={{
-                          backgroundColor: "#f1f1f1",
-                          border: "1px solid #e6e6e6",
-                          borderRadius: "8px",
-                          padding: "10px ",
-                          alignItems: "center",
-                        }}
-                      >
-                        <span>
-                          <PiWarehouseFill
-                            style={{
-                              color: "#1368EC",
-                              fontSize: "20px",
-                              fontWeight: "bold",
-                            }}
-                          />
-                          {item.warehouseName}
-                        </span>
-                      </div>
-
-                      {/* Right: Heart icon */}
-                      <div
-                        style={{
+                          backgroundColor: "#f9f9f9",
                           padding: "10px",
-                          backgroundColor: "#f1f1f1",
                           borderRadius: "8px",
-                          width: "fit-content",
+                          display: "flex",
+                          justifyContent: "space-between",
+                          alignItems: "flex-start",
+                          marginBottom: "30px",
+                          height: "150px",
+                          position: "relative",
+                          overflow: "hidden",
                         }}
                       >
-                        <FaHeart
-                          onClick={() => toggleFavourite(item)}
+                        <img
+                          src={Polygon}
+                          alt="Polygon"
                           style={{
-                            cursor: "pointer",
-                            // color: favourites.some(
-                            //   (fav) => fav._id === item._id
-                            // )
-                            //   ? "red"
-                            //   : "#1368EC",
-                            // fontWeight: "500",
-                            // fontSize: "26px",
-                            color: item.isFavorite ? "red" : "#1368EC",
-                            fontWeight: "500",
-                            fontSize: "26px",
+                            position: "absolute",
+                            bottom: "0",
+                            left: "auto",
+                            top: "auto",
+                            right: "0",
+                            width: "100%",
+                            height: "50px",
+                            zIndex: "0",
                           }}
                         />
-                      </div>
-                    </div>
 
-                    {/* Bottom Section (Address + Arrow) */}
-                    <div
-                      style={{
-                        position: "absolute",
-                        bottom: "10px",
-                        left: "10px",
-                        right: "10px",
-                        display: "flex",
-                        justifyContent: "space-between",
-                        alignItems: "flex-end",
-                      }}
-                    >
-                      {/* Address */}
-                      <div>
-                        <p style={{ margin: "0", fontWeight: "500" }}>
-                          {/* Delhi - Ram Prashad */}
-                          {item?.city}
-                          &nbsp;-&nbsp;{item?.warehouseOwner}
-                          {/* {item?.contactPerson?.lastName} */}
-                        </p>
-                        <span style={{ color: "#1368EC" }}>₹{totalRevenue.toLocaleString("en-IN")}</span>
-                        <span style={{ marginLeft: "4px" }}>
-                          Stock Valuation
-                        </span>
-                      </div>
+                        <img
+                          src={Poly}
+                          alt="Polygon"
+                          style={{
+                            position: "absolute",
+                            bottom: "0",
+                            left: "auto",
+                            top: "auto",
+                            right: "0",
+                            width: "100%",
+                            height: "50px",
+                            zIndex: "0",
+                          }}
+                        />
 
-                      {/* Arrow */}
-                      <div>
-                        <Link to={`/WarehouseDetails/${item._id}`}>
-                          <FaArrowRight />
-                        </Link>
+                        <img
+                          src={Polygont}
+                          alt="Polygon"
+                          style={{
+                            position: "absolute",
+                            bottom: "auto",
+                            left: "0",
+                            top: "0",
+                            right: "auto",
+                            width: "100%",
+                            height: "50px",
+                            zIndex: "0",
+                          }}
+                        />
+
+                        <img
+                          src={Polygo}
+                          alt="Polygon"
+                          style={{
+                            position: "absolute",
+                            bottom: "auto",
+                            left: "0",
+                            top: "0",
+                            right: "auto",
+                            width: "100%",
+                            height: "50px",
+                            zIndex: "0",
+                          }}
+                        />
+
+                        {/* WH-006 and Heart - Left Side */}
+                        <div
+                          style={{
+                            display: "flex",
+                            justifyContent: "space-between",
+                            width: "100%",
+                            marginBottom: "10px",
+                            position:'relative',
+                            overflow:'hidden'
+                          }}
+                        >
+                          {/* Left: WH-006 */}
+                          <div
+                            style={{
+                              backgroundColor: "#fff",
+                              border: "1px solid #e6e6e6",
+                              borderRadius: "8px",
+                              padding: "10px ",
+                              alignItems: "center",
+                              position:'relative',
+                              overflow:'hidden'
+                            }}
+                          >
+                            <span>
+                              <PiWarehouseFill
+                                style={{
+                                  color: "#1368EC",
+                                  fontSize: "20px",
+                                  fontWeight: "bold",
+                                }}
+                              />
+                              {item.warehouseName}
+                            </span>
+                          </div>
+
+                          {/* Right: Heart icon */}
+                          <div
+                            style={{
+                              padding: "10px",
+                              backgroundColor: "#fff",
+                              borderRadius: "8px",
+                              width: "fit-content",
+                            }}
+                          >
+                            <FaHeart
+                              onClick={() => toggleFavourite(item)}
+                              style={{
+                                cursor: "pointer",
+                                // color: favourites.some(
+                                //   (fav) => fav._id === item._id
+                                // )
+                                //   ? "red"
+                                //   : "#1368EC",
+                                // fontWeight: "500",
+                                // fontSize: "26px",
+                                color: item.isFavorite ? "red" : "#1368EC",
+                                fontWeight: "500",
+                                fontSize: "26px",
+                              }}
+                            />
+                          </div>
+                        </div>
+
+                        {/* Bottom Section (Address + Arrow) */}
+                        <div
+                          style={{
+                            position: "absolute",
+                            bottom: "10px",
+                            left: "10px",
+                            right: "10px",
+                            display: "flex",
+                            justifyContent: "space-between",
+                            alignItems: "flex-end",
+                          }}
+                        >
+                          {/* Address */}
+                          <div>
+                            <p style={{ margin: "0", fontWeight: "500" }}>
+                              {/* Delhi - Ram Prashad */}
+                              {item?.city}
+                              &nbsp;-&nbsp;{item?.warehouseOwner}
+                              {/* {item?.contactPerson?.lastName} */}
+                            </p>
+                            <span style={{ color: "#1368EC" }}>
+                              ₹{totalRevenue.toLocaleString("en-IN")}
+                            </span>
+                            <span style={{ marginLeft: "4px" }}>
+                              Stock Valuation
+                            </span>
+                          </div>
+
+                          {/* Arrow */}
+                          <div>
+                            <Link to={`/WarehouseDetails/${item._id}`}>
+                              <FaArrowRight />
+                            </Link>
+                          </div>
+                        </div>
                       </div>
-                    </div>
-                  </div>
                 </div>
               );
               })}

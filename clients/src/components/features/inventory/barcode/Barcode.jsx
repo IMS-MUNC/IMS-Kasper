@@ -8,6 +8,7 @@ import BASE_URL from '../../../../pages/config/config';
 import { toast } from 'react-toastify';
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
+import { IoPrint } from "react-icons/io5";
 
 function Barcode() {
   const [product, setProduct] = useState({
@@ -46,17 +47,17 @@ function Barcode() {
     }
 
     try {
-          const token = localStorage.getItem("token");
+      const token = localStorage.getItem("token");
 
       setLoading(true);
-const response = await axios.get(
-      `${BASE_URL}/api/products/search?name=${encodeURIComponent(query)}`,
-      {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      }
-    );      setProducts(response.data || []);
+      const response = await axios.get(
+        `${BASE_URL}/api/products/search?name=${encodeURIComponent(query)}`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      ); setProducts(response.data || []);
       setShowDropdown(true);
     } catch (error) {
       console.error('Error searching products:', error);
@@ -160,8 +161,8 @@ const response = await axios.get(
 
     // Helper function to safely get expiry date
     const getExpiryDate = (selectedProduct) => {
-      return selectedProduct.variants && selectedProduct.variants.Expiry && selectedProduct.variants.Expiry[0] 
-        ? selectedProduct.variants.Expiry[0] 
+      return selectedProduct.variants && selectedProduct.variants.Expiry && selectedProduct.variants.Expiry[0]
+        ? selectedProduct.variants.Expiry[0]
         : 'N/A';
     };
 
@@ -185,7 +186,7 @@ const response = await axios.get(
         var quantity = selectedProduct.quantity;
         var expiry = getExpiryDate(selectedProduct);
         return `Name:${name},SKU${sku},QTY:${quantity},Exp:${expiry}`;
-      } else if (product.showProductName && product.showQuantity && product.showPrice && product.showExpiryDate) {  
+      } else if (product.showProductName && product.showQuantity && product.showPrice && product.showExpiryDate) {
         var name = selectedProduct.productName;
         var price = selectedProduct.sellingPrice;
         var quantity = selectedProduct.quantity;
@@ -263,17 +264,17 @@ const response = await axios.get(
         var quantity = selectedProduct.quantity;
         return `Exp:${expiry},QTY:${quantity}`;
       } else if (product.showProductName) {
-        return "Name:"+selectedProduct.productName;
+        return "Name:" + selectedProduct.productName;
       } else if (product.showSku) {
-        return "SKU:"+selectedProduct.sku;
+        return "SKU:" + selectedProduct.sku;
       } else if (product.showPrice) {
-        return "Price:"+selectedProduct.sellingPrice;
+        return "Price:" + selectedProduct.sellingPrice;
       } else if (product.showExpiryDate) {
-        return "Exp:"+getExpiryDate(selectedProduct);
+        return "Exp:" + getExpiryDate(selectedProduct);
       } else if (product.showQuantity) {
-        return "QTY:"+selectedProduct.quantity;
+        return "QTY:" + selectedProduct.quantity;
       } else {
-        return "Name:"+selectedProduct.productName || "SKU:"+selectedProduct.sku || "Price:"+selectedProduct.sellingPrice || "Exp:"+getExpiryDate(selectedProduct) || "QTY:"+selectedProduct.quantity || '';
+        return "Name:" + selectedProduct.productName || "SKU:" + selectedProduct.sku || "Price:" + selectedProduct.sellingPrice || "Exp:" + getExpiryDate(selectedProduct) || "QTY:" + selectedProduct.quantity || '';
       }
     }
 
@@ -281,14 +282,14 @@ const response = await axios.get(
     // Generate unique barcodes for each barcode to be printed
     const barcodeCount = numberOfBarcodes || 1;
     const uniqueBarcodes = [];
-    
+
     for (let i = 0; i < barcodeCount; i++) {
       uniqueBarcodes.push(Math.floor(100000000000 + Math.random() * 900000000000).toString());
     }
-    
+
     // Use the first barcode for the product state (for display purposes)
     const primaryBarcode = uniqueBarcodes[0];
-    
+
     setProduct((prev) => ({
       ...prev,
       barcode: primaryBarcode,
@@ -375,15 +376,15 @@ const response = await axios.get(
         <body>
           <div class="barcode-container">
             ${Array.from({ length: Math.ceil((numberOfBarcodes || 1) / 2) })
-              .map((_, rowIndex) => {
-                const startIndex = rowIndex * 2;
-                return `
+        .map((_, rowIndex) => {
+          const startIndex = rowIndex * 2;
+          return `
                   <div class="barcode-row">
                     ${Array.from({ length: Math.min(2, (numberOfBarcodes || 1) - startIndex) })
-                      .map((_, colIndex) => {
-                        const index = startIndex + colIndex;
-                        const barcodeId = `barcode-print-${index}`;
-                        return `
+              .map((_, colIndex) => {
+                const index = startIndex + colIndex;
+                const barcodeId = `barcode-print-${index}`;
+                return `
                           <div class="barcode-col">
                             <div class="barcode-item">
                               ${product.showProductName && product.productName ? `<span style="font-weight: 600; color: black;">${product.productName}</span>` : ''}
@@ -399,19 +400,19 @@ const response = await axios.get(
                             </div>
                           </div>
                         `;
-                      })
-                      .join('')}
-                  </div>
-                `;
               })
               .join('')}
+                  </div>
+                `;
+        })
+        .join('')}
           </div>
           <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
           <script>
             ${Array.from({ length: numberOfBarcodes || 1 })
-              .map((_, index) => {
-                const barcodeId = `barcode-print-${index}`;
-                return `
+        .map((_, index) => {
+          const barcodeId = `barcode-print-${index}`;
+          return `
                   JsBarcode("#${barcodeId}", "${product.uniqueBarcodes[index] || product.barcode}", {
                     format: "CODE39",
                     lineColor: "#000",
@@ -420,8 +421,8 @@ const response = await axios.get(
                     displayValue: true
                   });
                 `;
-              })
-              .join('')}
+        })
+        .join('')}
             window.onload = function() {
               window.print();
               window.onafterprint = function() {
@@ -436,38 +437,38 @@ const response = await axios.get(
   };
 
 
-      const handleDownloadPDF = async () => {
-        if (!selectedProduct) {
-          toast.error('Please select a product first');
-          return;
-        }
+  const handleDownloadPDF = async () => {
+    if (!selectedProduct) {
+      toast.error('Please select a product first');
+      return;
+    }
 
-        const element = printRef.current;
-        const doc = new jsPDF({
-          orientation: 'portrait',
-          unit: 'mm',
-          format: 'a4',
-        });
+    const element = printRef.current;
+    const doc = new jsPDF({
+      orientation: 'portrait',
+      unit: 'mm',
+      format: 'a4',
+    });
 
-        try {
-          const canvas = await html2canvas(element, {
-            scale: 2,
-            useCORS: true,
-            backgroundColor: '#ffffff',
-          });
+    try {
+      const canvas = await html2canvas(element, {
+        scale: 2,
+        useCORS: true,
+        backgroundColor: '#ffffff',
+      });
 
-          const imgData = canvas.toDataURL('image/png');
-          const imgProps = doc.getImageProperties(imgData);
-          const pdfWidth = doc.internal.pageSize.getWidth();
-          const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
+      const imgData = canvas.toDataURL('image/png');
+      const imgProps = doc.getImageProperties(imgData);
+      const pdfWidth = doc.internal.pageSize.getWidth();
+      const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
 
-          doc.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
-          doc.save('barcodes.pdf');
-        } catch (error) {
-          console.error('Error generating PDF:', error);
-          toast.error('Failed to generate PDF: ' + error.message);
-        }
-      };
+      doc.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
+      doc.save('barcodes.pdf');
+    } catch (error) {
+      console.error('Error generating PDF:', error);
+      toast.error('Failed to generate PDF: ' + error.message);
+    }
+  };
 
   const closeForm = () => {
     setIsFormOpen(false);
@@ -492,7 +493,7 @@ const response = await axios.get(
   }, []);
 
   return (
-    <div style={{marginTop:'60px',padding:'20px',fontFamily:'sans-serif'}}>
+    <div style={{ marginTop: '60px', padding: '20px', fontFamily: 'sans-serif' }}>
 
       {/* Add CSS for loading animation */}
       <style>
@@ -505,120 +506,120 @@ const response = await axios.get(
       </style>
 
       {/* path */}
-      <div style={{fontSize:'large',marginLeft:'80px',marginBottom:'20px'}}>
-        <span className="ap-name" style={{fontWeight:'600'}}>Print Barcode</span>
+      <div style={{ fontSize: 'large', marginLeft: '80px', marginBottom: '20px' }}>
+        <span className="ap-name" style={{ fontWeight: '600' }}>Print Barcode</span>
       </div>
 
-      <div style={{maxWidth:'750px',margin:'auto',padding:'16px 32px',fontFamily:'sans-serif'}}>
-        
-        <div style={{backgroundColor:'#fff',border:'1px solid #E1E1E1',borderRadius:'8px',padding:'20px',marginBottom:'24px',boxShadow: "0px 0px 5px rgba(0, 0, 0, 0.3)"}}>
-            <strong>Estimate Amount</strong>
-            
-            <div style={{marginTop:'16px'}}>
-                <div>Products</div>
-                <div ref={searchRef} style={{position:'relative'}}>
-                    <div style={{border:'1px solid #ccc',color: "#999797ff", backgroundColor: "#FBFBFB",padding:'6px',borderRadius:'8px',display:'flex',alignItems:'center'}}>
-                        <IoIosSearch style={{fontSize:'25px',marginRight:'8px'}}/>
-                        <input 
-                        type="text" 
-                        name="searchQuery"
-                        value={searchQuery}
-                        onChange={handleChange}
-                        placeholder="Search for products..."
-                        style={{border:'none',outline:'none',color: "#999797ff", backgroundColor: "#FBFBFB",flex:1}} />
-                        {loading && (
-                          <div style={{width:'20px',height:'20px',border:'2px solid #f3f3f3',borderTop:'2px solid #3498db',borderRadius:'50%',animation:'spin 1s linear infinite'}}></div>
-                        )}
-                    </div>
-                    
-                    {/* Dropdown for search results */}
-                    {showDropdown && (
-                      <div style={{
-                        position:'absolute',
-                        top:'100%',
-                        left:0,
-                        right:0,
-                        backgroundColor:'white',
-                        border:'1px solid #ccc',
-                        borderRadius:'8px',
-                        maxHeight:'200px',
-                        overflowY:'auto',
-                        zIndex:1000,
-                        boxShadow:'0 4px 6px rgba(0,0,0,0.1)'
-                      }}>
-                        {products.length > 0 ? (
-                          products.map((productItem) => (
-                            <div
-                              key={productItem._id}
-                              onClick={() => handleProductSelect(productItem)}
-                              style={{
-                                padding:'10px 15px',
-                                cursor:'pointer',
-                                borderBottom:'1px solid #f0f0f0',
-                                display:'flex',
-                                justifyContent:'space-between',
-                                alignItems:'center'
-                              }}
-                              onMouseEnter={(e) => {
-                                e.target.style.backgroundColor = '#f8f9fa';
-                              }}
-                              onMouseLeave={(e) => {
-                                e.target.style.backgroundColor = 'white';
-                              }}
-                            >
-                              <div>
-                                <div style={{fontWeight:'500',color:'#333'}}>{productItem.productName}</div>
-                              </div>
-                            </div>
-                          ))
-                        ) : (
-                          <div style={{padding:'15px',textAlign:'center',color:'#666',fontStyle:'italic'}}>
-                            {loading ? 'Searching...' : 'No products found'}
-                          </div>
-                        )}
-                      </div>
-                    )}
-                </div>
-            </div>
+      <div style={{ maxWidth: '750px', margin: 'auto', padding: '16px 32px', fontFamily: 'sans-serif' }}>
 
-            {/* Selected Product Display */}
-            {selectedProduct && (
-              <div style={{marginTop:'16px',}}>
-                <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:'8px'}}>
-                  <div style={{fontWeight:'600',color:'#495057'}}>Selected Product Details :</div>
-                  <button
-                    onClick={clearSearch}
-                    style={{
-                      background:'#dc3545',
-                      color:'white',
-                      border:'none',
-                      padding:'4px 8px',
-                      borderRadius:'4px',
-                      fontSize:'12px',
-                      cursor:'pointer'
-                    }}
-                  >
-                    Clear
-                  </button>
+        <div style={{ backgroundColor: '#fff', border: '1px solid #E1E1E1', borderRadius: '8px', padding: '20px', marginBottom: '24px', boxShadow: "0px 0px 5px rgba(0, 0, 0, 0.3)" }}>
+          <strong>Estimate Amount</strong>
+
+          <div style={{ marginTop: '16px' }}>
+            <div>Products</div>
+            <div ref={searchRef} style={{ position: 'relative' }}>
+              <div style={{ border: '1px solid #ccc', color: "#999797ff", backgroundColor: "#FBFBFB", padding: '6px', borderRadius: '8px', display: 'flex', alignItems: 'center' }}>
+                <IoIosSearch style={{ fontSize: '25px', marginRight: '8px' }} />
+                <input
+                  type="text"
+                  name="searchQuery"
+                  value={searchQuery}
+                  onChange={handleChange}
+                  placeholder="Search for products..."
+                  style={{ border: 'none', outline: 'none', color: "#999797ff", backgroundColor: "#FBFBFB", flex: 1 }} />
+                {loading && (
+                  <div style={{ width: '20px', height: '20px', border: '2px solid #f3f3f3', borderTop: '2px solid #3498db', borderRadius: '50%', animation: 'spin 1s linear infinite' }}></div>
+                )}
+              </div>
+
+              {/* Dropdown for search results */}
+              {showDropdown && (
+                <div style={{
+                  position: 'absolute',
+                  top: '100%',
+                  left: 0,
+                  right: 0,
+                  backgroundColor: 'white',
+                  border: '1px solid #ccc',
+                  borderRadius: '8px',
+                  maxHeight: '200px',
+                  overflowY: 'auto',
+                  zIndex: 1000,
+                  boxShadow: '0 4px 6px rgba(0,0,0,0.1)'
+                }}>
+                  {products.length > 0 ? (
+                    products.map((productItem) => (
+                      <div
+                        key={productItem._id}
+                        onClick={() => handleProductSelect(productItem)}
+                        style={{
+                          padding: '10px 15px',
+                          cursor: 'pointer',
+                          borderBottom: '1px solid #f0f0f0',
+                          display: 'flex',
+                          justifyContent: 'space-between',
+                          alignItems: 'center'
+                        }}
+                        onMouseEnter={(e) => {
+                          e.target.style.backgroundColor = '#f8f9fa';
+                        }}
+                        onMouseLeave={(e) => {
+                          e.target.style.backgroundColor = 'white';
+                        }}
+                      >
+                        <div>
+                          <div style={{ fontWeight: '500', color: '#333' }}>{productItem.productName}</div>
+                        </div>
+                      </div>
+                    ))
+                  ) : (
+                    <div style={{ padding: '15px', textAlign: 'center', color: '#666', fontStyle: 'italic' }}>
+                      {loading ? 'Searching...' : 'No products found'}
+                    </div>
+                  )}
                 </div>
-                <div style={{fontSize:'14px'}}>
-                  <div style={{fontSize:'16px',fontWeight:'500'}}>SKU</div>
-                  <div style={{border:'1px solid #ccc',color: "#999797ff", backgroundColor: "#FBFBFB",padding:'8px',borderRadius:'8px',display:'flex',alignItems:'center'}}>{selectedProduct.sku}</div>
-                  <div style={{border:'1px solid #ccc',marginTop:'10px',borderRadius:'8px'}}>
-                  <table style={{width:'100%',borderCollapse:'collapse'}}>
-                    <thead style={{backgroundColor:'#E6E6E6'}}>
+              )}
+            </div>
+          </div>
+
+          {/* Selected Product Display */}
+          {selectedProduct && (
+            <div style={{ marginTop: '16px', }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+                <div style={{ fontWeight: '600', color: '#495057' }}>Selected Product Details :</div>
+                <button
+                  onClick={clearSearch}
+                  style={{
+                    background: '#dc3545',
+                    color: 'white',
+                    border: 'none',
+                    padding: '4px 8px',
+                    borderRadius: '4px',
+                    fontSize: '12px',
+                    cursor: 'pointer'
+                  }}
+                >
+                  Clear
+                </button>
+              </div>
+              <div style={{ fontSize: '14px' }}>
+                <div style={{ fontSize: '16px', fontWeight: '500' }}>SKU</div>
+                <div style={{ border: '1px solid #ccc', color: "#999797ff", backgroundColor: "#FBFBFB", padding: '8px', borderRadius: '8px', display: 'flex', alignItems: 'center' }}>{selectedProduct.sku}</div>
+                <div style={{ border: '1px solid #ccc', marginTop: '10px', borderRadius: '8px' }}>
+                  <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+                    <thead style={{ backgroundColor: '#E6E6E6' }}>
                       <tr style={{ color: "#676767", }}>
-                        <th style={{padding:'8px',borderTopLeftRadius:'8px'}}> Variant</th>
+                        <th style={{ padding: '8px', borderTopLeftRadius: '8px' }}> Variant</th>
                         <th>Price</th>
-                        <th style={{borderTopRightRadius:'8px'}}>Quantity</th>
+                        <th style={{ borderTopRightRadius: '8px' }}>Quantity</th>
                       </tr>
                     </thead>
                     <tbody>
                       <tr>
-                        <td style={{padding:'8px'}}>
+                        <td style={{ padding: '8px' }}>
                           {selectedProduct.images && selectedProduct.images[0] && (
-                            <img src={selectedProduct.images[0].url} style={{width:'30px',height:'30px',borderRadius:'6px'}} />
-                          )} 
+                            <img src={selectedProduct.images[0].url} style={{ width: '30px', height: '30px', borderRadius: '6px' }} />
+                          )}
                           {selectedProduct.productName}
                         </td>
                         <td>₹{selectedProduct.sellingPrice || '0'}.00</td>
@@ -626,97 +627,97 @@ const response = await axios.get(
                       </tr>
                     </tbody>
                   </table>
-                  </div>
                 </div>
               </div>
-            )}
+            </div>
+          )}
 
-            {!selectedProduct && (
-              <div style={{border:'1px solid #ccc',color: "#999797ff", backgroundColor: "white",padding:'40px',borderRadius:'8px',marginTop:'24px',textAlign:'center' }}>
-                <AiFillProduct style={{fontSize:'25px'}}/>
-                <br/>
-                <span style={{color:'#1368EC'}}>Search Product</span><span> to Generate Barcode</span>
-              </div>
-            )}
+          {!selectedProduct && (
+            <div style={{ border: '1px solid #ccc', color: "#999797ff", backgroundColor: "white", padding: '40px', borderRadius: '8px', marginTop: '24px', textAlign: 'center' }}>
+              <AiFillProduct style={{ fontSize: '25px' }} />
+              <br />
+              <span style={{ color: '#1368EC' }}>Search Product</span><span> to Generate Barcode</span>
+            </div>
+          )}
         </div>
 
-        <div style={{backgroundColor:'#fff',border:'1px solid #E1E1E1',borderRadius:'8px',padding:'20px',marginBottom:'24px',boxShadow: "0px 0px 5px rgba(0, 0, 0, 0.3)"}} >
-            <strong>Set Barcode Details</strong>
-            
-            <div style={{marginTop:'16px'}}>
-                
-                <div style={{display:'flex',justifyContent:'space-between',gap:'16px' }}>
-                    <div style={{width:'100%'}}>
-                        <div>Number of Barcode to print</div>
-                        <input 
-                        type="number" 
-                        name="numberOfBarcodes"
-                        value={numberOfBarcodes}
-                        onChange={handleChange} 
-                        min="1"
-                        placeholder='01'
-                        style={{border:'1px solid #ccc',color: "#999797ff", backgroundColor: "#FBFBFB",padding:'6px',borderRadius:'8px',width:'100%'  }} />
-                    </div>
+        <div style={{ backgroundColor: '#fff', border: '1px solid #E1E1E1', borderRadius: '8px', padding: '20px', marginBottom: '24px', boxShadow: "0px 0px 5px rgba(0, 0, 0, 0.3)" }} >
+          <strong>Set Barcode Details</strong>
 
-                    <div style={{width:'100%'}}>
-                        <div>Lable Formate</div>
-                        <select type="text" style={{border:'1px solid #ccc',color: "#999797ff", backgroundColor: "#FBFBFB",padding:'6px',borderRadius:'8px',width:'100%'  }}>
-                            <option>Large</option>
-                            <option>Mediam</option>
-                            <option>Small</option>
-                        </select>
-                    </div>
+          <div style={{ marginTop: '16px' }}>
 
-                    <div style={{width:'100%'}}>
-                        <div>Page Type & Size</div>
-                        <select type="text" style={{border:'1px solid #ccc',color: "#999797ff", backgroundColor: "#FBFBFB",padding:'6px',borderRadius:'8px',width:'100%'  }}>
-                            <option>A4</option>
-                        </select>
-                    </div>
-                </div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', gap: '16px' }}>
+              <div style={{ width: '100%' }}>
+                <div>Number of Barcode to print</div>
+                <input
+                  type="number"
+                  name="numberOfBarcodes"
+                  value={numberOfBarcodes}
+                  onChange={handleChange}
+                  min="1"
+                  placeholder='01'
+                  style={{ border: '1px solid #ccc', color: "#999797ff", backgroundColor: "#FBFBFB", padding: '6px', borderRadius: '8px', width: '100%' }} />
+              </div>
+
+              <div style={{ width: '100%' }}>
+                <div>Lable Formate</div>
+                <select type="text" style={{ border: '1px solid #ccc', color: "#999797ff", backgroundColor: "#FBFBFB", padding: '6px', borderRadius: '8px', width: '100%' }}>
+                  <option>Large</option>
+                  <option>Mediam</option>
+                  <option>Small</option>
+                </select>
+              </div>
+
+              <div style={{ width: '100%' }}>
+                <div>Page Type & Size</div>
+                <select type="text" style={{ border: '1px solid #ccc', color: "#999797ff", backgroundColor: "#FBFBFB", padding: '6px', borderRadius: '8px', width: '100%' }}>
+                  <option>A4</option>
+                </select>
+              </div>
             </div>
+          </div>
 
-            <div style={{marginTop:'16px'}}>
-                <div>Barcode Content Options</div>
-                <div style={{display:'flex',justifyContent:'space-between',gap:'16px'}}>
-                    <div style={{display:'flex',gap:'6px'}}>
-                        <input type='checkbox' 
-                        name="showProductName"
-                        checked={product.showProductName}
-                        onChange={handleChange} />
-                        <span>Product Name</span>
-                    </div>
-                    <div style={{display:'flex',gap:'6px'}}>
-                        <input type='checkbox' 
-                        name="showSku"
-                        checked={product.showSku}
-                        onChange={handleChange} />
-                        <span>SKU</span>
-                    </div>
-                    <div style={{display:'flex',gap:'6px'}}>
-                        <input type='checkbox' 
-                        name="showPrice"
-                        checked={product.showPrice}
-                        onChange={handleChange} />
-                        <span>Price</span>
-                    </div>
-                    <div style={{display:'flex',gap:'6px'}}>
-                        <input type='checkbox' 
-                        name="showExpiryDate"
-                        checked={product.showExpiryDate}
-                        onChange={handleChange} />
-                        <span>Expiry Date</span>
-                    </div>
+          <div style={{ marginTop: '16px' }}>
+            <div>Barcode Content Options</div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', gap: '16px' }}>
+              <div style={{ display: 'flex', gap: '6px' }}>
+                <input type='checkbox'
+                  name="showProductName"
+                  checked={product.showProductName}
+                  onChange={handleChange} />
+                <span>Product Name</span>
+              </div>
+              <div style={{ display: 'flex', gap: '6px' }}>
+                <input type='checkbox'
+                  name="showSku"
+                  checked={product.showSku}
+                  onChange={handleChange} />
+                <span>SKU</span>
+              </div>
+              <div style={{ display: 'flex', gap: '6px' }}>
+                <input type='checkbox'
+                  name="showPrice"
+                  checked={product.showPrice}
+                  onChange={handleChange} />
+                <span>Price</span>
+              </div>
+              <div style={{ display: 'flex', gap: '6px' }}>
+                <input type='checkbox'
+                  name="showExpiryDate"
+                  checked={product.showExpiryDate}
+                  onChange={handleChange} />
+                <span>Expiry Date</span>
+              </div>
 
-                    <div style={{display:'flex',gap:'6px'}}>
-                        <input type='checkbox' 
-                        name="showQuantity"
-                        checked={product.showQuantity}
-                        onChange={handleChange} />
-                        <span>Quantity</span>
-                    </div>
-                </div>
+              <div style={{ display: 'flex', gap: '6px' }}>
+                <input type='checkbox'
+                  name="showQuantity"
+                  checked={product.showQuantity}
+                  onChange={handleChange} />
+                <span>Quantity</span>
+              </div>
             </div>
+          </div>
         </div>
 
         <div
@@ -743,7 +744,7 @@ const response = await axios.get(
           >
             Cancel
           </button>
-          <button 
+          <button
             onClick={() => {
               setIsFormOpen(true);
               generateBarcode();
@@ -778,61 +779,60 @@ const response = await axios.get(
             zIndex: '10',
             overflowY: 'auto',
           }}>
-            <div ref={formRef} style={{width:'760px',height:'auto',margin:'auto',marginTop:'80px',marginBottom:'80px',backgroundColor:'white',border:'1px solid #E1E1E1',borderRadius:'8px',padding:'10px 16px',overflowY:'auto'}}>
-              <div style={{position:'fixed',width:'725px',display:'flex',justifyContent:'space-between',alignItems:'center',borderBottom:'1px solid #E1E1E1',backgroundColor:'#fff',zIndex:'100',marginTop:'-10px',padding:'10px 0px'}}>
-                <div style={{display:'flex',gap:'10px'}}>
-                <FaFilePdf style={{fontSize:'30px', color:'red',cursor:'pointer'}} onClick={handleDownloadPDF} />
-
-                <button
-                  onClick={handlePrint}
-                  disabled={!selectedProduct}
-                  style={{
-                    padding: "6px 12px",
-                    borderRadius: "5px",
-                    backgroundColor: selectedProduct ? "#007BFF" : "#f5f5f5",
-                    color: selectedProduct ? "white" : "#999",
-                    cursor: selectedProduct ? "pointer" : "not-allowed",
-                    boxShadow: "0px 0px 5px rgba(0, 0, 0, 0.3)",
-                    border: "none",
-                  }}
-                >
-                  Print
-                </button>
+            <div ref={formRef} style={{ width: '760px', height: 'auto', margin: 'auto', marginTop: '80px', marginBottom: '80px', backgroundColor: 'white', border: '1px solid #E1E1E1', borderRadius: '8px', padding: '10px 16px', overflowY: 'auto' }}>
+              <div style={{ position: 'fixed', width: '725px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid #E1E1E1', backgroundColor: '#fff', zIndex: '100', marginTop: '-10px', padding: '10px 0px' }}>
+                <div style={{ display: 'flex', gap: '10px' }}>
+                  <button
+                    type="button"
+                    className="icon-btn"
+                    title="Pdf"
+                    onClick={handleDownloadPDF}
+                  >
+                    <FaFilePdf style={{ color: "red" }} />
+                  </button>
+                  <button
+                    type="button"
+                    className="icon-btn"
+                    title="Pdf"
+                    onClick={handlePrint}
+                  >
+                    <IoPrint  style={{fontSize:'22px'}} /> Print
+                  </button>
                 </div>
                 <div style={{}}>
-                  <span style={{backgroundColor:'red',color:'white',padding:'5px 11px',borderRadius:'50%',cursor:'pointer',fontSize:'20px'}} onClick={handlePopupClose}>x</span>
+                  <span style={{ backgroundColor: 'red', color: 'white', padding: '5px 11px', borderRadius: '50%', cursor: 'pointer', fontSize: '20px' }} onClick={handlePopupClose}>x</span>
                 </div>
               </div>
 
-              <div ref={printRef} className='row' style={{marginTop:'60px',marginLeft:'1px'}}>
+              <div ref={printRef} className='row' style={{ marginTop: '60px', marginLeft: '1px' }}>
                 {Array.from({ length: numberOfBarcodes || 1 }).map((_, index) => (
-                  <div key={index} className='col-6' style={{height:'300px',}}>
-                    <div style={{ marginTop: "10px",border:'2px solid #E6E6E6',borderRadius:'8px',width:'320px',padding:'16px 24px',height:'280px',marginBottom:'10px' }}>
+                  <div key={index} className='col-6' style={{ height: '300px', }}>
+                    <div style={{ marginTop: "10px", border: '2px solid #E6E6E6', borderRadius: '8px', width: '320px', padding: '16px 24px', height: '280px', marginBottom: '10px' }}>
                       {product.showProductName && product.productName && (
-                        <span style={{fontWeight:'600',color:'black'}}>{product.productName}</span>
+                        <span style={{ fontWeight: '600', color: 'black' }}>{product.productName}</span>
                       )}
                       {product.showSku && product.sku && (
                         <>
-                          <br/>
-                          <span style={{color:'black'}}>SKU: {product.sku}</span>
+                          <br />
+                          <span style={{ color: 'black' }}>SKU: {product.sku}</span>
                         </>
                       )}
                       {product.showPrice && product.price && (
                         <>
-                          <br/><br/>
-                          <span style={{fontWeight:'500',color:'black'}}>MRP: ₹{product.price}</span>
+                          <br /><br />
+                          <span style={{ fontWeight: '500', color: 'black' }}>MRP: ₹{product.price}</span>
                         </>
                       )}
-                      <br/>
-                      <div style={{display:'flex',justifyContent:'space-between'}}>
+                      <br />
+                      <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                         {product.showExpiryDate && product.expiryDate && (
-                          <span style={{color:'black'}}>Expiry: {new Date(product.expiryDate).toLocaleDateString()}</span>
+                          <span style={{ color: 'black' }}>Expiry: {new Date(product.expiryDate).toLocaleDateString()}</span>
                         )}
                         {product.showQuantity && product.quantity && (
-                          <span style={{color:'black'}}>QTY: {product.quantity}</span>
+                          <span style={{ color: 'black' }}>QTY: {product.quantity}</span>
                         )}
                       </div>
-                      <div style={{marginTop:'10px',textAlign:'center'}}>
+                      <div style={{ marginTop: '10px', textAlign: 'center' }}>
                         {product.barcode && (
                           <svg id={`barcode-svg-${index}`}></svg>
                         )}

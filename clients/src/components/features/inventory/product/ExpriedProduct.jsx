@@ -12,7 +12,7 @@ import * as XLSX from 'xlsx';
 const ExpriedProduct = () => {
   // Columns for export
   const exportColumns = ['sku', 'productName', 'manufactured', 'expiry', 'quantity', 'supplierName', 'warehouseName'];
-  
+
   // Sort state
   const [sortBy, setSortBy] = useState('Last 7 Days');
   const [sortOrder, setSortOrder] = useState('desc');
@@ -80,7 +80,7 @@ const ExpriedProduct = () => {
               const today = new Date();
               today.setHours(0, 0, 0, 0);
               expDate.setHours(0, 0, 0, 0);
-              
+
               if (!isNaN(expDate.getTime())) {
                 return expDate < today; // Check if expired
               }
@@ -114,11 +114,11 @@ const ExpriedProduct = () => {
   useEffect(() => {
     const fetchProducts = async () => {
       try {
-           const token = localStorage.getItem("token"); 
-        const res = await axios.get('/api/products',{
-           headers: {
-          Authorization: `Bearer ${token}`, // ✅ token sent properly
-        },
+        const token = localStorage.getItem("token");
+        const res = await axios.get('/api/products', {
+          headers: {
+            Authorization: `Bearer ${token}`, // ✅ token sent properly
+          },
         });
         setProducts(res.data);
       } catch (err) {
@@ -149,7 +149,7 @@ const ExpriedProduct = () => {
                 const today = new Date();
                 today.setHours(0, 0, 0, 0);
                 expDate.setHours(0, 0, 0, 0);
-                
+
                 if (!isNaN(expDate.getTime())) {
                   return expDate < today; // Check if expired
                 }
@@ -228,9 +228,9 @@ const ExpriedProduct = () => {
   };
 
   //product delete---------------------------------------------------------------------------------------------------------------------------------------------
-  
+
   const handleDelete = async (product) => {
-    console.log("Deleting product:", product);
+    // console.log("Deleting product:", product);
     if (
       window.confirm(`Are you sure you want to delete ${product.productName}?`)
     ) {
@@ -244,7 +244,7 @@ const ExpriedProduct = () => {
         setProducts((prevProducts) =>
           prevProducts.filter((p) => p._id !== product._id)
         );
-        
+
         alert("Product deleted successfully!");
       } catch (err) {
         console.error("Failed to delete product:", err.response?.data || err);
@@ -257,40 +257,40 @@ const ExpriedProduct = () => {
   };
 
   return (
-   <div className="page-wrapper">
-  <div className="content">
-    <div className="page-header">
-      <div className="add-item d-flex">
-        <div className="page-title">
-          <h4 className="fw-bold">Expired Products</h4>
-          <h6>Manage your expired products</h6>
-        </div>						
-      </div>
-      <ul className="table-top-head">
-        <li>
-          <a onClick={handlePdf} title="Download PDF" ><FaFilePdf className="fs-20" style={{color:"red"}} /></a>
-        </li>
-        <li>
-          <a onClick={handleExcel} title="Download Excel" ><FaFileExcel className="fs-20" style={{color:"green"}}/></a>
-        </li>
-        <li>
-          <button data-bs-toggle="tooltip" data-bs-placement="top" title="Refresh" onClick={() => location.reload()} className="fs-20" style={{backgroundColor:'white', color:'', padding:'5px 5px', display:'flex', alignItems:'center', border:'1px solid #e8eaebff', cursor:'pointer',borderRadius:'4px'}}><TbRefresh className="ti ti-refresh" /></button>
-        </li>
-        {/* <li>
+    <div className="page-wrapper">
+      <div className="content">
+        <div className="page-header">
+          <div className="add-item d-flex">
+            <div className="page-title">
+              <h4 className="fw-bold">Expired Products</h4>
+              <h6>Manage your expired products</h6>
+            </div>
+          </div>
+          <ul className="table-top-head">
+            <li>
+              <a onClick={handlePdf} title="Download PDF" ><FaFilePdf className="fs-20" style={{ color: "red" }} /></a>
+            </li>
+            <li>
+              <a onClick={handleExcel} title="Download Excel" ><FaFileExcel className="fs-20" style={{ color: "green" }} /></a>
+            </li>
+            <li>
+              <button data-bs-toggle="tooltip" data-bs-placement="top" title="Refresh" onClick={() => location.reload()} className="fs-20" style={{ backgroundColor: 'white', color: '', padding: '5px 5px', display: 'flex', alignItems: 'center', border: '1px solid #e8eaebff', cursor: 'pointer', borderRadius: '4px' }}><TbRefresh className="ti ti-refresh" /></button>
+            </li>
+            {/* <li>
           <a data-bs-toggle="tooltip" data-bs-placement="top" title="Collapse" id="collapse-header"><i className="ti ti-chevron-up" /></a>
         </li> */}
-      </ul>
-    </div>
-    {/* /product list */}
-    <div className="card">
-      <div className="card-header d-flex align-items-center justify-content-between flex-wrap row-gap-3">
-        <div className="search-set">
-          <div className="search-input">
-            <span className="btn-searchset"><i className="ti ti-search fs-14 feather-search" /></span>
-          </div>
+          </ul>
         </div>
-        <div className="d-flex table-dropdown my-xl-auto right-content align-items-center flex-wrap row-gap-3">
-          {/* <div className="dropdown me-2">
+        {/* /product list */}
+        <div className="card">
+          <div className="card-header d-flex align-items-center justify-content-between flex-wrap row-gap-3">
+            <div className="search-set">
+              <div className="search-input">
+                <span className="btn-searchset"><i className="ti ti-search fs-14 feather-search" /></span>
+              </div>
+            </div>
+            <div className="d-flex table-dropdown my-xl-auto right-content align-items-center flex-wrap row-gap-3">
+              {/* <div className="dropdown me-2">
             <a className="dropdown-toggle btn btn-white btn-md d-inline-flex align-items-center" data-bs-toggle="dropdown">
               Product
             </a>
@@ -309,122 +309,146 @@ const ExpriedProduct = () => {
               </li>
             </ul>
           </div> */}
-          <div className="dropdown">
-            <a className="dropdown-toggle btn btn-white btn-md d-inline-flex align-items-center" data-bs-toggle="dropdown">
-              Sort By : {sortBy}
-            </a>
-            <ul className="dropdown-menu dropdown-menu-end p-3">
-              <li>
-                <a className="dropdown-item rounded-1" onClick={() => handleSortChange('Recently Added')} style={{cursor: 'pointer'}}>Recently Added</a>
-              </li>
-              <li>
-                <a className="dropdown-item rounded-1" onClick={() => handleSortChange('Ascending')} style={{cursor: 'pointer'}}>Ascending</a>
-              </li>
-              <li>
-                <a className="dropdown-item rounded-1" onClick={() => handleSortChange('Descending')} style={{cursor: 'pointer'}}>Descending</a>
-              </li>
-              <li>
-                <a className="dropdown-item rounded-1" onClick={() => handleSortChange('Last Month')} style={{cursor: 'pointer'}}>Last Month</a>
-              </li>
-              <li>
-                <a className="dropdown-item rounded-1" onClick={() => handleSortChange('Last 7 Days')} style={{cursor: 'pointer'}}>Last 7 Days</a>
-              </li>
-            </ul>
+              <div className="dropdown">
+                <a className="dropdown-toggle btn btn-white btn-md d-inline-flex align-items-center" data-bs-toggle="dropdown">
+                  Sort By : {sortBy}
+                </a>
+                <ul className="dropdown-menu dropdown-menu-end p-3">
+                  <li>
+                    <a className="dropdown-item rounded-1" onClick={() => handleSortChange('Recently Added')} style={{ cursor: 'pointer' }}>Recently Added</a>
+                  </li>
+                  <li>
+                    <a className="dropdown-item rounded-1" onClick={() => handleSortChange('Ascending')} style={{ cursor: 'pointer' }}>Ascending</a>
+                  </li>
+                  <li>
+                    <a className="dropdown-item rounded-1" onClick={() => handleSortChange('Descending')} style={{ cursor: 'pointer' }}>Descending</a>
+                  </li>
+                  <li>
+                    <a className="dropdown-item rounded-1" onClick={() => handleSortChange('Last Month')} style={{ cursor: 'pointer' }}>Last Month</a>
+                  </li>
+                  <li>
+                    <a className="dropdown-item rounded-1" onClick={() => handleSortChange('Last 7 Days')} style={{ cursor: 'pointer' }}>Last 7 Days</a>
+                  </li>
+                </ul>
+              </div>
+            </div>
           </div>
-        </div>
-      </div>
-      <div className="card-body p-0">
-        <div className="table-responsive">
-          <table className="table datatable">
-            <thead className="thead-light">
-              <tr>
-                <th className="no-sort">
-                  <label className="checkboxs">
-                    <input type="checkbox" id="select-all" />
-                    <span className="checkmarks" />
-                  </label>
-                </th>
-                <th>SKU</th>
-                <th>Product</th>
-                <th>Manufactured Date</th>
-                <th>Expired Date</th>
-                <th>Quantity</th>
-                <th>Supplier</th>
-                <th>Warehouse</th>
-                <th className="no-sort" />
-              </tr>
-            </thead>
-            <tbody>
-              {sortProducts(products.filter(product => {
-                const expiryArr = product.variants?.get?.('Expiry') || product.variants?.['Expiry']  || product.variants?.get?.('expiry') || product.variants?.['expiry'];
-                if (!expiryArr || expiryArr.length === 0) return false;
-                // Only show products that are already expired
-                return expiryArr.some(dateStr => {
-                  // Handle multiple date formats: DD-MM-YYYY, D-M-YYYY, DD/MM/YYYY, etc.
-                  if (typeof dateStr === "string") {
-                    // Try DD-MM-YYYY or D-M-YYYY format
-                    const dateMatch = dateStr.match(/^(\d{1,2})[-/](\d{1,2})[-/](\d{4})$/);
-                    if (dateMatch) {
-                      const [, day, month, year] = dateMatch.map(Number);
-                      if (day && month && year && day <= 31 && month <= 12) {
-                        const expDate = new Date(year, month - 1, day);
-                        const today = new Date();
-                        today.setHours(0, 0, 0, 0);
-                        expDate.setHours(0, 0, 0, 0);
-                        
-                        if (!isNaN(expDate.getTime())) {
-                          return expDate < today; // Show only expired products
+          <div className="card-body p-0">
+            <div className="table-responsive">
+              <table className="table datatable">
+                <thead className="thead-light">
+                  <tr>
+                    <th className="no-sort">
+                      <label className="checkboxs">
+                        <input type="checkbox" id="select-all" />
+                        <span className="checkmarks" />
+                      </label>
+                    </th>
+                    <th>SKU</th>
+                    <th>Product</th>
+                    <th>Manufactured Date</th>
+                    <th>Expired Date</th>
+                    <th>Quantity</th>
+                    <th>Supplier</th>
+                    <th>Warehouse</th>
+                    <th className="no-sort" />
+                  </tr>
+                </thead>
+                <tbody>
+                  {sortProducts(products.filter(product => {
+                    const expiryArr = product.variants?.get?.('Expiry') || product.variants?.['Expiry'] || product.variants?.get?.('expiry') || product.variants?.['expiry'];
+                    if (!expiryArr || expiryArr.length === 0) return false;
+                    // Only show products that are already expired
+                    return expiryArr.some(dateStr => {
+                      if (typeof dateStr === "string") {
+                        const dateMatch = dateStr.match(/^(\d{1,2})[-/](\d{1,2})[-/](\d{4})$/);
+                        if (dateMatch) {
+                          const [, day, month, year] = dateMatch.map(Number);
+                          if (day && month && year && day <= 31 && month <= 12) {
+                            const expDate = new Date(year, month - 1, day);
+                            const today = new Date();
+                            today.setHours(0, 0, 0, 0);
+                            expDate.setHours(0, 0, 0, 0);
+                            if (!isNaN(expDate.getTime())) {
+                              return expDate < today; // Show only expired products
+                            }
+                          }
                         }
                       }
-                    }
-                  }
-                  return false;
-                });
-              })).map(product => (
-                <tr key={product._id}>
-                  <td>
-                    <label className="checkboxs">
-                      <input type="checkbox" />
-                      <span className="checkmarks" />
-                    </label>
-                  </td>
-                  <td>{product.sku || 'N/A'}</td>
-                  <td>
-                    <div className="d-flex align-items-center">
-                      <a className="avatar avatar-md me-2">
-                        {product.images?.[0] && (
-                          <img src={product.images[0].url} alt={product.productName} className="media-image" />
-                        )}
-                      </a>
-                      <a>{product.productName || product.name || 'N/A'}</a>
-                    </div>
-                  </td>
-                  <td>{(product.variants?.get?.('Manufactured') || product.variants?.['Manufactured'] || ['N/A']).join(', ')}</td>
-                  <td>{(product.variants?.get?.('Expiry') || product.variants?.['Expiry'] || ['N/A']).join(', ')}</td>
-                  <td>{product.quantity ?? 'N/A'}</td>
-                  <td>{product.supplierName || 'N/A'}</td>
-                  <td>{product.warehouseName || 'N/A'}</td>
-                  <td className="action-table-data">
-                    <div className="edit-delete-action">
-                      <a data-bs-toggle="modal" data-bs-target="#edit-expired-product" className="me-2 p-2" onClick={() => navigate(`/product/edit/${product._id}`)}>
-                        <TbEdit data-feather="edit" className="feather-edit" />
-                      </a>
-                      <a data-bs-toggle="modal" data-bs-target="#delete-modal" className="p-2" onClick={() => handleDelete(product)}>
-                        <TbTrash data-feather="trash-2" className="feather-trash-2" />
-                      </a>
-                    </div>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+                      return false;
+                    });
+                  })).length > 0 ? (
+                    sortProducts(products.filter(product => {
+                      const expiryArr = product.variants?.get?.('Expiry') || product.variants?.['Expiry'] || product.variants?.get?.('expiry') || product.variants?.['expiry'];
+                      if (!expiryArr || expiryArr.length === 0) return false;
+                      return expiryArr.some(dateStr => {
+                        if (typeof dateStr === "string") {
+                          const dateMatch = dateStr.match(/^(\d{1,2})[-/](\d{1,2})[-/](\d{4})$/);
+                          if (dateMatch) {
+                            const [, day, month, year] = dateMatch.map(Number);
+                            if (day && month && year && day <= 31 && month <= 12) {
+                              const expDate = new Date(year, month - 1, day);
+                              const today = new Date();
+                              today.setHours(0, 0, 0, 0);
+                              expDate.setHours(0, 0, 0, 0);
+                              if (!isNaN(expDate.getTime())) {
+                                return expDate < today;
+                              }
+                            }
+                          }
+                        }
+                        return false;
+                      });
+                    })).map(product => (
+                      <tr key={product._id}>
+                        <td>
+                          <label className="checkboxs">
+                            <input type="checkbox" />
+                            <span className="checkmarks" />
+                          </label>
+                        </td>
+                        <td>{product.sku || 'N/A'}</td>
+                        <td>
+                          <div className="d-flex align-items-center">
+                            <a className="avatar avatar-md me-2">
+                              {product.images?.[0] && (
+                                <img src={product.images[0].url} alt={product.productName} className="media-image" />
+                              )}
+                            </a>
+                            <a>{product.productName || product.name || 'N/A'}</a>
+                          </div>
+                        </td>
+                        <td>{(product.variants?.get?.('Manufactured') || product.variants?.['Manufactured'] || ['N/A']).join(', ')}</td>
+                        <td>{(product.variants?.get?.('Expiry') || product.variants?.['Expiry'] || ['N/A']).join(', ')}</td>
+                        <td>{product.quantity ?? 'N/A'}</td>
+                        <td>{product.supplierName || 'N/A'}</td>
+                        <td>{product.warehouseName || 'N/A'}</td>
+                        <td className="action-table-data">
+                          <div className="edit-delete-action">
+                            <a data-bs-toggle="modal" data-bs-target="#edit-expired-product" className="me-2 p-2" onClick={() => navigate(`/product/edit/${product._id}`)}>
+                              <TbEdit data-feather="edit" className="feather-edit" />
+                            </a>
+                            <a data-bs-toggle="modal" data-bs-target="#delete-modal" className="p-2" onClick={() => handleDelete(product)}>
+                              <TbTrash data-feather="trash-2" className="feather-trash-2" />
+                            </a>
+                          </div>
+                        </td>
+                      </tr>
+                    ))
+                  ) : (
+                    <tr>
+                      <td colSpan="8" className="text-center">No Expiry Product</td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
         </div>
+        {/* /product list */}
       </div>
-    </div>
-    {/* /product list */}
-  </div>
 
-</div>
+    </div>
 
   )
 }

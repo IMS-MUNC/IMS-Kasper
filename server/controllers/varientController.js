@@ -31,11 +31,20 @@ const updateVariant = async (req, res) => {
 
 const deleteVariant = async (req, res) => {
     try {
-        const deletewar = await Warranty.findByIdAndDelete(req.params.id);
-        res.status(204).json({ message: "Warranty Deleted" }, deletewar);
+        const { id } = req.params; // Extract ID from request parameters
+
+        const deletedWarranty = await Warranty.findByIdAndDelete(id);
+
+        if (!deletedWarranty) {
+            return res.status(404).json({ error: 'Warranty not found' });
+        }
+
+        // Use 200 OK to return a response body
+        res.status(200).json({ message: 'Warranty deleted successfully', data: deletedWarranty });
     } catch (err) {
-        res.status(500).json({ error: err.message });
+        console.error('Error deleting warranty:', err); // Log error for debugging
+        res.status(500).json({ error: 'Failed to delete warranty', details: err.message });
     }
-}
+};
 
 module.exports = { createVariant, getVariant, updateVariant, deleteVariant };
