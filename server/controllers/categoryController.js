@@ -3,47 +3,52 @@ const Category = require("../models/categoryModels");
 
 // CREATE
 exports.createCategory = async (req, res) => {
-    try {
-      const { categoryName, categorySlug } = req.body;
-      if (!categoryName || !categorySlug) {
-        return res.status(400).json({ message: "All fields required." });
-      }
-  
-      const exists = await Category.findOne({
-        $or: [{ categoryName }, { categorySlug }]
-      });
-      if (exists) {
-        return res.status(400).json({ message: "Category already exists." });
-      }
-  
-      const categoryCode = await generateCategoryCode();
-  
-      const category = await Category.create({
-        categoryName,
-        categorySlug,
-        categoryCode
-      });
-  
-      res.status(201).json({ message: "Category created", category });
-    } catch (err) {
-      res.status(500).json({ message: "Server error", error: err.message });
+  try {
+    const { categoryName, categorySlug } = req.body;
+    if (!categoryName) {
+      return res.status(400).json({ message: "categoryName is required." });
     }
-  };
-
-  const generateCategoryCode = async () => {
-    const lastCategory = await Category.findOne().sort({ createdAt: -1 });
-  
-    if (!lastCategory || !lastCategory.categoryCode) {
-      return "CAT-0001";
+    let query = [{ categoryName }];
+    if (categorySlug && categorySlug.trim() !== "") {
+      query.push({ categorySlug });
     }
-  
-    const lastCodeNum = parseInt(lastCategory.categoryCode.split("-")[1], 10);
-    const newCodeNum = lastCodeNum + 1;
-  
-    return `CAT-${String(newCodeNum).padStart(4, "0")}`;
-  };
+    const exists = await Category.findOne({
+      $or: query,
+    });
+    if (exists) {
+      return res.status(400).json({ message: "Category already exists." });
+    }
 
-  exports.bulkAssignCategoryCodes = async (req, res) => {
+    const categoryCode = await generateCategoryCode();
+
+    const category = await Category.create({
+      categoryName,
+      categorySlug:
+        categorySlug && categorySlug.trim() !== "" ? categorySlug : undefined,
+      categoryCode,
+    });
+
+    res.status(201).json({ message: "Category created", category });
+  } catch (err) {
+    console.error("❌ Error in createCategory:", err);
+    res.status(500).json({ message: "Server error", error: err.message });
+  }
+};
+
+const generateCategoryCode = async () => {
+  const lastCategory = await Category.findOne().sort({ createdAt: -1 });
+
+  if (!lastCategory || !lastCategory.categoryCode) {
+    return "CAT-0001";
+  }
+
+  const lastCodeNum = parseInt(lastCategory.categoryCode.split("-")[1], 10);
+  const newCodeNum = lastCodeNum + 1;
+
+  return `CAT-${String(newCodeNum).padStart(4, "0")}`;
+};
+
+exports.bulkAssignCategoryCodes = async (req, res) => {
   try {
     const { selectedIds } = req.body;
 
@@ -51,10 +56,12 @@ exports.createCategory = async (req, res) => {
       return res.status(400).json({ message: "No categories selected" });
     }
 
-    const categories = await Category.find({ _id: { $in: selectedIds } }).sort({ createdAt: 1 });
+    const categories = await Category.find({ _id: { $in: selectedIds } }).sort({
+      createdAt: 1,
+    });
 
     for (let i = 0; i < categories.length; i++) {
-      const code = `CAT-${String(i + 1).padStart(4, '0')}`;
+      const code = `CAT-${String(i + 1).padStart(4, "0")}`;
       categories[i].categoryCode = code;
       await categories[i].save();
     }
@@ -65,9 +72,6 @@ exports.createCategory = async (req, res) => {
   }
 };
 
-
-
-
 exports.getAllCategories = async (req, res) => {
   try {
     const categories = await Category.find().sort({ createdAt: -1 });
@@ -77,12 +81,12 @@ exports.getAllCategories = async (req, res) => {
   }
 };
 
-
 // READ (ONE)
 exports.getCategoryById = async (req, res) => {
   try {
     const category = await Category.findById(req.params.id);
-    if (!category) return res.status(404).json({ message: "Category not found." });
+    if (!category)
+      return res.status(404).json({ message: "Category not found." });
     res.status(200).json(category);
   } catch (err) {
     res.status(500).json({ message: "Server error", error: err.message });
@@ -98,7 +102,8 @@ exports.updateCategory = async (req, res) => {
       { categoryName, categorySlug },
       { new: true }
     );
-    if (!category) return res.status(404).json({ message: "Category not found." });
+    if (!category)
+      return res.status(404).json({ message: "Category not found." });
 
     res.status(200).json({ message: "Category updated", category });
   } catch (err) {
@@ -110,7 +115,8 @@ exports.updateCategory = async (req, res) => {
 exports.deleteCategory = async (req, res) => {
   try {
     const category = await Category.findByIdAndDelete(req.params.id);
-    if (!category) return res.status(404).json({ message: "Category not found." });
+    if (!category)
+      return res.status(404).json({ message: "Category not found." });
 
     res.status(200).json({ message: "Category deleted." });
   } catch (err) {
@@ -127,14 +133,17 @@ exports.bulkDeleteCategories = async (req, res) => {
     const { ids } = req.body;
 
     if (!ids || !Array.isArray(ids)) {
-      return res.status(400).json({ message: "Invalid or missing 'ids' array in request body." });
+      return res
+        .status(400)
+        .json({ message: "Invalid or missing 'ids' array in request body." });
     }
 
     await Category.deleteMany({ _id: { $in: ids } });
 
     res.status(200).json({ message: "Categories deleted successfully" });
   } catch (error) {
-    res.status(500).json({ message: "Bulk delete failed", error: error.message });
+    res
+      .status(500)
+      .json({ message: "Bulk delete failed", error: error.message });
   }
 };
-

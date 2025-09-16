@@ -3,6 +3,7 @@ import { AiOutlineMenuFold, AiOutlineMenuUnfold } from 'react-icons/ai';
 import { Link } from 'react-router-dom';
 import { useSidebar } from '../../../Context/sidetoggle/SidebarContext';
 import { TbCalculator, TbCash, TbChartInfographic, TbMaximize, TbPrinter, TbProgress, TbSettings } from 'react-icons/tb';
+import Mundc from "../../../assets/img/logo/munclogotm.png"
 
 const PosHeader = () => {
   const { openMenus, toggleMenu, mobileOpen, handleMobileToggle, handleLinkClick } = useSidebar();
@@ -37,13 +38,15 @@ const PosHeader = () => {
       {/* Logo */}
       <div className="header-left active">
         <a href="index.html" className="logo logo-normal">
-          {/* <img src="assets/img/logo.svg" alt="Img" /> */}
+          <img src={Mundc} alt="Img" />
         </a>
         <a href="index.html" className="logo logo-white">
-          <img src="assets/img/logo-white.svg" alt="Img" />
+          {/* <img src="assets/img/logo-white.svg" alt="Img" /> */}
+          <img src={Mundc} alt="Img" />
         </a>
         <a href="index.html" className="logo-small">
-          <img src="assets/img/logo-small.png" alt="Img" />
+          {/* <img src="assets/img/logo-small.png" alt="Img" /> */}
+          <img src={Mundc} alt="Img" />
         </a>
       </div>
       {/* /Logo */}
@@ -123,14 +126,8 @@ const PosHeader = () => {
       </ul>
       {/* /Header Menu */}
       {/* Mobile Menu */}
-      <div className="dropdown mobile-user-menu">
-        <a href="javascript:void(0);" className="nav-link dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false"><i className="fa fa-ellipsis-v" /></a>
-        <div className="dropdown-menu dropdown-menu-right">
-          <a className="dropdown-item" href="profile.html">My Profile</a>
-          <a className="dropdown-item" href="general-settings.html">Settings</a>
-          <a className="dropdown-item" href="signin.html">Logout</a>
-        </div>
-      </div>
+      {/* Profile */}
+
       {/* /Mobile Menu */}
     </div>
 
