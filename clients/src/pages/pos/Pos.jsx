@@ -223,6 +223,11 @@ const Pos=() => {
   const closeTransaction = () => {
     setTransactionPopup(false);
   };
+
+  const handlePopupClose = () => {
+    setTransactionPopup(false); // open popup
+  };
+
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (TransactionRef.current && !TransactionRef.current.contains(event.target)) {
@@ -2458,6 +2463,9 @@ const handleSubmit = async (e) => {
                         </div>
                       </>)}
                     <div style={{ color: 'black', padding: '7px 8px', borderRadius: '6px', border: '2px solid #ccc', display: 'flex', gap: '10px', alignItems: 'center', cursor:'pointer' }} onClick={handleClear}><TbArrowsSort /></div>
+                    <div style={{}}>
+                      <span style={{backgroundColor:'red',color:'white',padding:'4px 11px',borderRadius:'50%',cursor:'pointer',fontSize:'20px'}} onClick={handlePopupClose}>x</span>
+                    </div>
                   </div>
                 </div>
 
@@ -2466,7 +2474,7 @@ const handleSubmit = async (e) => {
                     <div style={{ display: 'flex', justifyContent: 'space-between', padding: '5px 10px', }}>
 
                       <div style={{ marginTop: "4px", display: 'flex', gap: '10px' }}>
-                        <div style={{ border: '2px solid #ccc', padding: '1px 5px 0px 8px', alignItems: 'center', display: 'flex', borderRadius: '6px' }}>
+                        <div style={{ border: '2px solid #ccc', padding: '1px 5px 0px 8px', alignItems: 'center', display: 'flex', borderRadius: '6px',backgroundColor:'#f6f6f6' }}>
                           <div style={{ outline: 'none', border: 'none', color: '#555252' }}> Filter <CgSortAz style={{ fontSize: '30px' }} /></div>
                         </div>
 
@@ -2510,12 +2518,10 @@ const handleSubmit = async (e) => {
                             <option value="e1" style={{ color: '#555252' }}>Expiration 1</option>
                           </select>
                         </div>
+                        <div style={{ color: 'black', padding: '2px 8px', borderRadius: '6px', border: '2px solid #ccc', display: 'flex', alignItems: 'center', cursor:'pointer',backgroundColor:'#f6f6f6' }}>
+                          <span>Clear</span>
+                        </div>
                       </div>
-
-                      <div style={{ color: 'black', padding: '2px 8px', borderRadius: '6px', border: '2px solid #ccc', display: 'flex', alignItems: 'center', cursor:'pointer' }}>
-                        <span>Clear</span>
-                      </div>
-
                     </div>
                   </>
                 ) : (<></>)}

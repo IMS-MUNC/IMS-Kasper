@@ -497,7 +497,7 @@ const token = localStorage.getItem("token");
                                                                 </div>
                                                                 <div>
                                                                     <h6 className="fs-14 mb-1">{purchaseData?.supplier.billing.name}</h6>
-                                                                    <p className="mb-0">{formatAddress(purchaseData?.supplier?.billing)}</p>
+                                                                    {/* <p className="mb-0">{formatAddress(purchaseData?.supplier?.billing)}</p> */}
 
                                                                     <p className="mb-0">Phone : {purchaseData?.supplier?.phone}</p>
                                                                     <p className="mb-0">Email : {purchaseData?.supplier?.phone}</p>

@@ -10,12 +10,47 @@ import { MdImageSearch } from "react-icons/md";
 import CategoryModal from "../../../../pages/Modal/categoryModals/CategoryModal";
 import { TbChevronUp, TbEye, TbRefresh } from "react-icons/tb";
 import { useTranslation } from "react-i18next";
+import DOMPurify from "dompurify";
 
 
 
 const ProductForm = () => {
 
   const { t } = useTranslation();
+
+
+  // Define regex patterns for validation
+  const validationPatterns = {
+    productName: /^[A-Za-z\s]{2,50}$/,
+    sku: /^[A-Z0-9\-]{3,20}$/,
+    itemBarcode: /^[A-Z0-9]{6,20}$/,
+    price: /^\d+(\.\d{1,2})?$/,
+    quantity: /^\d{1,10}$/,
+    description: /^[\w\s.,!?-]{0,300}$/,
+    seoTitle: /^[a-zA-Z0-9\s\-]{2,60}$/,
+    seoDescription: /^[a-zA-Z0-9\s\-,.]{2,160}$/,
+    leadTime: /^\d{1,4}$/,
+    reorderLevel: /^\d{1,6}$/,
+    initialStock: /^\d{1,6}$/,
+    serialNumber: /^[A-Z0-9\-]{1,50}$/,
+    batchNumber: /^[A-Z0-9\-]{1,50}$/,
+    discountValue: /^\d+(\.\d{1,2})?$/,
+    quantityAlert: /^\d{1,6}$/,
+    categoryName: /^[A-Za-z\s]{2,50}$/,
+    categorySlug: /^[a-z0-9\-]{2,50}$/,
+    variantValue: /^[a-zA-Z0-9\s,]{1,100}$/,
+  };
+
+  // Sanitization function
+  const sanitizeInput = (value, preserveSpaces = false) => {
+    if (typeof value !== "string") return value;
+    const input = preserveSpaces ? value : value.trim();
+    return DOMPurify.sanitize(input, {
+      ALLOWED_TAGS: [],
+      ALLOWED_ATTR: [],
+    });
+  };
+
 
   const steps = [
     t("descriptionAndMedia"),
@@ -41,26 +76,80 @@ const ProductForm = () => {
   );
   const [activeTab, setActiveTab] = useState("Color");
   const [images, setImages] = useState([]);
+  const [formErrors, setFormErrors] = useState({});
 
   const inputChange = (key, value) => {
-    setFormData((prev) => ({ ...prev, [key]: value }));
+    // setFormData((prev) => ({ ...prev, [key]: value }));
+    const sanitizedValue = sanitizeInput(value, true);
+    const error = validateField(key, sanitizedValue);
+    setFormErrors((prev) => ({ ...prev, [key]: error }));
+    setFormData((prev) => ({ ...prev, [key]: sanitizedValue }));
   };
 
   const validateStep = () => {
+    // if (step === 0) {
+    //   return formData.productName;
+    // }
+    // if (step === 1) {
+    //   return formData.purchasePrice;
+    // }
+    // if (step === 2) {
+    //   return formData.description;
+    // }
+    // if (step === 3) {
+    //   // Check if at least one variant has both name and value
+    //   return variants.some(variant => variant.variantName && variant.variantValue);
+    // }
+    // return true;
+    // Improved comprehensive validation
+    const errors = {};
+    let isValid = true;
+
     if (step === 0) {
-      return formData.productName;
+      if (!formData.productName) errors.productName = t("fieldRequired");
+      if (!formData.sku) errors.sku = t("fieldRequired");
+      if (!formData.itemBarcode) errors.itemBarcode = t("fieldRequired");
+      if (!selectedCategory) errors.category = t("fieldRequired");
+      if (!selectedsubCategory) errors.subCategory = t("fieldRequired");
+      if (!selectedSupplier) errors.supplier = t("fieldRequired");
+      if (!formData.store) errors.store = t("fieldRequired");
+      if (!selectedWarehouse) errors.warehouse = t("fieldRequired");
+      if (!selectedHSN) errors.hsn = t("fieldRequired");
+      if (formData.isAdvanced) {
+        if (!formData.leadTime) errors.leadTime = t("fieldRequired");
+        if (!formData.reorderLevel) errors.reorderLevel = t("fieldRequired");
+        if (!formData.initialStock) errors.initialStock = t("fieldRequired");
+        if (formData.trackType === "serial" && !formData.serialNumber) errors.serialNumber = t("fieldRequired");
+        if (formData.trackType === "batch" && !formData.batchNumber) errors.batchNumber = t("fieldRequired");
+      }
+    } else if (step === 1) {
+      if (!formData.purchasePrice) errors.purchasePrice = t("fieldRequired");
+      if (!formData.quantity) errors.quantity = t("fieldRequired");
+      if (!selectedUnits) errors.unit = t("fieldRequired");
+      if (!formData.taxType) errors.taxType = t("fieldRequired");
+      if (!formData.tax) errors.tax = t("fieldRequired");
+      if (!formData.discountType) errors.discountType = t("fieldRequired");
+      if (!formData.discountValue) errors.discountValue = t("fieldRequired");
+      if (!formData.quantityAlert) errors.quantityAlert = t("fieldRequired");
+    } else if (step === 2) {
+      if (!formData.description) errors.description = t("fieldRequired");
+    } else if (step === 3) {
+      const hasValidVariant = variants.some(variant => variant.variantName && variant.variantValue);
+      if (!hasValidVariant) {
+        errors.variants = t("atLeastOneVariantRequired");
+      }
+      variants.forEach((variant, index) => {
+        if (variant.variantValue) {
+          const error = validateField("variantValue", variant.variantValue);
+          if (error) errors[`variantValue_${index}`] = error;
+        }
+      });
     }
-    if (step === 1) {
-      return formData.purchasePrice;
-    }
-    if (step === 2) {
-      return formData.description;
-    }
-    if (step === 3) {
-      // Check if at least one variant has both name and value
-      return variants.some(variant => variant.variantName && variant.variantValue);
-    }
-    return true;
+
+    setFormErrors(errors);
+    isValid = Object.keys(errors).length === 0;
+    return isValid;
+
   };
 
   //  const validateStep = () => {
@@ -71,6 +160,14 @@ const ProductForm = () => {
   // };
 
   const handleNext = () => {
+    // const isValid = validateStep();
+    // const updatedStatus = [...stepStatus];
+    // updatedStatus[step] = isValid ? "complete" : "incomplete";
+    // setStepStatus(updatedStatus);
+
+    // if (isValid && step < steps.length - 1) {
+    //   setStep((prev) => prev + 1);
+    // }
     const isValid = validateStep();
     const updatedStatus = [...stepStatus];
     updatedStatus[step] = isValid ? "complete" : "incomplete";
@@ -78,6 +175,8 @@ const ProductForm = () => {
 
     if (isValid && step < steps.length - 1) {
       setStep((prev) => prev + 1);
+    } else if (!isValid) {
+      toast.error(t("pleaseCompleteRequiredFields"));
     }
   };
 
@@ -166,9 +265,66 @@ const ProductForm = () => {
   });
 
   const handleChange = (e) => {
+    // const { name, value } = e.target;
+    // setFormData((prev) => ({ ...prev, [name]: value }));
     const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
+    const sanitizedValue = sanitizeInput(value, true);
+    const error = validateField(name, sanitizedValue);
+    setFormErrors((prev) => ({ ...prev, [name]: error }));
+    setFormData((prev) => ({ ...prev, [name]: sanitizedValue }));
   };
+
+
+  const validateField = (name, value) => {
+    if (!value && ["productName", "sku", "itemBarcode", "quantity", "discountValue", "quantityAlert"].includes(name)) {
+      return t("fieldRequired");
+    }
+
+    switch (name) {
+      case "productName":
+        return validationPatterns.productName.test(value) ? "" : t("invalidProductName");
+      case "sku":
+        return validationPatterns.sku.test(value) ? "" : t("invalidSKUFormat");
+      case "itemBarcode":
+        return validationPatterns.itemBarcode.test(value) ? "" : t("invalidBarcodeFormat");
+      case "purchasePrice":
+      case "sellingPrice":
+      case "wholesalePrice":
+      case "retailPrice":
+        return validationPatterns.price.test(value) ? "" : t("invalidPriceFormat");
+      case "quantity":
+        return validationPatterns.quantity.test(value) ? "" : t("invalidQuantityFormat");
+      case "description":
+        return validationPatterns.description.test(value) ? "" : t("invalidDescriptionFormat");
+      case "seoTitle":
+        return validationPatterns.seoTitle.test(value) ? "" : t("invalidSeoTitleFormat");
+      case "seoDescription":
+        return validationPatterns.seoDescription.test(value) ? "" : t("invalidSeoDescriptionFormat");
+      case "leadTime":
+        return validationPatterns.leadTime.test(value) ? "" : t("invalidLeadTimeFormat");
+      case "reorderLevel":
+        return validationPatterns.reorderLevel.test(value) ? "" : t("invalidReorderLevelFormat");
+      case "initialStock":
+        return validationPatterns.initialStock.test(value) ? "" : t("invalidInitialStockFormat");
+      case "serialNumber":
+        return validationPatterns.serialNumber.test(value) ? "" : t("invalidSerialNumberFormat");
+      case "batchNumber":
+        return validationPatterns.batchNumber.test(value) ? "" : t("invalidBatchNumberFormat");
+      case "discountValue":
+        return validationPatterns.discountValue.test(value) ? "" : t("invalidDiscountValueFormat");
+      case "quantityAlert":
+        return validationPatterns.quantityAlert.test(value) ? "" : t("invalidQuantityAlertFormat");
+      case "categoryName":
+        return validationPatterns.categoryName.test(value) ? "" : t("invalidCategoryName");
+      case "categorySlug":
+        return validationPatterns.categorySlug.test(value) ? "" : t("invalidCategorySlug");
+      case "variantValue":
+        return validationPatterns.variantValue.test(value) ? "" : t("invalidVariantFormat");
+      default:
+        return "";
+    }
+  };
+
 
   const fetchCategories = async () => {
     try {
@@ -181,12 +337,17 @@ const ProductForm = () => {
       const data = await res.json();
 
       // Map data for react-select
+      // const options = data.map((category) => ({
+      //   value: category._id, // or category.categoryName
+      //   label: category.categoryName,
+      // }));
       const options = data.map((category) => ({
-        value: category._id, // or category.categoryName
-        label: category.categoryName,
+        value: category._id,
+        label: sanitizeInput(category.categoryName, true),
       }));
-
       setCategories(options);
+
+      // setCategories(options);
       console.log('ferere categories', data)
     } catch (error) {
       console.error("Error fetching categories:", error);
@@ -201,9 +362,14 @@ const ProductForm = () => {
           Authorization: `Bearer ${token}`, // ✅ token sent properly
         },
       });
+      // const options = res.data.units.map((unit) => ({
+      //   value: unit.shortName,
+      //   label: `${unit.unitsName} (${unit.shortName})`,
+      // }));
+      // setUnitsOptions(options);
       const options = res.data.units.map((unit) => ({
         value: unit.shortName,
-        label: `${unit.unitsName} (${unit.shortName})`,
+        label: sanitizeInput(`${unit.unitsName} (${unit.shortName})`, true),
       }));
       setUnitsOptions(options);
     } catch (error) {
@@ -238,9 +404,14 @@ const ProductForm = () => {
       const data = await res.json();
       console.log("Subcategory API raw response:", data);
 
+      // const options = data.map((subcat) => ({
+      //   value: subcat._id,
+      //   label: subcat.subCategoryName,
+      // }));
+      // setSubcategories(options);
       const options = data.map((subcat) => ({
         value: subcat._id,
-        label: subcat.subCategoryName,
+        label: sanitizeInput(subcat.subCategoryName, true),
       }));
       setSubcategories(options);
       console.log('ferere subcategories', data)
@@ -259,11 +430,16 @@ const ProductForm = () => {
       const data = await res.json();
       console.log('fetchbrand', data)
 
+      // const options = data.brands.map((brand) => ({
+      //   value: brand._id,
+      //   label: brand.brandName,
+      // }));
+
+      // setBrandOptions(options);
       const options = data.brands.map((brand) => ({
         value: brand._id,
-        label: brand.brandName,
+        label: sanitizeInput(brand.brandName, true),
       }));
-
       setBrandOptions(options);
       console.log('ferere brand', data)
     } catch (error) {
@@ -293,24 +469,24 @@ const ProductForm = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
+    if (!validateStep()) {
+      toast.error(t("pleaseCorrectErrors"));
+      return;
+    }
     const formPayload = new FormData();
 
-    // Append form fields
-    formPayload.append("productName", formData.productName);
-    formPayload.append("sku", formData.sku);
-    formPayload.append("brand", selectedBrands?.value);
-    formPayload.append("category", selectedCategory?.value);
-    formPayload.append("subCategory", selectedsubCategory?.value);
-    // Only send supplier if valid ObjectId is present
-    if (selectedSupplier?.value && typeof selectedSupplier.value === 'string' && selectedSupplier.value.trim() !== '') {
+
+    formPayload.append("productName", sanitizeInput(formData.productName, true));
+    formPayload.append("sku", sanitizeInput(formData.sku));
+    formPayload.append("brand", selectedBrands?.value || "");
+    formPayload.append("category", selectedCategory?.value || "");
+    formPayload.append("subCategory", selectedsubCategory?.value || "");
+    if (selectedSupplier?.value && typeof selectedSupplier.value === "string" && selectedSupplier.value.trim() !== "") {
       formPayload.append("supplier", selectedSupplier.value);
     }
-    // Always send itemBarcode, prefer selectedSupplier if available
-    formPayload.append("itemBarcode", formData.itemBarcode);
-    formPayload.append("store", formData.store);
-    // Always send warehouse, prefer selectedWarehouse if available
-    formPayload.append("warehouse", selectedWarehouse?.value);
-    // Ensure hsn is sent if selectedHSN exists
+    formPayload.append("itemBarcode", sanitizeInput(formData.itemBarcode));
+    formPayload.append("store", sanitizeInput(formData.store));
+    formPayload.append("warehouse", selectedWarehouse?.value || "");
     if (selectedHSN?.value) {
       formPayload.append("hsn", selectedHSN.value);
     }
@@ -319,40 +495,99 @@ const ProductForm = () => {
     formPayload.append("wholesalePrice", Number(formData.wholesalePrice));
     formPayload.append("retailPrice", Number(formData.retailPrice));
     formPayload.append("quantity", Number(formData.quantity));
-    formPayload.append("unit", selectedUnits?.value);
-    formPayload.append("taxType", formData.taxType);
-    formPayload.append("tax", formData.tax);
-    formPayload.append("discountType", formData.discountType);
+    formPayload.append("unit", selectedUnits?.value || "");
+    formPayload.append("taxType", sanitizeInput(formData.taxType));
+    formPayload.append("tax", sanitizeInput(formData.tax));
+    formPayload.append("discountType", sanitizeInput(formData.discountType));
     formPayload.append("discountValue", Number(formData.discountValue));
     formPayload.append("quantityAlert", Number(formData.quantityAlert));
-    formPayload.append("description", formData.description);
-    formPayload.append("seoTitle", formData.seoTitle);
-    formPayload.append("seoDescription", formData.seoDescription);
-
-    formPayload.append("itemType", formData.itemType);
+    formPayload.append("description", sanitizeInput(formData.description, true));
+    formPayload.append("seoTitle", sanitizeInput(formData.seoTitle, true));
+    formPayload.append("seoDescription", sanitizeInput(formData.seoDescription, true));
+    formPayload.append("itemType", sanitizeInput(formData.itemType));
     formPayload.append("isAdvanced", formData.isAdvanced);
-    formPayload.append("trackType", formData.trackType);
+    formPayload.append("trackType", sanitizeInput(formData.trackType));
     formPayload.append("isReturnable", formData.isReturnable);
-    formPayload.append("leadTime", formData.leadTime);
-    formPayload.append("reorderLevel", formData.reorderLevel);
-    formPayload.append("initialStock", formData.initialStock);
-    formPayload.append("serialNumber", formData.serialNumber);
-    formPayload.append("batchNumber", formData.batchNumber);
+    formPayload.append("leadTime", sanitizeInput(formData.leadTime));
+    formPayload.append("reorderLevel", sanitizeInput(formData.reorderLevel));
+    formPayload.append("initialStock", sanitizeInput(formData.initialStock));
+    formPayload.append("serialNumber", sanitizeInput(formData.serialNumber));
+    formPayload.append("batchNumber", sanitizeInput(formData.batchNumber));
     formPayload.append("returnable", formData.returnable);
-    formPayload.append("expirationDate", formData.expirationDate);
+    formPayload.append("expirationDate", sanitizeInput(formData.expirationDate));
 
-    // Convert variants array to the format expected by backend (Map of arrays)
     const variantsMap = {};
-    variants.forEach(variant => {
+    variants.forEach((variant) => {
       if (variant.variantName && variant.variantValue) {
-        // Split comma-separated values and trim whitespace
-        const values = variant.variantValue.split(',').map(v => v.trim()).filter(v => v);
+        const values = sanitizeInput(variant.variantValue, true)
+          .split(",")
+          .map((v) => v.trim())
+          .filter((v) => v);
         if (values.length > 0) {
           variantsMap[variant.variantName] = values;
         }
       }
     });
     formPayload.append("variants", JSON.stringify(variantsMap));
+
+    // Append form fields
+    // formPayload.append("productName", formData.productName);
+    // formPayload.append("sku", formData.sku);
+    // formPayload.append("brand", selectedBrands?.value);
+    // formPayload.append("category", selectedCategory?.value);
+    // formPayload.append("subCategory", selectedsubCategory?.value);
+    // // Only send supplier if valid ObjectId is present
+    // if (selectedSupplier?.value && typeof selectedSupplier.value === 'string' && selectedSupplier.value.trim() !== '') {
+    //   formPayload.append("supplier", selectedSupplier.value);
+    // }
+    // // Always send itemBarcode, prefer selectedSupplier if available
+    // formPayload.append("itemBarcode", formData.itemBarcode);
+    // formPayload.append("store", formData.store);
+    // // Always send warehouse, prefer selectedWarehouse if available
+    // formPayload.append("warehouse", selectedWarehouse?.value);
+    // // Ensure hsn is sent if selectedHSN exists
+    // if (selectedHSN?.value) {
+    //   formPayload.append("hsn", selectedHSN.value);
+    // }
+    // formPayload.append("purchasePrice", Number(formData.purchasePrice));
+    // formPayload.append("sellingPrice", Number(formData.sellingPrice));
+    // formPayload.append("wholesalePrice", Number(formData.wholesalePrice));
+    // formPayload.append("retailPrice", Number(formData.retailPrice));
+    // formPayload.append("quantity", Number(formData.quantity));
+    // formPayload.append("unit", selectedUnits?.value);
+    // formPayload.append("taxType", formData.taxType);
+    // formPayload.append("tax", formData.tax);
+    // formPayload.append("discountType", formData.discountType);
+    // formPayload.append("discountValue", Number(formData.discountValue));
+    // formPayload.append("quantityAlert", Number(formData.quantityAlert));
+    // formPayload.append("description", formData.description);
+    // formPayload.append("seoTitle", formData.seoTitle);
+    // formPayload.append("seoDescription", formData.seoDescription);
+
+    // formPayload.append("itemType", formData.itemType);
+    // formPayload.append("isAdvanced", formData.isAdvanced);
+    // formPayload.append("trackType", formData.trackType);
+    // formPayload.append("isReturnable", formData.isReturnable);
+    // formPayload.append("leadTime", formData.leadTime);
+    // formPayload.append("reorderLevel", formData.reorderLevel);
+    // formPayload.append("initialStock", formData.initialStock);
+    // formPayload.append("serialNumber", formData.serialNumber);
+    // formPayload.append("batchNumber", formData.batchNumber);
+    // formPayload.append("returnable", formData.returnable);
+    // formPayload.append("expirationDate", formData.expirationDate);
+
+    // // Convert variants array to the format expected by backend (Map of arrays)
+    // const variantsMap = {};
+    // variants.forEach(variant => {
+    //   if (variant.variantName && variant.variantValue) {
+    //     // Split comma-separated values and trim whitespace
+    //     const values = variant.variantValue.split(',').map(v => v.trim()).filter(v => v);
+    //     if (values.length > 0) {
+    //       variantsMap[variant.variantName] = values;
+    //     }
+    //   }
+    // });
+    // formPayload.append("variants", JSON.stringify(variantsMap));
 
     // Append multiple images (must be File objects)
     images.forEach((imgFile) => {
@@ -388,6 +623,9 @@ const ProductForm = () => {
   const generateBarcode = () => {
     const prefix = "BR"; // Optional
     const randomNumber = Math.floor(100000000 + Math.random() * 900000000);
+    const barcode = `${prefix}${randomNumber}`;
+    setFormErrors((prev) => ({ ...prev, itemBarcode: "" }));
+    setFormData((prev) => ({ ...prev, itemBarcode: barcode }));
     return `${prefix}${randomNumber}`;
   };
 
@@ -396,47 +634,84 @@ const ProductForm = () => {
   const [categorySlug, setCategorySlug] = useState("");
 
   const categorySubmit = async (e) => {
-    e.preventDefault();
+    // e.preventDefault();
+    // const sanitizedCategoryName = sanitizeInput(categoryName, true);
+    // const sanitizedCategorySlug = sanitizeInput(categorySlug);
 
+    // if (!sanitizedCategoryName || !sanitizedCategorySlug) {
+    //   toast.error(t("allFieldsRequired"));
+    //   return;
+    // }
+
+    // const nameError = validateField("categoryName", sanitizedCategoryName);
+    // const slugError = validateField("categorySlug", sanitizedCategorySlug);
+    // if (nameError || slugError) {
+    //   setFormErrors({ categoryName: nameError, categorySlug: slugError });
+    //   toast.error(t("pleaseCorrectErrors"));
+    //   return;
+    // }
+
+    e.preventDefault();
+    const sanitizedCategoryName = sanitizeInput(categoryName, true);
+    const sanitizedCategorySlug = sanitizeInput(categorySlug);
+
+    if (!sanitizedCategoryName || !sanitizedCategorySlug) {
+      toast.error(t("allFieldsRequired"));
+      return;
+    }
+
+    const nameError = validateField("categoryName", sanitizedCategoryName);
+    const slugError = validateField("categorySlug", sanitizedCategorySlug);
+    if (nameError || slugError) {
+      setFormErrors({ categoryName: nameError, categorySlug: slugError });
+      toast.error(t("pleaseCorrectErrors"));
+      return;
+    }
     if (!categoryName || !categorySlug) {
       toast.error("All fields are required");
       return;
     }
 
     try {
-      await axios.post(`${BASE_URL}/api/category/categories`, {
-        categoryName: categoryName,
-        categorySlug: categorySlug,
-        headers: {
-          Authorization: `Bearer ${token}`, // ✅ token sent properly
+      const token = localStorage.getItem("token");
+      await axios.post(
+        `${BASE_URL}/api/category/categories`,
+        {
+          categoryName: sanitizedCategoryName,
+          categorySlug: sanitizedCategorySlug,
         },
-      });
-
-      toast.success("Category created successfully!");
-
-      // Reset form
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+      toast.success(t("categoryCreatedSuccessfully"));
       setCategoryName("");
       setCategorySlug("");
-      // Refresh list
       fetchCategories();
-      // Close modal
       window.$("#categoryModal").modal("hide");
     } catch (err) {
       console.error("Error creating category:", err);
-      toast.error(err.response?.data?.message || "Error creating category");
+      toast.error(err.response?.data?.message || t("errorCreatingCategory"));
     }
   };
 
   // to generate sku i.e, stock keeping unit based on category
   const generateSKU = () => {
+    // const category = formData.category || "GEN";
+    // const name = sanitizeInput(formData.productName || "PRD", true).replace(/\s+/g, "-");
+    // // const name = formData.name || "PRD";
+    // const randomNum = Math.floor(Math.random() * 9000) + 1000;
+    // const sku = `${category.toUpperCase().slice(0, 3)}-${name.toUpperCase().slice(0, 3)}-${randomNum}`
+    // setFormErrors((prev) => ({ ...prev, sku: "" }));
+    // setFormData((prevProduct) => ({
+    //   ...prevProduct,
+    //   sku,
+    // }))
     const category = formData.category || "GEN";
-    const name = formData.name || "PRD";
+    const name = formData.productName || "PRD";
     const randomNum = Math.floor(Math.random() * 9000) + 1000;
-    const sku = `${category.toUpperCase().slice(0, 3)}-${name.toUpperCase().slice(0, 3)}-${randomNum}`
-    setFormData((prevProduct) => ({
-      ...prevProduct,
-      sku,
-    }))
+    const sku = `${category.toUpperCase().slice(0, 3)}-${name.toUpperCase().slice(0, 3)}-${randomNum}`;
+    setFormData((prev) => ({ ...prev, sku }));
   }
 
   // to auto change sku based on changes in product name or category
@@ -459,11 +734,16 @@ const ProductForm = () => {
         });
         const suppliers = res.data.suppliers;
 
+        // const formattedOptions = suppliers.map((supplier) => ({
+        //   value: supplier._id,
+        //   label: `${supplier.firstName}${supplier.lastName} (${supplier.supplierCode})`,
+        // }));
+
+        // setOptions(formattedOptions);
         const formattedOptions = suppliers.map((supplier) => ({
           value: supplier._id,
-          label: `${supplier.firstName}${supplier.lastName} (${supplier.supplierCode})`,
+          label: sanitizeInput(`${supplier.firstName}${supplier.lastName} (${supplier.supplierCode})`, true),
         }));
-
         setOptions(formattedOptions);
       } catch (err) {
         console.error("Error fetching active suppliers:", err);
@@ -492,9 +772,14 @@ const ProductForm = () => {
           },
         });
         if (res.data.success) {
+          // const formatted = res.data.data.map((wh) => ({
+          //   value: wh._id,
+          //   label: wh.warehouseName, // ✅ direct warehouseName
+          // }));
+          // setOptionsWare(formatted);
           const formatted = res.data.data.map((wh) => ({
             value: wh._id,
-            label: wh.warehouseName, // ✅ direct warehouseName
+            label: sanitizeInput(wh.warehouseName, true),
           }));
           setOptionsWare(formatted);
         }
@@ -526,9 +811,14 @@ const ProductForm = () => {
           },
         });
         if (res.data.success) {
+          // const formatted = res.data.data.map((item) => ({
+          //   value: item._id,
+          //   label: `${item.hsnCode} - ${item.description || ""}`,
+          // }));
+          // setOptionsHsn(formatted);
           const formatted = res.data.data.map((item) => ({
             value: item._id,
-            label: `${item.hsnCode} - ${item.description || ""}`,
+            label: sanitizeInput(`${item.hsnCode} - ${item.description || ""}`, true),
           }));
           setOptionsHsn(formatted);
         }
@@ -554,10 +844,20 @@ const ProductForm = () => {
   ]);
 
   const handleVariantChange = (index, e) => {
+    // const { name, value } = e.target;
+    // setVariants((prev) =>
+    //   prev.map((variant, i) =>
+    //     i === index ? { ...variant, [name]: value } : variant
+    //   )
+    // );
+
     const { name, value } = e.target;
+    const sanitizedValue = sanitizeInput(value, true);
+    const error = name === "variantValue" ? validateField(name, sanitizedValue) : "";
+    setFormErrors((prev) => ({ ...prev, [`variantValue_${index}`]: error }));
     setVariants((prev) =>
       prev.map((variant, i) =>
-        i === index ? { ...variant, [name]: value } : variant
+        i === index ? { ...variant, [name]: sanitizedValue } : variant
       )
     );
   };
@@ -716,6 +1016,7 @@ const ProductForm = () => {
                         onChange={handleChange}
                         placeholder={t("enterProductName")}
                       />
+                      {formErrors.productName && <div className="text-danger">{formErrors.productName}</div>}
                     </div>
 
                     {/* HSNCODE */}
@@ -750,6 +1051,7 @@ const ProductForm = () => {
                             }}
                           />
                         </div>
+                        {formErrors.hsn && <div className="text-danger">{formErrors.hsn}</div>}
                       </div>
                       <button
                         type="button"
@@ -817,9 +1119,14 @@ const ProductForm = () => {
                           onChange={(e) => setFormData({ ...formData, sku: e.target.value })}
                           placeholder={t("enterSKU")}
                         />
-                        <button type="submit" onClick={generateSKU} className="btn btn-primaryadd">
+                        {/* <button type="submit" onClick={generateSKU} className="btn btn-primaryadd">
+                          {t("generate")}
+                        </button> */}
+                        <button type="button" onClick={generateSKU} className="btn btn-primaryadd">
                           {t("generate")}
                         </button>
+                        {formErrors.sku && <div className="text-danger">{formErrors.sku}</div>}
+
                       </div>
                     </div>
 
@@ -863,9 +1170,11 @@ const ProductForm = () => {
                         onChange={(selected) => {
                           setSelectedCategory(selected);
                           setSelectedSubcategory(null);
+                          setFormErrors((prev) => ({ ...prev, category: "" }));
                         }}
                         placeholder={t("searchOrSelectCategory")}
                       />
+                      {formErrors.category && <div className="text-danger">{formErrors.category}</div>}
                     </div>
 
                     {/* Subcategory */}
@@ -879,6 +1188,7 @@ const ProductForm = () => {
                         onChange={subCategoryChange}
                         placeholder={t("searchOrSelectSubcategory")}
                       />
+                      {formErrors.subCategory && <div className="text-danger">{formErrors.subCategory}</div>}
                     </div>
 
                     {/* Supplier */}
@@ -903,6 +1213,7 @@ const ProductForm = () => {
                         placeholder="Choose a supplier..."
                         isClearable
                       />
+                      {formErrors.supplier && <div className="text-danger">{formErrors.supplier}</div>}
                     </div>
 
                     <div className="col-lg-6 col-sm-6 col-12">
@@ -931,6 +1242,7 @@ const ProductForm = () => {
                         >
                           {t("generate")}
                         </button>
+                        {formErrors.itemBarcode && <div className="text-danger">{formErrors.itemBarcode}</div>}
                       </div>
                     </div>
 
@@ -949,6 +1261,7 @@ const ProductForm = () => {
                         <option value="India Mart">{t("indiaMart")}</option>
                         <option value="India Gadgets">{t("indiaGadgets")}</option>
                       </select>
+                      {formErrors.store && <div className="text-danger">{formErrors.store}</div>}
                     </div>
 
                     {/* Warehouse */}
@@ -965,6 +1278,7 @@ const ProductForm = () => {
                         placeholder="Select Warehouse..."
                         onChange={handleWarehouseChange}
                       />
+                      {formErrors.warehouse && <div className="text-danger">{formErrors.warehouse}</div>}
                       {/* <select
                         className="form-select"
                         name="warehouse"
@@ -1011,37 +1325,40 @@ const ProductForm = () => {
                         <div className="col-sm-6 col-12 mb-3">
                           <label className="form-label">{t("leadTime")}</label>
                           <input
-                            type="text"
+                            type="number"
                             className="form-control"
                             placeholder={t("enterLeadTime")}
                             name="leadTime"
                             value={formData.leadTime}
                             onChange={handleChange}
                           />
+                          {formErrors.leadTime && <div className="text-danger">{formErrors.leadTime}</div>}
                         </div>
 
                         <div className="col-sm-6 col-12 mb-3">
                           <label className="form-label">{t("reorderLevel")}</label>
                           <input
-                            type="text"
+                            type="number"
                             className="form-control"
                             placeholder={t("enterReorderLevel")}
                             name="reorderLevel"
                             value={formData.reorderLevel}
                             onChange={handleChange}
                           />
+                          {formErrors.reorderLevel && <div className="text-danger">{formErrors.reorderLevel}</div>}
                         </div>
 
                         <div className="col-sm-6 col-12 mb-3">
                           <label className="form-label">{t("initialStock")}</label>
                           <input
-                            type="text"
+                            type="number"
                             className="form-control"
                             placeholder={t("enterInitialStock")}
                             name="initialStock"
                             value={formData.initialStock}
                             onChange={handleChange}
                           />
+                          {formErrors.initialStock && <div className="text-danger">{formErrors.initialStock}</div>}
                         </div>
 
                         {/* Track Name */}
@@ -1129,6 +1446,7 @@ const ProductForm = () => {
                               value={formData.serialNumber}
                               onChange={handleChange}
                             />
+                            {formErrors.serialNumber && <div className="text-danger">{formErrors.serialNumber}</div>}
                           </div>
                         )}
 
@@ -1144,6 +1462,7 @@ const ProductForm = () => {
                               value={formData.batchNumber}
                               onChange={handleChange}
                             />
+                            {formErrors.batchNumber && <div className="text-danger">{formErrors.batchNumber}</div>}
                           </div>
                         )}
 
@@ -1179,15 +1498,33 @@ const ProductForm = () => {
                       <label className="block text-sm font-medium">
                         {t("expireDate")}
                       </label>
-                      <input type="date" className="w-full p-2 border rounded" placeholder={t("enterExpireDate")} />
+                      {/* <input type="date" className="w-full p-2 border rounded" placeholder={t("enterExpireDate")} /> */}
+                      <input
+                        type="date"
+                        className="form-control"
+                        name="expirationDate"
+                        value={formData.expirationDate}
+                        onChange={handleChange}
+                        placeholder={t("enterExpireDate")}
+                      />
+                      {formErrors.expirationDate && <div className="text-danger">{formErrors.expirationDate}</div>}
                     </div>
                     <div>
                       <label className="block text-sm font-medium">{t("brand")}</label>
-                      <input
+                      {/* <input
                         type="text"
                         className="w-full p-2 border rounded"
                         placeholder={t("enterBrand")}
+                      /> */}
+                      <input
+                        type="text"
+                        className="form-control"
+                        name="brand"
+                        value={formData.brand}
+                        onChange={handleChange}
+                        placeholder={t("enterBrand")}
                       />
+                      {formErrors.brand && <div className="text-danger">{formErrors.brand}</div>}
                     </div>
                   </>
                 )}
@@ -1216,6 +1553,7 @@ const ProductForm = () => {
                       onChange={handleChange}
                       placeholder={t(`enter${field.name.charAt(0).toUpperCase() + field.name.slice(1)}`)}
                     />
+                    {formErrors[field.name] && <div className="text-danger">{formErrors[field.name]}</div>}
                   </div>
                 ))}
 
@@ -1231,6 +1569,7 @@ const ProductForm = () => {
                     onChange={handleChange}
                     placeholder={t("enterQuantity")}
                   />
+                  {formErrors.quantity && <div className="text-danger">{formErrors.quantity}</div>}
                 </div>
                 <div className="col-sm-6 col-12 mb-3">
                   <label className="form-label">
@@ -1243,6 +1582,7 @@ const ProductForm = () => {
                     isSearchable
                     placeholder={t("searchOrSelectUnits")}
                   />
+                  {formErrors.unit && <div className="text-danger">{formErrors.unit}</div>}
                 </div>
 
                 <div className=" col-sm-6 col-12 mb-3">
@@ -1259,6 +1599,7 @@ const ProductForm = () => {
                     <option>{t("exclusive")}</option>
                     <option>{t("inclusive")}</option>
                   </select>
+                  {formErrors.taxType && <div className="text-danger">{formErrors.taxType}</div>}
                 </div>
 
                 <div className=" col-sm-6 col-12 mb-3">
@@ -1278,6 +1619,7 @@ const ProductForm = () => {
                     <option value="16">{t("cgst16")}</option>
                     <option value="18">{t("gst18")}</option>
                   </select>
+                  {formErrors.tax && <div className="text-danger">{formErrors.tax}</div>}
                 </div>
 
                 <div className=" col-sm-6 col-12 mb-3">
@@ -1294,6 +1636,7 @@ const ProductForm = () => {
                     <option>{t("percentage")}</option>
                     <option>{t("fixed")}</option>
                   </select>
+                  {formErrors.discountType && <div className="text-danger">{formErrors.discountType}</div>}
                 </div>
 
                 <div className=" col-sm-6 col-12 mb-3">
@@ -1308,6 +1651,7 @@ const ProductForm = () => {
                     onChange={handleChange}
                     placeholder={t("enterDiscountValue")}
                   />
+                  {formErrors.discountValue && <div className="text-danger">{formErrors.discountValue}</div>}
                 </div>
 
                 <div className=" col-sm-6 col-12 mb-3">
@@ -1322,6 +1666,7 @@ const ProductForm = () => {
                     onChange={handleChange}
                     placeholder={t("enterQuantityAlert")}
                   />
+                  {formErrors.quantityAlert && <div className="text-danger">{formErrors.quantityAlert}</div>}
                 </div>
               </div>
             )}
@@ -1363,6 +1708,7 @@ const ProductForm = () => {
                     onChange={handleChange}
                     placeholder={t("enterDescription")}
                   />
+                  {formErrors.description && <div className="text-danger">{formErrors.description}</div>}
                 </div>
 
                 <div className="row">
@@ -1376,6 +1722,7 @@ const ProductForm = () => {
                       onChange={handleChange}
                       placeholder={t("enterSeoMetaTitle")}
                     />
+                    {formErrors.seoTitle && <div className="text-danger">{formErrors.seoTitle}</div>}
                   </div>
                   <div className="col-sm-6 col-12 mb-3">
                     <label className="form-label">{t("seoMetaDescription")}</label>
@@ -1387,6 +1734,7 @@ const ProductForm = () => {
                       onChange={handleChange}
                       placeholder={t("enterSeoMetaDescription")}
                     />
+                    {formErrors.seoDescription && <div className="text-danger">{formErrors.seoDescription}</div>}
                   </div>
                 </div>
               </>
@@ -1419,6 +1767,7 @@ const ProductForm = () => {
                     onChange={(e) => inputChange(activeTab, e.target.value)}
                     placeholder={t("enterVariantsPlaceholder", { tab: activeTab })}
                   />
+                  {formErrors[activeTab] && <div className="text-danger">{formErrors[activeTab]}</div>}
                 </div> */}
 
                 {/* Variants */}
@@ -1452,6 +1801,9 @@ const ProductForm = () => {
                           onChange={(e) => handleVariantChange(index, e)}
                           style={{ color: "#999797ff", backgroundColor: "white", border: '1px solid gray', borderRadius: '4px', width: '300px', padding: '8px' }}
                         />
+                        {formErrors[`variantValue_${index}`] && (
+                          <div className="text-danger">{formErrors[`variantValue_${index}`]}</div>
+                        )}
                       </div>
 
                       {variants.length > 1 && (
@@ -1548,8 +1900,18 @@ const ProductForm = () => {
           title="Add Category"
           categoryName={categoryName}
           categorySlug={categorySlug}
-          onCategoryChange={(e) => setCategoryName(e.target.value)}
-          onSlugChange={(e) => setCategorySlug(e.target.value)}
+          // onCategoryChange={(e) => setCategoryName(e.target.value)}
+          onCategoryChange={(e) => {
+            const value = e.target.value;
+            setCategoryName(value);
+            setFormErrors((prev) => ({ ...prev, categoryName: validateField("categoryName", sanitizeInput(value, true)) }));
+          }}
+          // onSlugChange={(e) => setCategorySlug(e.target.value)}
+          onSlugChange={(e) => {
+            const value = e.target.value;
+            setCategorySlug(value);
+            setFormErrors((prev) => ({ ...prev, categorySlug: validateField("categorySlug", sanitizeInput(value)) }));
+          }}
           onSubmit={categorySubmit}
           submitLabel="Add Category"
         />
