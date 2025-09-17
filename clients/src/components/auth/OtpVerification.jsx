@@ -24,7 +24,7 @@ const OtpVerification = () => {
   const handleVerifyOtp = async (e) => {
     e.preventDefault();
     try {
-      const res = await axios.post(`${BASE_URL}/api/auth/verify-otp`, {
+      const res = await axios.post(`${BASE_URL}/api/auth//verify-otp-reset`, {
         email,
         otp,
           headers: {

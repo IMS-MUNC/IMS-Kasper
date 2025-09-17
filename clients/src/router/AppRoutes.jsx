@@ -1,5 +1,5 @@
 import React from "react";
-import { Routes, Route } from "react-router-dom";
+import { Routes, Route, useNavigate,Navigate  } from "react-router-dom";
 import Login from "../components/auth/Login/Login";
 import Register from "../components/auth/Register/Register";
 import ForgotPassword from "../components/auth/ForgotPassword/ForgotPassword";
@@ -10,6 +10,7 @@ import ResetPassword from "../components/auth/ResetPassword/ResetPassword";
 import ChangePassword from "../components/auth/ChangePassword/ChangePassword";
 import Profile from "../pages/profile/Profile";
 import PrivateRoute from "../utils/PrivateRoute";
+import PublicRoute from "../utils/PublicRoute.jsx";
 //------------------------------- invetory------------------------------//
 
 import Product from "../components/features/inventory/product/Product";
@@ -143,184 +144,400 @@ import NewPos from "../pages/pos/NewPos.jsx";
 const AppRoutes = () => {
   return (
 
-    <Routes>
-      {/* Auth & 404 remain outside layout */}
-      <Route path="/" element={<Login />} />
-      <Route path="/login" element={<Login />} />
-      <Route path="/register" element={<Register />} />
-      <Route path="/forgot-password" element={<ForgotPassword />} />
-      <Route path="/reset-password/:token" element={<ResetPassword />} />
-      <Route path="/change-password" element={<ChangePassword />} />
-      <Route path="/logout" element={<Logout />} />
-      <Route path="/otp" element={<OtpVerification />} />
+
+     <Routes>
+ {/* ---------- Public routes ---------- */}
+ <Route
+ path="/"
+ element={
+ <PublicRoute>
+ <Login />
+ </PublicRoute>
+ }
+ />
+ <Route
+ path="/login"
+ element={
+ <PublicRoute>
+ <Login />
+ </PublicRoute>
+ }
+ />
+ <Route
+ path="/otp"
+ element={
+ <PublicRoute>
+ <OtpVerification />
+ </PublicRoute>
+ }
+
+ 
+ />
+ <Route
+ path="/register"
+ element={
+ <PublicRoute>
+ <Register />
+ </PublicRoute>
+ }
+ />
+ <Route
+ path="/forgot-password"
+ element={
+ <PublicRoute>
+ <ForgotPassword />
+ </PublicRoute>
+ }
+ />
+ <Route
+ path="/reset-password/:token"
+ element={
+ <PublicRoute>
+ <ResetPassword />
+ </PublicRoute>
+ }
+ />
+ <Route
+ path="/change-password"
+ element={
+ <PublicRoute>
+ <ChangePassword />
+ </PublicRoute>
+ }
+ />
+ <Route path="/logout" element={<Logout />} />
+ {/* ---------- Catch-all route ---------- */}
+ <Route path="*" element={<Navigate to="/login" replace />} />
+ <Route
+ element={
+ <PrivateRoute>
+ <AuthLayout />
+ </PrivateRoute>
+ }
+ >
+ <Route path="/home" element={<Dashboard />} />
+ <Route path="/dashboard" element={<Dashboard />} />
+
+ 
+ {/* <Route path="/general-settings" element={<Setting />} /> */}
+ <Route path="/" element={<Setting />}>
+ <Route path="profile/:id" element={<UserProfiles />} />
+ <Route path="security-settings" element={<Security />} />
+ <Route path="notification" element={<Notification />} />
+ <Route path="connectedapps" element={<ConnectedApps />} />
+ <Route path="system-settings" element={<SystemSettings />} />
+ <Route path="company-settings" element={<Companysettings />} />
+ <Route path="language-settings" element={<Localization />} />
+ <Route path="prefixes" element={<Prefixes />} />
+ <Route path="preferance" element={<Preferance />} />
+ <Route path="appearance" element={<Appearance />} />
+ <Route path="socialauth" element={<SocialAuthentications />} />
+ <Route path="language" element={<Language />} />
+ <Route path="invoice-settings" element={<InvoiceSettings />} />
+ <Route path="/Purchase-settings" element={<PurchaseSettings />} />
+ <Route path="/warehouse-settings" element={<RackSettings />} />
+ </Route>
+ 
+ 
+ <Route path="/profile" element={<Profile />} />
+ <Route path="/product" element={<Product />} />
+ <Route path="/product/edit/:id" element={<ProductEdit />} />
+
+ <Route path="/choose-adproduct" element={<ChooseToAddProduct />} />
+ <Route path="/add-product" element={<ProductCreate />} />
+ <Route path="/expired-products" element={<ExpriedProduct />} />
+ <Route path="/category-list" element={<Category />} />
+ <Route path="/sub-categories" element={<SubCategory />} />
+ <Route path="/brand-list" element={<Brand />} />
+ <Route path="/units" element={<Units />} />
+ <Route path="/users" element={<Users />} />
+ <Route path="/roles-permissions" element={<Role />} />
+ {/* <Route path="/permissions/:roleId" element={<RolePermissionEditor />} /> */}
+ <Route path="/permissions" element={<RolePermissionEditor />} />
+ <Route path="/warranty" element={<Warranty />} />
+ <Route path="/countries" element={<Country />} />
+ <Route path="/states" element={<State />} />
+ <Route path="/cities" element={<City />} />
+ <Route path="/locations" element={<LocationTable />} />
+ <Route path="/store-list" element={<Stores />} />
+ <Route path="/coupons" element={<Coupons />} />
+ <Route path="/gift-cards" element={<GiftCard />} />
+ <Route path="/chat" element={<Chat />} />
+ <Route path="/variant-attributes" element={<Variant />} />
+ <Route path="/admin" element={<AdminDashboard />} />
+ <Route path="/theme" element={<ThemeCustomizer />} />
+ <Route path="/language" element={<LanguageSwitcher />} />
+ <Route path="/debit-note" element={<DebitNote />} />
+ <Route path="/credit-note" element={<CreditNote />} />
+
+ <Route path="/activities" element={<Activities />} />
+ <Route path="/ViewAllNotifications" element={<ViewAllNotifications />} />
+ <Route path="/barcode" element={<Barcode />} />
+ <Route path="/pos" element={<Pos />} />
 
 
-      <Route
-        element={
-          <PrivateRoute>
-            <AuthLayout />
-          </PrivateRoute>
-        }
-      >
-        <Route path="/home" element={<Dashboard />} />
-        <Route path="/dashboard" element={<Dashboard />} />
-        {/* <Route path="/general-settings" element={<Setting />} /> */}
+ {/* purchase */}
+ <Route path="/purchase-list" element={<Purchase />} />
+ <Route path="/purchase-order" element={<PurchaseOrder />} />
+ <Route path="/purchase-returns" element={<PurchaseReturn />} />
+ {/* <Route path="/purchase-report" element={<ViewPurchase />} /> */}
+ <Route path="/purchase-report" element={<PurchaseReport />} />
 
-        <Route path="/" element={<Setting />}>
-          <Route path="profile/:id" element={<UserProfiles />} />
-          <Route path="security-settings" element={<Security />} />
-          <Route path="notification" element={<Notification />} />
-          <Route path="connectedapps" element={<ConnectedApps />} />
-          <Route path="system-settings" element={<SystemSettings />} />
-          <Route path="company-settings" element={<Companysettings />} />
-          <Route path="language-settings" element={<Localization />} />
-          <Route path="prefixes" element={<Prefixes />} />
-          <Route path="preferance" element={<Preferance />} />
-          <Route path="appearance" element={<Appearance />} />
-          <Route path="socialauth" element={<SocialAuthentications />} />
-          <Route path="language" element={<Language />} />
-          <Route path="invoice-settings" element={<InvoiceSettings />} />
-          <Route path="/Purchase-settings" element={<PurchaseSettings />} />
-          <Route path="/warehouse-settings" element={<RackSettings />} />
-        </Route>
+ {/* sales */}
+ <Route path="/online-orders" element={<Sales />} />
+ <Route path="/sales-returns" element={<SaleReturn />} />
+ <Route path="/sales/view/:id" element={<ViewSales />} />
+ <Route path="/invoice/:invoiceId" element={<Invoice />} />
+ <Route path="/sales-log" element={<SaleHistory />} />
+ <Route path="/sales-payment" element={<PaymentHistory />} />
+ <Route path="/quotation-list" element={<Quotation />} />
 
+ {/* stock */}
+ <Route path="/stock" element={<ViewProductStock />} />
+ <Route path="/return-stock" element={<ViewReturnProduct />} />
+ <Route path="/manage-stocks" element={<ManageStock />} />
+ <Route path="/stock-adjustment" element={<StockAdujestment />} />
+ <Route path="/stock-transfer" element={<StockTransfer />} />
+ <Route path="/low-stocks" element={<LowStock />} />
+ <Route path="/hsn" element={<Hsn />} />
+ <Route path="/warehouse" element={<Warehouse />} />
+ <Route path="/invoice" element={<InvoiceTemplate />} />
+ <Route path="/invoice7" element={<Invoice7 />} />
+ <Route path="/hsn" element={<Hsn />} />
+ <Route path="/warehouse" element={<Warehouse />} />
+ <Route path="/addwarehouse" element={<AddWarehouse />} />
+ <Route path="/WarehouseDetails/:id" element={<WarehouseDetails />} />
+ <Route path="/Godown/:id" element={<Godown />} />
+ <Route path="/selectpage" element={<SelectPage />} />
+ <Route path="/stock-movement-log" element={<StockMovementLog />} />
 
-        <Route path="/profile" element={<Profile />} />
-        <Route path="/product" element={<Product />} />
-        <Route path="/product/edit/:id" element={<ProductEdit />} />
+ {/* customer */}
+ <Route path="/customers" element={<AllCustomer />} />
+ {/* suppplier */}
+ <Route path="/suppliers" element={<AllSuppliers />} />
+ <Route path="/viewsupplier/:id" element={<ViewSupplierModal />} />
+ {/* <Route path="/product/edit/:id" element={<ProductEdit />} /> */}
 
-        <Route path="/choose-adproduct" element={<ChooseToAddProduct />} />
-        <Route path="/add-product" element={<ProductCreate />} />
-        <Route path="/expired-products" element={<ExpriedProduct />} />
-        <Route path="/category-list" element={<Category />} />
-        <Route path="/sub-categories" element={<SubCategory />} />
-        <Route path="/brand-list" element={<Brand />} />
-        <Route path="/units" element={<Units />} />
-        <Route path="/users" element={<Users />} />
-        <Route path="/roles-permissions" element={<Role />} />
-        {/* <Route path="/permissions/:roleId" element={<RolePermissionEditor />} /> */}
-        <Route path="/permissions" element={<RolePermissionEditor />} />
-        <Route path="/warranty" element={<Warranty />} />
-        <Route path="/countries" element={<Country />} />
-        <Route path="/states" element={<State />} />
-        <Route path="/cities" element={<City />} />
-        <Route path="/locations" element={<LocationTable />} />
-        <Route path="/store-list" element={<Stores />} />
-        <Route path="/coupons" element={<Coupons />} />
-        <Route path="/gift-cards" element={<GiftCard />} />
-        <Route path="/chat" element={<Chat />} />
-        <Route path="/variant-attributes" element={<Variant />} />
-        <Route path="/admin" element={<AdminDashboard />} />
-        <Route path="/theme" element={<ThemeCustomizer />} />
-        <Route path="/language" element={<LanguageSwitcher />} />
-        <Route path="/debit-note" element={<DebitNote />} />
-        <Route path="/credit-note" element={<CreditNote />} />
+ {/* ------------------ MAIL ROUTES ------------------ */}
 
-        <Route path="/activities" element={<Activities />} />
-        <Route path="/ViewAllNotifications" element={<ViewAllNotifications />} />
-        <Route path="/barcode" element={<Barcode />} />
+ <Route path="/mail" element={<MailPage />}>
+ <Route path="inbox" element={<Inbox />} />
+ <Route path="starred" element={<Starred />}/>
+ <Route path="sent" element={<Sent />} />
+ <Route path="drafts" element={<Drafts />} />
+ <Route path="important" element={<Importants />} />
+ <Route path="allemails" element={<EmailMessages />} />
+ <Route path="spam" element={<Spam />} />
+ <Route path="deleted" element={<Deleted />} />
+ </Route>
 
 
 
-
-        {/* purchase */}
-        <Route path="/purchase-list" element={<Purchase />} />
-        <Route path="/purchase-order" element={<PurchaseOrder />} />
-        <Route path="/purchase-returns" element={<PurchaseReturn />} />
-        {/* <Route path="/purchase-report" element={<ViewPurchase />} /> */}
-        <Route path="/purchase-report" element={<PurchaseReport />} />
-
-        {/* sales */}
-        <Route path="/online-orders" element={<Sales />} />
-        <Route path="/sales-returns" element={<SaleReturn />} />
-        <Route path="/sales/view/:id" element={<ViewSales />} />
-        <Route path="/invoice/:invoiceId" element={<Invoice />} />
-        <Route path="/sales-log" element={<SaleHistory />} />
-        <Route path="/sales-payment" element={<SalePaymentHistory />} />
-        <Route path="/quotation-list" element={<Quotation />} />
-
-        {/* stock */}
-        <Route path="/stock" element={<ViewProductStock />} />
-        <Route path="/return-stock" element={<ViewReturnProduct />} />
-        <Route path="/manage-stocks" element={<ManageStock />} />
-        <Route path="/stock-adjustment" element={<StockAdujestment />} />
-        <Route path="/stock-transfer" element={<StockTransfer />} />
-        <Route path="/low-stocks" element={<LowStock />} />
-        <Route path="/hsn" element={<Hsn />} />
-        <Route path="/warehouse" element={<Warehouse />} />
-        <Route path="/invoice" element={<InvoiceTemplate />} />
-        <Route path="/invoice7" element={<Invoice7 />} />
-        <Route path="/stock-transfer" element={<StockTransfer />} />
-        <Route path="/hsn" element={<Hsn />} />
-        <Route path="/warehouse" element={<Warehouse />} />
-        <Route path="/addwarehouse" element={<AddWarehouse />} />
-        <Route path="/WarehouseDetails/:id" element={<WarehouseDetails />} />
-        <Route path="/Godown/:id" element={<Godown />} />
-        <Route path="/selectpage" element={<SelectPage />} />
-        <Route path="/stock-movement-log" element={<StockMovementLog />} />
-
-
-        {/* customer */}
-        <Route path="/customers" element={<AllCustomer />} />
-        {/* suppplier */}
-        <Route path="/suppliers" element={<AllSuppliers />} />
-        <Route path="/viewsupplier/:id" element={<ViewSupplierModal />} />
-        {/* settings */}
-        {/* <Route path="/Purchase-settings" element={<PurchaseSettings />} />
-        <Route path="/warehouse-settings" element={<RackSettings />} /> */}
-        {/* <Route path="/sidebar-settings" element={<SidebarSettings />} /> */}
+ 
+ {/* ------------------ Finance & Accounts ------------------ */}
+ <Route path="/balance-sheet" element={<BalanceSheet />} />
+ <Route path="/profit&loss" element={<ProfitLoss />} />
+ <Route
+ path="/profit_lossdate_choose"
+ element={<ProfitLossDateChoose />}
+ />
+ <Route
+ path="/profit_lossselect_date"
+ element={<ProfitLossSelectDate />}
+ />
+ <Route path="/overdue-report" element={<OverdueReport />} />
+ <Route path="/expense-report" element={<ExpenseReport />} />
+ <Route path="/add_expenses" element={<ExpenseForm />} />
+ <Route path="/expenseformedit" element={<ExpenseFormEdit />} />
+ <Route path="/expensereportproduct-modal" element={<ExpenseReportProductModal/>}/>
+ <Route path="/bc" element={<BC />} />
+ <Route path="/payment-history" element={<PaymentHistory />} />
+ <Route path="/credit&debit-note" element={<CreditDebitNotes />} />
+ <Route path="/credit" element={<Credit />} />
+ <Route path="/debit" element={<Debit />} />
 
 
 
+ </Route>    </Routes>
+
+    // <Routes>
+    //   {/* Auth & 404 remain outside layout */}
+    //   <Route path="/" element={<Login />} />
+    //   <Route path="/login" element={<Login />} />
+    //   <Route path="/register" element={<Register />} />
+    //   <Route path="/forgot-password" element={<ForgotPassword />} />
+    //   <Route path="/reset-password/:token" element={<ResetPassword />} />
+    //   <Route path="/change-password" element={<ChangePassword />} />
+    //   <Route path="/logout" element={<Logout />} />
+    //   <Route path="/otp" element={<OtpVerification />} />
 
 
-        {/* ------------------ MAIL ROUTES ------------------ */}
-        <Route path="/mail" element={<MailPage />}>
-          <Route path="inbox" element={<Inbox />} />
-          <Route path="starred" element={<Starred />} />
-          <Route path="sent" element={<Sent />} />
-          <Route path="drafts" element={<Drafts />} />
-          <Route path="important" element={<Importants />} />
-          <Route path="allemails" element={<EmailMessages />} />
-          <Route path="spam" element={<Spam />} />
-          <Route path="deleted" element={<Deleted />} />
-        </Route>
+    //   <Route
+    //     element={
+    //       <PrivateRoute>
+    //         <AuthLayout />
+    //       </PrivateRoute>
+    //     }
+    //   >
+    //     <Route path="/home" element={<Dashboard />} />
+    //     <Route path="/dashboard" element={<Dashboard />} />
+    //     {/* <Route path="/general-settings" element={<Setting />} /> */}
+
+    //     <Route path="/" element={<Setting />}>
+    //       <Route path="profile/:id" element={<UserProfiles />} />
+    //       <Route path="security-settings" element={<Security />} />
+    //       <Route path="notification" element={<Notification />} />
+    //       <Route path="connectedapps" element={<ConnectedApps />} />
+    //       <Route path="system-settings" element={<SystemSettings />} />
+    //       <Route path="company-settings" element={<Companysettings />} />
+    //       <Route path="language-settings" element={<Localization />} />
+    //       <Route path="prefixes" element={<Prefixes />} />
+    //       <Route path="preferance" element={<Preferance />} />
+    //       <Route path="appearance" element={<Appearance />} />
+    //       <Route path="socialauth" element={<SocialAuthentications />} />
+    //       <Route path="language" element={<Language />} />
+    //       <Route path="invoice-settings" element={<InvoiceSettings />} />
+    //       <Route path="/Purchase-settings" element={<PurchaseSettings />} />
+    //       <Route path="/warehouse-settings" element={<RackSettings />} />
+    //     </Route>
 
 
-        {/* ------------------ Finance & Accounts ------------------ */}
-        <Route path="/balance-sheet" element={<BalanceSheet />} />
-        <Route path="/profit&loss" element={<ProfitLoss />} />
-        <Route
-          path="/profit_lossdate_choose"
-          element={<ProfitLossDateChoose />}
-        />
-        <Route
-          path="/profit_lossselect_date"
-          element={<ProfitLossSelectDate />}
-        />
-        <Route path="/overdue-report" element={<OverdueReport />} />
-        <Route path="/expense-report" element={<ExpenseReport />} />
-        <Route path="/add_expenses" element={<ExpenseForm />} />
-        <Route path="/expenseformedit" element={<ExpenseFormEdit />} />
-        <Route path="/expensereportproduct-modal" element={<ExpenseReportProductModal />} />
-        <Route path="/bc" element={<BC />} />
-        <Route path="/payment-history" element={<PaymentHistory />} />
-        <Route path="/credit&debit-note" element={<CreditDebitNotes />} />
-        <Route path="/credit" element={<Credit />} />
-        <Route path="/debit" element={<Debit />} />
+    //     <Route path="/profile" element={<Profile />} />
+    //     <Route path="/product" element={<Product />} />
+    //     <Route path="/product/edit/:id" element={<ProductEdit />} />
+
+    //     <Route path="/choose-adproduct" element={<ChooseToAddProduct />} />
+    //     <Route path="/add-product" element={<ProductCreate />} />
+    //     <Route path="/expired-products" element={<ExpriedProduct />} />
+    //     <Route path="/category-list" element={<Category />} />
+    //     <Route path="/sub-categories" element={<SubCategory />} />
+    //     <Route path="/brand-list" element={<Brand />} />
+    //     <Route path="/units" element={<Units />} />
+    //     <Route path="/users" element={<Users />} />
+    //     <Route path="/roles-permissions" element={<Role />} />
+    //     {/* <Route path="/permissions/:roleId" element={<RolePermissionEditor />} /> */}
+    //     <Route path="/permissions" element={<RolePermissionEditor />} />
+    //     <Route path="/warranty" element={<Warranty />} />
+    //     <Route path="/countries" element={<Country />} />
+    //     <Route path="/states" element={<State />} />
+    //     <Route path="/cities" element={<City />} />
+    //     <Route path="/locations" element={<LocationTable />} />
+    //     <Route path="/store-list" element={<Stores />} />
+    //     <Route path="/coupons" element={<Coupons />} />
+    //     <Route path="/gift-cards" element={<GiftCard />} />
+    //     <Route path="/chat" element={<Chat />} />
+    //     <Route path="/variant-attributes" element={<Variant />} />
+    //     <Route path="/admin" element={<AdminDashboard />} />
+    //     <Route path="/theme" element={<ThemeCustomizer />} />
+    //     <Route path="/language" element={<LanguageSwitcher />} />
+    //     <Route path="/debit-note" element={<DebitNote />} />
+    //     <Route path="/credit-note" element={<CreditNote />} />
+
+    //     <Route path="/activities" element={<Activities />} />
+    //     <Route path="/ViewAllNotifications" element={<ViewAllNotifications />} />
+    //     <Route path="/barcode" element={<Barcode />} />
 
 
-      </Route>
-      {/* <Route path="/pos" element={<Pos />} /> */}
-      {/* <Route path="/pos" element={<NewPos/>} /> */}
-      {/* POS with header */}
-      <Route path="/pos" element={
-        <>
-          <PosHeader />
-          <Pos />
-        </>
-      } />
-    </Routes>
+
+
+    //     {/* purchase */}
+    //     <Route path="/purchase-list" element={<Purchase />} />
+    //     <Route path="/purchase-order" element={<PurchaseOrder />} />
+    //     <Route path="/purchase-returns" element={<PurchaseReturn />} />
+    //     {/* <Route path="/purchase-report" element={<ViewPurchase />} /> */}
+    //     <Route path="/purchase-report" element={<PurchaseReport />} />
+
+    //     {/* sales */}
+    //     <Route path="/online-orders" element={<Sales />} />
+    //     <Route path="/sales-returns" element={<SaleReturn />} />
+    //     <Route path="/sales/view/:id" element={<ViewSales />} />
+    //     <Route path="/invoice/:invoiceId" element={<Invoice />} />
+    //     <Route path="/sales-log" element={<SaleHistory />} />
+    //     <Route path="/sales-payment" element={<SalePaymentHistory />} />
+    //     <Route path="/quotation-list" element={<Quotation />} />
+
+    //     {/* stock */}
+    //     <Route path="/stock" element={<ViewProductStock />} />
+    //     <Route path="/return-stock" element={<ViewReturnProduct />} />
+    //     <Route path="/manage-stocks" element={<ManageStock />} />
+    //     <Route path="/stock-adjustment" element={<StockAdujestment />} />
+    //     <Route path="/stock-transfer" element={<StockTransfer />} />
+    //     <Route path="/low-stocks" element={<LowStock />} />
+    //     <Route path="/hsn" element={<Hsn />} />
+    //     <Route path="/warehouse" element={<Warehouse />} />
+    //     <Route path="/invoice" element={<InvoiceTemplate />} />
+    //     <Route path="/invoice7" element={<Invoice7 />} />
+    //     <Route path="/stock-transfer" element={<StockTransfer />} />
+    //     <Route path="/hsn" element={<Hsn />} />
+    //     <Route path="/warehouse" element={<Warehouse />} />
+    //     <Route path="/addwarehouse" element={<AddWarehouse />} />
+    //     <Route path="/WarehouseDetails/:id" element={<WarehouseDetails />} />
+    //     <Route path="/Godown/:id" element={<Godown />} />
+    //     <Route path="/selectpage" element={<SelectPage />} />
+    //     <Route path="/stock-movement-log" element={<StockMovementLog />} />
+
+
+    //     {/* customer */}
+    //     <Route path="/customers" element={<AllCustomer />} />
+    //     {/* suppplier */}
+    //     <Route path="/suppliers" element={<AllSuppliers />} />
+    //     <Route path="/viewsupplier/:id" element={<ViewSupplierModal />} />
+    //     {/* settings */}
+    //     {/* <Route path="/Purchase-settings" element={<PurchaseSettings />} />
+    //     <Route path="/warehouse-settings" element={<RackSettings />} /> */}
+    //     {/* <Route path="/sidebar-settings" element={<SidebarSettings />} /> */}
+
+
+
+
+
+    //     {/* ------------------ MAIL ROUTES ------------------ */}
+    //     <Route path="/mail" element={<MailPage />}>
+    //       <Route path="inbox" element={<Inbox />} />
+    //       <Route path="starred" element={<Starred />} />
+    //       <Route path="sent" element={<Sent />} />
+    //       <Route path="drafts" element={<Drafts />} />
+    //       <Route path="important" element={<Importants />} />
+    //       <Route path="allemails" element={<EmailMessages />} />
+    //       <Route path="spam" element={<Spam />} />
+    //       <Route path="deleted" element={<Deleted />} />
+    //     </Route>
+
+
+    //     {/* ------------------ Finance & Accounts ------------------ */}
+    //     <Route path="/balance-sheet" element={<BalanceSheet />} />
+    //     <Route path="/profit&loss" element={<ProfitLoss />} />
+    //     <Route
+    //       path="/profit_lossdate_choose"
+    //       element={<ProfitLossDateChoose />}
+    //     />
+    //     <Route
+    //       path="/profit_lossselect_date"
+    //       element={<ProfitLossSelectDate />}
+    //     />
+    //     <Route path="/overdue-report" element={<OverdueReport />} />
+    //     <Route path="/expense-report" element={<ExpenseReport />} />
+    //     <Route path="/add_expenses" element={<ExpenseForm />} />
+    //     <Route path="/expenseformedit" element={<ExpenseFormEdit />} />
+    //     <Route path="/expensereportproduct-modal" element={<ExpenseReportProductModal />} />
+    //     <Route path="/bc" element={<BC />} />
+    //     <Route path="/payment-history" element={<PaymentHistory />} />
+    //     <Route path="/credit&debit-note" element={<CreditDebitNotes />} />
+    //     <Route path="/credit" element={<Credit />} />
+    //     <Route path="/debit" element={<Debit />} />
+
+
+    //   </Route>
+    //   {/* <Route path="/pos" element={<Pos />} /> */}
+    //   {/* <Route path="/pos" element={<NewPos/>} /> */}
+    //   {/* POS with header */}
+    //   <Route path="/pos" element={
+    //     <>
+    //       <PosHeader />
+    //       <Pos />
+    //     </>
+    //   } />
+    // </Routes>
   );
 };
 
