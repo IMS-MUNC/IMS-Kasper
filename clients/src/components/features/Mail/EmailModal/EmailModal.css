@@ -29,6 +29,25 @@
   z-index: 1050;
 } */
 
+.mailmdl-emoji-wrapper {
+  position: absolute;
+  bottom: 100px; /* adjust so it appears above your footer */
+  right: 20px;
+  z-index: 1000;
+  background: white;
+  border: 1px solid #ddd;
+  border-radius: 10px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  padding: 5px;
+}
+
+/* Optional: make emoji grid smaller */
+.mailmdl-emoji-wrapper .EmojiPickerReact {
+  width: 300px !important; /* reduce width */
+  height: 350px !important;
+  border: none !important;
+  box-shadow: none !important;
+}
 
 /* Email modal */
 .mailmdl-email-modal {
@@ -281,10 +300,7 @@
 
 .mailmdl-calendar-popup {
   margin-top: 10px;
-} 
- 
-
-
+}
 
 /* src/styles/modal.css */
 @import url("https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,100..900;1,100..900&display=swap");
@@ -606,15 +622,3 @@
   max-width: fit-content;
   transition: background 0.2s;
 }
-
-
-
-
-
-
-
-
-
-
-
-

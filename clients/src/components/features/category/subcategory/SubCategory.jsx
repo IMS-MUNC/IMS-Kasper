@@ -731,46 +731,6 @@ const SubCategory = () => {
                 <div className="modal-body">
                   <div className="mb-3">
                     <div className="add-image-upload">
-                      {/* <div className="add-image p-1 border-solid">
-                        {images.length > 0 ? (
-                          <img
-                            src={URL.createObjectURL(images[0])}
-                            alt="preview"
-                            style={{
-                              height: "102px",
-                              width: "110px",
-                              borderRadius: "4px",
-                            }}
-                          />
-                        ) : editingSubCategory?.images?.length > 0 ? (
-                          <img
-                            src={editingSubCategory.images[0]}
-                            alt="current"
-                            style={{
-                              height: "102px",
-                              width: "102px",
-                              borderRadius: "4px",
-                            }}
-                          />
-                        ) : (
-                          <span>No image</span>
-                        )}
-                        {(images.length > 0 ||
-                          editingSubCategory?.images?.length > 0) && (
-                          <a
-                            href="javascript:void(0);"
-                            onClick={() => {
-                              setImages([]);
-                              setEditingSubCategory({
-                                ...editingSubCategory,
-                                images: [],
-                              });
-                            }}
-                          >
-                            <FiXSquare className="x-square-add image-close remove-product fs-12 text-white bg-danger rounded-1" />
-                          </a>
-                        )}
-                      </div> */}
                       <div className="new-employee-field">
                         <div className="profile-pic-upload mb-3">
                           <div className="profile-pic brand-pic">
