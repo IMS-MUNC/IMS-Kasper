@@ -20,6 +20,9 @@ import axios from "axios";
 import { TbEdit, TbPdf, TbRefresh, TbSearch, TbTrash } from "react-icons/tb";
 import { FaFileExcel, FaFilePdf } from "react-icons/fa";
 import BASE_URL from "../../../../pages/config/config";
+import Pagination from "../../../../utils/pagination/Pagination";
+import 'react-toastify/dist/ReactToastify.css';
+import { toast } from 'react-toastify';
 
 
 
@@ -53,76 +56,51 @@ const Warranty = ({ show, handleClose }) => {
   const [rowsPerPage, setRowsPerPage] = useState(10);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [pendingDeleteId, setPendingDeleteId] = useState(null);
-  const [warranties, setWarranties] = useState([]);
-  const [FilteredWarranties, setFilteredWarranties] = useState([]);
   const [loading, setLoading] = useState(false);
 
 
 
-console.log("Warranty data:", Warrantydata);
-  const fetchWarranties = async () => {
+// console.log("Warranty data:", Warrantydata);
+
+
+
+  const fetchWarrantyData = async () => {
     try {
-          const token = localStorage.getItem("token");
-
       setLoading(true);
-      const res = await fetch(`${BASE_URL}/api/warranty/`,{
+      const token = localStorage.getItem("token");
+
+      const response = await fetch(`${BASE_URL}/api/warranty/`,{
         headers: {
-        Authorization: `Bearer ${token}`,
-      },
+          Authorization: `Bearer ${token}`,
+        },
       });
-      if (!res.ok) {
-        throw new Error("Failed to fetch Warranty data");
+      if (!response.ok) {
+        throw new Error("Failed to fetch warranty data");
       }
-
-      const data = await res.json();
-
+      const data = await response.json();
+      console.log("Fetched warranty data:", data);
       const updatedData = data.map((item) => ({
         ...item,
         id: item._id,
       }));
-
-      setWarranties(updatedData);
-
-      setFilteredWarranties(updatedData);
+      
+      // Sort by creation date in descending order (LIFO - newest first)
+      const sortedData = updatedData.sort((a, b) => {
+        const dateA = new Date(a.createdAt || a.fromDate);
+        const dateB = new Date(b.createdAt || b.fromDate);
+        return dateB - dateA; // Newest first
+      });
+      
+      setWarrantydata(sortedData);
     } catch (err) {
-      console.error("Error fetching warranties:", err);
-      setError("Failed to fetch warranties");
+      setError(err.message);
     } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => {
-    fetchWarranties();
-  }, []);
-
-
-
-  useEffect(() => {
-    const fetchGiftData = async () => {
-      try {
-            const token = localStorage.getItem("token");
-
-        const response = await fetch(`${BASE_URL}/api/warranty/`,{
-          headers: {
-        Authorization: `Bearer ${token}`,
-      },
-        });
-        if (!response.ok) {
-          throw new Error("Failed to fetch warranty data");
-        }
-        const data = await response.json();
-        // console.log(data);
-        const updatedData = data.map((item) => ({
-          ...item,
-          id: item._id,
-        }));
-        setWarrantydata(updatedData);
-      } catch (err) {
-        setError(err.message);
-      }
-    };
-    fetchGiftData();
+    fetchWarrantyData();
   }, []);
 
 
@@ -160,12 +138,13 @@ console.log("Warranty data:", Warrantydata);
 
 
   const handleExportExcel = () => {
-    const exportData = filteredWarranties.map((item) => ({
+    const dataToExport = filteredWarranties;
+    const exportData = dataToExport.map((item) => ({
       Warranty: item.warranty,
       Description: item.description,
       From: item.fromDate ? new Date(item.fromDate).toLocaleDateString() : "",
       To: item.toDate ? new Date(item.toDate).toLocaleDateString() : "",
-      Duration: item.duration || "",
+      Duration: calculateDuration(item.fromDate, item.toDate),
       Status: item.status ? "Active" : "Inactive",
     }));
     const worksheet = XLSX.utils.json_to_sheet(exportData);
@@ -223,8 +202,20 @@ console.log("Warranty data:", Warrantydata);
       }
       const data = await response.json();
       console.log("New Warranty Added:", data);
-      setWarrantydata((prevData) => [...prevData, { ...data, id: data._id }]);
+      const newWarranty = { ...data, id: data._id };
+      toast.success("New Warranty added.");
+      // Add new warranty at the beginning of the array (LIFO order)
+      setWarrantydata((prevData) => [newWarranty, ...prevData]);
       handleCloses();
+      // Reset form data
+      setFormData({
+        warranty: "",
+        description: "",
+        duration: "",
+        fromDate: "",
+        toDate: "",
+        status: false,
+      });
     } catch (err) {
       setError(err.message);
       console.error("Error:", err.message);
@@ -232,14 +223,22 @@ console.log("Warranty data:", Warrantydata);
   };
 
   const handleEditOpen = (card) => {
-    console.log("Opening edit modal for card:", card);
+    // console.log("Opening edit modal for card:", card);
+    
+    // Format dates for HTML date inputs (YYYY-MM-DD format)
+    const formatDateForInput = (dateString) => {
+      if (!dateString) return "";
+      const date = new Date(dateString);
+      return date.toISOString().split('T')[0];
+    };
+
     setEditFormData({
       id: card.id || "",
       warranty: card.warranty || "",
       description: card.description || "",
       duration: card.duration || "",
-      fromDate: card.fromDate || "",
-      toDate: card.toDate || "",
+      fromDate: formatDateForInput(card.fromDate),
+      toDate: formatDateForInput(card.toDate),
       status: card.status || false,
     });
     setShowEditModal(true);
@@ -259,24 +258,16 @@ console.log("Warranty data:", Warrantydata);
   };
 
   const handleEditChange = (e) => {
-    const { name, value } = e.target;
+    const { name, value, type, checked } = e.target;
 
     const updatedForm = {
       ...editFormData,
-      [name]: value,
+      [name]: type === "checkbox" ? checked : value,
     };
 
-    // 👉 New: auto-calculate duration from fromDate and toDate
+    // Auto-calculate duration from fromDate and toDate
     if ((name === "fromDate" || name === "toDate") && updatedForm.fromDate && updatedForm.toDate) {
-      const from = new Date(updatedForm.fromDate);
-      const to = new Date(updatedForm.toDate);
-
-      const yearsDiff = to.getFullYear() - from.getFullYear();
-      const monthsDiff = to.getMonth() - from.getMonth();
-      const totalMonths = yearsDiff * 12 + monthsDiff;
-
-      const durationInYears = (totalMonths / 12).toFixed(1);
-      updatedForm.duration = `${durationInYears} years`; // 👉 New line
+      updatedForm.duration = calculateDuration(updatedForm.fromDate, updatedForm.toDate);
     }
 
     setEditFormData(updatedForm);
@@ -286,30 +277,71 @@ console.log("Warranty data:", Warrantydata);
 
   const handleEditSubmit = async (e) => {
     e.preventDefault();
+    
+    // Validation
+    if (!editFormData.warranty || !editFormData.fromDate || !editFormData.toDate || !editFormData.description) {
+      setError("Please fill in all required fields.");
+      return;
+    }
+
     try {
-          const token = localStorage.getItem("token");
+      const token = localStorage.getItem("token");
+      
+      // Prepare data for submission
+      const submitData = {
+        ...editFormData,
+        duration: calculateDuration(editFormData.fromDate, editFormData.toDate)
+      };
+
+      // console.log("Submitting edit data:", submitData);
 
       const response = await fetch(`${BASE_URL}/api/warranty/${editFormData.id}`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
-           Authorization: `Bearer ${token}`,
-
+          Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify(editFormData),
+        body: JSON.stringify(submitData),
       });
+      
       if (!response.ok) {
-        throw new Error("Failed to update warranty");
+        const errorData = await response.json();
+        throw new Error(errorData.message || "Failed to update warranty");
       }
+      
       const data = await response.json();
-      console.log("Updated Warranty:", data);
-      setWarrantydata((prevData) =>
-        prevData.map((card) => (card.id === data.id ? { ...card, ...data } : card))
-      );
-      handleEditClose();
+      // console.log("Updated Warranty:", data);
+      // console.log("Edit Form Data ID:", editFormData.id);
+      
+      // Ensure we use the correct ID for updating
+      const updatedWarranty = { 
+        ...data, 
+        id: data._id || data.id || editFormData.id,
+        duration: calculateDuration(data.fromDate || editFormData.fromDate, data.toDate || editFormData.toDate)
+      };
+      
+      // console.log("Updated Warranty with ID:", updatedWarranty);
+      
+      setWarrantydata((prevData) => {
+         const newData = prevData.map((card) => {
+          //  console.log("Comparing:", card.id, "with", updatedWarranty.id);
+           return card.id === updatedWarranty.id ? updatedWarranty : card;
+         });
+        //  console.log("New warranty data:", newData);
+         return newData;
+       });
+       
+       // Force refresh to ensure UI updates
+       setTimeout(() => {
+         fetchWarrantyData();
+       }, 100);
+       
+       setError(""); // Clear any previous errors
+       handleEditClose();
+       toast.success("Warranty updated successfully.");
     } catch (err) {
       console.error("Error updating warranty:", err);
-      setError("Failed to update warranty. Please try again.");
+      setError(err.message || "Failed to update warranty. Please try again.");
     }
   };
 
@@ -320,15 +352,18 @@ console.log("Warranty data:", Warrantydata);
 
       const response = await fetch(`${BASE_URL}/api/warranty/${id}`, {
         method: "DELETE",
-                Authorization: `Bearer ${token}`,
-
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
       });
       if (!response.ok) {
         throw new Error("Failed to delete the warranty");
       }
+      // Update both state arrays
       setWarrantydata((prev) => prev.filter((item) => item.id !== id));
       setShowDeleteModal(false);
       setPendingDeleteId(null);
+      toast.success("Warranty deleted successfully.");
       // alert("Warranty deleted successfully");
     } catch (err) {
       console.error("Error deleting warranty:", err);
@@ -378,17 +413,16 @@ console.log("Warranty data:", Warrantydata);
 										
 							</li>
 							<li>
-								<a data-bs-toggle="tooltip" data-bs-placement="top" title="Excel"><FaFileExcel className="fs-20" style={{color:"green"}}/></a>
+								<a data-bs-toggle="tooltip" data-bs-placement="top" title="Excel" onClick={handleExportExcel}><FaFileExcel className="fs-20" style={{color:"green"}}/></a>
 
 							</li>
 							<li>
-								<a data-bs-toggle="tooltip" data-bs-placement="top" title="Refresh"><TbRefresh/></a>
-									
+								<a data-bs-toggle="tooltip" data-bs-placement="top" title="Refresh" onClick={() => location.reload()}><TbRefresh/></a>
 							</li>
-							<li>
+							{/* <li>
 								<a data-bs-toggle="tooltip" data-bs-placement="top" title="Collapse" id="collapse-header"><i
 										className="ti ti-chevron-up" /></a>
-							</li>
+							</li> */}
 						</ul>
 						<div className="page-btn">
 							<a href="#" className="btn btn-primary" data-bs-toggle="modal" data-bs-target="#add-warranty" onClick={handleShow}><i
@@ -400,31 +434,50 @@ console.log("Warranty data:", Warrantydata);
 						<div className="card-header d-flex align-items-center justify-content-between flex-wrap row-gap-3">
 							<div className="search-set">
 								<div className="search-input">
-                  <input
-                type="search"
-                className="form-control rounded"
-                placeholder="🔍︎ Search"
-                aria-label="Search"
-                aria-describedby="search-addon"
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-              />
-					
+									<input
+										type="text"
+										className="form-control"
+										placeholder="Search warranties..."
+										value={searchTerm}
+										onChange={(e) => setSearchTerm(e.target.value)}
+									/>
+									<span className="btn-searchset">
+										<i className="ti ti-search fs-14 feather-search" />
+									</span>
 								</div>
 							</div>
-							<div className="d-flex table-dropdown my-xl-auto right-content align-items-center flex-wrap row-gap-3">
-								<div className="dropdown" >
-									<a
-										className="dropdown-toggle btn btn-white btn-md d-inline-flex align-items-center"
-										data-bs-toggle="dropdown" value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)}>
-										Status
-									</a>
-									<ul className="dropdown-menu  dropdown-menu-end p-3">
+							<div className="table-dropdown my-xl-auto right-content">
+								<div className="dropdown">
+									<Button
+										className="btn btn-white btn-md d-inline-flex align-items-center"
+										data-bs-toggle="dropdown"
+									>
+										Sort By: {statusFilter.charAt(0).toUpperCase() + statusFilter.slice(1) || "Status"}
+									</Button>
+									<ul className="dropdown-menu dropdown-menu-end p-3">
 										<li>
-											<a className="dropdown-item rounded-1">Active</a>
+											<a
+												className="dropdown-item rounded-1"
+												onClick={() => setStatusFilter("all")}
+											>
+												All
+											</a>
 										</li>
 										<li>
-											<a className="dropdown-item rounded-1">Inactive</a>
+											<a
+												className="dropdown-item rounded-1"
+												onClick={() => setStatusFilter("active")}
+											>
+												Active
+											</a>
+										</li>
+										<li>
+											<a
+												className="dropdown-item rounded-1"
+												onClick={() => setStatusFilter("inactive")}
+											>
+												Inactive
+											</a>
 										</li>
 									</ul>
 								</div>
@@ -499,55 +552,22 @@ console.log("Warranty data:", Warrantydata);
 								</table>
 							</div>
 						</div>
-               {/* CHANGE: Fixed pagination to use filteredWarranties */}
-        <div className="d-flex justify-content-between align-items-center p-3">
-          <div className="d-flex gap-3 align-items-center">
-            <div>Rows Per Page</div>
-            <select
-              className="form-select"
-              name="rows"
-              id="rows"
-              style={{ width: "80px" }}
-              value={rowsPerPage}
-              onChange={(e) => {
-                setRowsPerPage(Number(e.target.value));
-                setCurrentPage(1);
-              }}
+            {/* Pagination Info and Controls */}
+            <div className="" 
+            style={{display:'flex', justifyContent:'end', alignItems:'center'}}
             >
-              <option value="5">5</option>
-              <option value="10">10</option>
-              <option value="20">20</option>
-            </select>
-            <div>Entries</div>
-          </div>
-          <div className="d-flex align-items-center gap-3">
-            <button
-              className="btn"
-              style={{ border: "none", background: "transparent" }}
-              onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
-              disabled={currentPage === 1}
-              aria-label="Previous Page"
-            >
-              <GoChevronLeft size={20} />
-            </button>
-            <div className="text-center downt">
-              <span>{currentPage}</span>
+              <div className="pagination-info" style={{display:'flex',alignItems:'center'}}>
+                {Math.min((currentPage - 1) * rowsPerPage + 1, filteredWarranties.length)} to{" "}
+                {Math.min(currentPage * rowsPerPage, filteredWarranties.length)} of{" "}
+                {filteredWarranties.length}
+              
+              <Pagination
+                currentPage={currentPage}
+                totalPages={Math.ceil(filteredWarranties.length / rowsPerPage)}
+                onPageChange={setCurrentPage}
+              />
+              </div>
             </div>
-            <button
-              className="btn"
-              style={{ border: "none", background: "transparent" }}
-              onClick={() =>
-                setCurrentPage((prev) =>
-                  Math.min(prev + 1, Math.ceil(filteredWarranties.length / rowsPerPage))
-                )
-              }
-              disabled={currentPage === Math.ceil(filteredWarranties.length / rowsPerPage)}
-              aria-label="Next Page"
-            >
-              <GoChevronRight size={20} />
-            </button>
-          </div>
-        </div>
 					</div>
 					{/* /add modal list */}
             <Modal show={showModal} onHide={handleCloses} centered>
@@ -639,6 +659,7 @@ console.log("Warranty data:", Warrantydata);
           </Button>
         </Modal.Footer>
       </Modal>
+      
       {/* editmodal */}
       <Modal show={showEditModal} onHide={handleEditClose} centered>
         <Modal.Header closeButton>
@@ -657,7 +678,7 @@ console.log("Warranty data:", Warrantydata);
                 onChange={handleEditChange}
               />
             </Form.Group>
-            <Row className="mt-3">
+            {/* <Row className="mt-3">
               <Col>
                 <Form.Group controlId="editDuration">
                   <Form.Label>
@@ -672,7 +693,7 @@ console.log("Warranty data:", Warrantydata);
                   />
                 </Form.Group>
               </Col>
-            </Row>
+            </Row> */}
             <Row className="mt-3">
               <Col>
                 <Form.Group controlId="fromDate">
@@ -729,14 +750,15 @@ console.log("Warranty data:", Warrantydata);
           </Form>
         </Modal.Body>
         <Modal.Footer>
-          <Button variant="dark" onClick={handleEditClose}>
+          {/* <Button variant="dark" onClick={handleEditClose}>
             Cancel
-          </Button>
+          </Button> */}
           <Button variant="warning" onClick={handleEditSubmit}>
             Save Changes
           </Button>
         </Modal.Footer>
       </Modal>
+
       {/* delete modal*/}
       <Modal show={showDeleteModal} onHide={() => setShowDeleteModal(false)} centered>
         <Modal.Body className="text-center py-4">

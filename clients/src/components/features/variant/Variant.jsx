@@ -3,12 +3,14 @@ import { FaFileExcel, FaFilePdf } from "react-icons/fa";
 import { TbEdit, TbRefresh, TbTrash } from "react-icons/tb";
 import { Modal, Form, Button } from "react-bootstrap";
 import "bootstrap/dist/css/bootstrap.min.css";
+import 'react-toastify/dist/ReactToastify.css';
 import html2canvas from "html2canvas";
 import jsPDF from "jspdf";
 import * as XLSX from "xlsx";
 import dayjs from "dayjs";
 import BASE_URL from "../../../pages/config/config";
 import Pagination from "../../../utils/pagination/Pagination";
+import { toast, ToastContainer } from 'react-toastify';
 
 const Variant = ({ show, handleClose }) => {
   const [showModal, setShowModal] = useState(false);
@@ -39,7 +41,7 @@ const Variant = ({ show, handleClose }) => {
         ...item,
         id: item._id,
       }));
-      console.log("Fetched Data:", updatedData);
+      // console.log("Fetched Data:", updatedData);
       setVariantData(updatedData);
     } catch (err) {
       console.error("Error fetching variants:", err);
@@ -90,8 +92,10 @@ const Variant = ({ show, handleClose }) => {
         throw new Error("Failed to add variant");
       }
       const data = await response.json();
+      toast.success("New Variant added.");
       setVariantData((prevData) => [...prevData, { ...data, id: data._id }]);
       handleCloses();
+      setFormData("");
     } catch (err) {
       setError(err.message);
       console.error("Error:", err.message);
@@ -104,7 +108,7 @@ const Variant = ({ show, handleClose }) => {
       variant: item.variant || "",
       value: item.value || "",
       createdDate: item.createdDate || "",
-      status: item.status || true,
+      status: item.status !== undefined ? item.status : true,
     });
     setShowEditModal(true);
   };
@@ -141,12 +145,12 @@ const Variant = ({ show, handleClose }) => {
         throw new Error("Failed to update variant");
       }
       const data = await response.json();
-      setVariantData((prevData) =>
-        prevData.map((item) => (item.id === data.id ? { ...item, ...data } : item))
-      );
+      // Refetch data to ensure consistency
+      await fetchVariants();
+      toast.success("Variant edited successfully.");
       handleEditClose();
     } catch (err) {
-      console.error("Error updating variant:", err);
+      // console.error("Error updating variant:", err);
       setError("Failed to update variant. Please try again.");
     }
   };
@@ -166,6 +170,7 @@ const Variant = ({ show, handleClose }) => {
       if (!response.ok) {
         throw new Error("Failed to delete the variant");
       }
+      toast.success("Variant deleted successfully.");
       setVariantData((prev) => prev.filter((item) => item.id !== pendingDeleteId));
       setShowDeleteModal(false);
       setPendingDeleteId(null);
@@ -181,17 +186,24 @@ const Variant = ({ show, handleClose }) => {
   };
 
   const filteredVariants = useMemo(() => {
-    return variantData.filter((item) => {
-      const variant = item?.variant?.toLowerCase() || "";
-      const value = item?.value?.toLowerCase() || "";
-      const search = searchTerm?.toLowerCase() || "";
-      const searchMatch = variant.includes(search) || value.includes(search);
-      const statusMatch =
-        statusFilter === "all" ||
-        (statusFilter === "active" && item.status) ||
-        (statusFilter === "inactive" && !item.status);
-      return searchMatch && statusMatch;
-    });
+    return variantData
+      .filter((item) => {
+        const variant = item?.variant?.toLowerCase() || "";
+        const value = item?.value?.toLowerCase() || "";
+        const search = searchTerm?.toLowerCase() || "";
+        const searchMatch = variant.includes(search) || value.includes(search);
+        const statusMatch =
+          statusFilter === "all" ||
+          (statusFilter === "active" && item.status) ||
+          (statusFilter === "inactive" && !item.status);
+        return searchMatch && statusMatch;
+      })
+      .sort((a, b) => {
+        // Sort by creation date in descending order (LIFO - newest first)
+        const dateA = new Date(a.createdAt || a.createdDate || 0);
+        const dateB = new Date(b.createdAt || b.createdDate || 0);
+        return dateB - dateA;
+      });
   }, [variantData, searchTerm, statusFilter]);
 
   const handleExportPDF = () => {
@@ -423,15 +435,26 @@ const Variant = ({ show, handleClose }) => {
                 </tbody>
               </table>
             </div>
-            <Pagination
-              currentPage={currentPage}
-              setCurrentPage={setCurrentPage}
-              rowsPerPage={rowsPerPage}
-              setRowsPerPage={setRowsPerPage}
-              totalItems={filteredVariants.length}
-            />
+            
+            {/* Pagination Info and Controls */}
+            <div className="" 
+            style={{display:'flex', justifyContent:'end', alignItems:'center'}}
+            >
+              <div className="pagination-info" style={{display:'flex',alignItems:'center'}}>
+                {Math.min((currentPage - 1) * rowsPerPage + 1, filteredVariants.length)} to{" "}
+                {Math.min(currentPage * rowsPerPage, filteredVariants.length)} of{" "}
+                {filteredVariants.length}
+              
+              <Pagination
+                currentPage={currentPage}
+                totalPages={Math.ceil(filteredVariants.length / rowsPerPage)}
+                onPageChange={setCurrentPage}
+              />
+              </div>
+            </div>
           </div>
         </div>
+
         <Modal show={showModal} onHide={handleCloses} centered>
           <Modal.Header closeButton>
             <Modal.Title>Add Variant</Modal.Title>
@@ -478,14 +501,15 @@ const Variant = ({ show, handleClose }) => {
             </Form>
           </Modal.Body>
           <Modal.Footer>
-            <Button variant="dark" onClick={handleCloses}>
+            {/* <Button variant="dark" onClick={handleCloses}>
               Cancel
-            </Button>
+            </Button> */}
             <Button variant="warning" onClick={handleSubmit}>
               Add Variant
             </Button>
           </Modal.Footer>
         </Modal>
+
         <Modal show={showEditModal} onHide={handleEditClose} centered>
           <Modal.Header closeButton>
             <Modal.Title>Edit Variant</Modal.Title>
@@ -529,14 +553,15 @@ const Variant = ({ show, handleClose }) => {
             </Form>
           </Modal.Body>
           <Modal.Footer>
-            <Button variant="dark" onClick={handleEditClose}>
+            {/* <Button variant="dark" onClick={handleEditClose}>
               Cancel
-            </Button>
+            </Button> */}
             <Button variant="warning" onClick={handleEditSubmit}>
               Save Changes
             </Button>
           </Modal.Footer>
         </Modal>
+
         <Modal show={showDeleteModal} onHide={() => setShowDeleteModal(false)} centered>
           <Modal.Header closeButton>
             <Modal.Title>Confirm Deletion</Modal.Title>
