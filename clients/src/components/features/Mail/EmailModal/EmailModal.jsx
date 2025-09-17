@@ -14,6 +14,8 @@ import { GoScreenFull } from "react-icons/go";
 import { toast } from "react-toastify";
 import BASE_URL from "../../../../pages/config/config";
 import Ma from "../../../../assets/images/sewc.png";
+import { FiXSquare } from "react-icons/fi";
+
 
 const EmailModal = ({
   show,
@@ -41,26 +43,13 @@ const EmailModal = ({
   const [showCalendar, setShowCalendar] = useState(false);
   const [loading, setLoading] = useState(false);
   const [emailHistory, setEmailHistory] = useState([]);
+  const emojiRef = useRef(null);
+  const [showEmojiPicker, setShowEmojiPicker] = useState(false);
 
   useEffect(() => {
     const stored = JSON.parse(localStorage.getItem("emailHistory")) || [];
     setEmailHistory(stored);
   }, [show]); // reload every time modal opens
-
-  // sync when props change for (reply and forward)
-  //   useEffect(() => {
-  //     setTo(initialTo);
-  //     setSubject(initialSubject);
-  //     setBody(initialBody);
-  //   }, [initialTo, initialSubject, initialBody]);
-
-  //   useEffect(() => {
-  //   if (draft) {
-  //     setTo(draft.to || initialTo);
-  //     setSubject(draft.subject || initialSubject);
-  //     setBody(draft.body || initialBody);
-  //   }
-  // }, [draft, initialTo, initialSubject, initialBody]);
 
   useEffect(() => {
     if (!show) return; // do nothing if modal closed
@@ -99,10 +88,24 @@ const EmailModal = ({
   };
 
   // for emoji
-  const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const handleEmojiClick = (emojiData) => {
     setBody((prev) => prev + emojiData.emoji);
   };
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (emojiRef.current && !emojiRef.current.contains(e.target)) {
+        setShowEmojiPicker(false);
+      }
+    }
+    if (showEmojiPicker) {
+      document.addEventListener("mousedown", handleClickOutside);
+    } else {
+      document.removeEventListener("mousedown", handleClickOutside)
+    }
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside)
+    }
+  }, [showEmojiPicker])
 
   if (!show) return null;
 
@@ -274,6 +277,7 @@ const EmailModal = ({
     setIsExpanded(false);
     onClose();
   };
+
 
   return (
     <div className="mailmdl-modal-overlay">
@@ -499,15 +503,31 @@ const EmailModal = ({
             {images.length > 0 && (
               <div className="mailmdl-image-preview">
                 <h4>Images</h4>
-                {images.map((img, i) => (
-                  <img
-                    key={i}
-                    src={URL.createObjectURL(img)}
-                    alt={`preview-${i}`}
-                    width="100"
-                    style={{ marginRight: "10px", borderRadius: "5px" }}
-                  />
-                ))}
+                <div style={{ display: "flex", gap: "10px", flexWrap: "wrap" }}>
+                  {images.map((img, i) => (
+                    <div key={i} style={{ position: "relative", display: "inline-block" }}>
+                      <img
+                        key={i}
+                        src={URL.createObjectURL(img)}
+                        alt={`preview-${i}`}
+                        width="100"
+                        style={{ borderRadius: "5px" }}
+                      />
+                      <FiXSquare
+                        className="x-square-add image-close remove-product fs-12 text-white bg-danger rounded-1"
+                        style={{
+                          position: "absolute",
+                          top: "-5px",
+                          right: "-5px",
+                          cursor: "pointer",
+                        }}
+                        onClick={() =>
+                          setImages((prev) => prev.filter((_, idx) => idx !== i))
+                        }
+                      />
+                    </div>
+                  ))}
+                </div>
               </div>
             )}
             {/* Attachment preview */}
@@ -515,7 +535,23 @@ const EmailModal = ({
               <div className="mailmdl-attachment-preview">
                 <h4>Attachments:</h4>
                 {attachments.map((file, i) => (
-                  <div key={i}>{file.name}</div>
+                  <div key={i}
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: "8px",
+                      marginBottom: "5px",
+                    }}
+                  >
+                    <span>{file.name}</span>
+                    <FiXSquare
+                      className="x-square-add image-close remove-product fs-12 text-white bg-danger rounded-1"
+                      style={{ cursor: "pointer" }}
+                      onClick={() =>
+                        setAttachments((prev) => prev.filter((_, idx) => idx !== i))
+                      }
+                    />
+                  </div>
                 ))}
               </div>
             )}
@@ -586,7 +622,7 @@ const EmailModal = ({
               />
 
               {showEmojiPicker && (
-                <div className="mailmdl-emoji-picker">
+                <div ref={emojiRef} className="mailmdl-emoji-wrapper">
                   <EmojiPicker onEmojiClick={handleEmojiClick} />
                 </div>
               )}

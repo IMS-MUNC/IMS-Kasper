@@ -358,7 +358,7 @@ const SubCategory = () => {
 
 
   return (
-    <div className="page-wrapper" style={{ marginTop: '60px' }}>
+    <div className="page-wrapper">
       <div className="content">
         <div className="page-header">
           <div className="add-item d-flex">
@@ -427,77 +427,6 @@ const SubCategory = () => {
               </div>
             </div>
             <div className="d-flex table-dropdown my-xl-auto right-content align-items-center flex-wrap row-gap-3">
-              {/* <div className="dropdown me-2">
-                <a
-                  href="javascript:void(0);"
-                  className="dropdown-toggle btn btn-white btn-md d-inline-flex align-items-center"
-                  data-bs-toggle="dropdown"
-                >
-                  Category
-                </a>
-                <ul className="dropdown-menu  dropdown-menu-end p-3">
-                  <li>
-                    <a
-                      href="javascript:void(0);"
-                      className="dropdown-item rounded-1"
-                    >
-                      Computers
-                    </a>
-                  </li>
-                  <li>
-                    <a
-                      href="javascript:void(0);"
-                      className="dropdown-item rounded-1"
-                    >
-                      Electronics
-                    </a>
-                  </li>
-                  <li>
-                    <a
-                      href="javascript:void(0);"
-                      className="dropdown-item rounded-1"
-                    >
-                      Shoe
-                    </a>
-                  </li>
-                  <li>
-                    <a
-                      href="javascript:void(0);"
-                      className="dropdown-item rounded-1"
-                    >
-                      Electronics
-                    </a>
-                  </li>
-                </ul>
-              </div> */}
-              {/* status */}
-              {/* <div className="dropdown">
-                <a
-                  href="javascript:void(0);"
-                  className="dropdown-toggle btn btn-white btn-md d-inline-flex align-items-center"
-                  data-bs-toggle="dropdown"
-                >
-                  Status
-                </a>
-                <ul className="dropdown-menu  dropdown-menu-end p-3">
-                  <li>
-                    <a
-                      href="javascript:void(0);"
-                      className="dropdown-item rounded-1"
-                    >
-                      Active
-                    </a>
-                  </li>
-                  <li>
-                    <a
-                      href="javascript:void(0);"
-                      className="dropdown-item rounded-1"
-                    >
-                      Inactive
-                    </a>
-                  </li>
-                </ul>
-              </div> */}
             </div>
           </div>
           <div className="card-body p-0">
@@ -802,46 +731,6 @@ const SubCategory = () => {
                 <div className="modal-body">
                   <div className="mb-3">
                     <div className="add-image-upload">
-                      {/* <div className="add-image p-1 border-solid">
-                        {images.length > 0 ? (
-                          <img
-                            src={URL.createObjectURL(images[0])}
-                            alt="preview"
-                            style={{
-                              height: "102px",
-                              width: "110px",
-                              borderRadius: "4px",
-                            }}
-                          />
-                        ) : editingSubCategory?.images?.length > 0 ? (
-                          <img
-                            src={editingSubCategory.images[0]}
-                            alt="current"
-                            style={{
-                              height: "102px",
-                              width: "102px",
-                              borderRadius: "4px",
-                            }}
-                          />
-                        ) : (
-                          <span>No image</span>
-                        )}
-                        {(images.length > 0 ||
-                          editingSubCategory?.images?.length > 0) && (
-                          <a
-                            href="javascript:void(0);"
-                            onClick={() => {
-                              setImages([]);
-                              setEditingSubCategory({
-                                ...editingSubCategory,
-                                images: [],
-                              });
-                            }}
-                          >
-                            <FiXSquare className="x-square-add image-close remove-product fs-12 text-white bg-danger rounded-1" />
-                          </a>
-                        )}
-                      </div> */}
                       <div className="new-employee-field">
                         <div className="profile-pic-upload mb-3">
                           <div className="profile-pic brand-pic">

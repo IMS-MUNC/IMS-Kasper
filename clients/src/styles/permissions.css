@@ -1,4 +1,4 @@
-/* .switch {
+.switch {
   position: relative;
   display: inline-block;
   width: 46px;
@@ -14,7 +14,10 @@
 .slider {
   position: absolute;
   cursor: pointer;
-  top: 0; left: 0; right: 0; bottom: 0;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
   background-color: #ccc;
   transition: 0.4s;
   border-radius: 24px;
@@ -33,12 +36,12 @@
 }
 
 input:checked + .slider {
-  background-color: #007bff;
+  background-color: #3eb780;
 }
 
 input:checked + .slider:before {
   transform: translateX(22px);
-} */
+}
 
 .tpermsion {
   border-collapse: collapse;
