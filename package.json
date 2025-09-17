@@ -1,0 +1,7 @@
+{
+  "dependencies": {
+    "country-state-city": "^3.2.1",
+    "multer": "^2.0.2",
+    "react-select": "^5.10.2"
+  }
+}
