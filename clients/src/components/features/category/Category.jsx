@@ -322,7 +322,7 @@ const Category = () => {
 
   return (
     <div className="page-wrapper">
-      <div className="content" style={{ marginTop: "50px" }}>
+      <div className="content">
         <div className="page-header">
           <div className="add-item d-flex">
             <div className="page-title">

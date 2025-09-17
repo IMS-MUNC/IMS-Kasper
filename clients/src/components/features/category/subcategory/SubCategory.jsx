@@ -358,7 +358,7 @@ const SubCategory = () => {
 
 
   return (
-    <div className="page-wrapper" style={{ marginTop: '60px' }}>
+    <div className="page-wrapper">
       <div className="content">
         <div className="page-header">
           <div className="add-item d-flex">
@@ -427,77 +427,6 @@ const SubCategory = () => {
               </div>
             </div>
             <div className="d-flex table-dropdown my-xl-auto right-content align-items-center flex-wrap row-gap-3">
-              {/* <div className="dropdown me-2">
-                <a
-                  href="javascript:void(0);"
-                  className="dropdown-toggle btn btn-white btn-md d-inline-flex align-items-center"
-                  data-bs-toggle="dropdown"
-                >
-                  Category
-                </a>
-                <ul className="dropdown-menu  dropdown-menu-end p-3">
-                  <li>
-                    <a
-                      href="javascript:void(0);"
-                      className="dropdown-item rounded-1"
-                    >
-                      Computers
-                    </a>
-                  </li>
-                  <li>
-                    <a
-                      href="javascript:void(0);"
-                      className="dropdown-item rounded-1"
-                    >
-                      Electronics
-                    </a>
-                  </li>
-                  <li>
-                    <a
-                      href="javascript:void(0);"
-                      className="dropdown-item rounded-1"
-                    >
-                      Shoe
-                    </a>
-                  </li>
-                  <li>
-                    <a
-                      href="javascript:void(0);"
-                      className="dropdown-item rounded-1"
-                    >
-                      Electronics
-                    </a>
-                  </li>
-                </ul>
-              </div> */}
-              {/* status */}
-              {/* <div className="dropdown">
-                <a
-                  href="javascript:void(0);"
-                  className="dropdown-toggle btn btn-white btn-md d-inline-flex align-items-center"
-                  data-bs-toggle="dropdown"
-                >
-                  Status
-                </a>
-                <ul className="dropdown-menu  dropdown-menu-end p-3">
-                  <li>
-                    <a
-                      href="javascript:void(0);"
-                      className="dropdown-item rounded-1"
-                    >
-                      Active
-                    </a>
-                  </li>
-                  <li>
-                    <a
-                      href="javascript:void(0);"
-                      className="dropdown-item rounded-1"
-                    >
-                      Inactive
-                    </a>
-                  </li>
-                </ul>
-              </div> */}
             </div>
           </div>
           <div className="card-body p-0">
