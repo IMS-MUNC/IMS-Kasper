@@ -396,6 +396,7 @@ import { FiEdit } from "react-icons/fi";
 import { RiDeleteBinLine } from "react-icons/ri";
 import { FaAngleLeft } from "react-icons/fa6";
 import { FaChevronRight, FaFileCsv } from "react-icons/fa";
+import { TbEdit, TbRefresh, TbTrash } from 'react-icons/tb';
 
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
@@ -649,48 +650,48 @@ function ProductList() {
 
   //import excel-------------------------------------------------------------------------------------------------------------------------------------------------------------
 
-const fileInputRef = useRef();
+  const fileInputRef = useRef();
 
-const handleImportClick = () => {
-  fileInputRef.current.click();
-};
+  const handleImportClick = () => {
+    fileInputRef.current.click();
+  };
 
-const handleFileChange = async (e) => {
-  const file = e.target.files[0];
-  if (!file) return;
-  if (!file.name.endsWith(".xlsx")) {
-    alert("Please select a valid .xlsx file");
-    e.target.value = "";
-    return;
-  }
-
-  try {
-    // Create FormData and append the file
-    const formData = new FormData();
-    formData.append("file", file);
-
-    // Send to backend
-    const token = localStorage.getItem("token");
-    if (!token) {
-      throw new Error("No token found in localStorage");
+  const handleFileChange = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    if (!file.name.endsWith(".xlsx")) {
+      alert("Please select a valid .xlsx file");
+      e.target.value = "";
+      return;
     }
-    await axios.post(`${BASE_URL}/api/products/import`, formData, {
-      headers: {
-        "Content-Type": "multipart/form-data",
-        Authorization: `Bearer ${token}`,
-      },
-    });
-    toast.success("Imported successfully!");
-  } catch (err) {
-    console.error("Import Error:", err.response?.data || err.message || err);
-    alert(
-      "Error while Import: " +
+
+    try {
+      // Create FormData and append the file
+      const formData = new FormData();
+      formData.append("file", file);
+
+      // Send to backend
+      const token = localStorage.getItem("token");
+      if (!token) {
+        throw new Error("No token found in localStorage");
+      }
+      await axios.post(`${BASE_URL}/api/products/import`, formData, {
+        headers: {
+          "Content-Type": "multipart/form-data",
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      toast.success("Imported successfully!");
+    } catch (err) {
+      console.error("Import Error:", err.response?.data || err.message || err);
+      alert(
+        "Error while Import: " +
         (err.response?.data?.message || err.message || "Unknown error")
-    );
-  } finally {
-    e.target.value = ""; // Clear input
-  }
-};
+      );
+    } finally {
+      e.target.value = ""; // Clear input
+    }
+  };
 
   return (
     <div className="page-wrapper ">
@@ -764,6 +765,9 @@ const handleFileChange = async (e) => {
                         onChange={handleFileChange}
                       />
                     </label>
+                  </li>
+                  <li>
+                    <button data-bs-toggle="tooltip" data-bs-placement="top" title="Refresh" onClick={() => location.reload()} className="fs-20" style={{ backgroundColor: 'white', color: '', padding: '5px 5px', display: 'flex', alignItems: 'center', border: '1px solid #e8eaebff', cursor: 'pointer', borderRadius: '4px' }}><TbRefresh className="ti ti-refresh" /></button>
                   </li>
                 </div>
                 <Link to="/add-product">
@@ -1197,8 +1201,8 @@ const handleFileChange = async (e) => {
                         </h6>
                       </div>
                     </div>
-                    <div style={{position:'relative',top:'25px',right:'20px'}}>
-                      <span style={{backgroundColor:'red',color:'white',padding:'5px 13px',borderRadius:'50%',cursor:'pointer',fontSize:'20px'}} onClick={handlePopupClose}>x</span>
+                    <div style={{ position: 'relative', top: '25px', right: '20px' }}>
+                      <span style={{ backgroundColor: 'red', color: 'white', padding: '5px 13px', borderRadius: '50%', cursor: 'pointer', fontSize: '20px' }} onClick={handlePopupClose}>x</span>
                     </div>
                   </div>
 
@@ -1209,8 +1213,8 @@ const handleFileChange = async (e) => {
                         <div
                           key={tab}
                           className={`button-${activeTabs[selectedProduct._id] === tab
-                              ? "active"
-                              : "inactive"
+                            ? "active"
+                            : "inactive"
                             } button-${tab}`}
                           onClick={() =>
                             handleTabClick(selectedProduct._id, tab)
