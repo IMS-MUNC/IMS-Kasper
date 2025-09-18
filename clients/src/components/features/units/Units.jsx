@@ -7,7 +7,7 @@ import { toast } from "react-toastify";
 import EditUnitModal from "../../../pages/Modal/unitsModals/EditUnitsModals.jsx";
 import * as XLSX from "xlsx";
 import jsPDF from "jspdf";
-import "jspdf-autotable";
+import autoTable from "jspdf-autotable";
 import DeleteAlert from "../../../utils/sweetAlert/DeleteAlert";
 import Swal from "sweetalert2";
 import { sanitizeInput } from "../../../utils/sanitize.js";
@@ -125,39 +125,61 @@ const Units = () => {
     const selected = unitData.filter((unit) =>
       selectedUnits.includes(unit._id)
     );
-    if (selected.length === 0) {
-      toast.warn("No units selected.");
+    
+    // If no units are selected, export all units
+    const dataToExport = selected.length === 0 ? unitData : selected;
+    
+    if (dataToExport.length === 0) {
+      toast.warn("No units available to export.");
       return;
     }
 
-    const ws = XLSX.utils.json_to_sheet(selected);
+    // Format data for Excel export
+    const formattedData = dataToExport.map((unit) => ({
+      "Unit Name": unit.unitsName,
+      "Short Name": unit.shortName,
+      "Status": unit.status,
+      "Created At": new Date(unit.createdAt).toLocaleDateString(),
+    }));
+
+    const ws = XLSX.utils.json_to_sheet(formattedData);
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, "Units");
-    XLSX.writeFile(wb, "units.xlsx");
+    
+    const timestamp = new Date().toISOString().slice(0, 10);
+    XLSX.writeFile(wb, `units_${timestamp}.xlsx`);
+    toast.success("Excel file exported successfully!");
   };
 
   const exportToPDF = () => {
     const selected = unitData.filter((unit) =>
       selectedUnits.includes(unit._id)
     );
-    if (selected.length === 0) {
-      toast.warn("No units selected.");
+    
+    // If no units are selected, export all units
+    const dataToExport = selected.length === 0 ? unitData : selected;
+    
+    if (dataToExport.length === 0) {
+      toast.warn("No units available to export.");
       return;
     }
 
     const doc = new jsPDF();
     doc.text("Units List", 14, 10);
-    doc.autoTable({
+    autoTable(doc, {
       startY: 20,
       head: [["Unit", "Short Name", "Status", "Created At"]],
-      body: selected.map((u) => [
+      body: dataToExport.map((u) => [
         u.unitsName,
         u.shortName,
         u.status,
         new Date(u.createdAt).toLocaleDateString(),
       ]),
     });
-    doc.save("units.pdf");
+    
+    const timestamp = new Date().toISOString().slice(0, 10);
+    doc.save(`units_${timestamp}.pdf`);
+    toast.success("PDF exported successfully!");
   };
 
   const handleDeleteUnit = async (unitId, unitsName) => {

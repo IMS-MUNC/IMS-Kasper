@@ -9,6 +9,8 @@ import BASE_URL from '../../../../pages/config/config';
 import * as XLSX from "xlsx";
 import { GrFormPrevious } from "react-icons/gr";
 import { MdNavigateNext } from "react-icons/md";
+import DeleteAlert from "../../../../utils/sweetAlert/DeleteAlert";
+import { sanitizeInput } from "../../../../utils/sanitize";
 
 const HSNList = () => {
   const [data, setData] = useState([]);
@@ -45,6 +47,9 @@ const HSNList = () => {
   };
 
   const remove = async (id) => {
+    const confirmed = await DeleteAlert({});
+    if (!confirmed) return;
+    
     try {
       const token = localStorage.getItem("token")
       await axios.delete(`${BASE_URL}/api/hsn/${id}`, {
@@ -53,8 +58,10 @@ const HSNList = () => {
         },
       });
       load();
+      toast.success("HSN deleted successfully!");
     } catch (err) {
       console.error('Error deleting HSN:', err);
+      toast.error("Failed to delete HSN. Please try again.");
     }
   };
 
@@ -125,22 +132,36 @@ const HSNList = () => {
     let newErrors = {};
     const { hsnCode, description, id } = modalData;
 
+    // Validate HSN Code
     const hsnRegex = /^[0-9]{2,8}$/;
-    if (!hsnRegex.test(hsnCode)) {
+    if (!hsnCode || !hsnCode.trim()) {
+      newErrors.hsnCode = "HSN code is required";
+    } else if (!hsnRegex.test(hsnCode.trim())) {
       newErrors.hsnCode = "HSN code must be 2-8 digits";
-      toast.error("HSN code must be 2-8 digits")
-      return;
     }
+
+    // Validate Description
+    if (!description || !description.trim()) {
+      newErrors.description = "Description is required";
+    }
+
+    // If there are validation errors, show them and return
     if (Object.keys(newErrors).length > 0) {
-      setErrors(newErrors)
+      setErrors(newErrors);
+      toast.error("Please fix the validation errors");
       return;
     }
 
+    // Clear any previous errors
+    setErrors({});
+
     try {
-      const token = localStorage.getItem("token")
-      const cleanhsnCode = sanitizeInput(hsnCode)
-      const cleanhsnDescription = sanitizeInput(description)
+      const token = localStorage.getItem("token");
+      const cleanhsnCode = sanitizeInput(hsnCode.trim());
+      const cleanhsnDescription = sanitizeInput(description.trim());
+      
       if (modalData.id) {
+        // Update existing HSN
         await axios.put(`${BASE_URL}/api/hsn/${modalData.id}`, {
           hsnCode: cleanhsnCode,
           description: cleanhsnDescription
@@ -149,7 +170,9 @@ const HSNList = () => {
             Authorization: `Bearer ${token}`,
           },
         });
+        toast.success("HSN updated successfully!");
       } else {
+        // Create new HSN
         await axios.post(`${BASE_URL}/api/hsn`, {
           hsnCode: cleanhsnCode,
           description: cleanhsnDescription
@@ -158,18 +181,37 @@ const HSNList = () => {
             Authorization: `Bearer ${token}`,
           },
         });
+        toast.success("HSN created successfully!");
       }
+      
+      // Reset modal and reload data
       setModalData({ hsnCode: '', description: '', id: null });
       setShowModal(false);
+      setErrors({});
       load();
     } catch (err) {
       console.error('Save error:', err);
+      
+      // Handle specific error cases
+      if (err.response?.status === 400) {
+        toast.error(err.response.data.message || "Invalid data provided");
+      } else if (err.response?.status === 409) {
+        toast.error("HSN code already exists");
+      } else if (err.response?.status === 401) {
+        toast.error("Unauthorized. Please login again");
+      } else {
+        toast.error("Failed to save HSN. Please try again");
+      }
     }
   };
 
   const openModal = (item = null) => {
-    if (item) setModalData({ hsnCode: item.hsnCode, description: item.description, id: item._id });
-    else setModalData({ hsnCode: '', description: '', id: null });
+    if (item) {
+      setModalData({ hsnCode: item.hsnCode, description: item.description, id: item._id });
+    } else {
+      setModalData({ hsnCode: '', description: '', id: null });
+    }
+    setErrors({}); // Clear any previous errors
     setShowModal(true);
   };
 
@@ -333,9 +375,11 @@ const HSNList = () => {
                           <div className="edit-delete-action">
                             <a
                               className="me-2 p-2"
-                              data-bs-toggle="modal"
-                              data-bs-target="#edit-brand"
-                              onClick={() => openModal(hsn)}
+                              href="#"
+                              onClick={(e) => {
+                                e.preventDefault();
+                                openModal(hsn);
+                              }}
                             >
                               <TbEdit />
                             </a>

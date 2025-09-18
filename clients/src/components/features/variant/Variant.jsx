@@ -1,6 +1,8 @@
 import { useMemo, useRef, useState, useEffect } from "react";
 import { FaFileExcel, FaFilePdf } from "react-icons/fa";
 import { TbEdit, TbRefresh, TbTrash } from "react-icons/tb";
+import { GrFormPrevious } from "react-icons/gr";
+import { MdNavigateNext } from "react-icons/md";
 import { Modal, Form, Button } from "react-bootstrap";
 import "bootstrap/dist/css/bootstrap.min.css";
 import 'react-toastify/dist/ReactToastify.css';
@@ -436,21 +438,62 @@ const Variant = ({ show, handleClose }) => {
               </table>
             </div>
             
-            {/* Pagination Info and Controls */}
-            <div className="" 
-            style={{display:'flex', justifyContent:'end', alignItems:'center'}}
+            <div
+              className="d-flex justify-content-end gap-3"
+              style={{ padding: "10px 20px" }}
             >
-              <div className="pagination-info" style={{display:'flex',alignItems:'center'}}>
-                {Math.min((currentPage - 1) * rowsPerPage + 1, filteredVariants.length)} to{" "}
-                {Math.min(currentPage * rowsPerPage, filteredVariants.length)} of{" "}
-                {filteredVariants.length}
-              
-              <Pagination
-                currentPage={currentPage}
-                totalPages={Math.ceil(filteredVariants.length / rowsPerPage)}
-                onPageChange={setCurrentPage}
-              />
-              </div>
+              <select
+                value={rowsPerPage}
+                onChange={(e) => {
+                  setRowsPerPage(Number(e.target.value));
+                  setCurrentPage(1);
+                }}
+                className="form-select w-auto"
+              >
+                <option value={10}>10 Per Page</option>
+                <option value={25}>25 Per Page</option>
+                <option value={50}>50 Per Page</option>
+                <option value={100}>100 Per Page</option>
+              </select>
+              <span
+                style={{
+                  backgroundColor: "white",
+                  boxShadow: "rgb(0 0 0 / 4%) 0px 3px 8px",
+                  padding: "7px",
+                  borderRadius: "5px",
+                  border: "1px solid #e4e0e0ff",
+                  color: "gray",
+                }}
+              >
+                {filteredVariants.length === 0
+                  ? "0 of 0"
+                  : `${(currentPage - 1) * rowsPerPage + 1}-${Math.min(
+                    currentPage * rowsPerPage,
+                    filteredVariants.length
+                  )} of ${filteredVariants.length}`}
+                <button
+                  style={{
+                    border: "none",
+                    color: "grey",
+                    backgroundColor: "white",
+                  }}
+                  onClick={() =>
+                    setCurrentPage((prev) => Math.max(prev - 1, 1))
+                  }
+                  disabled={currentPage === 1}
+                >
+                  <GrFormPrevious />
+                </button>{" "}
+                <button
+                  style={{ border: "none", backgroundColor: "white" }}
+                  onClick={() =>
+                    setCurrentPage((prev) => Math.min(prev + 1, Math.ceil(filteredVariants.length / rowsPerPage)))
+                  }
+                  disabled={currentPage === Math.ceil(filteredVariants.length / rowsPerPage)}
+                >
+                  <MdNavigateNext />
+                </button>
+              </span>
             </div>
           </div>
         </div>

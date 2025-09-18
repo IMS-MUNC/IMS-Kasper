@@ -15,6 +15,7 @@ import { MdNavigateNext } from "react-icons/md";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import Papa from "papaparse";
+import * as XLSX from "xlsx";
 
 const Category = () => {
   const [categories, setCategories] = useState([]);
@@ -239,6 +240,37 @@ const Category = () => {
     document.body.removeChild(link);
   };
 
+  //excel export--------------------------------------------------------------------------------------------------------------------------------------------------
+
+  const handleExcel = () => {
+    // Prepare data for Excel export
+    const excelData = categories.map((category) => ({
+      "Category Code": category.categoryCode,
+      "Category": category.categoryName,
+      "Category Slug": category.categorySlug,
+      "Created On": new Date(category.createdAt).toLocaleDateString(),
+    }));
+
+    // Create a new workbook and worksheet
+    const workbook = XLSX.utils.book_new();
+    const worksheet = XLSX.utils.json_to_sheet(excelData);
+
+    // Set column widths for better formatting
+    const columnWidths = [
+      { wch: 15 }, // Category Code
+      { wch: 25 }, // Category
+      { wch: 25 }, // Category Slug
+      { wch: 15 }, // Created On
+    ];
+    worksheet["!cols"] = columnWidths;
+
+    // Add the worksheet to the workbook
+    XLSX.utils.book_append_sheet(workbook, worksheet, "Categories");
+
+    // Generate Excel file and trigger download
+    XLSX.writeFile(workbook, "categories.xlsx");
+  };
+
   //excell file upload--------------------------------------------------------------------------------------------------------------------------------------------------
 
   const fileInputRef = React.useRef();
@@ -383,7 +415,7 @@ const Category = () => {
                 type="button"
                 className="icon-btn"
                 title="Export Excel"
-                onClick={handleCSV}
+                onClick={handleExcel}
               >
                 <FaFileExcel />
               </button>

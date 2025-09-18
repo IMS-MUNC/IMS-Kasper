@@ -12,6 +12,10 @@ import { hasPermission } from "../../../utils/permission/hasPermission";
 import { sanitizeInput } from "../../../utils/sanitize";
 import { GrFormPrevious } from "react-icons/gr";
 import { MdNavigateNext } from "react-icons/md";
+import jsPDF from "jspdf";
+import autoTable from "jspdf-autotable";
+import html2canvas from "html2canvas";
+import * as XLSX from "xlsx";
 
 const Brand = () => {
   const [brandName, setBrandName] = useState("");
@@ -301,6 +305,87 @@ const Brand = () => {
     }
   };
 
+  // PDF export function
+  const exportToPDF = async () => {
+    try {
+      const doc = new jsPDF();
+      
+      // Add title
+      doc.text("Brand Report", 14, 15);
+      
+      // Define table columns
+      const tableColumns = ["Brand Name", "Created Date", "Status", "Description"];
+      
+      // Prepare table rows
+      const tableRows = filteredBrands.map((brand) => [
+        brand.brandName || "N/A",
+        new Date(brand.createdAt).toLocaleDateString(),
+        brand.status || "N/A",
+        brand.description || "N/A"
+      ]);
+      
+      // Create table using autoTable
+      autoTable(doc, {
+        head: [tableColumns],
+        body: tableRows,
+        startY: 20,
+        styles: {
+          fontSize: 8,
+        },
+        headStyles: {
+          fillColor: [155, 155, 155],
+          textColor: "white",
+        },
+        theme: "striped",
+      });
+      
+      // Save the PDF
+      doc.save(`brands_report_${new Date().toISOString().split('T')[0]}.pdf`);
+      toast.success("PDF exported successfully!");
+    } catch (error) {
+      console.error("PDF export failed:", error);
+      toast.error("Failed to export PDF");
+    }
+  };
+
+  // Excel export function
+  const exportToExcel = () => {
+    try {
+      // Prepare data for Excel
+      const excelData = filteredBrands.map((brand, index) => ({
+        "S.No": index + 1,
+        "Brand Name": brand.brandName || "N/A",
+        "Created Date": new Date(brand.createdAt).toLocaleDateString(),
+        "Status": brand.status || "N/A",
+        "Description": brand.description || "N/A"
+      }));
+      
+      // Create workbook and worksheet
+      const wb = XLSX.utils.book_new();
+      const ws = XLSX.utils.json_to_sheet(excelData);
+      
+      // Set column widths
+      const colWidths = [
+        { wch: 8 },  // S.No
+        { wch: 20 }, // Brand Name
+        { wch: 15 }, // Created Date
+        { wch: 12 }, // Status
+        { wch: 30 }  // Description
+      ];
+      ws['!cols'] = colWidths;
+      
+      // Add worksheet to workbook
+      XLSX.utils.book_append_sheet(wb, ws, "Brands");
+      
+      // Save the file
+      XLSX.writeFile(wb, `brands_report_${new Date().toISOString().split('T')[0]}.xlsx`);
+      toast.success("Excel file exported successfully!");
+    } catch (error) {
+      console.error("Excel export failed:", error);
+      toast.error("Failed to export Excel file");
+    }
+  };
+
   // derive page IDs + select-all status
   const pageIds = paginatedBrands.map((b) => b._id);
   const allSelectedOnPage =
@@ -328,7 +413,12 @@ const Brand = () => {
               )}
             </li>
             <li>
-              <button type="button" className="icon-btn" title="Pdf">
+              <button 
+                type="button" 
+                className="icon-btn" 
+                title="Export PDF"
+                onClick={exportToPDF}
+              >
                 <FaFilePdf />
               </button>
             </li>
@@ -339,7 +429,12 @@ const Brand = () => {
               </label>
             </li>
             <li>
-              <button type="button" className="icon-btn" title="Export Excel">
+              <button 
+                type="button" 
+                className="icon-btn" 
+                title="Export Excel"
+                onClick={exportToExcel}
+              >
                 <FaFileExcel />
               </button>
             </li>
@@ -481,19 +576,22 @@ const Brand = () => {
                       </td>
                       <td>
                         <div className="d-flex align-items-center">
-                          <a
-                            href="#"
-                            className="avatar avatar-md bg-light-900 p-1 me-2"
-                          >
+                          {brand.image?.[0]?.url ? (
+                            <>
                             <img
-                              className="object-fit-contain"
-                              // src={brand.image?.[0] || "assets/img/default.png"}
                               src={brand.image?.[0]?.url}
                               alt={brand.brandName}
+                              className="me-1"
+                              style={{objectFit:'contain',width:'30px',height:'30px',}}
                             />
-                          </a>
+                            </>
+                          ) : (
+                            <>
+                            </>
+                          )}
                           <a href="#">{brand.brandName}</a>
                         </div>
+                        
                       </td>
                       <td>{new Date(brand.createdAt).toLocaleDateString("en-GB", {
                         day: "2-digit",

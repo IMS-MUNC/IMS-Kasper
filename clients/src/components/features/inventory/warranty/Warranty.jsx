@@ -11,6 +11,8 @@ import { IoSettingsSharp } from "react-icons/io5";
 import { Modal, Form, Row, Col } from "react-bootstrap";
 import "bootstrap/dist/css/bootstrap.min.css";
 import { GoChevronLeft, GoChevronRight } from "react-icons/go";
+import { GrFormPrevious } from "react-icons/gr";
+import { MdNavigateNext } from "react-icons/md";
 import dayjs from "dayjs";
 // import "./Warranty.css";
 import html2canvas from "html2canvas";
@@ -552,21 +554,62 @@ const Warranty = ({ show, handleClose }) => {
 								</table>
 							</div>
 						</div>
-            {/* Pagination Info and Controls */}
-            <div className="" 
-            style={{display:'flex', justifyContent:'end', alignItems:'center'}}
+            <div
+              className="d-flex justify-content-end gap-3"
+              style={{ padding: "10px 20px" }}
             >
-              <div className="pagination-info" style={{display:'flex',alignItems:'center'}}>
-                {Math.min((currentPage - 1) * rowsPerPage + 1, filteredWarranties.length)} to{" "}
-                {Math.min(currentPage * rowsPerPage, filteredWarranties.length)} of{" "}
-                {filteredWarranties.length}
-              
-              <Pagination
-                currentPage={currentPage}
-                totalPages={Math.ceil(filteredWarranties.length / rowsPerPage)}
-                onPageChange={setCurrentPage}
-              />
-              </div>
+              <select
+                value={rowsPerPage}
+                onChange={(e) => {
+                  setRowsPerPage(Number(e.target.value));
+                  setCurrentPage(1);
+                }}
+                className="form-select w-auto"
+              >
+                <option value={10}>10 Per Page</option>
+                <option value={25}>25 Per Page</option>
+                <option value={50}>50 Per Page</option>
+                <option value={100}>100 Per Page</option>
+              </select>
+              <span
+                style={{
+                  backgroundColor: "white",
+                  boxShadow: "rgb(0 0 0 / 4%) 0px 3px 8px",
+                  padding: "7px",
+                  borderRadius: "5px",
+                  border: "1px solid #e4e0e0ff",
+                  color: "gray",
+                }}
+              >
+                {filteredWarranties.length === 0
+                  ? "0 of 0"
+                  : `${(currentPage - 1) * rowsPerPage + 1}-${Math.min(
+                    currentPage * rowsPerPage,
+                    filteredWarranties.length
+                  )} of ${filteredWarranties.length}`}
+                <button
+                  style={{
+                    border: "none",
+                    color: "grey",
+                    backgroundColor: "white",
+                  }}
+                  onClick={() =>
+                    setCurrentPage((prev) => Math.max(prev - 1, 1))
+                  }
+                  disabled={currentPage === 1}
+                >
+                  <GrFormPrevious />
+                </button>{" "}
+                <button
+                  style={{ border: "none", backgroundColor: "white" }}
+                  onClick={() =>
+                    setCurrentPage((prev) => Math.min(prev + 1, Math.ceil(filteredWarranties.length / rowsPerPage)))
+                  }
+                  disabled={currentPage === Math.ceil(filteredWarranties.length / rowsPerPage)}
+                >
+                  <MdNavigateNext />
+                </button>
+              </span>
             </div>
 					</div>
 					{/* /add modal list */}

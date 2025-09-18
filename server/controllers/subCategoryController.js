@@ -8,17 +8,29 @@ exports.addSubcategory = async (req, res) => {
     const { categoryId } = req.params;
     const { subCategoryName, description, status } = req.body;
 
+    // Validate required fields
+    if (!subCategoryName || !description) {
+      return res.status(400).json({ message: "Subcategory name and description are required" });
+    }
+
+    if (!categoryId) {
+      return res.status(400).json({ message: "Category ID is required" });
+    }
+
     const category = await Category.findById(categoryId);
     if (!category)
       return res.status(404).json({ message: "Category not found" });
 
-    // Upload images to Cloudinary
-    const imageUploadPromises = req.files.map((file) =>
-      cloudinary.uploader.upload(file.path, { folder: "subcategory_images" })
-    );
+    // Upload images to Cloudinary (handle case where no files are uploaded)
+    let imageUrls = [];
+    if (req.files && req.files.length > 0) {
+      const imageUploadPromises = req.files.map((file) =>
+        cloudinary.uploader.upload(file.path, { folder: "subcategory_images" })
+      );
 
-    const uploadedImages = await Promise.all(imageUploadPromises);
-    const imageUrls = uploadedImages.map((img) => img.secure_url);
+      const uploadedImages = await Promise.all(imageUploadPromises);
+      imageUrls = uploadedImages.map((img) => img.secure_url);
+    }
 
     const subcategory = new Subcategory({
       subCategoryName,
@@ -39,19 +51,33 @@ exports.addSubcategory = async (req, res) => {
     });
   } catch (error) {
     console.error("Add Subcategory Error:", error);
-    res.status(500).json({ message: "Server error" });
+    
+    // Handle specific MongoDB errors
+    if (error.code === 11000) {
+      return res.status(400).json({ message: "Subcategory name already exists" });
+    }
+    
+    // Handle validation errors
+    if (error.name === 'ValidationError') {
+      const validationErrors = Object.values(error.errors).map(err => err.message);
+      return res.status(400).json({ message: "Validation error", errors: validationErrors });
+    }
+    
+    // Handle Cloudinary errors
+    if (error.message && error.message.includes('cloudinary')) {
+      return res.status(500).json({ message: "Image upload failed", error: error.message });
+    }
+    
+    res.status(500).json({ message: "Server error", error: error.message });
   }
 };
 
 // Get All Subcategories with Category Info (including categoryCode)
 exports.getAllSubcategories = async (req, res) => {
   try {
-    const subcategories = await Subcategory.find({ status: true })
-  .populate("category", "categoryName categoryCode")
-  .sort({ createdAt: -1 });
-    // const subcategories = await Subcategory.find()
-    //   .populate("category", "categoryName categoryCode") // populate both name and code
-    //   .sort({ createdAt: -1 });
+    const subcategories = await Subcategory.find()
+      .populate("category", "categoryName categoryCode") // populate both name and code
+      .sort({ createdAt: -1 });
 
     res.status(200).json(subcategories);
   } catch (error) {
