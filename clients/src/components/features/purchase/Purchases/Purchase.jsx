@@ -14,7 +14,6 @@ import ViewPurchase from "../../../../pages/Modal/PurchaseModals/ViewPurchase";
 import "../../../../styles/product/product.css"
 import AddDebitNoteModals from "../../../../pages/Modal/debitNoteModals/AddDebitNoteModals";
 
-
 const Purchase = () => {
   const [purchases, setPurchases] = useState([]);
   const [viewPurchaseId, setViewPurchaseId] = useState(null);
