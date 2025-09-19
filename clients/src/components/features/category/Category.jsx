@@ -43,9 +43,10 @@ const Category = () => {
     if (!confirmed) return;
 
     try {
-      const token = localStorage.getItem("token")
+      const token = localStorage.getItem("token");
       await axios.post(`${BASE_URL}/api/category/categories/bulk-delete`, {
         ids: selectedCategories,
+      }, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
@@ -56,7 +57,14 @@ const Category = () => {
     } catch (err) {
       console.log(err);
 
-      toast.error("Bulk delete failed");
+      // Handle specific error cases
+      if (err.response?.status === 401) {
+        toast.error("Unauthorized. Please login again");
+      } else if (err.response?.status === 403) {
+        toast.error("You don't have permission to delete categories");
+      } else {
+        toast.error("Bulk delete failed. Please try again");
+      }
     }
   };
 
@@ -377,18 +385,24 @@ const Category = () => {
         </li>
       </ul> */}
           <div className="table-top-head me-2">
-            <li>
-              <button
-                type="button"
-                className="icon-btn"
-                title="Pdf"
-                onClick={handlePdf}
-              >
-                <FaFilePdf />
-              </button>
+            <li style={{ display: "flex", alignItems: "center", gap: '5px' }} className="icon-btn">
+              <label className="" title="">Export : </label>
+              <button onClick={handlePdf} title="Download PDF" style={{
+                backgroundColor: "white",
+                display: "flex",
+                alignItems: "center",
+                border: "none",
+              }}><FaFilePdf className="fs-20" style={{ color: "red" }} /></button>
+              <button onClick={handleExcel} title="Download Excel" style={{
+                backgroundColor: "white",
+                display: "flex",
+                alignItems: "center",
+                border: "none",
+              }}><FaFileExcel className="fs-20" style={{ color: "orange" }} /></button>
             </li>
-            <li>
-              <label className="icon-btn m-0" title="Import Excel">
+            <li style={{ display: "flex", alignItems: "center", gap: '5px' }} className="icon-btn">
+              <label className="" title="">Import : </label>
+              <label className="" title="Import Excel">
                 <button
                   type="button"
                   onClick={handleImportClick}
@@ -410,7 +424,7 @@ const Category = () => {
                 />
               </label>
             </li>
-            <li>
+            {/* <li>
               <button
                 type="button"
                 className="icon-btn"
@@ -419,7 +433,7 @@ const Category = () => {
               >
                 <FaFileExcel />
               </button>
-            </li>
+            </li> */}
           </div>
           <div className="page-btn">
             {/* <a

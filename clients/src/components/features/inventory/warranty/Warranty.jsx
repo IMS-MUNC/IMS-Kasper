@@ -59,10 +59,12 @@ const Warranty = ({ show, handleClose }) => {
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [pendingDeleteId, setPendingDeleteId] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [selectedWarranties, setSelectedWarranties] = useState([]);
+  const [selectAll, setSelectAll] = useState(false);
 
 
 
-// console.log("Warranty data:", Warrantydata);
+  // console.log("Warranty data:", Warrantydata);
 
 
 
@@ -71,7 +73,7 @@ const Warranty = ({ show, handleClose }) => {
       setLoading(true);
       const token = localStorage.getItem("token");
 
-      const response = await fetch(`${BASE_URL}/api/warranty/`,{
+      const response = await fetch(`${BASE_URL}/api/warranty/`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
@@ -80,19 +82,19 @@ const Warranty = ({ show, handleClose }) => {
         throw new Error("Failed to fetch warranty data");
       }
       const data = await response.json();
-      console.log("Fetched warranty data:", data);
+      // console.log("Fetched warranty data:", data);
       const updatedData = data.map((item) => ({
         ...item,
         id: item._id,
       }));
-      
+
       // Sort by creation date in descending order (LIFO - newest first)
       const sortedData = updatedData.sort((a, b) => {
         const dateA = new Date(a.createdAt || a.fromDate);
         const dateB = new Date(b.createdAt || b.fromDate);
         return dateB - dateA; // Newest first
       });
-      
+
       setWarrantydata(sortedData);
     } catch (err) {
       setError(err.message);
@@ -187,13 +189,13 @@ const Warranty = ({ show, handleClose }) => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-          const token = localStorage.getItem("token");
+      const token = localStorage.getItem("token");
 
       const response = await fetch(`${BASE_URL}/api/warranty/`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-                  Authorization: `Bearer ${token}`,
+          Authorization: `Bearer ${token}`,
 
         },
         body: JSON.stringify(formData),
@@ -226,7 +228,7 @@ const Warranty = ({ show, handleClose }) => {
 
   const handleEditOpen = (card) => {
     // console.log("Opening edit modal for card:", card);
-    
+
     // Format dates for HTML date inputs (YYYY-MM-DD format)
     const formatDateForInput = (dateString) => {
       if (!dateString) return "";
@@ -279,7 +281,7 @@ const Warranty = ({ show, handleClose }) => {
 
   const handleEditSubmit = async (e) => {
     e.preventDefault();
-    
+
     // Validation
     if (!editFormData.warranty || !editFormData.fromDate || !editFormData.toDate || !editFormData.description) {
       setError("Please fill in all required fields.");
@@ -288,7 +290,7 @@ const Warranty = ({ show, handleClose }) => {
 
     try {
       const token = localStorage.getItem("token");
-      
+
       // Prepare data for submission
       const submitData = {
         ...editFormData,
@@ -305,42 +307,42 @@ const Warranty = ({ show, handleClose }) => {
         },
         body: JSON.stringify(submitData),
       });
-      
+
       if (!response.ok) {
         const errorData = await response.json();
         throw new Error(errorData.message || "Failed to update warranty");
       }
-      
+
       const data = await response.json();
       // console.log("Updated Warranty:", data);
       // console.log("Edit Form Data ID:", editFormData.id);
-      
+
       // Ensure we use the correct ID for updating
-      const updatedWarranty = { 
-        ...data, 
+      const updatedWarranty = {
+        ...data,
         id: data._id || data.id || editFormData.id,
         duration: calculateDuration(data.fromDate || editFormData.fromDate, data.toDate || editFormData.toDate)
       };
-      
+
       // console.log("Updated Warranty with ID:", updatedWarranty);
-      
+
       setWarrantydata((prevData) => {
-         const newData = prevData.map((card) => {
+        const newData = prevData.map((card) => {
           //  console.log("Comparing:", card.id, "with", updatedWarranty.id);
-           return card.id === updatedWarranty.id ? updatedWarranty : card;
-         });
+          return card.id === updatedWarranty.id ? updatedWarranty : card;
+        });
         //  console.log("New warranty data:", newData);
-         return newData;
-       });
-       
-       // Force refresh to ensure UI updates
-       setTimeout(() => {
-         fetchWarrantyData();
-       }, 100);
-       
-       setError(""); // Clear any previous errors
-       handleEditClose();
-       toast.success("Warranty updated successfully.");
+        return newData;
+      });
+
+      // Force refresh to ensure UI updates
+      setTimeout(() => {
+        fetchWarrantyData();
+      }, 100);
+
+      setError(""); // Clear any previous errors
+      handleEditClose();
+      toast.success("Warranty updated successfully.");
     } catch (err) {
       console.error("Error updating warranty:", err);
       setError(err.message || "Failed to update warranty. Please try again.");
@@ -350,7 +352,7 @@ const Warranty = ({ show, handleClose }) => {
 
   const handleDelete = async (id) => {
     try {
-          const token = localStorage.getItem("token");
+      const token = localStorage.getItem("token");
 
       const response = await fetch(`${BASE_URL}/api/warranty/${id}`, {
         method: "DELETE",
@@ -373,6 +375,96 @@ const Warranty = ({ show, handleClose }) => {
     }
   };
 
+  // Handle individual warranty selection
+  const handleWarrantySelection = (warrantyId) => {
+    setSelectedWarranties(prev => {
+      if (prev.includes(warrantyId)) {
+        return prev.filter(id => id !== warrantyId);
+      } else {
+        return [...prev, warrantyId];
+      }
+    });
+  };
+
+  // Handle select all functionality
+  const handleSelectAll = () => {
+    if (selectAll) {
+      setSelectedWarranties([]);
+      setSelectAll(false);
+    } else {
+      // Only select warranties on the current page
+      const currentPageWarranties = filteredWarranties
+        .slice((currentPage - 1) * rowsPerPage, currentPage * rowsPerPage);
+      const currentPageWarrantyIds = currentPageWarranties.map(warranty => warranty.id);
+      setSelectedWarranties(currentPageWarrantyIds);
+      setSelectAll(true);
+    }
+  };
+
+  // Handle bulk delete
+  const handleBulkDelete = async () => {
+    if (selectedWarranties.length === 0) {
+      toast.warning("Please select warranties to delete.");
+      return;
+    }
+
+    const confirmDelete = window.confirm(
+      `Are you sure you want to delete ${selectedWarranties.length} selected warranty(ies)?`
+    );
+
+    if (!confirmDelete) return;
+
+    try {
+      const token = localStorage.getItem("token");
+
+      if (!token) {
+        toast.error("Authentication token not found. Please login again.");
+        return;
+      }
+
+      const deletePromises = selectedWarranties.map(warrantyId =>
+        fetch(`${BASE_URL}/api/warranty/${warrantyId}`, {
+          method: "DELETE",
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        })
+      );
+
+      const responses = await Promise.all(deletePromises);
+
+      // Check if all requests were successful
+      const failedDeletes = responses.filter(response => !response.ok);
+
+      if (failedDeletes.length > 0) {
+        if (failedDeletes.some(response => response.status === 401)) {
+          toast.error("Unauthorized. Please login again.");
+          return;
+        }
+        if (failedDeletes.some(response => response.status === 403)) {
+          toast.error("You don't have permission to delete warranties.");
+          return;
+        }
+        throw new Error(`Failed to delete ${failedDeletes.length} warranty(ies)`);
+      }
+
+      // Update state to remove deleted warranties
+      setWarrantydata(prev =>
+        prev.filter(warranty => !selectedWarranties.includes(warranty.id))
+      );
+
+      // Reset selection
+      setSelectedWarranties([]);
+      setSelectAll(false);
+
+      toast.success(`${selectedWarranties.length} warranty(ies) deleted successfully.`);
+
+    } catch (error) {
+      console.error("Error during bulk delete:", error);
+      toast.error("Failed to delete some warranties. Please try again.");
+    }
+  };
+
 
   const filteredWarranties = useMemo(() => {
     return Warrantydata.filter((item) => {
@@ -389,6 +481,26 @@ const Warranty = ({ show, handleClose }) => {
     });
   }, [Warrantydata, searchTerm, statusFilter]);
 
+  // Sync selectAll state with selectedWarranties (only for current page)
+  useEffect(() => {
+    if (filteredWarranties.length > 0) {
+      // Only check warranties on the current page
+      const currentPageWarranties = filteredWarranties
+        .slice((currentPage - 1) * rowsPerPage, currentPage * rowsPerPage);
+
+      if (currentPageWarranties.length > 0) {
+        const allCurrentPageSelected = currentPageWarranties.every(warranty =>
+          selectedWarranties.includes(warranty.id)
+        );
+        setSelectAll(allCurrentPageSelected);
+      } else {
+        setSelectAll(false);
+      }
+    } else {
+      setSelectAll(false);
+    }
+  }, [selectedWarranties, filteredWarranties, currentPage, rowsPerPage]);
+
 
 
   const openDeleteModal = (id) => {
@@ -400,111 +512,138 @@ const Warranty = ({ show, handleClose }) => {
 
 
   return (
-    	<div className="page-wrapper">
-				<div className="content">
-					<div className="page-header">
-						<div className="add-item d-flex">
-							<div className="page-title">
-								<h4 className="fw-bold">Warranties</h4>
-								<h6>Manage your warranties</h6>
-							</div>
-						</div>
-						<ul className="table-top-head">
-							<li>
-								<a data-bs-toggle="tooltip"  title="Pdf" onClick={handleExportPDF}><FaFilePdf className="fs-20" style={{color:"red"}} /></a>
-										
-							</li>
-							<li>
+    <div className="page-wrapper">
+      <div className="content">
+        <div className="page-header">
+          <div className="add-item d-flex">
+            <div className="page-title">
+              <h4 className="fw-bold">Warranties</h4>
+              <h6>Manage your warranties</h6>
+            </div>
+          </div>
+          <ul className="table-top-head">
+            <li style={{ display: "flex", alignItems: "center", gap: '5px' }} className="icon-btn">
+              <label className="" title="">Export : </label>
+              <button onClick={handleExportPDF} title="Download PDF" style={{
+                backgroundColor: "white",
+                display: "flex",
+                alignItems: "center",
+                border: "none",
+              }}><FaFilePdf className="fs-20" style={{ color: "red" }} /></button>
+              <button onClick={handleExportExcel} title="Download Excel" style={{
+                backgroundColor: "white",
+                display: "flex",
+                alignItems: "center",
+                border: "none",
+              }}><FaFileExcel className="fs-20" style={{ color: "orange" }} /></button>
+            </li>
+            {/* <li>
 								<a data-bs-toggle="tooltip" data-bs-placement="top" title="Excel" onClick={handleExportExcel}><FaFileExcel className="fs-20" style={{color:"green"}}/></a>
 
-							</li>
-							<li>
-								<a data-bs-toggle="tooltip" data-bs-placement="top" title="Refresh" onClick={() => location.reload()}><TbRefresh/></a>
-							</li>
-							{/* <li>
+							</li> */}
+            <li>
+              <a data-bs-toggle="tooltip" data-bs-placement="top" title="Refresh" onClick={() => location.reload()}><TbRefresh /></a>
+            </li>
+            {/* <li>
 								<a data-bs-toggle="tooltip" data-bs-placement="top" title="Collapse" id="collapse-header"><i
 										className="ti ti-chevron-up" /></a>
 							</li> */}
-						</ul>
-						<div className="page-btn">
-							<a href="#" className="btn btn-primary" data-bs-toggle="modal" data-bs-target="#add-warranty" onClick={handleShow}><i
-									className="ti ti-circle-plus me-1" />Add Warranty</a>
-						</div>
-					</div>
-					{/* /product list */}
-					<div className="card">
-						<div className="card-header d-flex align-items-center justify-content-between flex-wrap row-gap-3">
-							<div className="search-set">
-								<div className="search-input">
-									<input
-										type="text"
-										className="form-control"
-										placeholder="Search warranties..."
-										value={searchTerm}
-										onChange={(e) => setSearchTerm(e.target.value)}
-									/>
-									<span className="btn-searchset">
-										<i className="ti ti-search fs-14 feather-search" />
-									</span>
-								</div>
-							</div>
-							<div className="table-dropdown my-xl-auto right-content">
-								<div className="dropdown">
-									<Button
-										className="btn btn-white btn-md d-inline-flex align-items-center"
-										data-bs-toggle="dropdown"
-									>
-										Sort By: {statusFilter.charAt(0).toUpperCase() + statusFilter.slice(1) || "Status"}
-									</Button>
-									<ul className="dropdown-menu dropdown-menu-end p-3">
-										<li>
-											<a
-												className="dropdown-item rounded-1"
-												onClick={() => setStatusFilter("all")}
-											>
-												All
-											</a>
-										</li>
-										<li>
-											<a
-												className="dropdown-item rounded-1"
-												onClick={() => setStatusFilter("active")}
-											>
-												Active
-											</a>
-										</li>
-										<li>
-											<a
-												className="dropdown-item rounded-1"
-												onClick={() => setStatusFilter("inactive")}
-											>
-												Inactive
-											</a>
-										</li>
-									</ul>
-								</div>
-							</div>
-						</div>
-						<div className="card-body p-0">
-							<div className="table-responsive">
-								<table className="table datatable" ref={tableRef}>
-									<thead className="thead-light">
-										<tr>
-											<th className="no-sort">
-												<label className="checkboxs">
-													<input type="checkbox" id="select-all" />
-													<span className="checkmarks" />
-												</label>
-											</th>
-											<th>Warranty</th>
-											<th>Description</th>
-                      <th>From Date</th>
-                      <th>To Date</th>
-											<th>Duration</th>
-											<th>Status</th>
-											<th className="no-sort" />
-										</tr>
-									</thead>
+          </ul>
+          <div className="page-btn">
+            <a href="#" className="btn btn-primary" data-bs-toggle="modal" data-bs-target="#add-warranty" onClick={handleShow}><i
+              className="ti ti-circle-plus me-1" />Add Warranty</a>
+          </div>
+        </div>
+        {/* Bulk Delete Button */}
+        {selectedWarranties.length > 0 && (
+          <div className="mb-3">
+            <button
+              className="btn btn-danger"
+              onClick={handleBulkDelete}
+            >
+              Delete Selected ({selectedWarranties.length})
+            </button>
+          </div>
+        )}
+        {/* /product list */}
+        <div className="card">
+          <div className="card-header d-flex align-items-center justify-content-between flex-wrap row-gap-3">
+            <div className="search-set">
+              <div className="search-input">
+                <input
+                  type="text"
+                  className="form-control"
+                  placeholder="Search warranties..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                />
+                <span className="btn-searchset">
+                  <i className="ti ti-search fs-14 feather-search" />
+                </span>
+              </div>
+            </div>
+            <div className="table-dropdown my-xl-auto right-content">
+              <div className="dropdown">
+                <Button
+                  className="btn btn-white btn-md d-inline-flex align-items-center"
+                  data-bs-toggle="dropdown"
+                >
+                  Sort By: {statusFilter.charAt(0).toUpperCase() + statusFilter.slice(1) || "Status"}
+                </Button>
+                <ul className="dropdown-menu dropdown-menu-end p-3">
+                  <li>
+                    <a
+                      className="dropdown-item rounded-1"
+                      onClick={() => setStatusFilter("all")}
+                    >
+                      All
+                    </a>
+                  </li>
+                  <li>
+                    <a
+                      className="dropdown-item rounded-1"
+                      onClick={() => setStatusFilter("active")}
+                    >
+                      Active
+                    </a>
+                  </li>
+                  <li>
+                    <a
+                      className="dropdown-item rounded-1"
+                      onClick={() => setStatusFilter("inactive")}
+                    >
+                      Inactive
+                    </a>
+                  </li>
+                </ul>
+              </div>
+            </div>
+          </div>
+          <div className="card-body p-0">
+            <div className="table-responsive">
+              <table className="table datatable" ref={tableRef}>
+                <thead className="thead-light">
+                  <tr>
+                    <th className="no-sort">
+                      <label className="checkboxs">
+                        <input
+                          type="checkbox"
+                          id="select-all"
+                          checked={selectAll}
+                          onChange={handleSelectAll}
+                        />
+                        <span className="checkmarks" />
+                      </label>
+                    </th>
+                    <th>Warranty</th>
+                    <th>Description</th>
+                    <th>From Date</th>
+                    <th>To Date</th>
+                    <th>Duration</th>
+                    <th>Status</th>
+                    <th className="no-sort" />
+                  </tr>
+                </thead>
                 <tbody>
 
                   {filteredWarranties
@@ -513,7 +652,11 @@ const Warranty = ({ show, handleClose }) => {
                       <tr key={idx}>
                         <td>
                           <label className="checkboxs">
-                            <input type="checkbox" />
+                            <input
+                              type="checkbox"
+                              checked={selectedWarranties.includes(item.id)}
+                              onChange={() => handleWarrantySelection(item.id)}
+                            />
                             <span className="checkmarks" />
                           </label>
                         </td>
@@ -551,177 +694,177 @@ const Warranty = ({ show, handleClose }) => {
 
 
                 </tbody>
-								</table>
-							</div>
-						</div>
-            <div
-              className="d-flex justify-content-end gap-3"
-              style={{ padding: "10px 20px" }}
-            >
-              <select
-                value={rowsPerPage}
-                onChange={(e) => {
-                  setRowsPerPage(Number(e.target.value));
-                  setCurrentPage(1);
-                }}
-                className="form-select w-auto"
-              >
-                <option value={10}>10 Per Page</option>
-                <option value={25}>25 Per Page</option>
-                <option value={50}>50 Per Page</option>
-                <option value={100}>100 Per Page</option>
-              </select>
-              <span
-                style={{
-                  backgroundColor: "white",
-                  boxShadow: "rgb(0 0 0 / 4%) 0px 3px 8px",
-                  padding: "7px",
-                  borderRadius: "5px",
-                  border: "1px solid #e4e0e0ff",
-                  color: "gray",
-                }}
-              >
-                {filteredWarranties.length === 0
-                  ? "0 of 0"
-                  : `${(currentPage - 1) * rowsPerPage + 1}-${Math.min(
-                    currentPage * rowsPerPage,
-                    filteredWarranties.length
-                  )} of ${filteredWarranties.length}`}
-                <button
-                  style={{
-                    border: "none",
-                    color: "grey",
-                    backgroundColor: "white",
-                  }}
-                  onClick={() =>
-                    setCurrentPage((prev) => Math.max(prev - 1, 1))
-                  }
-                  disabled={currentPage === 1}
-                >
-                  <GrFormPrevious />
-                </button>{" "}
-                <button
-                  style={{ border: "none", backgroundColor: "white" }}
-                  onClick={() =>
-                    setCurrentPage((prev) => Math.min(prev + 1, Math.ceil(filteredWarranties.length / rowsPerPage)))
-                  }
-                  disabled={currentPage === Math.ceil(filteredWarranties.length / rowsPerPage)}
-                >
-                  <MdNavigateNext />
-                </button>
-              </span>
+              </table>
             </div>
-					</div>
-					{/* /add modal list */}
-            <Modal show={showModal} onHide={handleCloses} centered>
-        <Modal.Header closeButton>
-          <Modal.Title>Add Warranty</Modal.Title>
-        </Modal.Header>
-        <Modal.Body>
-          <Form>
-            <Form.Group controlId="warranty">
-              <Form.Label>
-                Warranty <span className="text-danger">*</span>
-              </Form.Label>
-              <Form.Control
-                type="text"
-                placeholder="Enter warranty"
-                name="warranty"
-                value={formData.warranty}
-                onChange={handleChange}
-              />
-            </Form.Group>
-
-            {/* //to date */}
-            <Row className="mt-3">
-              <Col>
-                <Form.Group controlId="fromDate">
-                  <Form.Label>
-                    From Date  <span className="text-danger">*</span>
-                  </Form.Label>
-                  <Form.Control
-                    type="Date"
-                    min={1}
-                    name="fromDate"
-                    value={formData.fromDate}
-                    onChange={handleChange}
-                  />
-                </Form.Group>
-              </Col>
-              <Col>
-                <Form.Group controlId="toDate">
-                  <Form.Label>
-                    To Date  <span className="text-danger">*</span>
-                  </Form.Label>
-                  <Form.Control
-                    type="Date"
-                    min={1}
-                    name="toDate"
-                    value={formData.toDate}
-                    onChange={handleChange}
-                  />
-                </Form.Group>
-              </Col>
-            </Row>
-
-            <Row className="mt-3">
-              <Col>
-                <Form.Group controlId="description">
-                  <Form.Label>
-                    Description <span className="text-danger">*</span>
-                  </Form.Label>
-                  <Form.Control
-                    as="textarea"
-                    name="description"
-                    value={formData.description}
-                    onChange={handleChange}
-                  />
-                </Form.Group>
-              </Col>
-            </Row>
-            <Form.Group
-              controlId="status"
-              className="mt-4 d-flex align-items-center justify-content-between"
+          </div>
+          <div
+            className="d-flex justify-content-end gap-3"
+            style={{ padding: "10px 20px" }}
+          >
+            <select
+              value={rowsPerPage}
+              onChange={(e) => {
+                setRowsPerPage(Number(e.target.value));
+                setCurrentPage(1);
+              }}
+              className="form-select w-auto"
             >
-              <Form.Label className="me-3 mb-0">Status</Form.Label>
-              <Form.Check
-                type="switch"
-                name="status"
-                checked={formData.status}
-                onChange={handleChange}
-              />
-            </Form.Group>
-          </Form>
-        </Modal.Body>
-        <Modal.Footer>
-          <Button variant="dark" onClick={handleCloses}>
-            Cancel
-          </Button>
-          <Button variant="warning text-white" onClick={handleSubmit}>
-            Add Warranty
-          </Button>
-        </Modal.Footer>
-      </Modal>
-      
-      {/* editmodal */}
-      <Modal show={showEditModal} onHide={handleEditClose} centered>
-        <Modal.Header closeButton>
-          <Modal.Title>Edit Warranty</Modal.Title>
-        </Modal.Header>
-        <Modal.Body>
-          <Form>
-            <Form.Group controlId="editWarranty">
-              <Form.Label>
-                Warranty <span className="text-danger">*</span>
-              </Form.Label>
-              <Form.Control
-                type="text"
-                name="warranty"
-                value={editFormData.warranty}
-                onChange={handleEditChange}
-              />
-            </Form.Group>
-            {/* <Row className="mt-3">
+              <option value={10}>10 Per Page</option>
+              <option value={25}>25 Per Page</option>
+              <option value={50}>50 Per Page</option>
+              <option value={100}>100 Per Page</option>
+            </select>
+            <span
+              style={{
+                backgroundColor: "white",
+                boxShadow: "rgb(0 0 0 / 4%) 0px 3px 8px",
+                padding: "7px",
+                borderRadius: "5px",
+                border: "1px solid #e4e0e0ff",
+                color: "gray",
+              }}
+            >
+              {filteredWarranties.length === 0
+                ? "0 of 0"
+                : `${(currentPage - 1) * rowsPerPage + 1}-${Math.min(
+                  currentPage * rowsPerPage,
+                  filteredWarranties.length
+                )} of ${filteredWarranties.length}`}
+              <button
+                style={{
+                  border: "none",
+                  color: "grey",
+                  backgroundColor: "white",
+                }}
+                onClick={() =>
+                  setCurrentPage((prev) => Math.max(prev - 1, 1))
+                }
+                disabled={currentPage === 1}
+              >
+                <GrFormPrevious />
+              </button>{" "}
+              <button
+                style={{ border: "none", backgroundColor: "white" }}
+                onClick={() =>
+                  setCurrentPage((prev) => Math.min(prev + 1, Math.ceil(filteredWarranties.length / rowsPerPage)))
+                }
+                disabled={currentPage === Math.ceil(filteredWarranties.length / rowsPerPage)}
+              >
+                <MdNavigateNext />
+              </button>
+            </span>
+          </div>
+        </div>
+        {/* /add modal list */}
+        <Modal show={showModal} onHide={handleCloses} centered>
+          <Modal.Header>
+            <Modal.Title>Add Warranty</Modal.Title>
+          </Modal.Header>
+          <Modal.Body>
+            <Form>
+              <Form.Group controlId="warranty">
+                <Form.Label>
+                  Warranty <span className="text-danger">*</span>
+                </Form.Label>
+                <Form.Control
+                  type="text"
+                  placeholder="Enter warranty"
+                  name="warranty"
+                  value={formData.warranty}
+                  onChange={handleChange}
+                />
+              </Form.Group>
+
+              {/* //to date */}
+              <Row className="mt-3">
+                <Col>
+                  <Form.Group controlId="fromDate">
+                    <Form.Label>
+                      From Date  <span className="text-danger">*</span>
+                    </Form.Label>
+                    <Form.Control
+                      type="Date"
+                      min={1}
+                      name="fromDate"
+                      value={formData.fromDate}
+                      onChange={handleChange}
+                    />
+                  </Form.Group>
+                </Col>
+                <Col>
+                  <Form.Group controlId="toDate">
+                    <Form.Label>
+                      To Date  <span className="text-danger">*</span>
+                    </Form.Label>
+                    <Form.Control
+                      type="Date"
+                      min={1}
+                      name="toDate"
+                      value={formData.toDate}
+                      onChange={handleChange}
+                    />
+                  </Form.Group>
+                </Col>
+              </Row>
+
+              <Row className="mt-3">
+                <Col>
+                  <Form.Group controlId="description">
+                    <Form.Label>
+                      Description <span className="text-danger">*</span>
+                    </Form.Label>
+                    <Form.Control
+                      as="textarea"
+                      name="description"
+                      value={formData.description}
+                      onChange={handleChange}
+                    />
+                  </Form.Group>
+                </Col>
+              </Row>
+              <Form.Group
+                controlId="status"
+                className="mt-4 d-flex align-items-center justify-content-between"
+              >
+                <Form.Label className="me-3 mb-0">Status</Form.Label>
+                <Form.Check
+                  type="switch"
+                  name="status"
+                  checked={formData.status}
+                  onChange={handleChange}
+                />
+              </Form.Group>
+            </Form>
+          </Modal.Body>
+          <Modal.Footer>
+            <Button variant="dark" onClick={handleCloses} className="me-2">
+              Cancel
+            </Button>
+            <Button variant="warning text-white" onClick={handleSubmit}>
+              Add Warranty
+            </Button>
+          </Modal.Footer>
+        </Modal>
+
+        {/* editmodal */}
+        <Modal show={showEditModal} onHide={handleEditClose} centered>
+          <Modal.Header>
+            <Modal.Title>Edit Warranty</Modal.Title>
+          </Modal.Header>
+          <Modal.Body>
+            <Form>
+              <Form.Group controlId="editWarranty">
+                <Form.Label>
+                  Warranty <span className="text-danger">*</span>
+                </Form.Label>
+                <Form.Control
+                  type="text"
+                  name="warranty"
+                  value={editFormData.warranty}
+                  onChange={handleEditChange}
+                />
+              </Form.Group>
+              {/* <Row className="mt-3">
               <Col>
                 <Form.Group controlId="editDuration">
                   <Form.Label>
@@ -737,94 +880,94 @@ const Warranty = ({ show, handleClose }) => {
                 </Form.Group>
               </Col>
             </Row> */}
-            <Row className="mt-3">
-              <Col>
-                <Form.Group controlId="fromDate">
-                  <Form.Label>
-                    From Date  <span className="text-danger">*</span>
-                  </Form.Label>
-                  <Form.Control
-                    type="Date"
-                    min={1}
-                    name="fromDate"
-                    value={editFormData.fromDate}
-                    onChange={handleEditChange}
-                  />
-                </Form.Group>
-              </Col>
-              <Col>
-                <Form.Group controlId="toDate">
-                  <Form.Label>
-                    To Date  <span className="text-danger">*</span>
-                  </Form.Label>
-                  <Form.Control
-                    type="Date"
-                    min={1}
-                    name="toDate"
-                    value={editFormData.toDate}
-                    onChange={handleEditChange}
-                  />
-                </Form.Group>
-              </Col>
-            </Row>
-            <Form.Group controlId="editDescription" className="mt-3">
-              <Form.Label>
-                Description <span className="text-danger">*</span>
-              </Form.Label>
-              <Form.Control
-                as="textarea"
-                name="description"
-                value={editFormData.description}
-                onChange={handleEditChange}
-              />
-            </Form.Group>
-            <Form.Group
-              controlId="editStatus"
-              className="mt-4 d-flex align-items-center justify-content-between"
-            >
-              <Form.Label className="me-3 mb-0">Status</Form.Label>
-              <Form.Check
-                type="switch"
-                name="status"
-                checked={editFormData.status}
-                onChange={handleEditChange}
-              />
-            </Form.Group>
-          </Form>
-        </Modal.Body>
-        <Modal.Footer>
-          {/* <Button variant="dark" onClick={handleEditClose}>
-            Cancel
-          </Button> */}
-          <Button variant="warning" onClick={handleEditSubmit}>
-            Save Changes
-          </Button>
-        </Modal.Footer>
-      </Modal>
-
-      {/* delete modal*/}
-      <Modal show={showDeleteModal} onHide={() => setShowDeleteModal(false)} centered>
-        <Modal.Body className="text-center py-4">
-          <div className="d-flex justify-content-center mb-3">
-            <div className="bg-danger bg-opacity-10 rounded-circle p-3">
-              <RiDeleteBinLine size={28} className="text-danger" />
-            </div>
-          </div>
-          <h5 className="fw-bold">Delete Warranty</h5>
-          <p>Are you sure you want to delete warranty?</p>
-          <div className="d-flex justify-content-center gap-3 mt-4">
-            <Button variant="dark" onClick={() => setShowDeleteModal(false)}>
+              <Row className="mt-3">
+                <Col>
+                  <Form.Group controlId="fromDate">
+                    <Form.Label>
+                      From Date  <span className="text-danger">*</span>
+                    </Form.Label>
+                    <Form.Control
+                      type="Date"
+                      min={1}
+                      name="fromDate"
+                      value={editFormData.fromDate}
+                      onChange={handleEditChange}
+                    />
+                  </Form.Group>
+                </Col>
+                <Col>
+                  <Form.Group controlId="toDate">
+                    <Form.Label>
+                      To Date  <span className="text-danger">*</span>
+                    </Form.Label>
+                    <Form.Control
+                      type="Date"
+                      min={1}
+                      name="toDate"
+                      value={editFormData.toDate}
+                      onChange={handleEditChange}
+                    />
+                  </Form.Group>
+                </Col>
+              </Row>
+              <Form.Group controlId="editDescription" className="mt-3">
+                <Form.Label>
+                  Description <span className="text-danger">*</span>
+                </Form.Label>
+                <Form.Control
+                  as="textarea"
+                  name="description"
+                  value={editFormData.description}
+                  onChange={handleEditChange}
+                />
+              </Form.Group>
+              <Form.Group
+                controlId="editStatus"
+                className="mt-4 d-flex align-items-center justify-content-between"
+              >
+                <Form.Label className="me-3 mb-0">Status</Form.Label>
+                <Form.Check
+                  type="switch"
+                  name="status"
+                  checked={editFormData.status}
+                  onChange={handleEditChange}
+                />
+              </Form.Group>
+            </Form>
+          </Modal.Body>
+          <Modal.Footer>
+            <Button variant="dark" onClick={handleEditClose} className="me-2">
               Cancel
             </Button>
-            <Button variant="warning" onClick={() => handleDelete(pendingDeleteId)}>
-              Yes Delete
+            <Button variant="warning" onClick={handleEditSubmit}>
+              Save Changes
             </Button>
-          </div>
-        </Modal.Body>
-      </Modal>
-				</div>
-				
-			</div>
+          </Modal.Footer>
+        </Modal>
+
+        {/* delete modal*/}
+        <Modal show={showDeleteModal} onHide={() => setShowDeleteModal(false)} centered>
+          <Modal.Body className="text-center py-4">
+            <div className="d-flex justify-content-center mb-3">
+              <div className="bg-danger bg-opacity-10 rounded-circle p-3">
+                <RiDeleteBinLine size={28} className="text-danger" />
+              </div>
+            </div>
+            <h5 className="fw-bold">Delete Warranty</h5>
+            <p>Are you sure you want to delete warranty?</p>
+            <div className="d-flex justify-content-center gap-3 mt-4">
+              <Button variant="dark" onClick={() => setShowDeleteModal(false)} >
+                Cancel
+              </Button>
+              <Button variant="warning" onClick={() => handleDelete(pendingDeleteId)}>
+                Yes Delete
+              </Button>
+            </div>
+          </Modal.Body>
+        </Modal>
+      </div>
+
+    </div>
     // <div className="fn-conatiner">
     //   {Error && <div className="alert alert-danger">{Error}</div>}
     //   <div className="d-flex bd-highlight justify-content-between align-items-start">

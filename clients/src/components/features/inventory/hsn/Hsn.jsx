@@ -11,6 +11,8 @@ import { GrFormPrevious } from "react-icons/gr";
 import { MdNavigateNext } from "react-icons/md";
 import DeleteAlert from "../../../../utils/sweetAlert/DeleteAlert";
 import { sanitizeInput } from "../../../../utils/sanitize";
+import jsPDF from "jspdf";
+import autoTable from "jspdf-autotable";
 
 const HSNList = () => {
   const [data, setData] = useState([]);
@@ -49,7 +51,7 @@ const HSNList = () => {
   const remove = async (id) => {
     const confirmed = await DeleteAlert({});
     if (!confirmed) return;
-    
+
     try {
       const token = localStorage.getItem("token")
       await axios.delete(`${BASE_URL}/api/hsn/${id}`, {
@@ -83,6 +85,67 @@ const HSNList = () => {
     } catch (err) {
       console.error('Export error:', err);
     }
+  };
+
+  // PDF download functionality
+  const handlePdf = () => {
+    const doc = new jsPDF();
+    doc.text("HSN List", 14, 15);
+    const tableColumns = [
+      "HSN Code",
+      "Description",
+      "Created Date",
+    ];
+
+    const tableRows = data.map((e) => [
+      e.hsnCode,
+      e.description,
+      new Date(e.createdAt).toLocaleDateString(),
+    ]);
+
+    autoTable(doc, {
+      head: [tableColumns],
+      body: tableRows,
+      startY: 20,
+      styles: {
+        fontSize: 8,
+      },
+      headStyles: {
+        fillColor: [155, 155, 155],
+        textColor: "white",
+      },
+      theme: "striped",
+    });
+
+    doc.save("hsn-list.pdf");
+  };
+
+  // Excel export functionality
+  const handleExcel = () => {
+    // Prepare data for Excel export
+    const excelData = data.map((hsn) => ({
+      "HSN Code": hsn.hsnCode,
+      "Description": hsn.description,
+      "Created Date": new Date(hsn.createdAt).toLocaleDateString(),
+    }));
+
+    // Create a new workbook and worksheet
+    const workbook = XLSX.utils.book_new();
+    const worksheet = XLSX.utils.json_to_sheet(excelData);
+
+    // Set column widths for better formatting
+    const columnWidths = [
+      { wch: 15 }, // HSN Code
+      { wch: 40 }, // Description
+      { wch: 15 }, // Created Date
+    ];
+    worksheet["!cols"] = columnWidths;
+
+    // Add the worksheet to the workbook
+    XLSX.utils.book_append_sheet(workbook, worksheet, "HSN List");
+
+    // Generate Excel file and trigger download
+    XLSX.writeFile(workbook, "hsn-list.xlsx");
   };
 
 
@@ -159,7 +222,7 @@ const HSNList = () => {
       const token = localStorage.getItem("token");
       const cleanhsnCode = sanitizeInput(hsnCode.trim());
       const cleanhsnDescription = sanitizeInput(description.trim());
-      
+
       if (modalData.id) {
         // Update existing HSN
         await axios.put(`${BASE_URL}/api/hsn/${modalData.id}`, {
@@ -183,7 +246,7 @@ const HSNList = () => {
         });
         toast.success("HSN created successfully!");
       }
-      
+
       // Reset modal and reload data
       setModalData({ hsnCode: '', description: '', id: null });
       setShowModal(false);
@@ -191,7 +254,7 @@ const HSNList = () => {
       load();
     } catch (err) {
       console.error('Save error:', err);
-      
+
       // Handle specific error cases
       if (err.response?.status === 400) {
         toast.error(err.response.data.message || "Invalid data provided");
@@ -281,13 +344,24 @@ const HSNList = () => {
               )}
 
             </li>
-            <li>
-              <button type="button" className="icon-btn" title="Pdf">
-                <FaFilePdf />
-              </button>
+            <li style={{ display: "flex", alignItems: "center", gap: '5px' }} className="icon-btn">
+              <label className="" title="">Export : </label>
+              <button onClick={handlePdf} title="Download PDF" style={{
+                backgroundColor: "white",
+                display: "flex",
+                alignItems: "center",
+                border: "none",
+              }}><FaFilePdf className="fs-20" style={{ color: "red" }} /></button>
+              <button onClick={handleExcel} title="Download Excel" style={{
+                backgroundColor: "white",
+                display: "flex",
+                alignItems: "center",
+                border: "none",
+              }}><FaFileExcel className="fs-20" style={{ color: "orange" }} /></button>
             </li>
-            <li>
-              <label className="icon-btn m-0" title="Import Excel">
+            <li style={{ display: "flex", alignItems: "center", gap: '5px' }} className="icon-btn">
+              <label className="" title="">Import : </label>
+              <label className="" title="Import Excel">
                 <input
                   type="file"
                   accept=".xlsx,.xls,.csv"
@@ -298,11 +372,11 @@ const HSNList = () => {
                 <FaFileExcel style={{ color: 'green', cursor: 'pointer' }} />
               </label>
             </li>
-            <li>
-              <button type="button" className="icon-btn" title="Export Excel">
+            {/* <li>
+              <button type="button" className="icon-btn" title="Export Excel" onClick={handleExcel}>
                 <FaFileExcel />
               </button>
-            </li>
+            </li> */}
           </div>
           <div className="page-btn">
             <a

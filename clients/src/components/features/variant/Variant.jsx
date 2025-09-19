@@ -26,6 +26,8 @@ const Variant = ({ show, handleClose }) => {
   const [statusFilter, setStatusFilter] = useState("all");
   const [currentPage, setCurrentPage] = useState(1);
   const [rowsPerPage, setRowsPerPage] = useState(10);
+  const [selectedVariants, setSelectedVariants] = useState([]);
+  const [selectAll, setSelectAll] = useState(false);
 
   const fetchVariants = async () => {
     try {
@@ -187,6 +189,70 @@ const Variant = ({ show, handleClose }) => {
     setShowDeleteModal(true);
   };
 
+  // Handle individual variant selection
+  const handleVariantSelection = (variantId) => {
+    setSelectedVariants(prev => {
+      if (prev.includes(variantId)) {
+        return prev.filter(id => id !== variantId);
+      } else {
+        return [...prev, variantId];
+      }
+    });
+  };
+
+  // Handle select all functionality
+  const handleSelectAll = () => {
+    if (selectAll) {
+      setSelectedVariants([]);
+      setSelectAll(false);
+    } else {
+      // Only select variants on the current page
+      const currentPageVariants = filteredVariants
+        .slice((currentPage - 1) * rowsPerPage, currentPage * rowsPerPage);
+      const currentPageVariantIds = currentPageVariants.map(variant => variant._id);
+      setSelectedVariants(currentPageVariantIds);
+      setSelectAll(true);
+    }
+  };
+
+  // Handle bulk delete
+  const handleBulkDelete = async () => {
+    if (selectedVariants.length === 0) {
+      toast.warn("No variants selected!");
+      return;
+    }
+
+    if (!window.confirm("Are you sure you want to delete selected variants?")) {
+      return;
+    }
+
+    try {
+      const token = localStorage.getItem("token");
+      await Promise.all(
+        selectedVariants.map((id) =>
+          fetch(`${BASE_URL}/api/variant-attributes/${id}`, {
+            method: "DELETE",
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          })
+        )
+      );
+      toast.success("Selected variants deleted successfully");
+      fetchVariants();
+      setSelectedVariants([]);
+      setSelectAll(false);
+    } catch (error) {
+      if (error.response?.status === 401) {
+        toast.error("Unauthorized: Please login again");
+      } else if (error.response?.status === 403) {
+        toast.error("Forbidden: You don't have permission to delete variants");
+      } else {
+        toast.error(error.response?.data?.message || "Failed to delete selected variants");
+      }
+    }
+  };
+
   const filteredVariants = useMemo(() => {
     return variantData
       .filter((item) => {
@@ -207,6 +273,26 @@ const Variant = ({ show, handleClose }) => {
         return dateB - dateA;
       });
   }, [variantData, searchTerm, statusFilter]);
+
+  // Sync selectAll state with selectedVariants (only for current page)
+  useEffect(() => {
+    if (filteredVariants.length > 0) {
+      // Only check variants on the current page
+      const currentPageVariants = filteredVariants
+        .slice((currentPage - 1) * rowsPerPage, currentPage * rowsPerPage);
+
+      if (currentPageVariants.length > 0) {
+        const allCurrentPageSelected = currentPageVariants.every(variant =>
+          selectedVariants.includes(variant._id)
+        );
+        setSelectAll(allCurrentPageSelected);
+      } else {
+        setSelectAll(false);
+      }
+    } else {
+      setSelectAll(false);
+    }
+  }, [selectedVariants, filteredVariants, currentPage, rowsPerPage]);
 
   const handleExportPDF = () => {
     const table = tableRef.current;
@@ -275,16 +361,26 @@ const Variant = ({ show, handleClose }) => {
             </div>
           </div>
           <ul className="table-top-head">
-            <li>
-              <a onClick={handleExportPDF} title="Download PDF">
-                <FaFilePdf className="fs-20" style={{ color: "red" }} />
-              </a>
+            <li style={{ display: "flex", alignItems: "center", gap: '5px' }} className="icon-btn">
+              <label className="" title="">Export : </label>
+              <button onClick={handleExportPDF} title="Download PDF" style={{
+                backgroundColor: "white",
+                display: "flex",
+                alignItems: "center",
+                border: "none",
+              }}><FaFilePdf className="fs-20" style={{ color: "red" }} /></button>
+              <button onClick={handleExportExcel} title="Download Excel" style={{
+                backgroundColor: "white",
+                display: "flex",
+                alignItems: "center",
+                border: "none",
+              }}><FaFileExcel className="fs-20" style={{ color: "orange" }} /></button>
             </li>
-            <li>
+            {/* <li>
               <a onClick={handleExportExcel} title="Download Excel">
                 <FaFileExcel className="fs-20" style={{ color: "green" }} />
               </a>
-            </li>
+            </li> */}
             <li>
               <button
                 title="Refresh"
@@ -317,6 +413,13 @@ const Variant = ({ show, handleClose }) => {
             </a>
           </div>
         </div>
+        {selectedVariants.length > 0 && (
+          <div className="mb-3">
+            <button className="btn btn-danger" onClick={handleBulkDelete}>
+              Delete Selected ({selectedVariants.length})
+            </button>
+          </div>
+        )}
         <div className="card">
           <div className="card-header d-flex align-items-center justify-content-between flex-wrap row-gap-3">
             <div className="search-set">
@@ -377,7 +480,12 @@ const Variant = ({ show, handleClose }) => {
                   <tr>
                     <th className="no-sort">
                       <label className="checkboxs">
-                        <input type="checkbox" id="select-all" />
+                        <input
+                          type="checkbox"
+                          id="select-all"
+                          checked={selectAll}
+                          onChange={handleSelectAll}
+                        />
                         <span className="checkmarks" />
                       </label>
                     </th>
@@ -395,7 +503,11 @@ const Variant = ({ show, handleClose }) => {
                       <tr key={idx}>
                         <td>
                           <label className="checkboxs">
-                            <input type="checkbox" />
+                            <input
+                              type="checkbox"
+                              checked={selectedVariants.includes(item._id)}
+                              onChange={() => handleVariantSelection(item._id)}
+                            />
                             <span className="checkmarks" />
                           </label>
                         </td>
@@ -404,9 +516,8 @@ const Variant = ({ show, handleClose }) => {
                         <td>{dayjs(item.createdAt).format("DD MMM YYYY")}</td>
                         <td>
                           <span
-                            className={`badge table-badge fw-medium fs-10 ${
-                              item.status ? "bg-success" : "bg-danger"
-                            }`}
+                            className={`badge table-badge fw-medium fs-10 ${item.status ? "bg-success" : "bg-danger"
+                              }`}
                           >
                             {item.status ? "Active" : "Inactive"}
                           </span>
@@ -437,7 +548,7 @@ const Variant = ({ show, handleClose }) => {
                 </tbody>
               </table>
             </div>
-            
+
             <div
               className="d-flex justify-content-end gap-3"
               style={{ padding: "10px 20px" }}
@@ -499,7 +610,7 @@ const Variant = ({ show, handleClose }) => {
         </div>
 
         <Modal show={showModal} onHide={handleCloses} centered>
-          <Modal.Header closeButton>
+          <Modal.Header>
             <Modal.Title>Add Variant</Modal.Title>
           </Modal.Header>
           <Modal.Body>
@@ -544,9 +655,9 @@ const Variant = ({ show, handleClose }) => {
             </Form>
           </Modal.Body>
           <Modal.Footer>
-            {/* <Button variant="dark" onClick={handleCloses}>
+            <Button variant="dark" onClick={handleCloses} className="me-2">
               Cancel
-            </Button> */}
+            </Button>
             <Button variant="warning" onClick={handleSubmit}>
               Add Variant
             </Button>
@@ -554,7 +665,7 @@ const Variant = ({ show, handleClose }) => {
         </Modal>
 
         <Modal show={showEditModal} onHide={handleEditClose} centered>
-          <Modal.Header closeButton>
+          <Modal.Header>
             <Modal.Title>Edit Variant</Modal.Title>
           </Modal.Header>
           <Modal.Body>
@@ -596,9 +707,9 @@ const Variant = ({ show, handleClose }) => {
             </Form>
           </Modal.Body>
           <Modal.Footer>
-            {/* <Button variant="dark" onClick={handleEditClose}>
+            <Button variant="dark" onClick={handleEditClose} className="me-2">
               Cancel
-            </Button> */}
+            </Button>
             <Button variant="warning" onClick={handleEditSubmit}>
               Save Changes
             </Button>

@@ -2,46 +2,61 @@
   position: relative;
   flex: 1;
   text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
 }
 
 .circle {
-  width: 30px;
-  height: 30px;
+  width: 40px;
+  height: 40px;
   border-radius: 50%;
   background: #dee2e6;
   color: black;
-  line-height: 30px;
+  line-height: 40px;
   margin: 0 auto;
   font-weight: bold;
+  position: relative;
+  z-index: 2;
+  border: 3px solid #fff;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
 }
 
 .step-text {
-  margin-top: 5px;
-  font-size: 0.8rem;
+  margin-top: 8px;
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: #6c757d;
 }
 
 .circle.active {
   background-color: #007bff;
   color: white;
+  border-color: #007bff;
+  box-shadow: 0 0 0 4px rgba(0, 123, 255, 0.25);
 }
 
 .circle.complete {
   background-color: #28a745;
   color: white;
+  border-color: #28a745;
 }
 
 .circle.incomplete {
   background-color: #dc3545;
   color: white;
+  border-color: #dc3545;
 }
 
 .progress-line {
   position: absolute;
-  top: 15px;
-  left: 50%;
-  width: 100%;
+  top: 20px;
+  left: calc(50% + 20px);
+  right: calc(-50% + 20px);
   height: 4px;
-  z-index: -1;
+  z-index: 1;
+  border-radius: 2px;
+  transition: background-color 0.3s ease;
 }
 
 .line-complete {
@@ -58,6 +73,7 @@
 
 .progress-wrapper {
   position: relative;
+  padding: 10px 0;
 }
 
 .variant-tabs .btn {

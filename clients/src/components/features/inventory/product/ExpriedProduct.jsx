@@ -5,6 +5,8 @@ import BASE_URL from "../../../../pages/config/config";
 import axios from 'axios';
 import { FaFileExcel, FaFilePdf } from 'react-icons/fa';
 import { TbEdit, TbRefresh, TbTrash } from 'react-icons/tb';
+import { GrFormPrevious } from "react-icons/gr";
+import { MdNavigateNext } from "react-icons/md";
 import jsPDF from 'jspdf';
 import { autoTable } from 'jspdf-autotable';
 import * as XLSX from 'xlsx';
@@ -111,6 +113,12 @@ const ExpriedProduct = () => {
   const [loading, setLoading] = useState(true);
   const [warned, setWarned] = useState(false);
 
+  // Pagination and selection state
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(10);
+  const [selectedProducts, setSelectedProducts] = useState([]);
+  const [selectAll, setSelectAll] = useState(false);
+
   useEffect(() => {
     const fetchProducts = async () => {
       try {
@@ -129,6 +137,21 @@ const ExpriedProduct = () => {
     };
     fetchProducts();
   }, []);
+
+  // Sync selectAll state with selectedProducts (only for current page)
+  useEffect(() => {
+    const currentPageProducts = getCurrentPageProducts();
+    const currentPageProductIds = currentPageProducts.map(product => product._id);
+
+    if (currentPageProductIds.length === 0) {
+      setSelectAll(false);
+    } else {
+      const allCurrentPageSelected = currentPageProductIds.every(id =>
+        selectedProducts.includes(id)
+      );
+      setSelectAll(allCurrentPageSelected);
+    }
+  }, [selectedProducts, products, currentPage, itemsPerPage]);
 
   useEffect(() => {
     if (!loading && products.length > 0 && !warned) {
@@ -227,6 +250,117 @@ const ExpriedProduct = () => {
     XLSX.writeFile(workbook, "expired-products.xlsx");
   };
 
+  // Get filtered expired products
+  const getExpiredProducts = () => {
+    return products.filter(product => {
+      const expiryArr = product.variants?.get?.('Expiry') || product.variants?.['Expiry'] || product.variants?.get?.('expiry') || product.variants?.['expiry'];
+      if (!expiryArr || expiryArr.length === 0) return false;
+      return expiryArr.some(dateStr => {
+        if (typeof dateStr === "string") {
+          const dateMatch = dateStr.match(/^(\d{1,2})[-/](\d{1,2})[-/](\d{4})$/);
+          if (dateMatch) {
+            const [, day, month, year] = dateMatch.map(Number);
+            if (day && month && year && day <= 31 && month <= 12) {
+              const expDate = new Date(year, month - 1, day);
+              const today = new Date();
+              today.setHours(0, 0, 0, 0);
+              expDate.setHours(0, 0, 0, 0);
+              if (!isNaN(expDate.getTime())) {
+                return expDate < today;
+              }
+            }
+          }
+        }
+        return false;
+      });
+    });
+  };
+
+  // Get current page products
+  const getCurrentPageProducts = () => {
+    const expiredProducts = getExpiredProducts();
+    const sortedProducts = sortProducts(expiredProducts);
+    const startIndex = (currentPage - 1) * itemsPerPage;
+    return sortedProducts.slice(startIndex, startIndex + itemsPerPage);
+  };
+
+  // Handle individual product selection
+  const handleProductSelect = (productId) => {
+    setSelectedProducts(prev => {
+      if (prev.includes(productId)) {
+        return prev.filter(id => id !== productId);
+      } else {
+        return [...prev, productId];
+      }
+    });
+  };
+
+  // Handle select all for current page
+  const handleSelectAll = () => {
+    const currentPageProducts = getCurrentPageProducts();
+    const currentPageProductIds = currentPageProducts.map(product => product._id);
+
+    if (selectAll) {
+      // Deselect all current page products
+      setSelectedProducts(prev => prev.filter(id => !currentPageProductIds.includes(id)));
+    } else {
+      // Select all current page products
+      setSelectedProducts(prev => {
+        const newSelected = [...prev];
+        currentPageProductIds.forEach(id => {
+          if (!newSelected.includes(id)) {
+            newSelected.push(id);
+          }
+        });
+        return newSelected;
+      });
+    }
+  };
+
+  // Handle bulk delete
+  const handleBulkDelete = async () => {
+    if (selectedProducts.length === 0) {
+      alert("Please select products to delete.");
+      return;
+    }
+
+    if (
+      window.confirm(
+        `Are you sure you want to delete ${selectedProducts.length} selected product(s)?`
+      )
+    ) {
+      try {
+        const token = localStorage.getItem("token");
+
+        // Delete all selected products
+        const deletePromises = selectedProducts.map(productId =>
+          axios.delete(`${BASE_URL}/api/products/pro/${productId}`, {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          })
+        );
+
+        await Promise.all(deletePromises);
+
+        // Update products list
+        setProducts(prev =>
+          prev.filter(product => !selectedProducts.includes(product._id))
+        );
+
+        // Clear selection
+        setSelectedProducts([]);
+
+        alert(`${selectedProducts.length} product(s) deleted successfully!`);
+      } catch (err) {
+        console.error("Error during bulk delete:", err);
+        alert(
+          `Failed to delete products: ${err.response?.data?.message || err.message}`
+        );
+      }
+    }
+  };
+
   //product delete---------------------------------------------------------------------------------------------------------------------------------------------
 
   const handleDelete = async (product) => {
@@ -236,7 +370,7 @@ const ExpriedProduct = () => {
     ) {
       try {
         const token = localStorage.getItem("token");
-        await axios.delete(`${BASE_URL}/api/products/pro/${product._id}`, { 
+        await axios.delete(`${BASE_URL}/api/products/pro/${product._id}`, {
           headers: {
             Authorization: `Bearer ${token}`,
           },
@@ -267,12 +401,37 @@ const ExpriedProduct = () => {
             </div>
           </div>
           <ul className="table-top-head">
-            <li>
-              <a onClick={handlePdf} title="Download PDF" ><FaFilePdf className="fs-20" style={{ color: "red" }} /></a>
+            {/* Bulk Delete Button */}
+            {selectedProducts.length > 0 && (
+              <li>
+                <button
+                  onClick={handleBulkDelete}
+                  className="btn btn-danger btn-sm me-2"
+                  title={`Delete Selected (${selectedProducts.length})`}
+                >
+                  <TbTrash className="me-1" />
+                  Delete Selected ({selectedProducts.length})
+                </button>
+              </li>
+            )}
+            <li style={{ display: "flex", alignItems: "center", gap: '5px' }} className="icon-btn">
+              <label className="" title="">Export : </label>
+              <button onClick={handlePdf} title="Download PDF" style={{
+                backgroundColor: "white",
+                display: "flex",
+                alignItems: "center",
+                border: "none",
+              }}><FaFilePdf className="fs-20" style={{ color: "red" }} /></button>
+              <button onClick={handleExcel} title="Download Excel" style={{
+                backgroundColor: "white",
+                display: "flex",
+                alignItems: "center",
+                border: "none",
+              }}><FaFileExcel className="fs-20" style={{ color: "orange" }} /></button>
             </li>
-            <li>
+            {/* <li>
               <a onClick={handleExcel} title="Download Excel" ><FaFileExcel className="fs-20" style={{ color: "green" }} /></a>
-            </li>
+            </li> */}
             <li>
               <button data-bs-toggle="tooltip" data-bs-placement="top" title="Refresh" onClick={() => location.reload()} className="fs-20" style={{ backgroundColor: 'white', color: '', padding: '5px 5px', display: 'flex', alignItems: 'center', border: '1px solid #e8eaebff', cursor: 'pointer', borderRadius: '4px' }}><TbRefresh className="ti ti-refresh" /></button>
             </li>
@@ -340,7 +499,12 @@ const ExpriedProduct = () => {
                   <tr>
                     <th className="no-sort">
                       <label className="checkboxs">
-                        <input type="checkbox" id="select-all" />
+                        <input
+                          type="checkbox"
+                          id="select-all"
+                          checked={selectAll}
+                          onChange={handleSelectAll}
+                        />
                         <span className="checkmarks" />
                       </label>
                     </th>
@@ -355,55 +519,16 @@ const ExpriedProduct = () => {
                   </tr>
                 </thead>
                 <tbody>
-                  {sortProducts(products.filter(product => {
-                    const expiryArr = product.variants?.get?.('Expiry') || product.variants?.['Expiry'] || product.variants?.get?.('expiry') || product.variants?.['expiry'];
-                    if (!expiryArr || expiryArr.length === 0) return false;
-                    // Only show products that are already expired
-                    return expiryArr.some(dateStr => {
-                      if (typeof dateStr === "string") {
-                        const dateMatch = dateStr.match(/^(\d{1,2})[-/](\d{1,2})[-/](\d{4})$/);
-                        if (dateMatch) {
-                          const [, day, month, year] = dateMatch.map(Number);
-                          if (day && month && year && day <= 31 && month <= 12) {
-                            const expDate = new Date(year, month - 1, day);
-                            const today = new Date();
-                            today.setHours(0, 0, 0, 0);
-                            expDate.setHours(0, 0, 0, 0);
-                            if (!isNaN(expDate.getTime())) {
-                              return expDate < today; // Show only expired products
-                            }
-                          }
-                        }
-                      }
-                      return false;
-                    });
-                  })).length > 0 ? (
-                    sortProducts(products.filter(product => {
-                      const expiryArr = product.variants?.get?.('Expiry') || product.variants?.['Expiry'] || product.variants?.get?.('expiry') || product.variants?.['expiry'];
-                      if (!expiryArr || expiryArr.length === 0) return false;
-                      return expiryArr.some(dateStr => {
-                        if (typeof dateStr === "string") {
-                          const dateMatch = dateStr.match(/^(\d{1,2})[-/](\d{1,2})[-/](\d{4})$/);
-                          if (dateMatch) {
-                            const [, day, month, year] = dateMatch.map(Number);
-                            if (day && month && year && day <= 31 && month <= 12) {
-                              const expDate = new Date(year, month - 1, day);
-                              const today = new Date();
-                              today.setHours(0, 0, 0, 0);
-                              expDate.setHours(0, 0, 0, 0);
-                              if (!isNaN(expDate.getTime())) {
-                                return expDate < today;
-                              }
-                            }
-                          }
-                        }
-                        return false;
-                      });
-                    })).map(product => (
+                  {getCurrentPageProducts().length > 0 ? (
+                    getCurrentPageProducts().map(product => (
                       <tr key={product._id}>
                         <td>
                           <label className="checkboxs">
-                            <input type="checkbox" />
+                            <input
+                              type="checkbox"
+                              checked={selectedProducts.includes(product._id)}
+                              onChange={() => handleProductSelect(product._id)}
+                            />
                             <span className="checkmarks" />
                           </label>
                         </td>
@@ -437,12 +562,71 @@ const ExpriedProduct = () => {
                     ))
                   ) : (
                     <tr>
-                      <td colSpan="8" className="text-center">No Expiry Product</td>
+                      <td colSpan="9" className="text-center">No Expired Products</td>
                     </tr>
                   )}
                 </tbody>
               </table>
             </div>
+          </div>
+
+          {/* Pagination */}
+          <div
+            className="d-flex justify-content-end gap-3"
+            style={{ padding: "10px 20px" }}
+          >
+            <select
+              value={itemsPerPage}
+              onChange={(e) => {
+                setItemsPerPage(Number(e.target.value));
+                setCurrentPage(1);
+              }}
+              className="form-select w-auto"
+            >
+              <option value={10}>10 Per Page</option>
+              <option value={25}>25 Per Page</option>
+              <option value={50}>50 Per Page</option>
+              <option value={100}>100 Per Page</option>
+            </select>
+            <span
+              style={{
+                backgroundColor: "white",
+                boxShadow: "rgb(0 0 0 / 4%) 0px 3px 8px",
+                padding: "7px",
+                borderRadius: "5px",
+                border: "1px solid #e4e0e0ff",
+                color: "gray",
+              }}
+            >
+              {getExpiredProducts().length === 0
+                ? "0 of 0"
+                : `${(currentPage - 1) * itemsPerPage + 1}-${Math.min(
+                  currentPage * itemsPerPage,
+                  getExpiredProducts().length
+                )} of ${getExpiredProducts().length}`}
+              <button
+                style={{
+                  border: "none",
+                  color: "grey",
+                  backgroundColor: "white",
+                }}
+                onClick={() =>
+                  setCurrentPage((prev) => Math.max(prev - 1, 1))
+                }
+                disabled={currentPage === 1}
+              >
+                <GrFormPrevious />
+              </button>{" "}
+              <button
+                style={{ border: "none", backgroundColor: "white" }}
+                onClick={() =>
+                  setCurrentPage((prev) => Math.min(prev + 1, Math.ceil(getExpiredProducts().length / itemsPerPage)))
+                }
+                disabled={currentPage === Math.ceil(getExpiredProducts().length / itemsPerPage)}
+              >
+                <MdNavigateNext />
+              </button>
+            </span>
           </div>
         </div>
         {/* /product list */}

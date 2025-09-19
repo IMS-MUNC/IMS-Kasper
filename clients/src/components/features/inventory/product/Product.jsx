@@ -548,7 +548,7 @@ function ProductList() {
     ) {
       try {
         const token = localStorage.getItem("token");
-        await axios.delete(`${BASE_URL}/api/products/pro/${product._id}`, { 
+        await axios.delete(`${BASE_URL}/api/products/pro/${product._id}`, {
           headers: {
             Authorization: `Bearer ${token}`,
           },
@@ -722,17 +722,36 @@ function ProductList() {
 
               <div className="d-flex gap-2">
                 <div className="table-top-head me-2">
-                  <li>
+                  <li style={{ display: "flex", alignItems: "center", gap: '5px' }} className="icon-btn">
+                    <label className="" title="">Export : </label>
                     <button
                       type="button"
-                      className="icon-btn"
                       title="Pdf"
+                      style={{
+                        backgroundColor: "white",
+                        display: "flex",
+                        alignItems: "center",
+                        border: "none",
+                      }}
                       onClick={handlePdf}
                     >
                       <FaFilePdf style={{ color: "red" }} />
                     </button>
+                    <button
+                      type="button"
+                      title="Export Excel"
+                      style={{
+                        backgroundColor: "white",
+                        display: "flex",
+                        alignItems: "center",
+                        border: "none",
+                      }}
+                      onClick={handleExcel}
+                    >
+                      <FaFileExcel style={{ color: "orange" }} />
+                    </button>
                   </li>
-                  <li>
+                  {/* <li>
                     <button
                       type="button"
                       className="icon-btn"
@@ -741,10 +760,11 @@ function ProductList() {
                     >
                       <FaFileExcel style={{ color: "orange" }} />
                     </button>
-                  </li>
-                  <li>
+                  </li> */}
+                  <li style={{ display: "flex", alignItems: "center", gap: '5px' }} className="icon-btn">
                     {/* <label className="icon-btn m-0" title="Import Excel"><input type="file" accept=".xlsx, .xls" hidden /><FaFileExcel style={{ color: "green" }} /></label> */}
-                    <label className="icon-btn m-0" title="Import Excel">
+                    <label className="" title="">Import : </label>
+                    <label className="" title="Import Excel">
                       <button
                         type="button"
                         onClick={handleImportClick}
@@ -1260,11 +1280,11 @@ function ProductList() {
                                   marginTop: "-20px",
                                 }}
                               >
-                                {selectedProduct.category?.categoryName}
+                                {selectedProduct.category?.categoryName || "N/A"}
                               </p>
                             </div>
                             <div className="category-item">
-                              <p className="label">Supplier SKU</p>
+                              <p className="label">Sub Category</p>
                               <p
                                 className="value"
                                 style={{
@@ -1274,7 +1294,21 @@ function ProductList() {
                                   marginTop: "-20px",
                                 }}
                               >
-                                KAPL-011
+                                {selectedProduct.subcategory?.subCategoryName || "N/A"}
+                              </p>
+                            </div>
+                            <div className="category-item">
+                              <p className="label">Initial Stock</p>
+                              <p
+                                className="value"
+                                style={{
+                                  textTransform: "capitalize",
+                                  padding: "4px 10px",
+                                  fontSize: "20px",
+                                  marginTop: "-20px",
+                                }}
+                              >
+                                {selectedProduct.initialStock || "N/A"}
                               </p>
                             </div>
                             <div className="category-item">
@@ -1288,7 +1322,7 @@ function ProductList() {
                                   marginTop: "-20px",
                                 }}
                               >
-                                {selectedProduct.reorderLevel}
+                                {selectedProduct.reorderLevel || "N/A"}
                               </p>
                             </div>
                           </div>
@@ -1306,7 +1340,7 @@ function ProductList() {
                                   marginTop: "-20px",
                                 }}
                               >
-                                {selectedProduct.brand?.brandName}
+                                {selectedProduct.brand?.brandName || "N/A"}
                               </p>
                             </div>
                             <div className="category-item">
@@ -1320,12 +1354,12 @@ function ProductList() {
                                   marginTop: "-20px",
                                 }}
                               >
-                                {selectedProduct.itemBarcode}
+                                {selectedProduct.itemBarcode || "N/A"}
                               </p>
                               {/* <p className="value">EAN - 1234 5678 9090</p> */}
                             </div>
                             <div className="category-item">
-                              <p className="label">Initial Stock Quantity</p>
+                              <p className="label">Lead Time</p>
                               <p
                                 className="value"
                                 style={{
@@ -1335,7 +1369,21 @@ function ProductList() {
                                   marginTop: "-20px",
                                 }}
                               >
-                                {selectedProduct.initialStock}
+                                {selectedProduct.leadTime || "N/A"}
+                              </p>
+                            </div>
+                            <div className="category-item">
+                              <p className="label">Serial Number</p>
+                              <p
+                                className="value"
+                                style={{
+                                  textTransform: "capitalize",
+                                  padding: "4px 10px",
+                                  fontSize: "20px",
+                                  marginTop: "-20px",
+                                }}
+                              >
+                                {selectedProduct.serialNumber || "N/A"}
                               </p>
                             </div>
                           </div>
@@ -1353,7 +1401,21 @@ function ProductList() {
                                   marginTop: "-20px",
                                 }}
                               >
-                                {selectedProduct.itemType}
+                                {selectedProduct.itemType || "N/A"}
+                              </p>
+                            </div>
+                            <div className="category-item">
+                              <p className="label">Warehouse Name</p>
+                              <p
+                                className="value"
+                                style={{
+                                  textTransform: "capitalize",
+                                  padding: "4px 10px",
+                                  fontSize: "20px",
+                                  marginTop: "-20px",
+                                }}
+                              >
+                                {selectedProduct.warehouseName || "N/A"}
                               </p>
                             </div>
                             <div className="category-item">
@@ -1367,11 +1429,13 @@ function ProductList() {
                                   marginTop: "-20px",
                                 }}
                               >
-                                {selectedProduct.warehouse}
+                                {selectedProduct.warehouse?.country}
+                                {selectedProduct.warehouse?.state}
+                                {selectedProduct.warehouse?.city || "N/A"}
                               </p>
                             </div>
                             <div className="category-item">
-                              <p className="label">Track by</p>
+                              <p className="label">Warehouse Owner</p>
                               <p
                                 className="value"
                                 style={{
@@ -1381,7 +1445,7 @@ function ProductList() {
                                   marginTop: "-20px",
                                 }}
                               >
-                                Serial No.
+                                {selectedProduct.warehouse?.warehouseOwner || "N/A"}
                               </p>
                             </div>
                           </div>
@@ -1403,7 +1467,7 @@ function ProductList() {
                               </p>
                             </div>
                             <div className="category-item">
-                              <p className="label">Warehouse</p>
+                              <p className="label">Store</p>
                               <p
                                 className="value"
                                 style={{
@@ -1413,7 +1477,7 @@ function ProductList() {
                                   marginTop: "-20px",
                                 }}
                               >
-                                {selectedProduct.warehouseName || "-"}
+                                {selectedProduct.store || "-"}
                               </p>
                             </div>
                             <div className="category-item">
@@ -1427,7 +1491,7 @@ function ProductList() {
                                   marginTop: "-20px",
                                 }}
                               >
-                                {selectedProduct.leadTime}
+                                {selectedProduct.leadTime || "N/A"}
                               </p>
                             </div>
                             <div className="category-item">
@@ -1526,7 +1590,7 @@ function ProductList() {
                                   marginTop: "-20px",
                                 }}
                               >
-                                {selectedProduct.discountValue}
+                                {selectedProduct.discountValue} {selectedProduct.discountType == "Percentage" ? "%" : 'rupee'}
                               </p>
                               {/* <p className="value">EAN - 1234 5678 9090</p> */}
                             </div>
@@ -1541,7 +1605,7 @@ function ProductList() {
                                   marginTop: "-20px",
                                 }}
                               >
-                                {selectedProduct.tax}
+                                {selectedProduct.tax}%
                               </p>
                             </div>
                           </div>
@@ -1565,8 +1629,34 @@ function ProductList() {
                               </p>
                             </div>
                             <div className="category-item">
-                              <p className="label">Discount Period</p>
-                              {/* <p className="value">{product.purchasePrice}</p> */}
+                              <p className="label">
+                                Retail Price
+                              </p>
+                              <p
+                                className="value"
+                                style={{
+                                  textTransform: "capitalize",
+                                  padding: "4px 10px",
+                                  fontSize: "20px",
+                                  marginTop: "-20px",
+                                }}
+                              >
+                                {selectedProduct.retailPrice}
+                              </p>
+                            </div>
+                            <div className="category-item">
+                              <p className="label">GST Type</p>
+                              <p
+                                className="value"
+                                style={{
+                                  textTransform: "capitalize",
+                                  padding: "4px 10px",
+                                  fontSize: "20px",
+                                  marginTop: "-20px",
+                                }}
+                              >
+                                {selectedProduct.taxType}
+                              </p>
                             </div>
                           </div>
 
@@ -1584,6 +1674,20 @@ function ProductList() {
                                 }}
                               >
                                 {selectedProduct.quantity}
+                              </p>
+                            </div>
+                            <div className="category-item">
+                              <p className="label">Quantity Alert</p>
+                              <p
+                                className="value"
+                                style={{
+                                  textTransform: "capitalize",
+                                  padding: "4px 10px",
+                                  fontSize: "20px",
+                                  marginTop: "-20px",
+                                }}
+                              >
+                                {selectedProduct.quantityAlert}
                               </p>
                             </div>
                           </div>
