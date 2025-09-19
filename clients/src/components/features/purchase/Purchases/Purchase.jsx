@@ -27,7 +27,6 @@ const Purchase = () => {
       returnModal.show();
     };
 
-
    
 
     
