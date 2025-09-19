@@ -16,6 +16,11 @@ import BASE_URL from "../../../pages/config/config";
 import { FiMoreVertical } from "react-icons/fi";
 import { TbMoneybag } from "react-icons/tb";
 import { toast } from "react-toastify";
+import jsPDF from "jspdf";
+import "jspdf-autotable";
+import { autoTable } from "jspdf-autotable";
+
+
 
 
 function formatAddress(billing) {
@@ -51,6 +56,18 @@ function AllCustomers({ onClose }) {
   const [showAddModal, setShowAddModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const [showFilters, setShowFilters] = React.useState(false);
+  const [selectedCustomers, setSelectedCustomers] = useState([]);
+
+  const [search, setSearch] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
+  const [rowsPerPage, setRowsPerPage] = useState(10);
+
+  const [filters, setFilters] = useState({
+    category: "",
+    stockLevel: "",
+    warehouse: "",
+    expiration: "",
+  });
 
 
   useEffect(() => {
@@ -123,75 +140,132 @@ function AllCustomers({ onClose }) {
     { id: 6, product: "Office Chair", qty: 5, total: 25000 },
   ];
 
+  const handleCheckboxChange = (customerId) => {
+    setSelectedCustomers((prev) =>
+      prev.includes(customerId)
+        ? prev.filter((id) => id !== customerId)
+        : [...prev, customerId]
+    );
+  };
 
-  // Submit handler
-  // const handleSubmit = async (e) => {
-  //   e.preventDefault();
-  //   setLoading(true);
-  //   try {
-  //     // Prepare payload for API
-  //     const payload = {
-  //       name: form.name,
-  //       email: form.email,
-  //       phone: form.phone,
-  //       currency: form.currency,
-  //       website: form.website,
-  //       notes: form.notes,
-  //       billing: {
-  //         ...form.billing,
-  //         country: form.billing.country?.value || '',
-  //         state: form.billing.state?.value || '',
-  //         city: form.billing.city?.value || '',
-  //       },
-  //       shipping: {
-  //         ...form.shipping,
-  //         country: form.shipping.country?.value || '',
-  //         state: form.shipping.state?.value || '',
-  //         city: form.shipping.city?.value || '',
-  //       },
-  //       bank: form.bank,
-  //       status: form.status,
-  //     };
-  //     // If image is selected, use FormData
-  //     if (selectedImage) {
-  //       const formData = new FormData();
-  //       Object.entries(payload).forEach(([key, value]) => {
-  //         if (typeof value === 'object' && value !== null) {
-  //           formData.append(key, JSON.stringify(value));
-  //         } else {
-  //           formData.append(key, value);
-  //         }
-  //       });
-  //       formData.append('image', selectedImage);
-  //       await axios.post(`${BASE_URL}/api/customers`, formData, {
-  //         headers: { 'Content-Type': 'multipart/form-data' },
-  //       });
-  //     } else {
-  //       await axios.post(`${BASE_URL}/api/customers`, payload);
-  //     }
-  //     toast.success('Customer created successfully!');
-  //     setFormSubmitted(true);
-  //     setForm({
-  //       name: '', email: '', phone: '', currency: '', website: '', notes: '',
-  //       billing: { name: '', address1: '', address2: '', country: null, state: null, city: null, postalCode: '', pincode: '' },
-  //       shipping: { name: '', address1: '', address2: '', country: '', state: '', city: '', pincode: '' },
-  //       bank: { bankName: '', branch: '', accountHolder: '', accountNumber: '', ifsc: '' },
-  //       status: true,
-  //     });
-  //     setSelectedImage(null);
-  //     if (onSuccess) onSuccess();
-  //   } catch (err) {
-  //     toast.error('Failed to create customer');
-  //   } finally {
-  //     setLoading(false);
-  //   }
-  // };
+
+  const handleSelectAll = (e) => {
+    if (e.target.checked) {
+      const allIds = customers.map((c) => c._id);
+      setSelectedCustomers(allIds);
+    } else {
+      setSelectedCustomers([]);
+    }
+  };
+
+
+  const handleBulkDelete = async () => {
+    if (selectedCustomers.length === 0) return;
+
+    if (!window.confirm(`Are you sure you want to delete ${selectedCustomers.length} customers?`)) return;
+
+    try {
+      const token = localStorage.getItem("token");
+
+      await Promise.all(
+        selectedCustomers.map((id) =>
+          axios.delete(`${BASE_URL}/api/customers/${id}`, {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          })
+        )
+      );
+
+      toast.success(`${selectedCustomers.length} customers deleted successfully!`);
+      setSelectedCustomers([]);
+      fetchCustomers();
+    } catch (err) {
+      toast.error("Failed to delete selected customers.");
+    }
+  };
+
+  // const filtered = customers.filter(c =>
+  //   c.name?.toLowerCase().includes(search.toLowerCase())
+  // );
+  // Updated filter logic to include filter state
+  const filtered = customers.filter((c) => {
+    return (
+      c.name?.toLowerCase().includes(search.toLowerCase()) &&
+      (!filters.category || c.category === filters.category) &&
+      (!filters.stockLevel || c.stockLevel === filters.stockLevel) &&
+      (!filters.warehouse || c.warehouse === filters.warehouse) &&
+      (!filters.expiration || c.expiration === filters.expiration)
+    );
+  });
+  // Original filter logic
+  /* const filtered = customers.filter(c =>
+    c.name?.toLowerCase().includes(search.toLowerCase())
+  ); */
+
+  const totalPages = Math.ceil(filtered.length / rowsPerPage);
+  const start = (currentPage - 1) * rowsPerPage;
+  const visible = filtered.slice(start, start + rowsPerPage);
+
+  // New handler for filter changes
+  const handleFilterChange = (e, filterName) => {
+    setFilters((prev) => ({ ...prev, [filterName]: e.target.value }));
+    setCurrentPage(1); // Reset to first page when filters change
+  };
+
+
+
+  const handleDownloadPDF = () => {
+    try {
+      const doc = new jsPDF();
+
+      doc.setFontSize(18);
+      doc.text("Customer List", 14, 20);
+
+      const tableColumn = ["#", "Name", "Email", "Phone", "Country", "State"];
+      const tableRows = customers.map((c, i) => [
+        i + 1,
+        c.name || "N/A",
+        c.email || "N/A",
+        c.phone || "N/A",
+        c.billing?.country?.name || "N/A",
+        c.billing?.state?.stateName || "N/A",
+      ]);
+
+      autoTable(doc, {
+        startY: 30,
+        head: [tableColumn],
+        body: tableRows,
+      });
+
+      doc.save("customers.pdf");
+    } catch (error) {
+      console.error("Error generating PDF:", error);
+      toast.error("Failed to generate PDF.");
+    }
+  };
+
+
+
+
+
+
+
   return (
-    <div className="page-wrapper  shadow rounded bg-white">
+    <div className="page-wrapper  shadow rounded bg-white  p-4 mt-5 ">
       <div className="d-flex justify-content-between align-items-center mb-3">
-        <h5 className="fw-bold">All Customers</h5>
+        <h5 className="fw-bold">All Customer</h5>
         <div className="d-flex gap-2">
-          <button className="btn btn-outline-secondary">
+          {selectedCustomers.length > 0 && (
+            <div className=" d-flex justify-content-between align-items-center">
+
+              <button className="btn btn-danger" onClick={handleBulkDelete}>
+                <FaTrashAlt className="me-1" /> Delete ({selectedCustomers.length}) Selected
+              </button>
+            </div>
+          )}
+
+          <button className="btn btn-outline-secondary" onClick={handleDownloadPDF}>
             <FaDownload className="me-1" /> Export
           </button>
 
@@ -208,8 +282,11 @@ function AllCustomers({ onClose }) {
             <FaSearch />
           </span>
           <input
-            type="text"
+            // type="text"
             className="form-control"
+            value={search}
+            onChange={(e) => { setSearch(e.target.value); setCurrentPage(1); }}
+
             placeholder="Search Here"
           />
         </div>
@@ -223,7 +300,17 @@ function AllCustomers({ onClose }) {
 
         {showFilters && (
           <>
-            <select className="form-select border-dashed" style={{ maxWidth: "150px" }}>
+            <select
+              className="form-select border-dashed"
+              style={{ maxWidth: "150px" }}
+              value={filters.category}
+              onChange={(e) => handleFilterChange(e, "category")}
+            >
+              <option value="">All Categories</option>
+              <option value="Clothing">Clothing</option>
+              <option value="Electronics">Electronics</option>
+            </select>
+            {/* <select className="form-select border-dashed" style={{ maxWidth: "150px" }}>
               <option>Category</option>
               <option>Clothing</option>
               <option>Electronics</option>
@@ -245,7 +332,7 @@ function AllCustomers({ onClose }) {
               <option>Expiring Soon</option>
               <option>Expired</option>
               <option>Valid</option>
-            </select>
+            </select> */}
           </>
         )}
       </div>
@@ -255,7 +342,9 @@ function AllCustomers({ onClose }) {
           <thead className="table-light">
             <tr>
               <th>
-                <input type="checkbox" />
+                <input type="checkbox"
+                  onChange={handleSelectAll}
+                  checked={selectedCustomers.length === customers.length && customers.length > 0} />
               </th>
               <th>Customer Name</th>
               <th>Address</th>
@@ -266,10 +355,12 @@ function AllCustomers({ onClose }) {
             </tr>
           </thead>
           <tbody>
-            {customers.map((customer, index) => (
+            {visible.map((customer, index) => (
               <tr key={index} style={{ cursor: "pointer" }}>
                 <td>
-                  <input type="checkbox" />
+                  <input type="checkbox"
+                    checked={selectedCustomers.includes(customer._id)}
+                    onChange={() => handleCheckboxChange(customer._id)} />
                 </td>
                 <td className="" onClick={() => handleCustomerClick(customer)}>
                   {/* <img
@@ -286,7 +377,7 @@ function AllCustomers({ onClose }) {
                     className="rounded-circle"
                     width="32"
                     height="32"
-                    // onError={(e) => { e.target.src = "https://via.placeholder.com/32"; }} // Fallback on error
+                  // onError={(e) => { e.target.src = "https://via.placeholder.com/32"; }} // Fallback on error
                   />
                   {customer.name}
                 </td>
@@ -324,16 +415,55 @@ function AllCustomers({ onClose }) {
       <div className="d-flex justify-content-between align-items-center mt-3">
         <div className="d-flex align-items-center gap-2">
           <span>Rows per page:</span>
-          <select className="form-select form-select-sm" style={{ width: "80px" }}>
-            <option>10</option>
-            <option>25</option>
-            <option>50</option>
+
+          <select
+            className="form-select form-select-sm"
+            style={{ width: "80px" }}
+            value={rowsPerPage} // Added to sync with state
+            onChange={(e) => {
+              setRowsPerPage(Number(e.target.value)); // Update rowsPerPage state
+              setCurrentPage(1); // Reset to first page
+            }}
+          >
+            <option value="10">10</option>
+            <option value="25">25</option>
+            <option value="50">50</option>
           </select>
         </div>
-        <span>1-10 of 369</span>
-        <div>
-          <button className="btn btn-light btn-sm me-2">&lt;</button>
-          <button className="btn btn-light btn-sm">&gt;</button>
+        {/* <span>1-10 of 369</span> */}
+        <span>{start + 1}-{Math.min(start + rowsPerPage, filtered.length)} of {filtered.length}</span>
+
+
+        <div className="d-flex gap-2">
+
+          <button
+            className="btn btn-light btn-sm"
+            disabled={currentPage === 1}
+            onClick={() => setCurrentPage(1)}
+          >
+            &lt;&lt;
+          </button>
+          <button
+            className="btn btn-light btn-sm"
+            disabled={currentPage === 1}
+            onClick={() => setCurrentPage((p) => p - 1)}
+          >
+            &lt;
+          </button>
+          <button
+            className="btn btn-light btn-sm"
+            disabled={currentPage === totalPages}
+            onClick={() => setCurrentPage((p) => p + 1)}
+          >
+            &gt;
+          </button>
+          <button
+            className="btn btn-light btn-sm"
+            disabled={currentPage === totalPages}
+            onClick={() => setCurrentPage(totalPages)}
+          >
+            &gt;&gt;
+          </button>
         </div>
       </div>
 
