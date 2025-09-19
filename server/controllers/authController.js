@@ -33,7 +33,7 @@ exports.loginUser = async (req, res) => {
     const tokenPayload = {
       id: user._id,
       email: user.email,
-      role: roleData,
+      // role: roleData,
     };
 
     const token = jwt.sign(tokenPayload, process.env.JWT_SECRET, {
@@ -67,7 +67,7 @@ exports.loginUser = async (req, res) => {
         phone: user.phone,
         profileImage: user.profileImage,
         status: user.status,
-        role: roleData,
+        // role: roleData,
       },
     });
   } catch (err) {

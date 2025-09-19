@@ -45,7 +45,7 @@ const AddDebitNoteModals = ({ purchaseData, onReturnCreated }) => {
     const [products, setProducts] = useState([]);
     const [loading, setLoading] = useState(false);
 
-const token = localStorage.getItem("token");
+    const token = localStorage.getItem("token");
 
 
     // Single source of truth for form state (all fields in one object)
@@ -82,10 +82,10 @@ const token = localStorage.getItem("token");
     useEffect(() => {
         const fetchNextId = async () => {
             try {
-                const res = await axios.get(`${BASE_URL}/api/debit-notes/next-id`,{
+                const res = await axios.get(`${BASE_URL}/api/debit-notes/next-id`, {
                     headers: {
-        Authorization: `Bearer ${token}`,
-      },
+                        Authorization: `Bearer ${token}`,
+                    },
                 });
                 setFormState(prev => ({ ...prev, debitNoteId: res.data.nextId }));
             } catch (err) {
@@ -142,12 +142,14 @@ const token = localStorage.getItem("token");
                 reason: formState.reason,
             };
             // await axios.post(`${BASE_URL}/api/purchases/return`, payload);
-            await axios.post(`${BASE_URL}/api/debit-notes/return`, payload,{
+            await axios.post(`${BASE_URL}/api/debit-notes/return`, payload, {
                 headers: {
-        Authorization: `Bearer ${token}`,
-      },
+                    Authorization: `Bearer ${token}`,
+                },
             });
             toast.success('Debit Note created!');
+         window.$('#add-return-debit-note').modal('hide'); // <-- auto close modal
+
             setFormState({
                 referenceNumber: "",
                 supplier: "",
@@ -238,10 +240,10 @@ const token = localStorage.getItem("token");
         const delayDebounce = setTimeout(() => {
             if (searchTerm.trim()) {
                 axios
-                    .get(`${BASE_URL}/api/products/search?name=${searchTerm}`,{
+                    .get(`${BASE_URL}/api/products/search?name=${searchTerm}`, {
                         headers: {
-        Authorization: `Bearer ${token}`,
-      },
+                            Authorization: `Bearer ${token}`,
+                        },
                     })
                     .then((res) => setProducts(res.data))
                     .catch((err) => console.error("Search error:", err));
@@ -253,103 +255,254 @@ const token = localStorage.getItem("token");
     }, [searchTerm]);
 
 
+    // const handleSelectProduct = (product) => {
+    //     const alreadyExists = formState.products.some((p) => p._id === product._id);
+    //     if (!alreadyExists) {
+    //         const taxMatch = product.tax?.match(/\((\d+)%\)/);
+    //         const taxPercent = taxMatch ? parseFloat(taxMatch[1]) : 0;
+    //         setFormState({
+    //             ...formState,
+    //             products: [
+    //                 ...formState.products,
+    //                 {
+    //                     ...product,
+    //                     productName: product.productName || product.name || "",
+    //                     quantity: 1,
+    //                     availableQty: product.quantity || 0,
+    //                     discount: product.discountValue || 0,
+    //                     tax: taxPercent,
+    //                     unitName: product.unit || "",
+    //                     purchasePrice: product.purchasePrice || product.price || 0,
+    //                     images: product.images || []
+    //                 }
+    //             ]
+    //         });
+    //     }
+    //     setProducts([]);
+    //     setSearchTerm("");
+    // };
+
+
+    // Calculate total return (amount) for all products
+
+
+
     const handleSelectProduct = (product) => {
         const alreadyExists = formState.products.some((p) => p._id === product._id);
         if (!alreadyExists) {
-            const taxMatch = product.tax?.match(/\((\d+)%\)/);
-            const taxPercent = taxMatch ? parseFloat(taxMatch[1]) : 0;
-            setFormState({
-                ...formState,
+            const qty = product.quantity || 1;
+            const price = product.purchasePrice || product.price || 0;
+            const discount = product.discountValue || 0;
+            const tax = product.tax || 0;
+            const subTotal = qty * price;
+            const afterDiscount = subTotal - discount;
+            const taxAmount = (afterDiscount * tax) / 100;
+            const lineTotal = afterDiscount + taxAmount;
+            const unitCost = qty > 0 ? lineTotal / qty : 0;
+
+            setFormState((prev) => ({
+                ...prev,
                 products: [
-                    ...formState.products,
+                    ...prev.products,
                     {
                         ...product,
                         productName: product.productName || product.name || "",
-                        quantity: 1,
+                        returnQty: qty,
+                        quantity: qty,
                         availableQty: product.quantity || 0,
-                        discount: product.discountValue || 0,
-                        tax: taxPercent,
-                        unitName: product.unit || "",
-                        purchasePrice: product.purchasePrice || product.price || 0,
-                        images: product.images || []
-                    }
-                ]
-            });
+                        discount: discount,
+                        tax: tax,
+                        taxAmount: taxAmount,
+                        unitCost: unitCost,
+                        totalCost: lineTotal,
+                        unit: product.unit || "",
+                        purchasePrice: price,
+                        images: product.images || [],
+                    },
+                ],
+            }));
         }
         setProducts([]);
         setSearchTerm("");
     };
+// ...existing code...
 
+// Calculate total return (amount) for all products
+const totalReturn = formState.products.reduce((acc, product) => {
+    const qty = parseFloat(product.returnQty || product.quantity || 0);
+    const price = parseFloat(product.purchasePrice || 0);
+    const discount = parseFloat(product.discount || 0);
+    const tax = parseFloat(product.tax || 0);
+    const subTotal = qty * price;
+    const afterDiscount = subTotal - discount;
+    const taxAmount = (afterDiscount * tax) / 100;
+    const lineTotal = afterDiscount + taxAmount;
+    return acc + lineTotal;
+}, 0);
 
-    // Calculate total return (amount) for all products
-    const totalReturn = formState.products.reduce((acc, product) => {
-        const qty = parseFloat(product.returnQty || product.quantity || 0);
-        const price = parseFloat(product.purchasePrice || 0);
-        let discount = product.discount || 0;
-        if (typeof discount === 'string' && discount.trim().endsWith('%')) {
-            const percent = parseFloat(discount);
-            discount = ((qty * price) * percent) / 100;
-        } else {
-            discount = parseFloat(discount) || 0;
-        }
-        const tax = parseFloat(product.tax || 0);
-        let taxAmount = 0;
-        let totalCost = 0;
-        if (formState.enableTax) {
-            taxAmount = ((qty * price - discount) * tax) / 100;
-            totalCost = (qty * price - discount) + taxAmount;
-        } else {
-            taxAmount = tax;
-            totalCost = (qty * price - discount) + taxAmount;
-        }
-        return acc + totalCost;
-    }, 0);
+// SGST/CGST as percent of totalReturn
+let cgstValue = 0;
+let sgstValue = 0;
+if (formState.cgst) {
+    const percent = parseFloat(formState.cgst) || 0;
+    cgstValue = (totalReturn * percent) / 100;
+}
+if (formState.sgst) {
+    const percent = parseFloat(formState.sgst) || 0;
+    sgstValue = (totalReturn * percent) / 100;
+}
 
-    // SGST/CGST as value or percent
-    // Always treat CGST/SGST as percent of totalReturn
-    let cgstValue = 0;
-    let sgstValue = 0;
-    if (formState.cgst) {
-        const percent = parseFloat(formState.cgst) || 0;
-        cgstValue = (totalReturn * percent) / 100;
+// Discount for summary (can be percent or value)
+let summaryDiscount = 0;
+if (formState.discount) {
+    if (typeof formState.discount === 'string' && formState.discount.trim().endsWith('%')) {
+        const percent = parseFloat(formState.discount);
+        summaryDiscount = ((totalReturn + cgstValue + sgstValue) * percent) / 100;
+    } else {
+        summaryDiscount = parseFloat(formState.discount) || 0;
     }
-    if (formState.sgst) {
-        const percent = parseFloat(formState.sgst) || 0;
-        sgstValue = (totalReturn * percent) / 100;
-    }
+}
 
-    // Discount for summary (can be percent or value)
-    let summaryDiscount = 0;
-    if (formState.discount) {
-        if (typeof formState.discount === 'string' && formState.discount.trim().endsWith('%')) {
-            const percent = parseFloat(formState.discount);
-            summaryDiscount = ((totalReturn + cgstValue + sgstValue) * percent) / 100;
-        } else {
-            summaryDiscount = parseFloat(formState.discount) || 0;
-        }
-    }
+let grandTotal = totalReturn + cgstValue + sgstValue - summaryDiscount;
+if (formState.roundOff) {
+    grandTotal = Math.round(grandTotal);
+}
 
-    let grandTotal = totalReturn + cgstValue + sgstValue - summaryDiscount;
-    if (formState.roundOff) {
-        grandTotal = Math.round(grandTotal);
-    }
+// ...existing code...
+
+
+
+    // const totalReturn = formState.products.reduce((acc, product) => {
+    //     const qty = parseFloat(product.returnQty || product.quantity || 0);
+    //     const price = parseFloat(product.purchasePrice || 0);
+    //     let discount = product.discount || 0;
+    //     if (typeof discount === 'string' && discount.trim().endsWith('%')) {
+    //         const percent = parseFloat(discount);
+    //         discount = ((qty * price) * percent) / 100;
+    //     } else {
+    //         discount = parseFloat(discount) || 0;
+    //     }
+    //     const tax = parseFloat(product.tax || 0);
+    //     let taxAmount = 0;
+    //     let totalCost = 0;
+    //     if (formState.enableTax) {
+    //         taxAmount = ((qty * price - discount) * tax) / 100;
+    //         totalCost = (qty * price - discount) + taxAmount;
+    //     } else {
+    //         taxAmount = tax;
+    //         totalCost = (qty * price - discount) + taxAmount;
+    //     }
+    //     return acc + totalCost;
+    // }, 0);
+
+    // // SGST/CGST as value or percent
+    // // Always treat CGST/SGST as percent of totalReturn
+    // let cgstValue = 0;
+    // let sgstValue = 0;
+    // if (formState.cgst) {
+    //     const percent = parseFloat(formState.cgst) || 0;
+    //     cgstValue = (totalReturn * percent) / 100;
+    // }
+    // if (formState.sgst) {
+    //     const percent = parseFloat(formState.sgst) || 0;
+    //     sgstValue = (totalReturn * percent) / 100;
+    // }
+
+    // // Discount for summary (can be percent or value)
+    // let summaryDiscount = 0;
+    // if (formState.discount) {
+    //     if (typeof formState.discount === 'string' && formState.discount.trim().endsWith('%')) {
+    //         const percent = parseFloat(formState.discount);
+    //         summaryDiscount = ((totalReturn + cgstValue + sgstValue) * percent) / 100;
+    //     } else {
+    //         summaryDiscount = parseFloat(formState.discount) || 0;
+    //     }
+    // }
+
+    // let grandTotal = totalReturn + cgstValue + sgstValue - summaryDiscount;
+    // if (formState.roundOff) {
+    //     grandTotal = Math.round(grandTotal);
+    // }
 
     // Convert number to words (simple version)
-    function numberToWords(num) {
-        const a = ['', 'One', 'Two', 'Three', 'Four', 'Five', 'Six', 'Seven', 'Eight', 'Nine', 'Ten', 'Eleven', 'Twelve', 'Thirteen', 'Fourteen', 'Fifteen', 'Sixteen', 'Seventeen', 'Eighteen', 'Nineteen'];
-        const b = ['', '', 'Twenty', 'Thirty', 'Forty', 'Fifty', 'Sixty', 'Seventy', 'Eighty', 'Ninety'];
-        if ((num = num.toString()).length > 9) return 'Overflow';
-        let n = ('000000000' + num).substr(-9).match(/.{1,3}/g) || [];
-        while (n.length < 5) n.unshift('000');
-        let str = '';
-        str += (n[0] && n[0] != 0) ? (a[Number(n[0])] || b[n[0][0]] + ' ' + a[n[0][1]]) + 'Crore ' : '';
-        str += (n[1] && n[1] != 0) ? (a[Number(n[1])] || b[n[1][0]] + ' ' + a[n[1][1]]) + 'Lakh ' : '';
-        str += (n[2] && n[2] != 0) ? (a[Number(n[2])] || b[n[2][0]] + ' ' + a[n[2][1]]) + 'Thousand ' : '';
-        str += (n[3] && n[3] != 0) ? (a[Number(n[3])] || b[n[3][0]] + ' ' + a[n[3][1]]) + 'Hundred ' : '';
-        str += (n[4] && n[4] != 0) ? ((str != '') ? 'and ' : '') + (a[Number(n[4])] || b[n[4][0]] + ' ' + a[n[4][1]]) + 'Only ' : '';
-        return str.trim();
+    // function numberToWords(num) {
+    //     const a = ['', 'One', 'Two', 'Three', 'Four', 'Five', 'Six', 'Seven', 'Eight', 'Nine', 'Ten', 'Eleven', 'Twelve', 'Thirteen', 'Fourteen', 'Fifteen', 'Sixteen', 'Seventeen', 'Eighteen', 'Nineteen'];
+    //     const b = ['', '', 'Twenty', 'Thirty', 'Forty', 'Fifty', 'Sixty', 'Seventy', 'Eighty', 'Ninety'];
+    //     if ((num = num.toString()).length > 9) return 'Overflow';
+    //     let n = ('000000000' + num).substr(-9).match(/.{1,3}/g) || [];
+    //     while (n.length < 5) n.unshift('000');
+    //     let str = '';
+    //     str += (n[0] && n[0] != 0) ? (a[Number(n[0])] || b[n[0][0]] + ' ' + a[n[0][1]]) + 'Crore ' : '';
+    //     str += (n[1] && n[1] != 0) ? (a[Number(n[1])] || b[n[1][0]] + ' ' + a[n[1][1]]) + 'Lakh ' : '';
+    //     str += (n[2] && n[2] != 0) ? (a[Number(n[2])] || b[n[2][0]] + ' ' + a[n[2][1]]) + 'Thousand ' : '';
+    //     str += (n[3] && n[3] != 0) ? (a[Number(n[3])] || b[n[3][0]] + ' ' + a[n[3][1]]) + 'Hundred ' : '';
+    //     str += (n[4] && n[4] != 0) ? ((str != '') ? 'and ' : '') + (a[Number(n[4])] || b[n[4][0]] + ' ' + a[n[4][1]]) + 'Only ' : '';
+    //     return str.trim();
+    // }
+    // const totalInWords = numberToWords(Math.round(grandTotal));
+
+
+    // ...existing code...
+
+function numberToWords(num) {
+    const a = [
+        '', 'One', 'Two', 'Three', 'Four', 'Five', 'Six', 'Seven', 'Eight', 'Nine', 'Ten',
+        'Eleven', 'Twelve', 'Thirteen', 'Fourteen', 'Fifteen', 'Sixteen', 'Seventeen', 'Eighteen', 'Nineteen'
+    ];
+    const b = [
+        '', '', 'Twenty', 'Thirty', 'Forty', 'Fifty', 'Sixty', 'Seventy', 'Eighty', 'Ninety'
+    ];
+
+    function inWords(n) {
+        if (n < 20) return a[n];
+        if (n < 100) return b[Math.floor(n / 10)] + (n % 10 ? ' ' + a[n % 10] : '');
+        if (n < 1000) return a[Math.floor(n / 100)] + ' Hundred' + (n % 100 ? ' ' + inWords(n % 100) : '');
+        if (n < 100000) return inWords(Math.floor(n / 1000)) + ' Thousand' + (n % 1000 ? ' ' + inWords(n % 1000) : '');
+        if (n < 10000000) return inWords(Math.floor(n / 100000)) + ' Lakh' + (n % 100000 ? ' ' + inWords(n % 100000) : '');
+        return inWords(Math.floor(n / 10000000)) + ' Crore' + (n % 10000000 ? ' ' + inWords(n % 10000000) : '');
     }
-    const totalInWords = numberToWords(Math.round(grandTotal));
+
+    num = Number(num).toFixed(2);
+    const [rupees, paise] = num.split('.');
+
+    let words = '';
+    if (parseInt(rupees, 10) > 0) {
+        words += inWords(parseInt(rupees, 10)) + ' Rupees';
+    }
+    if (parseInt(paise, 10) > 0) {
+        words += (words ? ' and ' : '') + inWords(parseInt(paise, 10)) + ' Paise';
+    }
+    if (!words) words = 'Zero Rupees';
+    return words + ' Only';
+}
+
+// ...existing code...
+const totalInWords = numberToWords(grandTotal);
+
+
+
+// Calculate total tax amount for all products
+const totalTaxAmount = formState.products.reduce((acc, product) => {
+  const qty = parseFloat(product.returnQty || product.quantity || 0);
+  const price = parseFloat(product.purchasePrice || 0);
+  const discount = parseFloat(product.discount || 0);
+  const tax = parseFloat(product.tax || 0);
+  const afterDiscount = qty * price - discount;
+  const taxAmount = (afterDiscount * tax) / 100;
+  return acc + taxAmount;
+}, 0);
+const totalSGST = totalTaxAmount ;
+
+
+const totalValue = formState.products.reduce((acc, product) => {
+  const tax = parseFloat(product.tax || 0);
+  return acc + tax;
+}, 0);
+
+// SGST is half of total tax amount (if using 50/50 split)
+const totalGST = totalValue ;
+
+// ...existing code...
 
     return (
         <div className="modal fade" id="add-return-debit-note">
@@ -364,9 +517,9 @@ const token = localStorage.getItem("token");
                             <div className="card">
                                 <div className="card-body">
                                     <div className="top-content">
-                                        <div className="purchase-header mb-3">
+                                        {/* <div className="purchase-header mb-3">
                                             <h6>Purchase Order Details</h6>
-                                        </div>
+                                        </div> */}
                                         <div>
                                             <div className="row justify-content-between">
                                                 <div className="col-md-6">
@@ -380,6 +533,21 @@ const token = localStorage.getItem("token");
                                                                         onChange={handleChange} placeholder={1254569} />
                                                                 </div>
                                                             </div>
+                                        
+                                                            <div className="col-md-6">
+                                                                <div className="mb-3">
+                                                                    <label className="form-label">Invoice No</label>
+                                                                    <input
+                                                                        type="text"
+                                                                        className="form-control"
+                                                                        name="invoiceNo"
+                                                                        value={formState.invoiceNo || ""}
+                                                                        onChange={handleChange}
+                                                                        placeholder="Invoice No"
+                                                                    />
+                                                                </div>
+                                                            </div>
+
                                                             <div className="col-md-12">
                                                                 <label className="form-label">Debit Note Date</label>
                                                                 <div className="input-group position-relative mb-3">
@@ -392,12 +560,12 @@ const token = localStorage.getItem("token");
                                                                     </span>
                                                                 </div>
                                                             </div>
-                                                            <div>
+                                                            {/* <div>
                                                                 <a href=""
                                                                     className="d-flex align-items-center "><i
                                                                         className="isax isax-add-circle5 me-1 text-primary" />Add
                                                                     Due Date</a>
-                                                            </div>
+                                                            </div> */}
                                                         </div>
                                                     </div>
                                                 </div>{/* end col */}
@@ -483,10 +651,6 @@ const token = localStorage.getItem("token");
                                                             <div className="d-flex">
                                                                 <div className="me-3">
                                                                     <span className="p-2 rounded ">
-
-                                                                        {/* <img
-                                            src="assets/img/logo-small.svg" alt="image"
-                                            className="img-fluid" /> */}
                                                                         {purchaseData?.supplier?.images?.[0]?.url && (
                                                                             <span>
                                                                                 <img src={purchaseData.supplier.images[0].url} alt="supplier" className="img-fluid rounded"
@@ -497,11 +661,9 @@ const token = localStorage.getItem("token");
                                                                 </div>
                                                                 <div>
                                                                     <h6 className="fs-14 mb-1">{purchaseData?.supplier.billing.name}</h6>
-                                                                    {/* <p className="mb-0">{formatAddress(purchaseData?.supplier?.billing)}</p> */}
-
+                                                                    <p className="mb-0">{formatAddress(purchaseData?.supplier?.billing)}</p>
                                                                     <p className="mb-0">Phone : {purchaseData?.supplier?.phone}</p>
                                                                     <p className="mb-0">Email : {purchaseData?.supplier?.phone}</p>
-
                                                                     <p className="text-dark mb-0">GST : {purchaseData?.supplier.gstin}</p>
                                                                 </div>
                                                             </div>
@@ -606,7 +768,7 @@ const token = localStorage.getItem("token");
                                                     <label className="form-label">
                                                         Product<span className="text-danger ms-1">*</span>
                                                     </label>
-                                                    <input type="text" className="form-control" placeholder="Search Product"
+                                                    <input disabled type="text" className="form-control" placeholder="Search Product"
                                                         value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)}
                                                     />
                                                 </div>
@@ -661,13 +823,8 @@ const token = localStorage.getItem("token");
                                                         <th>Return Qty</th>
                                                         <th> Purchase Price</th>
                                                         <th>Discount</th>
-                                                        {formState.enableTax && (
-                                                            <>
-                                                                <th>Tax (%)</th>
-                                                                <th>Tax Amount</th>
-                                                            </>
-                                                        )}
-
+                                                        <th>Tax (%)</th>
+                                                        <th>Tax Amount</th>
                                                         <th> Unit Cost</th>
                                                         <th>Total Return</th>
                                                         <th />
@@ -676,32 +833,31 @@ const token = localStorage.getItem("token");
                                                 <tbody className="add-tbody">
                                                     {formState.products.length > 0 ? (
                                                         formState.products.map((product, index) => {
-                                                            const qty = parseFloat(product.returnQty || 0);
-                                                            const price = parseFloat(product.purchasePrice || 0);
-                                                            const discount = parseFloat(product.discount || 0);
-                                                            const tax = parseFloat(product.tax || 0);
-                                                            const purchasedQty = parseFloat(product.quantity || 0);
-
-                                                            const taxAmount = formState.enableTax
-                                                                ? ((qty * price - discount) * tax) / 100
-                                                                : 0;
-                                                            const totalCost = qty * price - discount + taxAmount;
-                                                            const unitCost = qty > 0 ? totalCost / qty : 0;
-                                                            // formState.products.map((product, index) => {
                                                             // const qty = parseFloat(product.returnQty || 0);
                                                             // const price = parseFloat(product.purchasePrice || 0);
                                                             // const discount = parseFloat(product.discount || 0);
                                                             // const tax = parseFloat(product.tax || 0);
-                                                            // let taxAmount = 0;
-                                                            // let totalCost = 0;
-                                                            // if (formState.enableTax) {
-                                                            // taxAmount = ((qty * price - discount) * tax) / 100;
-                                                            // totalCost = (qty * price - discount) + taxAmount;
-                                                            // } else {
-                                                            // taxAmount = tax; // treat as flat value
-                                                            // totalCost = (qty * price - discount) + taxAmount;
-                                                            // }
+                                                            // const purchasedQty = parseFloat(product.quantity || 0);
+
+                                                            // const taxAmount = formState.enableTax
+                                                            //     ? ((qty * price - discount) * tax) / 100
+                                                            //     : 0;
+                                                            // const totalCost = qty * price - discount + taxAmount;
                                                             // const unitCost = qty > 0 ? totalCost / qty : 0;
+
+
+                                                            const qty = parseFloat(product.returnQty || 0);
+                                                            const price = parseFloat(product.purchasePrice || 0);
+                                                            const discount = parseFloat(product.discount || 0);
+                                                            const tax = parseFloat(product.tax || 0);
+                                                            const subTotal = qty * price;
+                                                            const afterDiscount = subTotal - discount;
+                                                            const taxAmount = (afterDiscount * tax) / 100;
+                                                            const lineTotal = afterDiscount + taxAmount;
+                                                            const unitCost = qty > 0 ? lineTotal / qty : 0;
+
+
+
                                                             return (
                                                                 <tr key={index}>
                                                                     <td>
@@ -729,20 +885,18 @@ const token = localStorage.getItem("token");
                                                                             placeholder="% or value"
                                                                         />
                                                                     </td>
-                                                                    {formState.enableTax && (
-                                                                        <>
-                                                                            <td>
-                                                                                <input type="number" min="0" max="100" className="form-control form-control-sm"
-                                                                                    style={{ width: "80px" }} value={tax} onChange={(e) => handleProductChange(index, "tax",
-                                                                                        e.target.value)}
-                                                                                />
-                                                                            </td>
-                                                                            <td>₹{taxAmount.toFixed(2)}</td>
-                                                                        </>
-
-                                                                    )}
+                                                                    <td>
+                                                                        <input type="number" min="0" max="100" className="form-control form-control-sm"
+                                                                            style={{ width: "80px" }} value={tax} onChange={(e) => handleProductChange(index, "tax",
+                                                                                e.target.value)}
+                                                                        />
+                                                                    </td>
+                                                                    <td>₹{taxAmount.toFixed(2)}</td>
                                                                     <td>₹{unitCost.toFixed(2)}</td>
-                                                                    <td className="fw-semibold text-success">₹{totalCost.toFixed(2)}</td>
+                                                                    
+                                                                    {/* <td className="fw-semibold text-success">₹{totalCost.toFixed(2)}</td> */}
+                                                                                        <td className="fw-semibold text-success">₹{lineTotal.toFixed(2)}</td>
+
                                                                     <td>
                                                                         <button className="btn btn-sm btn-danger" onClick={() => {
                                                                             const updated = formState.products.filter((_, i) => i !== index);
@@ -767,64 +921,15 @@ const token = localStorage.getItem("token");
                                         </div>
 
                                         {/* Table list end */}
-                                        <div>
+                                        {/* <div>
                                             <a href="#" className="d-inline-flex align-products-center add-invoice-data"><i
                                                 className="isax isax-add-circle5 text-primary me-1" />Add New</a>
-                                        </div>
+                                        </div> */}
                                     </div>
                                     <div className="extra-info">
-                                        {/* start row */}
                                         <div className="row">
-                                            <div className="col-md-7">
-                                                <div className="mb-3">
-                                                    <h6 className="mb-3">Extra Information</h6>
-                                                    <div>
-                                                        <ul className="nav nav-tabs nav-solid-primary mb-3" role="tablist">
-                                                            <li className="nav-item me-2" role="presentation">
-                                                                <a className="nav-link active border fs-12 fw-semibold rounded"
-                                                                    data-bs-toggle="tab" data-bs-target="#notes"
-                                                                    aria-current="page" href=""><i
-                                                                        className="isax isax-document-text me-1" />Add Notes</a>
-                                                            </li>
-                                                            <li className="nav-item me-2" role="presentation">
-                                                                <a className="nav-link border fs-12 fw-semibold rounded"
-                                                                    data-bs-toggle="tab" data-bs-target="#terms"
-                                                                    href=""><i
-                                                                        className="isax isax-document me-1" />Add Terms &amp;
-                                                                    Conditions</a>
-                                                            </li>
-                                                            <li className="nav-item" role="presentation">
-                                                                <a className="nav-link border fs-12 fw-semibold rounded"
-                                                                    data-bs-toggle="tab" data-bs-target="#bank"
-                                                                    href=""><i
-                                                                        className="isax isax-bank me-1" />Bank Details</a>
-                                                            </li>
-                                                        </ul>
-                                                        <div className="tab-content">
-                                                            <div className="tab-pane active show" id="notes" role="tabpanel">
-                                                                <label className="form-label">Additional Notes</label>
-                                                                <textarea className="form-control" name="extraInfo.notes" value={formState.extraInfo.notes}
-                                                                    onChange={handleChange} />
-                                                            </div>
-                                                            <div className="tab-pane fade" id="terms" role="tabpanel">
-                                                                <label className="form-label">Terms &amp; Conditions</label>
-                                                                <textarea className="form-control" name="extraInfo.terms" value={formState.extraInfo.terms} onChange={handleChange} />
-                                                            </div>
-                                                            <div className="tab-pane fade" id="bank" role="tabpanel">
-                                                                <label className="form-label">Account</label>
-                                                                <select className="form-select" name="extraInfo.bank" value={formState.extraInfo.bank} onChange={handleChange}>
-                                                                    <option>Select</option>
-                                                                    <option>Andrew - 5225655545555454 (Swiss Bank)</option>
-                                                                    <option>Mark Salween - 4654145644566 (International Bank)</option>
-                                                                    <option>Sophia Martinez - 7890123456789012 (Global Finance)</option>
-                                                                    <option>David Chen - 2345678901234567 (National Bank)</option>
-                                                                    <option>Emily Johnson - 3456789012345678 (Community Credit Union)</option>
-                                                                </select>
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            </div>{/* end col */}
+                                            <div className="col-md-7"></div>
+                     
                                             <div className="col-md-5">
                                                 <ul className="mb-0 ps-0 list-unstyled">
                                                     <li className="mb-3">
@@ -833,32 +938,31 @@ const token = localStorage.getItem("token");
                                                             <h6 className="fs-14">₹ {totalReturn.toFixed(2)}</h6>
                                                         </div>
                                                     </li>
-                                                    {formState.enableTax && (
-                                                        <>
-                                                            <li className="mb-3">
-                                                                <div className="d-flex align-items-center justify-content-between">
-                                                                    <p className="fw-semibold fs-14 text-gray-9 mb-0">CGST</p>
-                                                                    <div className="d-flex align-items-center gap-2">
-                                                                        <input type="text" className="form-control form-control-sm w-auto d-inline-block" style={{ minWidth: 80 }}
-                                                                            name="cgst" value={formState.cgst} onChange={handleChange} placeholder="% or value" />
-                                                                        <span className="ms-2">₹ {cgstValue ? cgstValue.toFixed(2) : '0.00'}</span>
-                                                                    </div>
-                                                                </div>
-                                                            </li>
-                                                            <li className="mb-3">
-                                                                <div className="d-flex align-items-center justify-content-between">
-                                                                    <p className="fw-semibold fs-14 text-gray-9 mb-0">SGST</p>
-                                                                    <div className="d-flex align-items-center gap-2">
-                                                                        <input type="text" className="form-control form-control-sm w-auto d-inline-block" style={{ minWidth: 80 }}
-                                                                            name="sgst" value={formState.sgst} onChange={handleChange} placeholder="% or value" />
-                                                                        <span className="ms-2">₹ {sgstValue ? sgstValue.toFixed(2) : '0.00'}</span>
-                                                                    </div>
-                                                                </div>
-                                                            </li>
-                                                        </>
-                                                    )}
 
+                                                    {/* <li className="mb-3">
+                                                        <div className="d-flex align-items-center justify-content-between">
+                                                            <p className="fw-semibold fs-14 text-gray-9 mb-0">CGST</p>
+                                                            <div className="d-flex align-items-center gap-2">
+
+                                                                <span className="ms-2">₹ {taxAmount ? taxAmount.toFixed(2) : '0.00'}</span>
+                                                            </div>
+                                                        </div>
+                                                    </li>
                                                     <li className="mb-3">
+                                                        <div className="d-flex align-items-center justify-content-between">
+                                                            <p className="fw-semibold fs-14 text-gray-9 mb-0">SGST  <span className="ms-2">{totalGST}%</span></p>
+                                                            <div className="d-flex align-items-center gap-2">
+
+                                                                <span className="ms-2">₹ {totalTaxAmount.toFixed(2)}</span>
+
+
+                                                                <span className="ms-2">₹ {sgstValue ? sgstValue.toFixed(2) : '0.00'}</span>
+                                                            </div>
+                                                        </div>
+                                                    </li> */}
+
+
+                                                     {/* <li className="mb-3">
                                                         <a href="" className="d-flex align-items-center "><i className="isax isax-add-circle5 text-primary me-1" />Add Additional Charges</a>
                                                     </li>
                                                     <li className="mb-3">
@@ -870,7 +974,7 @@ const token = localStorage.getItem("token");
                                                                 <span className="ms-2">- ₹ {summaryDiscount ? summaryDiscount.toFixed(2) : '0.00'}</span>
                                                             </div>
                                                         </div>
-                                                    </li>
+                                                    </li> */}
                                                     <li className="pb-2 border-gray border-bottom">
                                                         <div className="p-2 d-flex justify-content-between">
                                                             <div className="d-flex align-items-center">
@@ -880,7 +984,7 @@ const token = localStorage.getItem("token");
                                                                 </div>
                                                             </div>
                                                             <div>
-                                                                <h6 className="fs-14">$596</h6>
+                                                                <h6 className="fs-14">₹ {totalReturn.toFixed(2)}</h6>
                                                             </div>
                                                         </div>
                                                     </li>
@@ -894,7 +998,9 @@ const token = localStorage.getItem("token");
                                                         <h6 className="fs-14 fw-semibold">Total In Words</h6>
                                                         <p>{totalInWords}</p>
                                                     </li>
-                                                    <li className="mt-3 mb-3">
+
+                                                    
+                                                    {/* <li className="mt-3 mb-3">
                                                         <div>
                                                             <select className="form-select" name="signature" value={formState.signature} onChange={handleChange}>
                                                                 <option>Select Signature</option>
@@ -912,7 +1018,7 @@ const token = localStorage.getItem("token");
                                                             <label className="form-label">Signature Name</label>
                                                             <input type="text" className="form-control" name="signatureName" value={formState.signatureName} onChange={handleChange} defaultValue="Adrian" />
                                                         </div>
-                                                    </li>
+                                                    </li> */}
                                                     <li>
                                                         <div className="singnature-upload bg-light d-flex align-items-center justify-content-center">
                                                             <div className="drag-upload-btn bg-light position-relative mb-2 fs-14 fw-normal text-gray-5">
