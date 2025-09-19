@@ -370,7 +370,7 @@ function Warehouse() {
                               ₹{totalRevenue.toLocaleString("en-IN")}
                             </span>
                             <span style={{ marginLeft: "4px" }}>
-                              Stock Valuation
+                              Valuation
                             </span>
                           </div>
 
