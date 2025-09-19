@@ -5,14 +5,13 @@ const upload = require("../middleware/Multer/multer");
 
 const { verifyToken } = require("../middleware/Authentication/verifyToken");
 const { checkPermission } = require("../middleware/permission/checkPermission");
-const { authMiddleware } = require("../middleware/auth.js")
+const  {authMiddleware}=require("../middleware/auth.js")
 
 // ✅ Create brand (requires 'Brand' → 'create')
 router.post(
   "/addBrands",
   verifyToken,
   authMiddleware,
-  checkPermission("Brand", "write"),
   upload.array("image", 5),
   brandController.addBrand
 );
@@ -22,7 +21,6 @@ router.put(
   "/editBrands/:id",
   verifyToken,
   authMiddleware,
-  checkPermission("Brand", "update"),
   upload.array("image", 5),
   brandController.updateBrand
 );
@@ -32,7 +30,6 @@ router.get(
   "/getBrands",
   verifyToken,
   authMiddleware,
-  checkPermission("Brand", "read"),
   brandController.getBrands
 );
 
@@ -41,7 +38,6 @@ router.get(
   "/active-brands",
   verifyToken,
   authMiddleware,
-  checkPermission("Brand", "read"),
   brandController.getActiveBrands
 );
 
@@ -49,9 +45,7 @@ router.get(
 router.delete(
   "/deleteBrand/:id",
   verifyToken,
-  authMiddleware,
-  checkPermission("Brand", "delete"),
-  brandController.deleteBrand
+  authMiddleware,  brandController.deleteBrand
 );
 
 module.exports = router;
