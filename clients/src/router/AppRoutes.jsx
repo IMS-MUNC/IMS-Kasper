@@ -273,7 +273,7 @@ const AppRoutes = () => {
  <Route path="/activities" element={<Activities />} />
  <Route path="/ViewAllNotifications" element={<ViewAllNotifications />} />
  <Route path="/barcode" element={<Barcode />} />
- <Route path="/pos" element={<Pos />} />
+ {/* <Route path="/pos" element={<Pos />} /> */}
 
 
  {/* purchase */}
@@ -358,7 +358,14 @@ const AppRoutes = () => {
 
 
 
- </Route>    </Routes>
+ </Route>
+ 
+       <Route path="/pos" element={
+        <>
+          <PosHeader />
+          <Pos />
+        </>
+      } />    </Routes>
 
     // <Routes>
     //   {/* Auth & 404 remain outside layout */}
