@@ -21,7 +21,7 @@ const ProductForm = () => {
 
   // Define regex patterns for validation
   const validationPatterns = {
-    productName: /^[A-Za-z\s]{2,50}$/,
+    productName: /^[a-zA-Z0-9\s,-]{2,50}$/,
     sku: /^[A-Z0-9\-]{3,20}$/,
     itemBarcode: /^[A-Z0-9]{6,20}$/,
     price: /^\d+(\.\d{1,2})?$/,
@@ -38,7 +38,7 @@ const ProductForm = () => {
     quantityAlert: /^\d{1,6}$/,
     categoryName: /^[A-Za-z\s]{2,50}$/,
     categorySlug: /^[a-z0-9\-]{2,50}$/,
-    variantValue: /^[a-zA-Z0-9\s,]{1,100}$/,
+    variantValue: /^[a-zA-Z0-9\s,-]{1,100}$/,
   };
 
   // Sanitization function
@@ -956,7 +956,7 @@ const ProductForm = () => {
                 <TbRefresh />
               </button>
             </li>
-            <li>
+            {/* <li>
               <button
                 type="button"
                 data-bs-toggle="tooltip"
@@ -967,13 +967,15 @@ const ProductForm = () => {
               >
                 <TbChevronUp />
               </button>
-            </li>
+            </li> */}
           </div>
 
           <div className="page-btn mt-0">
-            <button className="btn" style={{ backgroundColor: '#007BFF' }}>
-              <Link to="/product" style={{ color: 'white' }}>{t("backToProduct")}</Link>
-            </button>
+            <div className="d-flex gap-2">
+              <Link to="/product">
+                <a className="btn btn-primary">Back to Product</a>
+              </Link>
+            </div>
           </div>
         </div>
         {/* <h5 className="mb-3">{steps[step]}</h5> */}
@@ -1734,6 +1736,7 @@ const ProductForm = () => {
             {step === 2 && (
               <>
                 <div
+                style={{width:'100%'}}
                   {...getRootProps({
                     className:
                       "dropzone p-4 text-center image-upload image-upload-two mb-3",
@@ -1741,8 +1744,10 @@ const ProductForm = () => {
                 >
                   <input {...getInputProps()} />
                   <MdImageSearch style={{ fontSize: "50px" }} />
-                  <p>Drag your image here, or browse</p>
-                  <p>Supports JPEG, PNG, JPG</p>
+                  <br/>
+                  <span>Drag your image here, or browse</span>
+                  <br/>
+                  <span>Supports JPEG, PNG, JPG</span>
                 </div>
 
                 <div className="row mt-3">
@@ -1842,7 +1847,7 @@ const ProductForm = () => {
                         <input
                           type="text"
                           name="variantName"
-                          placeholder=""
+                          placeholder="E.g., Color, Expiry..."
                           value={variant.variantName}
                           onChange={(e) => handleVariantChange(index, e)}
                           style={{ color: "#999797ff", backgroundColor: "white", border: '1px solid gray', borderRadius: '4px', width: '300px', padding: '8px' }}
@@ -1855,7 +1860,7 @@ const ProductForm = () => {
                         <input
                           type="text"
                           name="variantValue"
-                          placeholder=""
+                          placeholder="E.g., Red, 15-08-1947..."
                           value={variant.variantValue}
                           onChange={(e) => handleVariantChange(index, e)}
                           style={{ color: "#999797ff", backgroundColor: "white", border: '1px solid gray', borderRadius: '4px', width: '300px', padding: '8px' }}

@@ -439,7 +439,7 @@ const HSNList = () => {
                           </label>
                         </td>
                         <td>{hsn.hsnCode}</td>
-                        <td>{hsn.description}</td>
+                        <td>{hsn.description.length > 100 ? hsn.description.slice(0, 100) + '...' : hsn.description}</td>
                         <td>{new Date(hsn.createdAt).toLocaleDateString("en-GB", {
                           day: '2-digit',
                           month: 'short',

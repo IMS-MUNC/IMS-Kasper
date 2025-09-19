@@ -101,6 +101,14 @@ const Pos=() => {
   const [cashpopup, setCashPopup] = useState(false);
   const CashRef = useRef(null);
   const handleCashPopupChange = () => {
+    if (!selectedCustomer) {
+      toast.error('Please select a customer first');
+      return;
+    }
+    if (selectedItems.length === 0) {
+      toast.error('Please select at least one product');
+      return;
+    }
     setCashPopup(!cashpopup);
   }
   const closeCash = () => {
@@ -154,6 +162,14 @@ const Pos=() => {
   const [cardpopup, setCardPopup] = useState(false);
   const CardRef = useRef(null);
   const handleCardPopupChange = () => {
+    if (!selectedCustomer) {
+      toast.error('Please select a customer first');
+      return;
+    }
+    if (selectedItems.length === 0) {
+      toast.error('Please select at least one product');
+      return;
+    }
     setCardPopup(!cardpopup);
   }
   const closeCard = () => {
@@ -186,6 +202,14 @@ const Pos=() => {
   const [upipopup, setUpiPopup] = useState(false);
   const UpiRef = useRef(null);
   const handleUpiPopupChange = () => {
+    if (!selectedCustomer) {
+      toast.error('Please select a customer first');
+      return;
+    }
+    if (selectedItems.length === 0) {
+      toast.error('Please select at least one product');
+      return;
+    }
     setUpiPopup(!upipopup);
   }
   const closeUpi = () => {
@@ -336,6 +360,76 @@ const Pos=() => {
       document.removeEventListener('mousedown', handleClickOutside);
     }
   }, []);
+
+  // Function to calculate discounted price
+  const calculateDiscountedPrice = (product) => {
+    // First check if product itself has discount properties
+    if (product.discountValue && product.discountValue > 0) {
+      if (product.discountType === 'Percentage') {
+        // Calculate percentage discount from product data
+        const discountAmount = (product.sellingPrice * product.discountValue) / 100;
+        return product.sellingPrice - discountAmount;
+      } else if (product.discountType === 'Fixed') {
+        // Calculate fixed discount from product data
+        return product.sellingPrice - product.discountValue;
+      }
+    }
+    
+    // If no product discount, check if product has discount applied in cart
+    const cartItem = selectedItems.find(item => item._id === product._id);
+    
+    if (cartItem && cartItem.discountValue && cartItem.discountValue > 0) {
+      if (cartItem.discountType === 'Percentage') {
+        // Calculate percentage discount
+        const discountAmount = (product.sellingPrice * cartItem.discountValue) / 100;
+        return product.sellingPrice - discountAmount;
+      } else if (cartItem.discountType === 'Fixed') {
+        // Calculate fixed discount
+        return product.sellingPrice - cartItem.discountValue;
+      }
+    }
+    
+    // Return original price if no discount
+    return product.sellingPrice;
+  };
+
+  // Function to calculate total price after discount for cart items
+  const calculateDiscountedTotalPrice = (item) => {
+    if (item.discountValue && item.discountValue > 0) {
+      if (item.discountType === 'Percentage') {
+        // Calculate percentage discount
+        const discountAmount = (item.sellingPrice * item.discountValue) / 100;
+        const discountedPrice = item.sellingPrice - discountAmount;
+        return item.quantity * discountedPrice;
+      } else if (item.discountType === 'Fixed') {
+        // Calculate fixed discount per unit
+        const discountedPrice = item.sellingPrice - item.discountValue;
+        return item.quantity * discountedPrice;
+      }
+    }
+    
+    // Return original total price if no discount
+    return item.quantity * item.sellingPrice;
+  };
+
+  // Function to calculate tax on discounted price
+  const calculateDiscountedTax = (item) => {
+    if (item.discountValue && item.discountValue > 0) {
+      if (item.discountType === 'Percentage') {
+        // Calculate percentage discount
+        const discountAmount = (item.sellingPrice * item.discountValue) / 100;
+        const discountedPrice = item.sellingPrice - discountAmount;
+        return (discountedPrice * item.tax * item.quantity) / 100;
+      } else if (item.discountType === 'Fixed') {
+        // Calculate fixed discount per unit
+        const discountedPrice = item.sellingPrice - item.discountValue;
+        return (discountedPrice * item.tax * item.quantity) / 100;
+      }
+    }
+    
+    // Return original tax calculation if no discount
+    return (item.sellingPrice * item.tax * item.quantity) / 100;
+  };
 
 //payment done popup-------------------------------------------------------------------------------------------------------
   const [paymentpopup, setPaymentPopup] = useState(false);
@@ -509,6 +603,34 @@ const Pos=() => {
     }
   };
 
+  const handleBagSelection = (bagPrice, bagType) => {
+    // Remove any existing bag from selectedItems
+    const itemsWithoutBag = selectedItems.filter(item => !item.isBag);
+    
+    if (bagCharge === bagPrice) {
+      // If same bag is selected, remove it
+      setBagCharge(0);
+      setSelectedItems(itemsWithoutBag);
+    } else {
+      // Add new bag to selectedItems
+      setBagCharge(bagPrice);
+      const bagItem = {
+        _id: `bag-${bagPrice}`,
+        productName: bagType,
+        sellingPrice: bagPrice,
+        quantity: 1,
+        totalPrice: bagPrice,
+        totalDiscount: 0,
+        totalTax: 0,
+        tax: 0,
+        discountValue: 0,
+        isBag: true, // Flag to identify bag items
+        unit: 'piece'
+      };
+      setSelectedItems([...itemsWithoutBag, bagItem]);
+    }
+  };
+
   const updateItemQuantity = (itemId, newQuantity) => {
     if (newQuantity <= 0) {
       // Remove item if quantity is 0 or negative
@@ -531,7 +653,7 @@ const Pos=() => {
   useEffect(() => {
     const subtotal = selectedItems.reduce((sum, item) => sum + item.totalPrice, 0);
     const discount = selectedItems.reduce((sum, item) => sum + item.totalDiscount, 0);
-    const tax = selectedItems.reduce((sum, item) => sum + item.totalTax, 0);
+    const tax = selectedItems.reduce((sum, item) => sum + calculateDiscountedTax(item), 0);
     const items = selectedItems.length;
     const quantity = selectedItems.reduce((sum, item) => sum + item.quantity, 0);
     
@@ -1152,11 +1274,14 @@ const handleSubmit = async (e) => {
   <div className="content pos-design p-0">
 
     <div className="row pos-wrapper">
+
       {/* Products */}
       <div className="col-md-12 col-lg-7 col-xl-8 d-flex">
         <div className="pos-categories tabs_wrapper p-0 flex-fill">
           <div className="content-wrap">
-            <div className="tab-wrap">
+
+            {/* categories listing */}
+            <div className="tab-wrap" style={{width:'200px',}}>
                <div className='tabs owl-carousel pos-category5' style={{display: "block", height: "100%", overflow: "hidden"}} >
                 <span style={{color:'#676767'}}><b>All Items</b></span>
                 <div 
@@ -1176,7 +1301,7 @@ const handleSubmit = async (e) => {
                   &nbsp;All Items
                 </div>
 
-    {/* categories */}
+              {/* categories */}
               <div style={{lineHeight:'30px',marginTop:'10px',marginBottom:'20px'}}>
                 <span style={{color:'#676767'}}><b>Categories</b></span>
                 <div style={{display:'flex',flexDirection:'column',marginLeft:'10px'}}>
@@ -1202,7 +1327,7 @@ const handleSubmit = async (e) => {
                 </div>
               </div>
 
-              </div>
+                </div>
 
              
               {/* <ul className="tabs owl-carousel pos-category5">
@@ -1219,6 +1344,8 @@ const handleSubmit = async (e) => {
               
               </ul> */}
             </div>
+
+            {/* products listing */}
             <div className="tab-content-wrap">
               <div className="d-flex align-items-center justify-content-between flex-wrap mb-2">
                 <div className="mb-3">
@@ -1362,17 +1489,17 @@ const handleSubmit = async (e) => {
 
                       {/* Category */}
                       <h6 className="cat-name text-center mt-0">
-                        <a href="">{product.category?.categoryName}</a>
+                        {product.category?.categoryName}
                       </h6>
 
                       {/* Product Name */}
                       <h6 className="product-name text-capitalize text-center">
-                        <a href="">{product.productName}</a>
+                        {product.productName}
                       </h6>
 
                       {/* Price, Qty, Cart Quantity */}
                       <div className="d-flex align-items-center justify-content-between price px-2">
-                        <p className="text-gray-9 mb-0">₹{product.sellingPrice}</p>
+                        <p className="text-gray-9 mb-0">₹{calculateDiscountedPrice(product).toFixed(2)}</p>
 
                         <div className="qty-item m-0">
                           {cartQuantity > 0 && (
@@ -1455,11 +1582,10 @@ const handleSubmit = async (e) => {
                 </div>
               </div>
             </div>
+            
           </div>
         </div>
       </div>
-      {/* /Products */}
-      {/* Order Details */}
 
        {/* billing section */}
       <div className="col-md-12 col-lg-5 col-xl-4 ps-0 theiaStickySidebar  position-relative">
@@ -1477,8 +1603,8 @@ const handleSubmit = async (e) => {
                   cursor:'pointer',
                   borderRight:'1px solid #ccc',
                   paddingRight:'15px',
-                  backgroundColor: bagCharge > 0 ? '#E3F3FF' : 'transparent',
-                  borderRadius: bagCharge > 0 ? '8px' : '0px',
+                  backgroundColor: 'transparent',
+                  borderRadius: '0px',
                   padding: '5px 15px'
                 }}
                 onClick={handleBagPopupChange}
@@ -1681,35 +1807,53 @@ const handleSubmit = async (e) => {
                     <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:'8px'}}>
                       
                     <div style={{display:'flex',justifyContent:'center',backgroundColor:'white',width:'50px',height:'50px',alignItems:'center',borderRadius:'8px',overflow:'hidden',cursor:'pointer'}} onClick={() => handleProductDiscountClick(item)}>
-                    {item.images && item.images.length > 0 && item.images[0] ? (
-                      <img
-                        src={item.images[0].url || item.images[0]}
-                        alt={item.productName}
-                        style={{ 
-                          height: "100%", 
-                          width: "100%",
-                          objectFit:'contain',
-                          maxWidth:'100%',
-                          maxHeight:'100%'
-                        }}
-                        onError={(e) => {
-                          e.target.style.display = 'none';
-                          e.target.nextSibling.style.display = 'flex';
-                        }}
-                      />
-                    ) : null}
-                    {/* Fallback icon when no image */}
-                    <div style={{
-                      display: item.images && item.images.length > 0 && item.images[0] ? 'none' : 'flex',
-                      flexDirection:'column',
-                      alignItems:'center',
-                      justifyContent:'center',
-                      color:'#ccc',
-                      fontSize:'24px'
-                    }}>
-                      {/* <SlHandbag style={{fontSize:'40px',marginBottom:'5px'}}/> */}
-                      <span style={{fontSize:'10px'}}>No Image</span>
-                    </div>
+                    {item.isBag ? (
+                      // Show bag icons for bag items
+                      <div style={{
+                        display:'flex',
+                        flexDirection:'column',
+                        alignItems:'center',
+                        justifyContent:'center',
+                        color:'#1368EC',
+                        fontSize:'24px'
+                      }}>
+                        {item.productName === '10Kg Bag' && <SlHandbag style={{fontSize:'30px'}}/>}
+                        {item.productName === '15Kg Bag' && <PiShoppingBagThin style={{fontSize:'35px'}}/>}
+                        {item.productName === '20Kg Bag' && <PiBagThin style={{fontSize:'35px'}}/>}
+                      </div>
+                    ) : (
+                      // Show product images for regular items
+                      <>
+                        {item.images && item.images.length > 0 && item.images[0] ? (
+                          <img
+                            src={item.images[0].url || item.images[0]}
+                            alt={item.productName}
+                            style={{ 
+                              height: "100%", 
+                              width: "100%",
+                              objectFit:'contain',
+                              maxWidth:'100%',
+                              maxHeight:'100%'
+                            }}
+                            onError={(e) => {
+                              e.target.style.display = 'none';
+                              e.target.nextSibling.style.display = 'flex';
+                            }}
+                          />
+                        ) : null}
+                        {/* Fallback icon when no image */}
+                        <div style={{
+                          display: item.images && item.images.length > 0 && item.images[0] ? 'none' : 'flex',
+                          flexDirection:'column',
+                          alignItems:'center',
+                          justifyContent:'center',
+                          color:'#ccc',
+                          fontSize:'24px'
+                        }}>
+                          <span style={{fontSize:'10px'}}>No Image</span>
+                        </div>
+                      </>
+                    )}
                   </div>
 
                       <div style={{flex:1,gap:'10px',display:'flex',flexDirection:'column',marginLeft:'10px',cursor:'pointer'}} onClick={() => handleProductDiscountClick(item)}>
@@ -1719,7 +1863,7 @@ const handleSubmit = async (e) => {
                         <div style={{fontSize:'12px',marginTop:'-8px', display:'flex',gap:'20px'}}>
                           <div>
                             <span style={{color:'black'}}>Price: </span>
-                            <span style={{color:'#666'}}>₹{item.sellingPrice} / {item.unit}</span>
+                            <span style={{color:'#666'}}>₹{item.sellingPrice.toFixed(2)} / {item.unit}</span>
                           </div>
                           <div>
                             <span style={{color:'black'}}>Discount: </span>
@@ -1752,7 +1896,7 @@ const handleSubmit = async (e) => {
                         </span>
                       </div>
                       <div style={{fontWeight:'600',color:'#1368EC'}}>
-                        ₹{item.totalPrice.toFixed(2)}
+                        ₹{calculateDiscountedTotalPrice(item).toFixed(2)}
                       </div>
                     </div>
                   </div>
@@ -1781,12 +1925,12 @@ const handleSubmit = async (e) => {
             <div style={{display:'flex',justifyContent:'space-between',color:'#676767'}}>
               <div>Discount</div>
               <div style={{display:'flex',justifyContent:'space-around',gap:'20px'}}>
-                <span>₹{discount}</span>
+                <span>- ₹{discount}</span>
               </div>
             </div>
             <div style={{display:'flex',justifyContent:'space-between',color:'#676767'}}>
               <span>Tax</span>
-              <span>₹{totalTax}</span>
+              <span>+ ₹{totalTax}</span>
             </div>
             {bagCharge > 0 && (
               <div style={{display:'flex',justifyContent:'space-between',color:'#676767'}}>
@@ -1834,13 +1978,13 @@ const handleSubmit = async (e) => {
                 display:'flex',
                 justifyContent:'space-between',
                 padding:'10px 15px',
-                backgroundColor: (selectedCustomer && selectedItems.length > 0) ? '#1368EC' : '#ccc',
+                backgroundColor: '#1368EC',
                 borderRadius:'8px',
                 color:'white',
                 marginTop:'5px',
-                cursor: (selectedCustomer && selectedItems.length > 0) ? 'pointer' : 'not-allowed'
+                cursor: 'pointer'
               }} 
-              onClick={(selectedCustomer && selectedItems.length > 0) ? handleCashPopupChange : undefined}
+              onClick={handleCashPopupChange}
             >
               <span>Cash</span>
               <span>[F1]</span>
@@ -1856,10 +2000,10 @@ const handleSubmit = async (e) => {
                   borderRadius:'10px',
                   border:'1px solid #E6E6E6',
                   width:'100%',
-                  color: (selectedCustomer && selectedItems.length > 0) ? '#1368EC' : '#ccc',
-                  cursor: (selectedCustomer && selectedItems.length > 0) ? 'pointer' : 'not-allowed',
+                  color: '#1368EC',
+                  cursor: 'pointer',
                 }} 
-                onClick={(selectedCustomer && selectedItems.length > 0) ? handleCardPopupChange : undefined}
+                onClick={handleCardPopupChange}
               >
                 <span>Card</span>
                 <span>[F2]</span>
@@ -1873,10 +2017,10 @@ const handleSubmit = async (e) => {
                   borderRadius:'10px',
                   border:'1px solid #E6E6E6',
                   width:'100%',
-                  color: (selectedCustomer && selectedItems.length > 0) ? '#1368EC' : '#ccc',
-                  cursor: (selectedCustomer && selectedItems.length > 0) ? 'pointer' : 'not-allowed',
+                  color: '#1368EC',
+                  cursor: 'pointer',
                 }} 
-                onClick={(selectedCustomer && selectedItems.length > 0) ? handleUpiPopupChange : undefined}
+                onClick={handleUpiPopupChange}
               >
                 <span>UPI</span>
                 <span>[F3]</span>
@@ -1885,11 +2029,11 @@ const handleSubmit = async (e) => {
 
           </div>
 
-        </div>
+      </div>
 
-      {/* /Order Details */}
     </div>
 
+    {/* footer section of pos */}
     <div className="pos-footer bg-white p-3 border-top">
       <div className="d-flex align-items-center justify-content-center flex-wrap gap-2">
         <a href='/pos' target='_blank' className="btn btn-orange d-inline-flex align-items-center justify-content-center" ><i className="ti ti-player-pause me-2" />Hold</a>
@@ -2256,13 +2400,7 @@ const handleSubmit = async (e) => {
                   border: '1px solid #E6E6E6',
                   color: bagCharge == 10 ? '#1368EC' : 'white',
                 }}
-                onClick={() => {
-                  if (bagCharge === 0) {
-                    setBagCharge(10);
-                  } else {
-                    setBagCharge(0);
-                  }
-                }}
+                onClick={() => handleBagSelection(10, '10Kg Bag')}
               >
               <SlHandbag style={{fontSize:'30px',marginTop:'20px'}} /> 
               <span style={{fontSize:'15px',marginTop:'15px'}}>₹10</span>
@@ -2282,13 +2420,7 @@ const handleSubmit = async (e) => {
                   border: '1px solid #E6E6E6',
                   color: bagCharge == 20 ? '#1368EC' : 'white',
                 }}
-                onClick={() => {
-                  if (bagCharge === 0) {
-                    setBagCharge(20);
-                  } else {
-                    setBagCharge(0);
-                  }
-                }}
+                onClick={() => handleBagSelection(20, '15Kg Bag')}
               >
               <PiShoppingBagThin style={{fontSize:'50px',marginTop:'10px'}} /> 
               <span style={{fontSize:'15px',marginTop:'10px'}}>₹20</span>
@@ -2308,13 +2440,7 @@ const handleSubmit = async (e) => {
                   border: '1px solid #E6E6E6',
                   color: bagCharge == 30 ? '#1368EC' : 'white',
                 }}
-                onClick={() => {
-                  if (bagCharge === 0) {
-                    setBagCharge(30);
-                  } else {
-                    setBagCharge(0);
-                  }
-                }}
+                onClick={() => handleBagSelection(30, '20Kg Bag')}
               >
               <PiBagThin style={{fontSize:'50px',marginTop:'10px'}} /> 
               <span style={{fontSize:'15px',marginTop:'10px'}}>₹30</span>
