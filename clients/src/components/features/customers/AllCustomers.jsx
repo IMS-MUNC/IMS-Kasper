@@ -272,7 +272,7 @@ function AllCustomers({ onClose }) {
           <button onClick={() => { setSelectedCustomer(null); setShowAddModal(true); }} className="add-btn">
             + Add New Customer
           </button>
-          <button className="btn btn-primary">Create</button>
+          {/* <button className="btn btn-primary">Create</button> */}
         </div>
       </div>
 
