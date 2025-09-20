@@ -468,9 +468,10 @@ const SubCategory = () => {
                               key={i}
                               src={img}
                               alt="subcat-img"
-                              height="50"
-                              width="50"
+                              height="30"
+                              width="30"
                               className="me-1"
+                              style={{ borderRadius: '50%' }}
                             />
                           ))}
                         </td>

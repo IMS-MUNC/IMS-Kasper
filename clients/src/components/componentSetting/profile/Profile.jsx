@@ -74,25 +74,25 @@ const UserProfile = () => {
 
 
   // fetch user
-    const fetchUser = async () => {
-      if (!id) return;
-      try {
-        console.log("User ID from URL:", id);
-        const userId = id;
-        const res = await axios.get(`${BASE_URL}/api/user/${userId}`, {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        });
-        console.log("Fetched user:", res.data);
-        setUserData(res.data);
-        if (res.data.profileImage?.url) {
-          setPreviewUrl(res.data.profileImage.url);
-        }
-      } catch (error) {
-        console.error("Error fetching user", error);
-        toast.error("Failed to load user");
+  const fetchUser = async () => {
+    if (!id) return;
+    try {
+      console.log("User ID from URL:", id);
+      const userId = id;
+      const res = await axios.get(`${BASE_URL}/api/user/${userId}`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      console.log("Fetched user:", res.data);
+      setUserData(res.data);
+      if (res.data.profileImage?.url) {
+        setPreviewUrl(res.data.profileImage.url);
       }
+    } catch (error) {
+      console.error("Error fetching user", error);
+      toast.error("Failed to load user");
+    }
   };
   useEffect(() => {
     fetchUser();
@@ -105,13 +105,13 @@ const UserProfile = () => {
     formData.append("profileImage", imageFiles.profileImage);
     try {
       const userId = userData._id;
-    const res =  await axios.put(`${BASE_URL}/api/user/update/${userId}`, formData, {
+      const res = await axios.put(`${BASE_URL}/api/user/update/${userId}`, formData, {
         headers: { Authorization: `Bearer ${token}` },
       });
       if (res.data?.profileImage?.url) {
-      setPreviewUrl(res.data.profileImage.url);
-    } else {
-      await fetchUser();
+        setPreviewUrl(res.data.profileImage.url);
+      } else {
+        await fetchUser();
       }
       toast.success("Profile image updates");
     } catch (error) {
@@ -222,7 +222,7 @@ const UserProfile = () => {
                         onClick={handleIconClick}
                         className="setting-imgupload-btn"
                       >
-                        Upload Image
+                        {previewUrl ? "Change Image" : "Upload Image"}
                       </span>
                     </div>
                     <p style={{ color: '#888888', fontFamily: '"Roboto", sans-serif', fontWeight: 400, fontSize: '12px', marginTop: '10px' }}>

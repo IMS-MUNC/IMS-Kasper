@@ -123,18 +123,42 @@ import BASE_URL from '../../../pages/config/config.js';
 import Logo from "../../../assets/img/logo/munclogotm.png";
 import IconLogo from "../../../assets/img/logo/MuncSmall.svg";
 import { TbBell, TbCirclePlus, TbCommand, TbDeviceLaptop, TbDotsVertical, TbFileText, TbLanguage, TbLogout, TbMail, TbMaximize, TbSearch, TbSettings, TbUserCircle } from 'react-icons/tb';
-import { AiOutlineMenuFold } from 'react-icons/ai';
+import { AiOutlineMenuFold, AiOutlineDown, AiOutlineLeft, AiOutlineRight, AiOutlineUp } from 'react-icons/ai';
+import { NavLink, useLocation } from "react-router-dom";
+import { IoIosArrowForward } from 'react-icons/io';
+
 
 
 const Sidebar = () => {
-  // const [openMenus, setOpenMenus] = useState({});
-  const [sidebarOpen, setSidebarOpen] = useState(false); // For mobile sidebar
-  const [miniSidebar, setMiniSidebar] = useState(false); // For mini sidebar
-  const [hovered, setHovered] = useState(false); // For mini sidebar hover
+//   const [sidebarOpen, setSidebarOpen] = useState(false); // For mobile sidebar
+//   const [miniSidebar, setMiniSidebar] = useState(false); // For mini sidebar
+//   const [hovered, setHovered] = useState(false); // For mini sidebar hover
   const [themeColor, setThemeColor] = useState(localStorage.getItem('color') || 'info');
   const sidebarRef = useRef(null);
-const menuData = getMenuData();
-const { openMenus, toggleMenu, mobileOpen, handleMobileToggle, handleLinkClick } = useSidebar();
+  const menuData = getMenuData();
+	// const { openMenus, toggleMenu, mobileOpen, handleMobileToggle, handleLinkClick } = useSidebar();
+	const {
+  openMenus,
+  toggleMenu,
+  mobileOpen,
+  sidebarOpen, setSidebarOpen,
+  miniSidebar, setMiniSidebar,
+  hovered, setHovered,
+  handleMobileToggle,
+  handleLinkClick,
+} = useSidebar();
+
+	
+	const location = useLocation();
+
+const isPathActive = (path) => {
+  if (!path) return false;
+  // exact match OR prefix match for nested routes
+  return location.pathname === path || location.pathname.startsWith(path + "/");
+	};
+	
+	
+
 	// Handle submenu open/close
 	// const toggleMenu = (idx, iidx) => {
 	// 	setOpenMenus((prev) => ({
@@ -254,7 +278,7 @@ const { openMenus, toggleMenu, mobileOpen, handleMobileToggle, handleLinkClick }
 			{/* Main Sidebar */}
 			
 			<div
-			 className={`sidebar${mobileOpen ? ' slide-nav' : ''}${miniSidebar ? ' mini-sidebar' : ''}${hovered ? ' expand-menu' : ''} ${themeColor}`}
+			className={`sidebar${mobileOpen ? ' slide-nav' : ''}${miniSidebar ? ' mini-sidebar' : ''}${hovered ? ' expand-menu' : ''} ${themeColor}`}
 				id="sidebar"
 				ref={sidebarRef}
 				data-color={themeColor}
@@ -408,102 +432,122 @@ const { openMenus, toggleMenu, mobileOpen, handleMobileToggle, handleLinkClick }
 
 
 				<div className="sidebar-inner slimscroll">
-					<div id="sidebar-menu" className="sidebar-menu">
-						<ul>
-							{menuData.map((section, idx) => (
-								<li key={idx} className="submenu-open">
-									{section.section && (
-										<h6 className="submenu-hdr">{section.section}</h6>
-									)}
-									<ul>
-										{section.items.map((item, iidx) =>
-											item.subItems ? (
-												<li
-													className={`submenu ${openMenus[item.key] ? "open" : ""
-														}`}
-													key={iidx}
-												>
-													<a
-														href="#"
-														className={`subdrop${openMenus[item.key] ? " active" : ""
-															}`}
-														onClick={(e) => {
-															e.preventDefault();
-															toggleMenu(item.key);
-														}}
-													>
-														{item.icon}
-														<span>{item.title}</span>
-														<span className="menu-arrow"></span>
-													</a>
+  <div id="sidebar-menu" className="sidebar-menu">
+    <ul>
+      {menuData.map((section, idx) => (
+        <li key={idx} className="submenu-open">
+          {section.section && <h6 className="submenu-hdr">{section.section}</h6>}
+          <ul>
+            {section.items.map((item, iidx) => {
+              // If item has subItems, determine if any child is active
+              if (item.subItems) {
+                const anyChildActive = item.subItems.some((sub) => {
+                  if (sub.nested) {
+                    return sub.nested.some((n) => isPathActive(n.path));
+                  }
+                  return isPathActive(sub.path);
+                });
+   const isOpen = !!openMenus[item.key] || anyChildActive;
+                return (
+                  <li
+                    className={`submenu ${openMenus[item.key] ? "open" : ""}`}
+                    key={iidx}
+                  >
+                    <a
+                      href="#"
+                      className={`subdrop ${openMenus[item.key] ? "active" : ""} ${anyChildActive ? "active" : ""}`}
+                      onClick={(e) => {
+                        e.preventDefault();
+                        toggleMenu(item.key);
+                      }}
+                    >
+                      {item.icon}
+                      <span>{item.title}</span>
+					{isOpen ? (
+					  <AiOutlineRight
+  className={`menu-arrow ${isOpen ? "rotated" : ""}`}
+/>
 
-													<ul
-														style={{
-															display: openMenus[item.key] ? "block" : "none",
-														}}
-													>
-														{item.subItems.map((sub, subIdx) =>
-															sub.nested ? (
-																<li
-																	key={subIdx}
-																	className={`submenu submenu-two ${openMenus[sub.nestedKey] ? "open" : ""
-																		}`}
-																>
-																	<a
-																		href="#"
-																		onClick={(e) => {
-																			e.preventDefault();
-																			toggleMenu(sub.nestedKey);
-																		}}
-																	>
-																		{sub.label}
-																		<span className="menu-arrow inside-submenu"></span>
-																	</a>
-																	<ul
-																		style={{
-																			display: openMenus[sub.nestedKey]
-																				? "block"
-																				: "none",
-																		}}
-																	>
-																		{sub.nested.map((n, nIdx) => (
-																			<li key={nIdx}>
-																				<Link to={n.path} onClick={handleLinkClick}>
-																					{n.label}
-																				</Link>
-																			</li>
-																		))}
-																	</ul>
-																</li>
-															) : (
-																<li key={subIdx}>
-																	<Link
-																		to={sub.path}
-																		onClick={handleLinkClick}
-																		className={sub.active ? "active" : ""}
-																	>
-																		{sub.label}
-																	</Link>
-																</li>
-															)
-														)}
-													</ul>
-												</li>
-											) : (
-												<li key={iidx}>
-													<Link to={item.path} onClick={handleLinkClick}>
-														{item.icon}
-														<span>{item.label}</span>
-													</Link>
-												</li>
-											)
-										)}
-									</ul>
-								</li>
-							))}
-						</ul>
-					</div>
-				</div>
+					) : (
+					  <AiOutlineUp className="menu-arrow" />
+					)}
+                    </a>
+
+                    <ul
+                      style={{
+                        display: openMenus[item.key] || anyChildActive ? "block" : "none",
+                      }}
+                    >
+                      {item.subItems.map((sub, subIdx) =>
+                        sub.nested ? (
+                          <li
+                            key={subIdx}
+                            className={`submenu submenu-two ${openMenus[sub.nestedKey] ? "open" : ""}`}
+                          >
+                            <a
+                              href="#"
+                              onClick={(e) => {
+                                e.preventDefault();
+                                toggleMenu(sub.nestedKey);
+                              }}
+                              className={openMenus[sub.nestedKey] ? "active" : ""}
+                            >
+                              {sub.label}
+                              <span className={`menu-arrow inside-submenu ${openMenus[sub.nestedKey] ? "rotated" : ""}`}></span>
+                            </a>
+
+                            <ul style={{ display: openMenus[sub.nestedKey] ? "block" : "none" }}>
+                              {sub.nested.map((n, nIdx) => (
+                                <li key={nIdx}>
+                                  <NavLink
+                                    to={n.path}
+                                    onClick={handleLinkClick}
+                                    className={({ isActive }) => (isActive ? "active" : "")}
+                                  >
+                                    {n.label}
+                                  </NavLink>
+                                </li>
+                              ))}
+                            </ul>
+                          </li>
+                        ) : (
+                          <li key={subIdx}>
+                            <NavLink
+                              to={sub.path}
+                              onClick={handleLinkClick}
+                              className={({ isActive }) => (isActive ? "active" : "")}
+                            >
+                              {sub.label}
+                            </NavLink>
+                          </li>
+                        )
+                      )}
+                    </ul>
+                  </li>
+                );
+              }
+
+              // Single-level item (no subItems)
+              return (
+                <li key={iidx}>
+                  <NavLink
+                    to={item.path}
+                    onClick={handleLinkClick}
+                    className={({ isActive }) => (isActive ? "active" : "")}
+                  >
+                    {item.icon}
+                    <span>{item.label}</span>
+                  </NavLink>
+                </li>
+              );
+            })}
+          </ul>
+        </li>
+      ))}
+    </ul>
+  </div>
+</div>
+
 			</div>
 			{/* /Main Sidebar */}
 		</>
