@@ -396,6 +396,7 @@ import { FiEdit } from "react-icons/fi";
 import { RiDeleteBinLine } from "react-icons/ri";
 import { FaAngleLeft } from "react-icons/fa6";
 import { FaChevronRight, FaFileCsv } from "react-icons/fa";
+import { TbEdit, TbRefresh, TbTrash } from 'react-icons/tb';
 
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
@@ -547,7 +548,7 @@ function ProductList() {
     ) {
       try {
         const token = localStorage.getItem("token");
-        await axios.delete(`${BASE_URL}/api/products/${product._id}`, {
+        await axios.delete(`${BASE_URL}/api/products/pro/${product._id}`, {
           headers: {
             Authorization: `Bearer ${token}`,
           },
@@ -649,48 +650,48 @@ function ProductList() {
 
   //import excel-------------------------------------------------------------------------------------------------------------------------------------------------------------
 
-const fileInputRef = useRef();
+  const fileInputRef = useRef();
 
-const handleImportClick = () => {
-  fileInputRef.current.click();
-};
+  const handleImportClick = () => {
+    fileInputRef.current.click();
+  };
 
-const handleFileChange = async (e) => {
-  const file = e.target.files[0];
-  if (!file) return;
-  if (!file.name.endsWith(".xlsx")) {
-    alert("Please select a valid .xlsx file");
-    e.target.value = "";
-    return;
-  }
-
-  try {
-    // Create FormData and append the file
-    const formData = new FormData();
-    formData.append("file", file);
-
-    // Send to backend
-    const token = localStorage.getItem("token");
-    if (!token) {
-      throw new Error("No token found in localStorage");
+  const handleFileChange = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    if (!file.name.endsWith(".xlsx")) {
+      alert("Please select a valid .xlsx file");
+      e.target.value = "";
+      return;
     }
-    await axios.post(`${BASE_URL}/api/products/import`, formData, {
-      headers: {
-        "Content-Type": "multipart/form-data",
-        Authorization: `Bearer ${token}`,
-      },
-    });
-    toast.success("Imported successfully!");
-  } catch (err) {
-    console.error("Import Error:", err.response?.data || err.message || err);
-    alert(
-      "Error while Import: " +
+
+    try {
+      // Create FormData and append the file
+      const formData = new FormData();
+      formData.append("file", file);
+
+      // Send to backend
+      const token = localStorage.getItem("token");
+      if (!token) {
+        throw new Error("No token found in localStorage");
+      }
+      await axios.post(`${BASE_URL}/api/products/import`, formData, {
+        headers: {
+          "Content-Type": "multipart/form-data",
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      toast.success("Imported successfully!");
+    } catch (err) {
+      console.error("Import Error:", err.response?.data || err.message || err);
+      alert(
+        "Error while Import: " +
         (err.response?.data?.message || err.message || "Unknown error")
-    );
-  } finally {
-    e.target.value = ""; // Clear input
-  }
-};
+      );
+    } finally {
+      e.target.value = ""; // Clear input
+    }
+  };
 
   return (
     <div className="page-wrapper ">
@@ -721,17 +722,36 @@ const handleFileChange = async (e) => {
 
               <div className="d-flex gap-2">
                 <div className="table-top-head me-2">
-                  <li>
+                  <li style={{ display: "flex", alignItems: "center", gap: '5px' }} className="icon-btn">
+                    <label className="" title="">Export : </label>
                     <button
                       type="button"
-                      className="icon-btn"
                       title="Pdf"
+                      style={{
+                        backgroundColor: "white",
+                        display: "flex",
+                        alignItems: "center",
+                        border: "none",
+                      }}
                       onClick={handlePdf}
                     >
                       <FaFilePdf style={{ color: "red" }} />
                     </button>
+                    <button
+                      type="button"
+                      title="Export Excel"
+                      style={{
+                        backgroundColor: "white",
+                        display: "flex",
+                        alignItems: "center",
+                        border: "none",
+                      }}
+                      onClick={handleExcel}
+                    >
+                      <FaFileExcel style={{ color: "orange" }} />
+                    </button>
                   </li>
-                  <li>
+                  {/* <li>
                     <button
                       type="button"
                       className="icon-btn"
@@ -740,10 +760,11 @@ const handleFileChange = async (e) => {
                     >
                       <FaFileExcel style={{ color: "orange" }} />
                     </button>
-                  </li>
-                  <li>
+                  </li> */}
+                  <li style={{ display: "flex", alignItems: "center", gap: '5px' }} className="icon-btn">
                     {/* <label className="icon-btn m-0" title="Import Excel"><input type="file" accept=".xlsx, .xls" hidden /><FaFileExcel style={{ color: "green" }} /></label> */}
-                    <label className="icon-btn m-0" title="Import Excel">
+                    <label className="" title="">Import : </label>
+                    <label className="" title="Import Excel">
                       <button
                         type="button"
                         onClick={handleImportClick}
@@ -764,6 +785,9 @@ const handleFileChange = async (e) => {
                         onChange={handleFileChange}
                       />
                     </label>
+                  </li>
+                  <li>
+                    <button data-bs-toggle="tooltip" data-bs-placement="top" title="Refresh" onClick={() => location.reload()} className="fs-20" style={{ backgroundColor: 'white', color: '', padding: '5px 5px', display: 'flex', alignItems: 'center', border: '1px solid #e8eaebff', cursor: 'pointer', borderRadius: '4px' }}><TbRefresh className="ti ti-refresh" /></button>
                   </li>
                 </div>
                 <Link to="/add-product">
@@ -1197,8 +1221,8 @@ const handleFileChange = async (e) => {
                         </h6>
                       </div>
                     </div>
-                    <div style={{position:'relative',top:'25px',right:'20px'}}>
-                      <span style={{backgroundColor:'red',color:'white',padding:'5px 13px',borderRadius:'50%',cursor:'pointer',fontSize:'20px'}} onClick={handlePopupClose}>x</span>
+                    <div style={{ position: 'relative', top: '25px', right: '20px' }}>
+                      <span style={{ backgroundColor: 'red', color: 'white', padding: '5px 13px', borderRadius: '50%', cursor: 'pointer', fontSize: '20px' }} onClick={handlePopupClose}>x</span>
                     </div>
                   </div>
 
@@ -1209,8 +1233,8 @@ const handleFileChange = async (e) => {
                         <div
                           key={tab}
                           className={`button-${activeTabs[selectedProduct._id] === tab
-                              ? "active"
-                              : "inactive"
+                            ? "active"
+                            : "inactive"
                             } button-${tab}`}
                           onClick={() =>
                             handleTabClick(selectedProduct._id, tab)
@@ -1256,11 +1280,11 @@ const handleFileChange = async (e) => {
                                   marginTop: "-20px",
                                 }}
                               >
-                                {selectedProduct.category?.categoryName}
+                                {selectedProduct.category?.categoryName || "N/A"}
                               </p>
                             </div>
                             <div className="category-item">
-                              <p className="label">Supplier SKU</p>
+                              <p className="label">Sub Category</p>
                               <p
                                 className="value"
                                 style={{
@@ -1270,7 +1294,21 @@ const handleFileChange = async (e) => {
                                   marginTop: "-20px",
                                 }}
                               >
-                                KAPL-011
+                                {selectedProduct.subcategory?.subCategoryName || "N/A"}
+                              </p>
+                            </div>
+                            <div className="category-item">
+                              <p className="label">Initial Stock</p>
+                              <p
+                                className="value"
+                                style={{
+                                  textTransform: "capitalize",
+                                  padding: "4px 10px",
+                                  fontSize: "20px",
+                                  marginTop: "-20px",
+                                }}
+                              >
+                                {selectedProduct.initialStock || "N/A"}
                               </p>
                             </div>
                             <div className="category-item">
@@ -1284,7 +1322,7 @@ const handleFileChange = async (e) => {
                                   marginTop: "-20px",
                                 }}
                               >
-                                {selectedProduct.reorderLevel}
+                                {selectedProduct.reorderLevel || "N/A"}
                               </p>
                             </div>
                           </div>
@@ -1302,7 +1340,7 @@ const handleFileChange = async (e) => {
                                   marginTop: "-20px",
                                 }}
                               >
-                                {selectedProduct.brand?.brandName}
+                                {selectedProduct.brand?.brandName || "N/A"}
                               </p>
                             </div>
                             <div className="category-item">
@@ -1316,12 +1354,12 @@ const handleFileChange = async (e) => {
                                   marginTop: "-20px",
                                 }}
                               >
-                                {selectedProduct.itemBarcode}
+                                {selectedProduct.itemBarcode || "N/A"}
                               </p>
                               {/* <p className="value">EAN - 1234 5678 9090</p> */}
                             </div>
                             <div className="category-item">
-                              <p className="label">Initial Stock Quantity</p>
+                              <p className="label">Lead Time</p>
                               <p
                                 className="value"
                                 style={{
@@ -1331,7 +1369,21 @@ const handleFileChange = async (e) => {
                                   marginTop: "-20px",
                                 }}
                               >
-                                {selectedProduct.initialStock}
+                                {selectedProduct.leadTime || "N/A"}
+                              </p>
+                            </div>
+                            <div className="category-item">
+                              <p className="label">Serial Number</p>
+                              <p
+                                className="value"
+                                style={{
+                                  textTransform: "capitalize",
+                                  padding: "4px 10px",
+                                  fontSize: "20px",
+                                  marginTop: "-20px",
+                                }}
+                              >
+                                {selectedProduct.serialNumber || "N/A"}
                               </p>
                             </div>
                           </div>
@@ -1349,7 +1401,21 @@ const handleFileChange = async (e) => {
                                   marginTop: "-20px",
                                 }}
                               >
-                                {selectedProduct.itemType}
+                                {selectedProduct.itemType || "N/A"}
+                              </p>
+                            </div>
+                            <div className="category-item">
+                              <p className="label">Warehouse Name</p>
+                              <p
+                                className="value"
+                                style={{
+                                  textTransform: "capitalize",
+                                  padding: "4px 10px",
+                                  fontSize: "20px",
+                                  marginTop: "-20px",
+                                }}
+                              >
+                                {selectedProduct.warehouseName || "N/A"}
                               </p>
                             </div>
                             <div className="category-item">
@@ -1363,11 +1429,13 @@ const handleFileChange = async (e) => {
                                   marginTop: "-20px",
                                 }}
                               >
-                                {selectedProduct.warehouse}
+                                {selectedProduct.warehouse?.country}
+                                {selectedProduct.warehouse?.state}
+                                {selectedProduct.warehouse?.city || "N/A"}
                               </p>
                             </div>
                             <div className="category-item">
-                              <p className="label">Track by</p>
+                              <p className="label">Warehouse Owner</p>
                               <p
                                 className="value"
                                 style={{
@@ -1377,7 +1445,7 @@ const handleFileChange = async (e) => {
                                   marginTop: "-20px",
                                 }}
                               >
-                                Serial No.
+                                {selectedProduct.warehouse?.warehouseOwner || "N/A"}
                               </p>
                             </div>
                           </div>
@@ -1399,7 +1467,7 @@ const handleFileChange = async (e) => {
                               </p>
                             </div>
                             <div className="category-item">
-                              <p className="label">Warehouse</p>
+                              <p className="label">Store</p>
                               <p
                                 className="value"
                                 style={{
@@ -1409,7 +1477,7 @@ const handleFileChange = async (e) => {
                                   marginTop: "-20px",
                                 }}
                               >
-                                {selectedProduct.warehouseName || "-"}
+                                {selectedProduct.store || "-"}
                               </p>
                             </div>
                             <div className="category-item">
@@ -1423,7 +1491,7 @@ const handleFileChange = async (e) => {
                                   marginTop: "-20px",
                                 }}
                               >
-                                {selectedProduct.leadTime}
+                                {selectedProduct.leadTime || "N/A"}
                               </p>
                             </div>
                             <div className="category-item">
@@ -1522,7 +1590,7 @@ const handleFileChange = async (e) => {
                                   marginTop: "-20px",
                                 }}
                               >
-                                {selectedProduct.discountValue}
+                                {selectedProduct.discountValue} {selectedProduct.discountType == "Percentage" ? "%" : 'rupee'}
                               </p>
                               {/* <p className="value">EAN - 1234 5678 9090</p> */}
                             </div>
@@ -1537,7 +1605,7 @@ const handleFileChange = async (e) => {
                                   marginTop: "-20px",
                                 }}
                               >
-                                {selectedProduct.tax}
+                                {selectedProduct.tax}%
                               </p>
                             </div>
                           </div>
@@ -1561,8 +1629,34 @@ const handleFileChange = async (e) => {
                               </p>
                             </div>
                             <div className="category-item">
-                              <p className="label">Discount Period</p>
-                              {/* <p className="value">{product.purchasePrice}</p> */}
+                              <p className="label">
+                                Retail Price
+                              </p>
+                              <p
+                                className="value"
+                                style={{
+                                  textTransform: "capitalize",
+                                  padding: "4px 10px",
+                                  fontSize: "20px",
+                                  marginTop: "-20px",
+                                }}
+                              >
+                                {selectedProduct.retailPrice}
+                              </p>
+                            </div>
+                            <div className="category-item">
+                              <p className="label">GST Type</p>
+                              <p
+                                className="value"
+                                style={{
+                                  textTransform: "capitalize",
+                                  padding: "4px 10px",
+                                  fontSize: "20px",
+                                  marginTop: "-20px",
+                                }}
+                              >
+                                {selectedProduct.taxType}
+                              </p>
                             </div>
                           </div>
 
@@ -1580,6 +1674,20 @@ const handleFileChange = async (e) => {
                                 }}
                               >
                                 {selectedProduct.quantity}
+                              </p>
+                            </div>
+                            <div className="category-item">
+                              <p className="label">Quantity Alert</p>
+                              <p
+                                className="value"
+                                style={{
+                                  textTransform: "capitalize",
+                                  padding: "4px 10px",
+                                  fontSize: "20px",
+                                  marginTop: "-20px",
+                                }}
+                              >
+                                {selectedProduct.quantityAlert}
                               </p>
                             </div>
                           </div>

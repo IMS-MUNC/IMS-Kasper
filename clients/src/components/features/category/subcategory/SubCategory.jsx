@@ -15,6 +15,7 @@ import { MdNavigateNext } from "react-icons/md";
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import Papa from 'papaparse';
+import * as XLSX from 'xlsx';
 
 const SubCategory = () => {
   const [categories, setCategories] = useState([]);
@@ -111,9 +112,14 @@ const SubCategory = () => {
     }
 
     try {
+      const token = localStorage.getItem("token");
       await Promise.all(
         selectedSubCategories.map((id) =>
-          axios.delete(`${BASE_URL}/api/subcategory/subcategories/${id}`)
+          axios.delete(`${BASE_URL}/api/subcategory/subcategories/${id}`, {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          })
         )
       );
       toast.success("Selected subcategories deleted successfully");
@@ -121,7 +127,13 @@ const SubCategory = () => {
       setSelectedSubCategories([]);
       setSelectAll(false);
     } catch (error) {
-      toast.error("Failed to delete selected subcategories");
+      if (error.response?.status === 401) {
+        toast.error("Unauthorized: Please login again");
+      } else if (error.response?.status === 403) {
+        toast.error("Forbidden: You don't have permission to delete subcategories");
+      } else {
+        toast.error(error.response?.data?.message || "Failed to delete selected subcategories");
+      }
     }
   };
 
@@ -177,12 +189,21 @@ const SubCategory = () => {
       setDescription("");
       setStatus(true); // or whatever default
       setImages([]);
+      setImagePreviews([]);
       setSelectedCategory(null);
-      fetchSubcategories();
-      window.$("#add-category").modal("hide");
+
+      // Force immediate cleanup before fetching data
+      forceCleanupModal();
+      closeAddModal();
+
+      // Fetch updated data after modal cleanup
+      setTimeout(() => {
+        fetchSubcategories();
+      }, 100);
     } catch (error) {
       console.error("Submit Error:", error);
       toast.error(error.message || "Failed to add subcategory");
+      closeAddModal();
     }
   };
 
@@ -261,10 +282,15 @@ const SubCategory = () => {
         }
       );
       toast.success("Subcategory updated successfully!");
+
+      // Force immediate cleanup before fetching data
+      forceCleanupModal();
+
       fetchSubcategories();
-      window.$("#edit-category").modal("hide");
+      closeEditModal();
     } catch (error) {
       toast.error(error.message || "Failed to update subcategory");
+      closeEditModal();
     }
   };
 
@@ -288,6 +314,84 @@ const SubCategory = () => {
         error.response?.data?.message || "Failed to delete subcategory"
       );
     }
+  };
+
+  // Enhanced modal cleanup functions for Bootstrap 5
+  const forceCleanupModal = () => {
+    // Remove ALL modal backdrops (in case there are multiple)
+    const backdrops = document.querySelectorAll('.modal-backdrop');
+    backdrops.forEach(backdrop => backdrop.remove());
+
+    // Remove modal-open class and reset body styles
+    document.body.classList.remove('modal-open');
+    document.body.style.overflow = '';
+    document.body.style.paddingRight = '';
+    document.body.style.marginRight = '';
+
+    // Remove any Bootstrap 5 specific classes
+    document.body.classList.remove('modal-backdrop');
+    document.documentElement.style.overflow = '';
+
+    // Force remove any lingering modal states
+    const modals = document.querySelectorAll('.modal.show');
+    modals.forEach(modal => {
+      modal.classList.remove('show');
+      modal.style.display = 'none';
+      modal.setAttribute('aria-hidden', 'true');
+      modal.removeAttribute('aria-modal');
+    });
+  };
+
+  const closeAddModal = () => {
+    // Close modal immediately
+    const modal = window.$("#add-category");
+    modal.modal("hide");
+
+    // Force immediate cleanup
+    forceCleanupModal();
+
+    // Additional cleanup after animation
+    setTimeout(() => {
+      forceCleanupModal();
+    }, 100);
+  };
+
+  const closeEditModal = () => {
+    // Close modal immediately  
+    const modal = window.$("#edit-category");
+    modal.modal("hide");
+
+    // Force immediate cleanup
+    forceCleanupModal();
+
+    // Additional cleanup after animation
+    setTimeout(() => {
+      forceCleanupModal();
+    }, 100);
+  };
+
+  // Cancel handlers for modals
+  const handleCancelAdd = () => {
+    // Clear form fields
+    setSubCategoryName("");
+    setDescription("");
+    setStatus(true);
+    setImages([]);
+    setImagePreviews([]);
+    setSelectedCategory(null);
+    setErrors({});
+
+    closeAddModal();
+  };
+
+  const handleCancelEdit = () => {
+    // Clear editing state
+    setEditingSubCategory(null);
+    setImages([]);
+    setImagePreviews([]);
+    setErrors({});
+
+    closeEditModal();
   };
 
   //pdf download------------------------------------------------------------------------------------------------------------------------------------------
@@ -356,6 +460,41 @@ const SubCategory = () => {
     document.body.removeChild(link);
   }
 
+  //excel export--------------------------------------------------------------------------------------------------------------------------------------------------
+
+  const handleExcel = () => {
+    // Prepare data for Excel export
+    const excelData = subcategories.map((subcategory) => ({
+      "Category Code": subcategory.category?.categoryCode || "",
+      "Category": subcategory.category?.categoryName || "",
+      "Sub Category": subcategory.subCategoryName || "",
+      "Description": subcategory.description || "",
+      "Status": subcategory.status ? "Active" : "Inactive",
+      "Created On": subcategory.createdAt ? new Date(subcategory.createdAt).toLocaleDateString() : "",
+    }));
+
+    // Create a new workbook and worksheet
+    const workbook = XLSX.utils.book_new();
+    const worksheet = XLSX.utils.json_to_sheet(excelData);
+
+    // Set column widths for better formatting
+    const columnWidths = [
+      { wch: 15 }, // Category Code
+      { wch: 25 }, // Category
+      { wch: 25 }, // Sub Category
+      { wch: 30 }, // Description
+      { wch: 12 }, // Status
+      { wch: 15 }, // Created On
+    ];
+    worksheet["!cols"] = columnWidths;
+
+    // Add the worksheet to the workbook
+    XLSX.utils.book_append_sheet(workbook, worksheet, "Sub Categories");
+
+    // Generate Excel file and trigger download
+    XLSX.writeFile(workbook, "sub-categories.xlsx");
+  };
+
 
   return (
     <div className="page-wrapper">
@@ -379,22 +518,33 @@ const SubCategory = () => {
                   Delete ({selectedSubCategories.length}) Selected
                 </button>
               )}</li>
-            <li>
-              <button type="button" className="icon-btn" title="Pdf" onClick={handlePdf}>
-                <FaFilePdf />
-              </button>
+            <li style={{ display: "flex", alignItems: "center", gap: '5px' }} className="icon-btn">
+              <label className="" title="">Export : </label>
+              <button onClick={handlePdf} title="Download PDF" style={{
+                backgroundColor: "white",
+                display: "flex",
+                alignItems: "center",
+                border: "none",
+              }}><FaFilePdf className="fs-20" style={{ color: "red" }} /></button>
+              <button onClick={handleExcel} title="Download Excel" style={{
+                backgroundColor: "white",
+                display: "flex",
+                alignItems: "center",
+                border: "none",
+              }}><FaFileExcel className="fs-20" style={{ color: "orange" }} /></button>
             </li>
-            <li>
-              <label className="icon-btn m-0" title="Import Excel">
+            <li style={{ display: "flex", alignItems: "center", gap: '5px' }} className="icon-btn">
+              <label className="" title="">Import : </label>
+              <label className="" title="Import Excel">
                 <input type="file" accept=".xlsx, .xls" hidden />
                 <FaFileExcel style={{ color: "green" }} />
               </label>
             </li>
-            <li>
-              <button type="button" className="icon-btn" title="Export Excel" onClick={handleCSV}>
+            {/* <li>
+              <button type="button" className="icon-btn" title="Export Excel" onClick={handleExcel}>
                 <FaFileExcel />
               </button>
-            </li>
+            </li> */}
           </div>
           <div className="page-btn d-flex gap-2">
 
@@ -468,8 +618,10 @@ const SubCategory = () => {
                               key={i}
                               src={img}
                               alt="subcat-img"
+
                               height="30"
                               width="30"
+
                               className="me-1"
                               style={{ borderRadius: '50%' }}
                             />
@@ -698,7 +850,7 @@ const SubCategory = () => {
                   <button
                     type="button"
                     className="btn me-2 btn-secondary"
-                    data-bs-dismiss="modal"
+                    onClick={handleCancelAdd}
                   >
                     Cancel
                   </button>
@@ -911,7 +1063,7 @@ const SubCategory = () => {
                   <button
                     type="button"
                     className="btn me-2 btn-secondary"
-                    data-bs-dismiss="modal"
+                    onClick={handleCancelEdit}
                   >
                     Cancel
                   </button>

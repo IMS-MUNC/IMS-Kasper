@@ -9,6 +9,10 @@ import BASE_URL from '../../../../pages/config/config';
 import * as XLSX from "xlsx";
 import { GrFormPrevious } from "react-icons/gr";
 import { MdNavigateNext } from "react-icons/md";
+import DeleteAlert from "../../../../utils/sweetAlert/DeleteAlert";
+import { sanitizeInput } from "../../../../utils/sanitize";
+import jsPDF from "jspdf";
+import autoTable from "jspdf-autotable";
 
 const HSNList = () => {
   const [data, setData] = useState([]);
@@ -45,6 +49,9 @@ const HSNList = () => {
   };
 
   const remove = async (id) => {
+    const confirmed = await DeleteAlert({});
+    if (!confirmed) return;
+
     try {
       const token = localStorage.getItem("token")
       await axios.delete(`${BASE_URL}/api/hsn/${id}`, {
@@ -53,8 +60,10 @@ const HSNList = () => {
         },
       });
       load();
+      toast.success("HSN deleted successfully!");
     } catch (err) {
       console.error('Error deleting HSN:', err);
+      toast.error("Failed to delete HSN. Please try again.");
     }
   };
 
@@ -76,6 +85,67 @@ const HSNList = () => {
     } catch (err) {
       console.error('Export error:', err);
     }
+  };
+
+  // PDF download functionality
+  const handlePdf = () => {
+    const doc = new jsPDF();
+    doc.text("HSN List", 14, 15);
+    const tableColumns = [
+      "HSN Code",
+      "Description",
+      "Created Date",
+    ];
+
+    const tableRows = data.map((e) => [
+      e.hsnCode,
+      e.description,
+      new Date(e.createdAt).toLocaleDateString(),
+    ]);
+
+    autoTable(doc, {
+      head: [tableColumns],
+      body: tableRows,
+      startY: 20,
+      styles: {
+        fontSize: 8,
+      },
+      headStyles: {
+        fillColor: [155, 155, 155],
+        textColor: "white",
+      },
+      theme: "striped",
+    });
+
+    doc.save("hsn-list.pdf");
+  };
+
+  // Excel export functionality
+  const handleExcel = () => {
+    // Prepare data for Excel export
+    const excelData = data.map((hsn) => ({
+      "HSN Code": hsn.hsnCode,
+      "Description": hsn.description,
+      "Created Date": new Date(hsn.createdAt).toLocaleDateString(),
+    }));
+
+    // Create a new workbook and worksheet
+    const workbook = XLSX.utils.book_new();
+    const worksheet = XLSX.utils.json_to_sheet(excelData);
+
+    // Set column widths for better formatting
+    const columnWidths = [
+      { wch: 15 }, // HSN Code
+      { wch: 40 }, // Description
+      { wch: 15 }, // Created Date
+    ];
+    worksheet["!cols"] = columnWidths;
+
+    // Add the worksheet to the workbook
+    XLSX.utils.book_append_sheet(workbook, worksheet, "HSN List");
+
+    // Generate Excel file and trigger download
+    XLSX.writeFile(workbook, "hsn-list.xlsx");
   };
 
 
@@ -125,22 +195,36 @@ const HSNList = () => {
     let newErrors = {};
     const { hsnCode, description, id } = modalData;
 
+    // Validate HSN Code
     const hsnRegex = /^[0-9]{2,8}$/;
-    if (!hsnRegex.test(hsnCode)) {
+    if (!hsnCode || !hsnCode.trim()) {
+      newErrors.hsnCode = "HSN code is required";
+    } else if (!hsnRegex.test(hsnCode.trim())) {
       newErrors.hsnCode = "HSN code must be 2-8 digits";
-      toast.error("HSN code must be 2-8 digits")
-      return;
     }
+
+    // Validate Description
+    if (!description || !description.trim()) {
+      newErrors.description = "Description is required";
+    }
+
+    // If there are validation errors, show them and return
     if (Object.keys(newErrors).length > 0) {
-      setErrors(newErrors)
+      setErrors(newErrors);
+      toast.error("Please fix the validation errors");
       return;
     }
 
+    // Clear any previous errors
+    setErrors({});
+
     try {
-      const token = localStorage.getItem("token")
-      const cleanhsnCode = sanitizeInput(hsnCode)
-      const cleanhsnDescription = sanitizeInput(description)
+      const token = localStorage.getItem("token");
+      const cleanhsnCode = sanitizeInput(hsnCode.trim());
+      const cleanhsnDescription = sanitizeInput(description.trim());
+
       if (modalData.id) {
+        // Update existing HSN
         await axios.put(`${BASE_URL}/api/hsn/${modalData.id}`, {
           hsnCode: cleanhsnCode,
           description: cleanhsnDescription
@@ -149,7 +233,9 @@ const HSNList = () => {
             Authorization: `Bearer ${token}`,
           },
         });
+        toast.success("HSN updated successfully!");
       } else {
+        // Create new HSN
         await axios.post(`${BASE_URL}/api/hsn`, {
           hsnCode: cleanhsnCode,
           description: cleanhsnDescription
@@ -158,18 +244,37 @@ const HSNList = () => {
             Authorization: `Bearer ${token}`,
           },
         });
+        toast.success("HSN created successfully!");
       }
+
+      // Reset modal and reload data
       setModalData({ hsnCode: '', description: '', id: null });
       setShowModal(false);
+      setErrors({});
       load();
     } catch (err) {
       console.error('Save error:', err);
+
+      // Handle specific error cases
+      if (err.response?.status === 400) {
+        toast.error(err.response.data.message || "Invalid data provided");
+      } else if (err.response?.status === 409) {
+        toast.error("HSN code already exists");
+      } else if (err.response?.status === 401) {
+        toast.error("Unauthorized. Please login again");
+      } else {
+        toast.error("Failed to save HSN. Please try again");
+      }
     }
   };
 
   const openModal = (item = null) => {
-    if (item) setModalData({ hsnCode: item.hsnCode, description: item.description, id: item._id });
-    else setModalData({ hsnCode: '', description: '', id: null });
+    if (item) {
+      setModalData({ hsnCode: item.hsnCode, description: item.description, id: item._id });
+    } else {
+      setModalData({ hsnCode: '', description: '', id: null });
+    }
+    setErrors({}); // Clear any previous errors
     setShowModal(true);
   };
 
@@ -239,13 +344,24 @@ const HSNList = () => {
               )}
 
             </li>
-            <li>
-              <button type="button" className="icon-btn" title="Pdf">
-                <FaFilePdf />
-              </button>
+            <li style={{ display: "flex", alignItems: "center", gap: '5px' }} className="icon-btn">
+              <label className="" title="">Export : </label>
+              <button onClick={handlePdf} title="Download PDF" style={{
+                backgroundColor: "white",
+                display: "flex",
+                alignItems: "center",
+                border: "none",
+              }}><FaFilePdf className="fs-20" style={{ color: "red" }} /></button>
+              <button onClick={handleExcel} title="Download Excel" style={{
+                backgroundColor: "white",
+                display: "flex",
+                alignItems: "center",
+                border: "none",
+              }}><FaFileExcel className="fs-20" style={{ color: "orange" }} /></button>
             </li>
-            <li>
-              <label className="icon-btn m-0" title="Import Excel">
+            <li style={{ display: "flex", alignItems: "center", gap: '5px' }} className="icon-btn">
+              <label className="" title="">Import : </label>
+              <label className="" title="Import Excel">
                 <input
                   type="file"
                   accept=".xlsx,.xls,.csv"
@@ -256,11 +372,11 @@ const HSNList = () => {
                 <FaFileExcel style={{ color: 'green', cursor: 'pointer' }} />
               </label>
             </li>
-            <li>
-              <button type="button" className="icon-btn" title="Export Excel">
+            {/* <li>
+              <button type="button" className="icon-btn" title="Export Excel" onClick={handleExcel}>
                 <FaFileExcel />
               </button>
-            </li>
+            </li> */}
           </div>
           <div className="page-btn">
             <a
@@ -323,7 +439,7 @@ const HSNList = () => {
                           </label>
                         </td>
                         <td>{hsn.hsnCode}</td>
-                        <td>{hsn.description}</td>
+                        <td>{hsn.description.length > 100 ? hsn.description.slice(0, 100) + '...' : hsn.description}</td>
                         <td>{new Date(hsn.createdAt).toLocaleDateString("en-GB", {
                           day: '2-digit',
                           month: 'short',
@@ -333,9 +449,11 @@ const HSNList = () => {
                           <div className="edit-delete-action">
                             <a
                               className="me-2 p-2"
-                              data-bs-toggle="modal"
-                              data-bs-target="#edit-brand"
-                              onClick={() => openModal(hsn)}
+                              href="#"
+                              onClick={(e) => {
+                                e.preventDefault();
+                                openModal(hsn);
+                              }}
                             >
                               <TbEdit />
                             </a>

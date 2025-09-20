@@ -12,6 +12,10 @@ import { hasPermission } from "../../../utils/permission/hasPermission";
 import { sanitizeInput } from "../../../utils/sanitize";
 import { GrFormPrevious } from "react-icons/gr";
 import { MdNavigateNext } from "react-icons/md";
+import jsPDF from "jspdf";
+import autoTable from "jspdf-autotable";
+import html2canvas from "html2canvas";
+import * as XLSX from "xlsx";
 
 const Brand = () => {
   const [brandName, setBrandName] = useState("");
@@ -301,6 +305,87 @@ const Brand = () => {
     }
   };
 
+  // PDF export function
+  const exportToPDF = async () => {
+    try {
+      const doc = new jsPDF();
+
+      // Add title
+      doc.text("Brand Report", 14, 15);
+
+      // Define table columns
+      const tableColumns = ["Brand Name", "Created Date", "Status", "Description"];
+
+      // Prepare table rows
+      const tableRows = filteredBrands.map((brand) => [
+        brand.brandName || "N/A",
+        new Date(brand.createdAt).toLocaleDateString(),
+        brand.status || "N/A",
+        brand.description || "N/A"
+      ]);
+
+      // Create table using autoTable
+      autoTable(doc, {
+        head: [tableColumns],
+        body: tableRows,
+        startY: 20,
+        styles: {
+          fontSize: 8,
+        },
+        headStyles: {
+          fillColor: [155, 155, 155],
+          textColor: "white",
+        },
+        theme: "striped",
+      });
+
+      // Save the PDF
+      doc.save(`brands_report_${new Date().toISOString().split('T')[0]}.pdf`);
+      toast.success("PDF exported successfully!");
+    } catch (error) {
+      console.error("PDF export failed:", error);
+      toast.error("Failed to export PDF");
+    }
+  };
+
+  // Excel export function
+  const exportToExcel = () => {
+    try {
+      // Prepare data for Excel
+      const excelData = filteredBrands.map((brand, index) => ({
+        "S.No": index + 1,
+        "Brand Name": brand.brandName || "N/A",
+        "Created Date": new Date(brand.createdAt).toLocaleDateString(),
+        "Status": brand.status || "N/A",
+        "Description": brand.description || "N/A"
+      }));
+
+      // Create workbook and worksheet
+      const wb = XLSX.utils.book_new();
+      const ws = XLSX.utils.json_to_sheet(excelData);
+
+      // Set column widths
+      const colWidths = [
+        { wch: 8 },  // S.No
+        { wch: 20 }, // Brand Name
+        { wch: 15 }, // Created Date
+        { wch: 12 }, // Status
+        { wch: 30 }  // Description
+      ];
+      ws['!cols'] = colWidths;
+
+      // Add worksheet to workbook
+      XLSX.utils.book_append_sheet(wb, ws, "Brands");
+
+      // Save the file
+      XLSX.writeFile(wb, `brands_report_${new Date().toISOString().split('T')[0]}.xlsx`);
+      toast.success("Excel file exported successfully!");
+    } catch (error) {
+      console.error("Excel export failed:", error);
+      toast.error("Failed to export Excel file");
+    }
+  };
+
   // derive page IDs + select-all status
   const pageIds = paginatedBrands.map((b) => b._id);
   const allSelectedOnPage =
@@ -327,22 +412,38 @@ const Brand = () => {
                 </button>
               )}
             </li>
-            <li>
-              <button type="button" className="icon-btn" title="Pdf">
-                <FaFilePdf />
-              </button>
+            <li style={{ display: "flex", alignItems: "center", gap: '5px' }} className="icon-btn">
+              <label className="" title="">Export : </label>
+              <button onClick={exportToPDF} title="Download PDF" style={{
+                backgroundColor: "white",
+                display: "flex",
+                alignItems: "center",
+                border: "none",
+              }}><FaFilePdf className="fs-20" style={{ color: "red" }} /></button>
+              <button onClick={exportToExcel} title="Download Excel" style={{
+                backgroundColor: "white",
+                display: "flex",
+                alignItems: "center",
+                border: "none",
+              }}><FaFileExcel className="fs-20" style={{ color: "orange" }} /></button>
             </li>
-            <li>
-              <label className="icon-btn m-0" title="Import Excel">
+            <li style={{ display: "flex", alignItems: "center", gap: '5px' }} className="icon-btn">
+              <label className="" title="">Import : </label>
+              <label className="" title="Import Excel">
                 <input type="file" accept=".xlsx, .xls" hidden />
                 <FaFileExcel style={{ color: "green" }} />
               </label>
             </li>
-            <li>
-              <button type="button" className="icon-btn" title="Export Excel">
+            {/* <li>
+              <button 
+                type="button" 
+                className="icon-btn" 
+                title="Export Excel"
+                onClick={exportToExcel}
+              >
                 <FaFileExcel />
               </button>
-            </li>
+            </li> */}
           </div>
           <div className="page-btn">
             <a
@@ -481,19 +582,22 @@ const Brand = () => {
                       </td>
                       <td>
                         <div className="d-flex align-items-center">
-                          <a
-                            href="#"
-                            className="avatar avatar-md bg-light-900 p-1 me-2"
-                          >
-                            <img
-                              className="object-fit-contain"
-                              // src={brand.image?.[0] || "assets/img/default.png"}
-                              src={brand.image?.[0]?.url}
-                              alt={brand.brandName}
-                            />
-                          </a>
+                          {brand.image?.[0]?.url ? (
+                            <>
+                              <img
+                                src={brand.image?.[0]?.url}
+                                alt={brand.brandName}
+                                className="me-1"
+                                style={{ objectFit: 'contain', width: '30px', height: '30px', }}
+                              />
+                            </>
+                          ) : (
+                            <>
+                            </>
+                          )}
                           <a href="#">{brand.brandName}</a>
                         </div>
+
                       </td>
                       <td>{new Date(brand.createdAt).toLocaleDateString("en-GB", {
                         day: "2-digit",

@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { FaFileExcel, FaFilePdf } from "react-icons/fa";
-import { TbChevronUp, TbEdit, TbRefresh, TbTrash, TbEye } from "react-icons/tb";
+import { TbChevronUp, TbEdit, TbRefresh, TbTrash, TbEye, TbDots } from "react-icons/tb";
 import { Link, useNavigate } from "react-router-dom";
 import AddPurchaseModal from "../../../../pages/Modal/PurchaseModals/AddPurchaseModal";
 import { CiCirclePlus } from "react-icons/ci";
@@ -12,15 +12,26 @@ import ViewPurchase from "../../../../pages/Modal/PurchaseModals/ViewPurchase";
 // import { useSettings } from "../../../../Context/purchase/PurchaseContext";
 // import "../../../../styles/purchase/product.css"
 import "../../../../styles/product/product.css"
-
+import AddDebitNoteModals from "../../../../pages/Modal/debitNoteModals/AddDebitNoteModals";
 
 const Purchase = () => {
   const [purchases, setPurchases] = useState([]);
   const [viewPurchaseId, setViewPurchaseId] = useState(null);
 
+    const [selectedReturnData, setSelectedReturnData] = useState(null);
   
+    const handleConvertToReturn = (purchase) => {
+      setSelectedReturnData(purchase);
+      const returnModal = new window.bootstrap.Modal(document.getElementById("add-return-debit-note"));
+      returnModal.show();
+    };
+
+   
+
+    
 
   console.log("Purchase component rendered", purchases);
+
   const [filters, setFilters] = useState({
     search: "",
     startDate: "",
@@ -262,14 +273,39 @@ const token = localStorage.getItem("token");
                         <td><ul>{purchase.products.map((p, idx) => (<li key={idx}>{settings.currencySymbol}{convertCurrency(p.unitCost)}</li>))}</ul></td>
                         <td><ul>{purchase.products.map((p, idx) => (<li key={idx}>{settings.currencySymbol}{convertCurrency(p.totalCost)}</li>))}</ul></td>
                         <td><span className={`badge ${purchase.status === "Pending" ? "bg-warning" : "bg-success"}`}>{purchase.status}</span></td>
-                        <td className="action-table-data">
+                        
+                          <td class="action-item">
+                          <a href="" data-bs-toggle="dropdown">
+                            <TbDots/>
+                          </a>
+                          <ul class="dropdown-menu">
+                            <li>
+                              <a class="dropdown-item d-flex align-items-center" onClick={() => handleEditClick(purchase)}><TbEdit className="me-2" />Edit</a>
+                            </li>
+                            <li>
+                              <a href="" class="dropdown-item d-flex align-items-center" data-bs-toggle="modal" data-bs-target="#delete_modal" onClick={() => handleDeletePurchase(purchase._id, purchase.referenceNumber)}> <TbTrash className="me-2" />Delete</a>
+                            </li>
+                            <li>
+                              <a  class="dropdown-item d-flex align-items-center" onClick={() => setViewPurchaseId(purchase._id)}><TbEye class="isax isax-send-2 me-2"/>View </a>
+                            </li>
+                            <li>
+                              {/* <a href="" class="dropdown-item d-flex align-items-center"><i class="isax isax-document-download me-2"></i>Download Invoices as PDF</a> */}
+                            </li>
+                            <li>
+                              <a className="dropdown-item d-flex align-items-center" onClick={() => handleConvertToReturn(purchase)}><i className="isax isax-convert me-2"></i>Convert to Purchase Return</a>
+                            </li>
+                            <li>
+                            </li>
+                          </ul>
+                        </td>
+                        {/* <td className="action-table-data">
 
                           <div className="edit-delete-action">
                             <a className="me-2 p-2" data-bs-toggle="modal" data-bs-target="#edit-purchase" onClick={() => handleEditClick(purchase)}><TbEdit /></a>
                             <a className="me-2 p-2" data-bs-toggle="modal" data-bs-target="#view-purchase" onClick={() => setViewPurchaseId(purchase._id)}><TbEye /></a>
                             <a className="p-2"><TbTrash /></a>
                           </div>
-                        </td>
+                        </td> */}
                       </tr>
                     ))
                   )}
@@ -290,6 +326,7 @@ const token = localStorage.getItem("token");
         <AddPurchaseModal />
         {/* <EditPurchaseModal /> */}
         <EditPurchaseModal editData={selectedPurchase} onUpdate={fetchPurchases} />
+        <AddDebitNoteModals purchaseData={selectedReturnData} onReturnCreated={fetchPurchases} />
 
         <div className="modal fade" id="view-purchase" tabIndex="-1" aria-labelledby="viewPurchaseLabel" aria-hidden="true">
           <div className="modal-dialog modal-xl modal-dialog-centered">
@@ -303,6 +340,9 @@ const token = localStorage.getItem("token");
                   <ViewPurchase purchase={purchases.find(p => p._id === viewPurchaseId)} purchaseId={viewPurchaseId} />
                 )}
               </div>
+
+             {/* <AddDebitNoteModals purchaseData={selectedReturnData} onReturnCreated={fetchPurchases} /> */}
+              
             </div>
           </div>
         </div>

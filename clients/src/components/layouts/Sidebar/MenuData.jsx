@@ -132,7 +132,7 @@ export const getMenuData = () => {
       key: "inventory",
       items: [
         { label: t("product"), path: "/product", icon: <GoPackage className="icons" /> },
-        { label: t("createProduct"), path: "/choose-adproduct", icon: <TbTablePlus className="icons" /> },
+        // { label: t("createProduct"), path: "/choose-adproduct", icon: <TbTablePlus className="icons" /> },
         { label: t("expiredProducts"), path: "/expired-products", icon: <PiWarningDiamond className="icons" /> },
         { label: t("lowStocks"), path: "/low-stocks", icon: <HiArrowTrendingUp className="icons" /> },
         { label: t("category"), path: "/category-list", icon: <TbListDetails className="icons" /> },
@@ -195,16 +195,16 @@ export const getMenuData = () => {
           path: "/purchase-list",
           icon: <TbShoppingBag className="icons" />,
         },
-        {
-          label: t("purchaseOrder"),
-          path: "/purchase-order",
-          icon: <TbFileUnknown className="icons" />,
-        },
-        {
-          label: t("purchaseReturn"),
-          path: "/purchase-returns",
-          icon: <TbFileUpload className="icons" />,
-        },
+        // {
+        //   label: t("purchaseOrder"),
+        //   path: "/purchase-order",
+        //   icon: <TbFileUnknown className="icons" />,
+        // },
+        // {
+        //   label: t("purchaseReturn"),
+        //   path: "/purchase-returns",
+        //   icon: <TbFileUpload className="icons" />,
+        // },
         { label: "Debit Note", path: "/debit-note", icon: <MdQrCode className="icons" /> },
       ],
     },
@@ -242,60 +242,79 @@ export const getMenuData = () => {
     },
 
 
-    {
+     {
       section: t("sales"),
       key: "sales",
       items: [
         {
-          label: t("sales"),
-          path: "/invoice",
-          icon: <MdOutlineDashboard className="icons" />,
-          title: t("salesOrders"),
-          subItems: [
-            {
-              label: t("onlineOrders"),
-              path: "/online-orders",
-            },
-            {
-              label: t("Payment History"),
-              path: "/sales-payment",
-            },
-            {
-              label: t("Sales History"),
-              path: "/sales-log",
-            },
-            { label: "Credit", path: "/credit-note", icon: <MdQrCode className="icons" /> },
-            {
-              label: t("posOrders"),
-              path: "/pos",
-            },
-          ],
+          label: t("Sales"),
+          path: "/online-orders",
+          icon: <TbShoppingBag className="icons" />,
         },
-
-
-        {
-          label: t("invoices"),
-          path: "/invoice",
-          icon: <TbFileInvoice className="icons" />,
-        },
-        {
-          label: t("salesReturn"),
-          path: "/sales-returns",
-          icon: <TbReceiptRefund className="icons" />,
-        },
-        // {
-        //   label: t("quotation"),
-        //   path: "/quotation-list",
-        //   icon: <TbFileDescription className="icons" />,
-        // },
-        {
+         { label: "Credit Note", path: "/credit-note", icon: <MdQrCode className="icons" /> },
+          {
           label: t("pos"),
           path: "/pos",
           icon: <MdOutlinePointOfSale className="icons" />,
         },
-
+        
       ],
     },
+
+    // {
+    //   section: t("sales"),
+    //   key: "sales",
+    //   items: [
+    //     {
+    //       label: t("sales"),
+    //       path: "/invoice",
+    //       icon: <MdOutlineDashboard className="icons" />,
+    //       title: t("salesOrders"),
+    //       subItems: [
+    //         {
+    //           label: t("Sales Lists"),
+    //           path: "/online-orders",
+    //         },
+    //         // {
+    //         //   label: t("Payment History"),
+    //         //   path: "/sales-payment",
+    //         // },
+    //         // {
+    //         //   label: t("Sales History"),
+    //         //   path: "/sales-log",
+    //         // },
+    //         { label: "Credit", path: "/credit-note", icon: <MdQrCode className="icons" /> },
+    //         {
+    //           label: t("posOrders"),
+    //           path: "/pos",
+    //         },
+    //       ],
+    //     },
+
+
+    //     {
+    //       label: t("invoices"),
+    //       path: "/invoice",
+    //       icon: <TbFileInvoice className="icons" />,
+    //     },
+    //     {
+    //       label: t("salesReturn"),
+    //       path: "/sales-returns",
+    //       icon: <TbReceiptRefund className="icons" />,
+    //     },
+    //     // {
+    //     //   label: t("quotation"),
+    //     //   path: "/quotation-list",
+    //     //   icon: <TbFileDescription className="icons" />,
+    //     // },
+    //     {
+    //       label: t("pos"),
+    //       path: "/pos",
+    //       icon: <MdOutlinePointOfSale className="icons" />,
+    //     },
+
+    //   ],
+    // },
     {
       section: t("promo"),
       key: "promo",
@@ -374,11 +393,11 @@ export const getMenuData = () => {
       section: "Reports",
       key: "reports",
       items: [
-        {
-          label: "Sales Report",
-          path: "/reports/sales",
-          icon: <FaChartBar className="icons" />,
-        },
+        // {
+        //   label: "Sales Report",
+        //   path: "/reports/sales",
+        //   icon: <FaChartBar className="icons" />,
+        // },
         {
           label: "Purchase Report",
           path: "/purchase-report",

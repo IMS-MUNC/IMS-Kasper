@@ -21,7 +21,7 @@ const ProductForm = () => {
 
   // Define regex patterns for validation
   const validationPatterns = {
-    productName: /^[A-Za-z\s]{2,50}$/,
+    productName: /^[a-zA-Z0-9\s,-]{2,50}$/,
     sku: /^[A-Z0-9\-]{3,20}$/,
     itemBarcode: /^[A-Z0-9]{6,20}$/,
     price: /^\d+(\.\d{1,2})?$/,
@@ -38,7 +38,7 @@ const ProductForm = () => {
     quantityAlert: /^\d{1,6}$/,
     categoryName: /^[A-Za-z\s]{2,50}$/,
     categorySlug: /^[a-z0-9\-]{2,50}$/,
-    variantValue: /^[a-zA-Z0-9\s,]{1,100}$/,
+    variantValue: /^[a-zA-Z0-9\s,-]{1,100}$/,
   };
 
   // Sanitization function
@@ -160,19 +160,8 @@ const ProductForm = () => {
   // };
 
   const handleNext = () => {
-    // const isValid = validateStep();
-    // const updatedStatus = [...stepStatus];
-    // updatedStatus[step] = isValid ? "complete" : "incomplete";
-    // setStepStatus(updatedStatus);
-
-    // if (isValid && step < steps.length - 1) {
-    //   setStep((prev) => prev + 1);
-    // }
     const isValid = validateStep();
-    const updatedStatus = [...stepStatus];
-    updatedStatus[step] = isValid ? "complete" : "incomplete";
-    setStepStatus(updatedStatus);
-
+    
     if (isValid && step < steps.length - 1) {
       setStep((prev) => prev + 1);
     } else if (!isValid) {
@@ -214,6 +203,12 @@ const ProductForm = () => {
   const [optionsware, setOptionsWare] = useState([]);
   const [selectedSupplier, setSelectedSupplier] = useState(null);
   const [selectedWarehouse, setSelectedWarehouse] = useState(null);
+  const [selectedHSN, setSelectedHSN] = useState(null);
+  const [optionsHsn, setOptionsHsn] = useState([]);
+  const [showHSNModal, setShowHSNModal] = useState(false);
+  const [variants, setVariants] = useState([
+    { variantName: '', variantValue: '' }, // Initial row
+  ]);
 
 
   const [formData, setFormData] = useState({
@@ -452,6 +447,77 @@ const ProductForm = () => {
     fetchBrands();
     fetchUnits();
   }, []);
+
+  // Validation function for specific step without modifying state
+  const validateSpecificStep = (stepIndex) => {
+    const errors = {};
+    let isValid = true;
+
+    if (stepIndex === 0) {
+      if (!formData.productName) errors.productName = t("fieldRequired");
+      if (!formData.sku) errors.sku = t("fieldRequired");
+      if (!formData.itemBarcode) errors.itemBarcode = t("fieldRequired");
+      if (!selectedCategory) errors.category = t("fieldRequired");
+      if (!selectedsubCategory) errors.subCategory = t("fieldRequired");
+      if (!selectedSupplier) errors.supplier = t("fieldRequired");
+      if (!formData.store) errors.store = t("fieldRequired");
+      if (!selectedWarehouse) errors.warehouse = t("fieldRequired");
+      if (!selectedHSN) errors.hsn = t("fieldRequired");
+      if (formData.isAdvanced) {
+        if (!formData.leadTime) errors.leadTime = t("fieldRequired");
+        if (!formData.reorderLevel) errors.reorderLevel = t("fieldRequired");
+        if (!formData.initialStock) errors.initialStock = t("fieldRequired");
+        if (formData.trackType === "serial" && !formData.serialNumber) errors.serialNumber = t("fieldRequired");
+        if (formData.trackType === "batch" && !formData.batchNumber) errors.batchNumber = t("fieldRequired");
+      }
+    } else if (stepIndex === 1) {
+      if (!formData.purchasePrice) errors.purchasePrice = t("fieldRequired");
+      if (!formData.quantity) errors.quantity = t("fieldRequired");
+      if (!selectedUnits) errors.unit = t("fieldRequired");
+      if (!formData.taxType) errors.taxType = t("fieldRequired");
+      if (!formData.tax) errors.tax = t("fieldRequired");
+      if (!formData.discountType) errors.discountType = t("fieldRequired");
+      if (!formData.discountValue) errors.discountValue = t("fieldRequired");
+      if (!formData.quantityAlert) errors.quantityAlert = t("fieldRequired");
+    } else if (stepIndex === 2) {
+      if (!formData.description) errors.description = t("fieldRequired");
+    } else if (stepIndex === 3) {
+      const hasValidVariant = variants.some(variant => variant.variantName && variant.variantValue);
+      if (!hasValidVariant) {
+        errors.variants = t("atLeastOneVariantRequired");
+      }
+    }
+
+    isValid = Object.keys(errors).length === 0;
+    return isValid;
+  };
+
+  // Update step status based on form validation
+  useEffect(() => {
+    const updateStepStatus = () => {
+      const updatedStatus = [...stepStatus];
+      
+      // Check each step's validation status
+      for (let i = 0; i < steps.length; i++) {
+        if (i < step) {
+          // Previous steps should be validated
+          updatedStatus[i] = validateSpecificStep(i) ? "complete" : "incomplete";
+        } else if (i === step) {
+          // Current step should show as active/pending unless complete
+          updatedStatus[i] = validateSpecificStep(i) ? "complete" : "pending";
+        } else {
+          // Future steps remain pending
+          updatedStatus[i] = "pending";
+        }
+      }
+      
+      setStepStatus(updatedStatus);
+    };
+
+    // Only update if we have form data changes
+    const timeoutId = setTimeout(updateStepStatus, 300); // Debounce updates
+    return () => clearTimeout(timeoutId);
+  }, [formData, selectedCategory, selectedsubCategory, selectedSupplier, selectedWarehouse, selectedHSN, selectedUnits, variants, step]);
 
   const subCategoryChange = (selectedOption) => {
     setSelectedsubCategory(selectedOption);
@@ -797,10 +863,6 @@ const ProductForm = () => {
     setSelectedWarehouse(selectedOption);
   };
 
-  const [optionsHsn, setOptionsHsn] = useState([]);
-  const [selectedHSN, setSelectedHSN] = useState(null);
-  const [showHSNModal, setShowHSNModal] = useState(false);
-
   useEffect(() => {
     const fetchHSN = async () => {
       try {
@@ -838,10 +900,6 @@ const ProductForm = () => {
 
 
   //variants----------------------------------------------------------------------------------------------------------------------------------------------
-
-  const [variants, setVariants] = useState([
-    { variantName: '', variantValue: '' }, // Initial row
-  ]);
 
   const handleVariantChange = (index, e) => {
     // const { name, value } = e.target;
@@ -898,7 +956,7 @@ const ProductForm = () => {
                 <TbRefresh />
               </button>
             </li>
-            <li>
+            {/* <li>
               <button
                 type="button"
                 data-bs-toggle="tooltip"
@@ -909,13 +967,15 @@ const ProductForm = () => {
               >
                 <TbChevronUp />
               </button>
-            </li>
+            </li> */}
           </div>
 
           <div className="page-btn mt-0">
-            <button className="btn" style={{ backgroundColor: '#007BFF' }}>
-              <Link to="/product" style={{ color: 'white' }}>{t("backToProduct")}</Link>
-            </button>
+            <div className="d-flex gap-2">
+              <Link to="/product">
+                <a className="btn btn-primary">Back to Product</a>
+              </Link>
+            </div>
           </div>
         </div>
         {/* <h5 className="mb-3">{steps[step]}</h5> */}
@@ -926,6 +986,14 @@ const ProductForm = () => {
             const isActive = index === step;
             const isComplete = status === "complete";
             const isIncomplete = status === "incomplete";
+            
+            // Line status should be based on the current step's completion
+            // Line connects current step to next step, so it should be complete if current step is complete
+            const lineStatus = status === "complete" 
+              ? "line-complete" 
+              : status === "incomplete" 
+                ? "line-incomplete" 
+                : "line-pending";
 
             return (
               <div key={index} className="step-wrapper">
@@ -943,14 +1011,7 @@ const ProductForm = () => {
                 </div>
                 <div className="step-text">{label}</div>
                 {index < steps.length - 1 && (
-                  <div
-                    className={`progress-line ${status === "complete"
-                      ? "line-complete"
-                      : status === "incomplete"
-                        ? "line-incomplete"
-                        : "line-pending"
-                      }`}
-                  />
+                  <div className={`progress-line ${lineStatus}`} />
                 )}
               </div>
             );
@@ -1675,6 +1736,7 @@ const ProductForm = () => {
             {step === 2 && (
               <>
                 <div
+                style={{width:'100%'}}
                   {...getRootProps({
                     className:
                       "dropzone p-4 text-center image-upload image-upload-two mb-3",
@@ -1682,8 +1744,10 @@ const ProductForm = () => {
                 >
                   <input {...getInputProps()} />
                   <MdImageSearch style={{ fontSize: "50px" }} />
-                  <p>Drag your image here, or browse</p>
-                  <p>Supports JPEG, PNG, JPG</p>
+                  <br/>
+                  <span>Drag your image here, or browse</span>
+                  <br/>
+                  <span>Supports JPEG, PNG, JPG</span>
                 </div>
 
                 <div className="row mt-3">
@@ -1783,7 +1847,7 @@ const ProductForm = () => {
                         <input
                           type="text"
                           name="variantName"
-                          placeholder=""
+                          placeholder="E.g., Color, Expiry..."
                           value={variant.variantName}
                           onChange={(e) => handleVariantChange(index, e)}
                           style={{ color: "#999797ff", backgroundColor: "white", border: '1px solid gray', borderRadius: '4px', width: '300px', padding: '8px' }}
@@ -1796,7 +1860,7 @@ const ProductForm = () => {
                         <input
                           type="text"
                           name="variantValue"
-                          placeholder=""
+                          placeholder="E.g., Red, 15-08-1947..."
                           value={variant.variantValue}
                           onChange={(e) => handleVariantChange(index, e)}
                           style={{ color: "#999797ff", backgroundColor: "white", border: '1px solid gray', borderRadius: '4px', width: '300px', padding: '8px' }}

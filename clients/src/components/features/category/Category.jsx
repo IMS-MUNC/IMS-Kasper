@@ -15,6 +15,7 @@ import { MdNavigateNext } from "react-icons/md";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import Papa from "papaparse";
+import * as XLSX from "xlsx";
 
 const Category = () => {
   const [categories, setCategories] = useState([]);
@@ -42,9 +43,10 @@ const Category = () => {
     if (!confirmed) return;
 
     try {
-      const token = localStorage.getItem("token")
+      const token = localStorage.getItem("token");
       await axios.post(`${BASE_URL}/api/category/categories/bulk-delete`, {
         ids: selectedCategories,
+      }, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
@@ -55,7 +57,14 @@ const Category = () => {
     } catch (err) {
       console.log(err);
 
-      toast.error("Bulk delete failed");
+      // Handle specific error cases
+      if (err.response?.status === 401) {
+        toast.error("Unauthorized. Please login again");
+      } else if (err.response?.status === 403) {
+        toast.error("You don't have permission to delete categories");
+      } else {
+        toast.error("Bulk delete failed. Please try again");
+      }
     }
   };
 
@@ -239,6 +248,37 @@ const Category = () => {
     document.body.removeChild(link);
   };
 
+  //excel export--------------------------------------------------------------------------------------------------------------------------------------------------
+
+  const handleExcel = () => {
+    // Prepare data for Excel export
+    const excelData = categories.map((category) => ({
+      "Category Code": category.categoryCode,
+      "Category": category.categoryName,
+      "Category Slug": category.categorySlug,
+      "Created On": new Date(category.createdAt).toLocaleDateString(),
+    }));
+
+    // Create a new workbook and worksheet
+    const workbook = XLSX.utils.book_new();
+    const worksheet = XLSX.utils.json_to_sheet(excelData);
+
+    // Set column widths for better formatting
+    const columnWidths = [
+      { wch: 15 }, // Category Code
+      { wch: 25 }, // Category
+      { wch: 25 }, // Category Slug
+      { wch: 15 }, // Created On
+    ];
+    worksheet["!cols"] = columnWidths;
+
+    // Add the worksheet to the workbook
+    XLSX.utils.book_append_sheet(workbook, worksheet, "Categories");
+
+    // Generate Excel file and trigger download
+    XLSX.writeFile(workbook, "categories.xlsx");
+  };
+
   //excell file upload--------------------------------------------------------------------------------------------------------------------------------------------------
 
   const fileInputRef = React.useRef();
@@ -345,18 +385,24 @@ const Category = () => {
         </li>
       </ul> */}
           <div className="table-top-head me-2">
-            <li>
-              <button
-                type="button"
-                className="icon-btn"
-                title="Pdf"
-                onClick={handlePdf}
-              >
-                <FaFilePdf />
-              </button>
+            <li style={{ display: "flex", alignItems: "center", gap: '5px' }} className="icon-btn">
+              <label className="" title="">Export : </label>
+              <button onClick={handlePdf} title="Download PDF" style={{
+                backgroundColor: "white",
+                display: "flex",
+                alignItems: "center",
+                border: "none",
+              }}><FaFilePdf className="fs-20" style={{ color: "red" }} /></button>
+              <button onClick={handleExcel} title="Download Excel" style={{
+                backgroundColor: "white",
+                display: "flex",
+                alignItems: "center",
+                border: "none",
+              }}><FaFileExcel className="fs-20" style={{ color: "orange" }} /></button>
             </li>
-            <li>
-              <label className="icon-btn m-0" title="Import Excel">
+            <li style={{ display: "flex", alignItems: "center", gap: '5px' }} className="icon-btn">
+              <label className="" title="">Import : </label>
+              <label className="" title="Import Excel">
                 <button
                   type="button"
                   onClick={handleImportClick}
@@ -378,16 +424,16 @@ const Category = () => {
                 />
               </label>
             </li>
-            <li>
+            {/* <li>
               <button
                 type="button"
                 className="icon-btn"
                 title="Export Excel"
-                onClick={handleCSV}
+                onClick={handleExcel}
               >
                 <FaFileExcel />
               </button>
-            </li>
+            </li> */}
           </div>
           <div className="page-btn">
             {/* <a
