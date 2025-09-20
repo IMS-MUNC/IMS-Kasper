@@ -5,15 +5,18 @@ import LanguageSwitcher from "./utils/LanguageSwitch/LanguageSwitcher";
 import "./i18n"; // Import i18n config
 import { InboxProvider } from "./components/features/Mail/SideBar/InboxContext";
 import { ToastContainer } from "react-toastify";
+
+
 const App = () => {
   return (
+
     <BrowserRouter>
       {/* <LanguageSwitcher /> */}
       <InboxProvider>
-      <ToastContainer/>
-      <AppRoutes />
+        <ToastContainer />
+        <AppRoutes />
       </InboxProvider>
-    </BrowserRouter>
+      </BrowserRouter>
   );
 };
 

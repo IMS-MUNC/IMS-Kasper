@@ -27594,9 +27594,9 @@ body.layout-mode-rtl .user-info {
 [data-color=magenta] .invoice-card:hover .avatar {
   background: #0984E3 !important;
 }
-[data-color=magenta] .settings-wrapper .settings-sidebar .sidebar-menu .submenu-open ul .submenu ul li a.active::after {
-  background: #0984E3;
-}
+  [data-color=magenta] .settings-wrapper .settings-sidebar .sidebar-menu .submenu-open ul .submenu ul li a.active::after {
+    background: #0984E3;
+  }
 [data-color=magenta] ::selection {
   background: #0984E3;
 }

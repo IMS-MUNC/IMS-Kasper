@@ -228,11 +228,11 @@ export const getMenuData = () => {
           path: "/manage-stocks",
           icon: <TbShoppingBag className="icons" />,
         },
-        {
-          label: t("Stock Adjustment"),
-          path: "/stock-adjustment",
-          icon: <TbFileUnknown className="icons" />,
-        },
+        // {
+        //   label: t("Stock Adjustment"),
+        //   path: "/stock-adjustment",
+        //   icon: <TbFileUnknown className="icons" />,
+        // },
         // {
         //   label: t("Stock Transfer"),
         //   path: "/stock-transfer",
