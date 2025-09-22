@@ -124,8 +124,9 @@ const token = localStorage.getItem("token");
 
   const handleSendOtp = async () => {
     try {
-      await axios.post(`${BASE_URL}/api/mobile/send-otp`, { mobile ,
-         headers: {
+      const token = localStorage.getItem("token");
+      await axios.post(`${BASE_URL}/api/mobile/send-otp`, { mobile }, {
+        headers: {
         Authorization: `Bearer ${token}`,
       },
       });

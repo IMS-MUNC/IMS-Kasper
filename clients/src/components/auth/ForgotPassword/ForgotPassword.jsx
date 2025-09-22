@@ -13,30 +13,6 @@ function ForgotPassword() {
   const [newPassword, setNewPassword] = useState("");
   const navigate = useNavigate();
 
-  // const handleRequestOtp = async (e) => {
-  //   e.preventDefault();
-  //   try {
-  //     await axios.post(`${BASE_URL}/api/auth/forgot-password`, { email });
-  //     toast.success("OTP sent to your email");
-  //     setStep(2);
-  //   } catch (err) {
-  //     alert(err.response?.data?.message || "Failed to send OTP");
-  //   }
-  // };
-
-  // const handleVerifyOtp = async (e) => {
-  //   e.preventDefault();
-  //   try {
-  //     await axios.post(`${BASE_URL}/api/user/verify-otp-reset`, {
-  //       email,
-  //       otp, // 6-digit OTP combined
-  //       newPassword,
-  //     });
-  //     alert("Password reset successfully!");
-  //   } catch (err) {
-  //     alert(err.response?.data?.message || "OTP verification failed");
-  //   }
-  // };
 
   // OTP input handler
   const handleOtpChange = (e, index) => {
@@ -61,27 +37,26 @@ function ForgotPassword() {
     toast.success('OTP sent to your email');
     setStep(2);
   } catch (err) {
-     toast.error(err.response?.data?.message || 'Failed to send OTP');
+    toast.error(err.response?.data?.message || 'Failed to send OTP');
   }
 };
 
 const handleVerifyOtp = async (e) => {
   e.preventDefault();
   try {
-    await axios.post(`${BASE_URL}/api/auth/verify-otp-reset`, {
+    await axios.post(`${BASE_URL}/api/auth/verify-otp-reset-check`, {
       email,
       otp,
-      newPassword
     });
-     toast.success('Password reset successfully!');
-      // reset form fields
-      setEmail("");
-      setOtp("");
-      setNewPassword("");
-      setStep(1);
+     toast.success('OTP verified successfully!');
+      // // reset form fields
+      // setEmail("");
+      // setOtp("");
+      // setNewPassword("");
+      // setStep(1);
 
       // navigate to login page
-      navigate("/login");
+      navigate("/reset-password/:token", { state: { email, otp } });
   } catch (err) {
      toast.error(err.response?.data?.message || 'OTP verification failed');
   }
@@ -109,7 +84,7 @@ const handleVerifyOtp = async (e) => {
                             <div className="mb-3">
                                 <label className="form-label">Email <span className="text-danger"> *</span></label>
                                 <div className="input-group">
-                                    <input type="text"  className="form-control border-end-0"       value={email}
+                                    <input type="email"  className="form-control border-end-0"       value={email}
           onChange={(e) => setEmail(e.target.value)}
           required/>
                                     <span className="input-group-text border-start-0">
@@ -158,7 +133,7 @@ const handleVerifyOtp = async (e) => {
                   </div>
 
                   {/* New Password */}
-                  <div className="mb-3">
+                  {/* <div className="mb-3">
                     <label className="form-label">
                       New Password <span className="text-danger">*</span>
                     </label>
@@ -169,7 +144,7 @@ const handleVerifyOtp = async (e) => {
                       onChange={(e) => setNewPassword(e.target.value)}
                       required
                     />
-                  </div>
+                  </div> */}
 
                   <div className="mb-3">
                     <button type="submit" className="btn btn-primary w-100">
