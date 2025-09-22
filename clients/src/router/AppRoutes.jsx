@@ -135,7 +135,7 @@ import Credit from "../pages/finance&accounts/credit&debit_note/Credit.jsx";
 import Debit from "../pages/finance&accounts/credit&debit_note/Debit.jsx";
 import ExpenseReportProductModal from "../pages/finance&accounts/expense_report/ExpenseReportProductModal.jsx"
 import PosHeader from "../pages/pos/posHead/PosHeader.jsx";
-import OtpVerification from "../components/auth/OtpVerification.jsx";
+import OtpVerification from "../components/auth/TwoStepOtpVerification.jsx";
 import Quotation from "../components/features/quotation/Quotation.jsx";
 import NewPos from "../pages/pos/NewPos.jsx";
 // import {Pos} from "../pages/pos/Pos.jsx";

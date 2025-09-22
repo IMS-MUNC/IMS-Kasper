@@ -4,29 +4,34 @@ const User = require("../models/usersModels");
 const Otp = require("../models/otpModels");
 const sendEmail = require("../utils/sendEmail");
 // const sendEmail = require("../config/")
-const axios = require("axios")
-const DeviceSession = require("../models/settings/DeviceManagementmodal")
+const axios = require("axios");
+const DeviceSession = require("../models/settings/DeviceManagementmodal");
 
 exports.loginUser = async (req, res) => {
   const { email, password } = req.body;
 
-  
   try {
-    const user = await User.findOne({ email:email.toLowerCase() }).populate("role");
+    const user = await User.findOne({ email: email.toLowerCase() }).populate(
+      "role"
+    );
 
     if (!user) return res.status(404).json({ message: "User not found" });
 
     // 🚫 Prevent inactive users from logging in
 
     if (user.status === "Inactive") {
-      return res.status(403).json({ message: "Your account is inactive. Please contact admin." });
+      return res
+        .status(403)
+        .json({ message: "Your account is inactive. Please contact admin." });
     }
     const match = await bcrypt.compare(password, user.password);
     if (!match) return res.status(400).json({ message: "Invalid credentials" });
     const roleData = user.role
       ? {
           roleName: user.role.roleName,
-          modulePermissions: Object.fromEntries(user.role.modulePermissions || []),
+          modulePermissions: Object.fromEntries(
+            user.role.modulePermissions || []
+          ),
         }
       : null;
 
@@ -41,19 +46,19 @@ exports.loginUser = async (req, res) => {
     });
 
     // Generate OTP
-    if(user.twoFactorEnabled) {
+    if (user.twoFactorEnabled) {
       const otp = Math.floor(100000 + Math.random() * 900000);
       const expiry = Date.now() + 5 * 60 * 1000;
       user.otp = otp;
       user.otpExpires = expiry;
       await user.save();
 
-      await sendEmail(email, "your Login OTP", `your OTP code is: ${otp}`)
+      await sendEmail(email, "your Login OTP", `your OTP code is: ${otp}`);
       return res.status(200).json({
-          message: "OTP sent to your email",
+        message: "OTP sent to your email",
         twoFactor: true,
         email: user.email,
-      })
+      });
     }
 
     res.status(200).json({
@@ -71,15 +76,14 @@ exports.loginUser = async (req, res) => {
       },
     });
   } catch (err) {
-  console.error("Login error:", err.message); // Print error message
-  console.error(err.stack); // Print stack trace
-  res.status(500).json({
-    message: "Server error",
-    error: err.message,  // Show actual error in response
-  });
-}
+    console.error("Login error:", err.message); // Print error message
+    console.error(err.stack); // Print stack trace
+    res.status(500).json({
+      message: "Server error",
+      error: err.message, // Show actual error in response
+    });
+  }
 };
-
 
 // LOGOUT
 exports.logoutUser = async (req, res) => {
@@ -97,28 +101,34 @@ exports.forgotPassword = async (req, res) => {
   const { email } = req.body;
 
   try {
-    const normalizedEmail = email.toLowerCase()
-    const user = await User.findOne({ email:normalizedEmail });
+    const normalizedEmail = email.toLowerCase();
+    const user = await User.findOne({ email: normalizedEmail });
     if (!user) return res.status(404).json({ message: "User not found" });
 
     // Allow max 3 OTPS/hour
     const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000);
     const recentOtps = await Otp.find({
       email: normalizedEmail,
-      createdAt: { $gte: oneHourAgo }
+      createdAt: { $gte: oneHourAgo },
     });
     if (recentOtps.length >= 3) {
-      return res.status(429).json({message:"Too many OTP requests. Try again later"})
+      return res
+        .status(429)
+        .json({ message: "Too many OTP requests. Try again later" });
     }
 
     const otpCode = Math.floor(100000 + Math.random() * 900000).toString();
 
     await Otp.deleteMany({ email });
 
-    const otp = new Otp({ email:normalizedEmail, otp: otpCode });
+    const otp = new Otp({ email: normalizedEmail, otp: otpCode });
     await otp.save();
 
-    await sendEmail(normalizedEmail, "OTP for Password Reset", `Your OTP is: ${otpCode}`);
+    await sendEmail(
+      normalizedEmail,
+      "OTP for Password Reset",
+      `Your OTP is: ${otpCode}`
+    );
 
     res.status(200).json({ message: "OTP sent to registered email" });
   } catch (error) {
@@ -127,15 +137,41 @@ exports.forgotPassword = async (req, res) => {
   }
 };
 
+// verify otp and  check otp
+
+exports.verifyOtpCheck = async (req, res) => {
+  try {
+    const { email, otp } = req.body;
+
+    // Find OTP entry
+    const validOtp = await Otp.findOne({ email, otp });
+    if (!validOtp) {
+      return res.status(400).json({ message: "Invalid or expired OTP" });
+    }
+
+    // Check expiry
+    if (validOtp.expiresAt < Date.now()) {
+      return res.status(400).json({ message: "OTP expired" });
+    }
+
+    res.status(200).json({ message: "OTP Verified successfully" });
+  } catch (error) {
+    console.error("OTP verification error", error);
+    res.status(500).json({ message: "Server error during OTP verification" });
+  }
+};
+
+
 // VERIFY OTP & RESET PASSWORD
 exports.verifyOtpAndReset = async (req, res) => {
   const { email, otp, newPassword } = req.body;
 
   try {
     const validOtp = await Otp.findOne({ email, otp });
-    if (!validOtp) return res.status(400).json({ message: "Invalid or expired OTP" });
+    if (!validOtp)
+      return res.status(400).json({ message: "Invalid or expired OTP" });
 
-    const user = await User.findOne({ email:email.toLowerCase() });
+    const user = await User.findOne({ email: email.toLowerCase() });
     if (!user) return res.status(404).json({ message: "User not found" });
 
     user.password = await bcrypt.hash(newPassword, 10);
@@ -155,7 +191,9 @@ exports.verifyOtpAndReset = async (req, res) => {
 exports.verifyotp = async (req, res) => {
   try {
     const { email, otp } = req.body;
-    const user = await User.findOne({ email: email.toLowerCase() }).populate("role");
+    const user = await User.findOne({ email: email.toLowerCase() }).populate(
+      "role"
+    );
 
     if (!user) return res.status(404).json({ message: "User not found" });
 
@@ -172,7 +210,9 @@ exports.verifyotp = async (req, res) => {
     const roleData = user.role
       ? {
           roleName: user.role.roleName,
-          modulePermissions: Object.fromEntries(user.role.modulePermissions || []),
+          modulePermissions: Object.fromEntries(
+            user.role.modulePermissions || []
+          ),
         }
       : null;
 
@@ -205,8 +245,6 @@ exports.verifyotp = async (req, res) => {
     res.status(500).json({ message: "Server error during OTP verification" });
   }
 };
-
-
 
 //this is for login device maintain location
 exports.logDevice = async (req, res) => {
@@ -262,122 +300,29 @@ exports.logDevice = async (req, res) => {
   }
 };
 
+exports.resendOtp = async (req, res) => {
+  try {
+    const { email } = req.body;
+    const user = await User.findOne({ email: email.toLowerCase() });
 
+    if (!user) return res.status(404).json({ message: "User not found" });
 
-// const jwt = require("jsonwebtoken");
-// const bcrypt = require("bcryptjs");
-// const User = require("../models/usersModels");
-// const Otp = require("../models/otpModels");
-// const sendEmail = require("../utils/sendEmail");
+    if (!user.twoFactorEnabled) {
+      return res
+        .status(400)
+        .json({ message: "Two factor is not enabled for this user" });
+    }
 
-// exports.loginUser = async (req, res) => {
-//   const { email, password } = req.body;
-
-  
-//   try {
-//     const user = await User.findOne({ email }).populate("role");
-
-//     if (!user) return res.status(404).json({ message: "User not found" });
-
-//     // 🚫 Prevent inactive users from logging in
-
-//     if (user.status === "Inactive") {
-//       return res.status(403).json({ message: "Your account is inactive. Please contact admin." });
-//     }
-//     const match = await bcrypt.compare(password, user.password);
-//     if (!match) return res.status(400).json({ message: "Invalid credentials" });
-//     const roleData = user.role
-//       ? {
-//           roleName: user.role.roleName,
-//           modulePermissions: Object.fromEntries(user.role.modulePermissions || []),
-//         }
-//       : null;
-
-//     const tokenPayload = {
-//       id: user._id,
-//       email: user.email,
-//       role: roleData,
-//     };
-
-//     const token = jwt.sign(tokenPayload, process.env.JWT_SECRET, {
-//       expiresIn: "1d",
-//     });
-
-//     res.status(200).json({
-//       message: "Login successful",
-//       token,
-//       user: {
-//         id: user._id,
-//         firstName: user.firstName,
-//         lastName: user.lastName,
-//         email: user.email,
-//         phone: user.phone,
-//         profileImage: user.profileImage,
-//         status: user.status,
-//         role: roleData,
-//       },
-//     });
-//   } catch (err) {
-//     console.error("Login error:", err);
-//     res.status(500).json({ message: "Server error" });
-//   }
-// };
-
-
-// // LOGOUT
-// exports.logoutUser = async (req, res) => {
-//   try {
-//     // For JWT, you usually handle logout on client side
-//     res.status(200).json({ message: "Logout successful" });
-//   } catch (error) {
-//     console.error("Logout Error:", error);
-//     res.status(500).json({ message: "Server error" });
-//   }
-// };
-
-// // FORGOT PASSWORD
-// exports.forgotPassword = async (req, res) => {
-//   const { email } = req.body;
-
-//   try {
-//     const user = await User.findOne({ email });
-//     if (!user) return res.status(404).json({ message: "User not found" });
-
-//     const otpCode = Math.floor(100000 + Math.random() * 900000).toString();
-
-//     await Otp.deleteMany({ email });
-
-//     const otp = new Otp({ email, otp: otpCode });
-//     await otp.save();
-
-//     await sendEmail(email, "OTP for Password Reset", `Your OTP is: ${otpCode}`);
-
-//     res.status(200).json({ message: "OTP sent to registered email" });
-//   } catch (error) {
-//     console.error("Error sending OTP:", error);
-//     res.status(500).json({ message: "Server error", error });
-//   }
-// };
-
-// // VERIFY OTP & RESET PASSWORD
-// exports.verifyOtpAndReset = async (req, res) => {
-//   const { email, otp, newPassword } = req.body;
-
-//   try {
-//     const validOtp = await Otp.findOne({ email, otp });
-//     if (!validOtp) return res.status(400).json({ message: "Invalid or expired OTP" });
-
-//     const user = await User.findOne({ email });
-//     if (!user) return res.status(404).json({ message: "User not found" });
-
-//     user.password = await bcrypt.hash(newPassword, 10);
-//     await user.save();
-
-//     await Otp.deleteMany({ email });
-
-//     res.status(200).json({ message: "Password reset successful" });
-//   } catch (error) {
-//     console.error("Error resetting password:", error);
-//     res.status(500).json({ message: "Server error", error });
-//   }
-// };
+    // Generate new OTP
+    const otp = Math.floor(100000 + Math.random() * 900000);
+    const expiry = Date.now() + 5 * 60 * 1000;
+    user.otp = otp;
+    user.otpExpires = expiry;
+    await user.save();
+    await sendEmail(email, "Your Login OTP", `Your OTP code is: ${otp}`);
+    res.status(200).json({ message: "OTP resent to your email" });
+  } catch (error) {
+    console.error("Resend OTP error:", error);
+    res.status(500).json({ message: "Server error during OTP resend" });
+  }
+};
