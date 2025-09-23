@@ -245,6 +245,33 @@ function AllCustomers({ onClose }) {
     }
   };
 
+  const [purchases, setPurchases] = useState([]);
+  // const [page, setPage] = useState(1);
+  const token = localStorage.getItem("token");
+
+  const fetchPurchases = async () => {
+    try {
+      const res = await axios.get(`${BASE_URL}/api/purchases`, {
+       
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+
+
+      });
+      console.log("Fetch data", JSON.stringify(res.data.purchases));
+
+      setPurchases(res.data.purchases);
+      // setTotalPages(res.data.totalPages);
+    } catch (error) {
+      console.error("Error fetching purchases:", error);
+    }
+  };
+
+  useEffect(() => {
+    fetchPurchases();
+  }, []);
+
 
 
 
@@ -294,6 +321,7 @@ function AllCustomers({ onClose }) {
         <button
           className="btn btn-outline-secondary d-flex align-items-center"
           onClick={() => setShowFilters(!showFilters)}
+          style={{ marginLeft: "240px" }}
         >
           <FaFilter className="me-1" /> Filter
         </button>
@@ -384,7 +412,9 @@ function AllCustomers({ onClose }) {
                 {/* <td>{customer.address}</td> */}
                 <td>{formatAddress(customer.billing)}</td>
                 <td>{customer.phone}</td>
-                <td>{customer.orders}</td>
+                {/* <td>{customer.orders}</td> */}
+                <td>hi{ }</td>
+
                 <td>{customer.spent}</td>
                 <td>
                   <div className="edit-delete-action d-flex gap-2">
@@ -561,7 +591,16 @@ function AllCustomers({ onClose }) {
                           <div className="p-3 border rounded bg-white h-100">
                             <h5 className="mb-3">User Profile</h5>
                             <div className="d-flex align-items-center gap-2 mb-3">
-                              <div className="avatar bg-secondary rounded-circle" style={{ width: 48, height: 48 }}></div>
+                              {/* <div className="avatar bg-secondary rounded-circle" style={{ width: 48, height: 48 }}></div> */}
+                              <img
+                                src={selectedCustomer.images && selectedCustomer.images.length > 0 ? selectedCustomer.images[0] : "https://via.placeholder.com/32"}
+                                alt={selectedCustomer.name?.charAt(0) || "N/A"}
+                                className="avatar bg-secondary rounded-circle"
+                                // width="48"
+                                // height="48"
+                                style={{ width: 48, height: 48 }}
+                              // onError={(e) => { e.target.src = "https://via.placeholder.com/32"; }} // Fallback on error
+                              />
                               <span className="fw-semibold">{selectedCustomer.name}</span>
                             </div>
                             <div className="mb-3">
@@ -602,6 +641,7 @@ function AllCustomers({ onClose }) {
                                         <input type="checkbox" className="me-2" />
                                         <img
                                           src="https://img.icons8.com/ios/50/000000/office-chair.png"
+                                          //  src={customer.images && customer.images.length > 0 ? customer.images[0] : "https://via.placeholder.com/32"}
                                           alt="product"
                                           width="24"
                                           className="me-2"
@@ -639,5 +679,3 @@ function AllCustomers({ onClose }) {
 }
 
 export default AllCustomers;
-
-

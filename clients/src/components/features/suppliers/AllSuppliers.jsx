@@ -41,6 +41,8 @@ function AllSuppliers() {
   const [suppliers, setSuppliers] = useState([]);
   const [loading, setLoading] = useState(false);
   const [editSupplier, setEditSupplier] = useState(null);
+  const [selectedIds, setSelectedIds] = useState([]);
+
 
   useEffect(() => {
     fetchSuppliers();
@@ -49,12 +51,12 @@ function AllSuppliers() {
   const fetchSuppliers = async () => {
     setLoading(true);
     try {
-          const token = localStorage.getItem("token");
+      const token = localStorage.getItem("token");
 
-      const res = await fetch(`${BASE_URL}/api/suppliers`,{
-         headers: {
-        Authorization: `Bearer ${token}`,
-      },
+      const res = await fetch(`${BASE_URL}/api/suppliers`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
       });
       const data = await res.json();
       setSuppliers(data);
@@ -68,11 +70,13 @@ function AllSuppliers() {
   const handleDeleteSupplier = async (id) => {
     if (!window.confirm('Are you sure you want to delete this supplier?')) return;
     try {
-          const token = localStorage.getItem("token");
+      const token = localStorage.getItem("token");
 
-      await fetch(`${BASE_URL}/api/suppliers/${id}`, { method: 'DELETE', headers: {
-        Authorization: `Bearer ${token}`,
-      }, });
+      await fetch(`${BASE_URL}/api/suppliers/${id}`, {
+        method: 'DELETE', headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
       fetchSuppliers();
     } catch (err) {
       // handle error
@@ -92,6 +96,33 @@ function AllSuppliers() {
   // const [showViewModal, setShowViewModal] = useState(false);
   const [viewSupplierId, setViewSupplierId] = useState(null);
 
+  const handleBulkDelete = async () => {
+    if (selectedIds.length === 0) {
+      alert("Please select at least one supplier.");
+      return;
+    }
+    if (!window.confirm(`Delete ${selectedIds.length} selected suppliers?`)) return;
+
+    try {
+      const token = localStorage.getItem("token");
+      await Promise.all(
+        selectedIds.map(id =>
+          fetch(`${BASE_URL}/api/suppliers/${id}`, {
+            method: "DELETE",
+            headers: { Authorization: `Bearer ${token}` },
+          })
+        )
+      );
+      setSelectedIds([]);
+      fetchSuppliers();
+    } catch (err) {
+      console.error("Bulk delete failed", err);
+    }
+  };
+
+
+
+
   return (
 
     <div className="page-wrapper">
@@ -104,6 +135,29 @@ function AllSuppliers() {
             </div>
           </div>
           <ul className="table-top-head">
+            <li>
+              {/* <button
+                className="btn btn-danger me-2"
+                onClick={handleBulkDelete}
+                disabled={selectedIds.length === 0}
+              >
+                <TbTrash className="me-1" /> Delete Selected
+              </button> */}
+
+              {selectedIds.length > 0 && (
+                // <div className="d-flex align-items-center mb-2">
+
+                <button
+                  className="btn btn-danger ms-3"
+                  onClick={handleBulkDelete}
+                >
+                  <TbTrash className="me-1" /> Delete ({selectedIds.length}) Selected
+                </button>
+                // </div>
+              )}
+
+
+            </li>
             <li className="me-2">
               <a data-bs-toggle="tooltip" data-bs-placement="top" title="Pdf"><img src="assets/img/icons/pdf.svg" alt="img" /></a>
             </li>
@@ -153,7 +207,18 @@ function AllSuppliers() {
                   <tr>
                     <th className="no-sort">
                       <label className="checkboxs">
-                        <input type="checkbox" id="select-all" />
+                        {/* <input type="checkbox" id="select-all" /> */}
+                        <input
+                          type="checkbox"
+                          checked={selectedIds.length === paginatedData.length && paginatedData.length > 0}
+                          onChange={(e) => {
+                            if (e.target.checked) {
+                              setSelectedIds(paginatedData.map(s => s._id));
+                            } else {
+                              setSelectedIds([]);
+                            }
+                          }}
+                        />
                         <span className="checkmarks" />
                       </label>
                     </th>
@@ -171,7 +236,18 @@ function AllSuppliers() {
                     <tr key={supplier._id}>
                       <td>
                         <label className="checkboxs">
-                          <input type="checkbox" />
+                          {/* <input type="checkbox" /> */}
+                          <input
+                            type="checkbox"
+                            checked={selectedIds.includes(supplier._id)}
+                            onChange={(e) => {
+                              if (e.target.checked) {
+                                setSelectedIds([...selectedIds, supplier._id]);
+                              } else {
+                                setSelectedIds(selectedIds.filter(id => id !== supplier._id));
+                              }
+                            }}
+                          />
                           <span className="checkmarks" />
                         </label>
                       </td>
