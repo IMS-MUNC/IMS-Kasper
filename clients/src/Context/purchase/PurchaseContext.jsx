@@ -15,20 +15,27 @@ export const SettingsProvider = ({ children }) => {
 
     useEffect(() => {
         (async () => {
-            const res = await axios.get(`${BASE_URL}/api/settings/get`,{
-                 headers: {
-        Authorization: `Bearer ${token}`,
-      },
-            });
-            setSettings(res.data);
+            try {
+                const token = localStorage.getItem("token");
+                if (!token) return;
+                const res = await axios.get(`${BASE_URL}/api/settings/get`, {
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                    },
+                });
+                setSettings(res.data);
+            } catch (error) {
+                console.error("Failed to fetch settings:", error.response?.data || error.message);
+            }
         })();
     }, []);
 
     const updateSettings = async (newSettings) => {
-        const res = await axios.put(`${BASE_URL}/api/settings/update`, newSettings,{
-             headers: {
-        Authorization: `Bearer ${token}`,
-      },
+        const token = localStorage.getItem("token");
+        const res = await axios.put(`${BASE_URL}/api/settings/update`, newSettings, {
+            headers: {
+                Authorization: `Bearer ${token}`,
+            },
         });
         setSettings(res.data);
     };

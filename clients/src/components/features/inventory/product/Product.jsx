@@ -548,7 +548,7 @@ function ProductList() {
     ) {
       try {
         const token = localStorage.getItem("token");
-        await axios.delete(`${BASE_URL}/api/products/pro/${product._id}`, { 
+        await axios.delete(`${BASE_URL}/api/products/pro/${product._id}`, {
           headers: {
             Authorization: `Bearer ${token}`,
           },
@@ -722,17 +722,36 @@ function ProductList() {
 
               <div className="d-flex gap-2">
                 <div className="table-top-head me-2">
-                  <li>
+                  <li style={{ display: "flex", alignItems: "center", gap: '5px' }} className="icon-btn">
+                    <label className="" title="">Export : </label>
                     <button
                       type="button"
-                      className="icon-btn"
                       title="Pdf"
+                      style={{
+                        backgroundColor: "white",
+                        display: "flex",
+                        alignItems: "center",
+                        border: "none",
+                      }}
                       onClick={handlePdf}
                     >
                       <FaFilePdf style={{ color: "red" }} />
                     </button>
+                    <button
+                      type="button"
+                      title="Export Excel"
+                      style={{
+                        backgroundColor: "white",
+                        display: "flex",
+                        alignItems: "center",
+                        border: "none",
+                      }}
+                      onClick={handleExcel}
+                    >
+                      <FaFileExcel style={{ color: "orange" }} />
+                    </button>
                   </li>
-                  <li>
+                  {/* <li>
                     <button
                       type="button"
                       className="icon-btn"
@@ -741,10 +760,11 @@ function ProductList() {
                     >
                       <FaFileExcel style={{ color: "orange" }} />
                     </button>
-                  </li>
-                  <li>
+                  </li> */}
+                  <li style={{ display: "flex", alignItems: "center", gap: '5px' }} className="icon-btn">
                     {/* <label className="icon-btn m-0" title="Import Excel"><input type="file" accept=".xlsx, .xls" hidden /><FaFileExcel style={{ color: "green" }} /></label> */}
-                    <label className="icon-btn m-0" title="Import Excel">
+                    <label className="" title="">Import : </label>
+                    <label className="" title="Import Excel">
                       <button
                         type="button"
                         onClick={handleImportClick}
@@ -1068,150 +1088,26 @@ function ProductList() {
               style={{
                 maxWidth: "1300px",
                 maxHeight: "670px",
-                width: "1000px",
-                height: "550px",
+                width: "838px",
+                height: "347px",
                 margin: "auto",
-                padding: "10px 16px",
                 overflowY: "auto",
                 borderRadius: "8px",
                 backgroundColor: "#fff",
                 boxShadow: "0 4px 8px rgba(0,0,0,0.2)",
               }}
             >
-              <div className="">
-                {/* All Content */}
-                <div className="contents gap-2">
-                  {/* Heading */}
-                  <div className="section-header">
-                    <div className="section-title">
-                      <div
-                        className="icon-container"
-                        style={{
-                          height: "70px",
-                          width: "70px",
-                          display: "flex",
-                          justifyContent: "center",
-                          alignItems: "center",
-                          borderRadius: "8px",
-                          overflow: "hidden",
-                          border: "1px solid #ccc",
-                          padding: "2px",
-                        }}
-                      >
-                        {/* <FaShoppingBag /> */}
-                        {selectedProduct.images?.[0] && (
-                          <img
-                            src={selectedProduct.images[0].url}
-                            alt={selectedProduct.productName}
-                            className="media-image"
-                            style={{
-                              height: "100%",
-                              width: "100%",
-                              objectFit: "contain",
-                            }}
-                          />
-                        )}
-                      </div>
+              {/* All Content */}
+              <div className="contents gap-2">
 
-                      <div>
-                        <h1 className="section-title-text">
-                          {selectedProduct.productName}
-                        </h1>
-                        <br />
-                        <h6 className="section-subtitle">
-                          {/* SKU-KAPL-021 • Goods • Available Qty - 76kg */}
-                          SKU-{selectedProduct.sku} • Available Qty -{" "}
-                          {selectedProduct.quantity} {selectedProduct.unit}
-                          {selectedProduct.variants &&
-                            Object.keys(selectedProduct.variants).includes(
-                              "Expiry"
-                            ) ? (
-                            Object.entries(selectedProduct.variants)
-                              .filter(([variant]) => variant === "Expiry")
-                              .map(([variant, qty]) => {
-                                let statusText = "";
-                                let displayQty = "0"; // Default display value
-                                let statusdisc = "";
-                                // Extract qtyString from array or use qty directly
-                                const qtyString =
-                                  Array.isArray(qty) && qty.length > 0
-                                    ? qty[0]
-                                    : qty;
-                                // Set displayQty to qtyString if it's a string, else keep "0"
-                                if (typeof qtyString === "string") {
-                                  displayQty = qtyString;
-                                }
-                                // Process date if qtyString matches DD-MM-YYYY format
-                                if (
-                                  typeof qtyString === "string" &&
-                                  qtyString.match(/^\d{2}-\d{2}-\d{4}$/)
-                                ) {
-                                  try {
-                                    const [day, month, year] = qtyString
-                                      .split("-")
-                                      .map(Number);
-                                    const expiryDate = new Date(
-                                      year,
-                                      month - 1,
-                                      day
-                                    );
-                                    const today = new Date(); // Current date (August 27, 2025, 5:44 PM IST)
-                                    today.setHours(0, 0, 0, 0); // Reset time to midnight
-                                    expiryDate.setHours(0, 0, 0, 0); // Reset time for expiry
-                                    if (!isNaN(expiryDate.getTime())) {
-                                      const diffTime = expiryDate - today;
-                                      const daysDiff = Math.ceil(
-                                        diffTime / (1000 * 60 * 60 * 24)
-                                      );
-                                      if (daysDiff <= 0) {
-                                        statusdisc = "Expired";
-                                      } else if (daysDiff <= 2) {
-                                        statusdisc = "Expiring Soon";
-                                      } else {
-                                        statusdisc = "";
-                                      }
-                                    } else {
-                                      console.log(
-                                        "Invalid date for qtyString:",
-                                        qtyString
-                                      ); // Debug: Log invalid date
-                                    }
-                                  } catch (error) {
-                                    console.log(
-                                      "Error parsing date for qtyString:",
-                                      qtyString,
-                                      error
-                                    ); // Debug: Log errors
-                                  }
-                                } else {
-                                  console.log(
-                                    "Non-string or invalid format qtyString:",
-                                    qtyString
-                                  ); // Debug: Log invalid format
-                                }
-                                return (
-                                  <span key={variant} style={{ color: "red" }}>
-                                    {statusdisc ? " • " + statusdisc : ""}
-                                  </span>
-                                );
-                              })
-                          ) : (
-                            <span key="Expiry"></span>
-                          )}
-                        </h6>
-                      </div>
-                    </div>
-                    <div style={{ position: 'relative', top: '25px', right: '20px' }}>
-                      <span style={{ backgroundColor: 'red', color: 'white', padding: '5px 13px', borderRadius: '50%', cursor: 'pointer', fontSize: '20px' }} onClick={handlePopupClose}>x</span>
-                    </div>
-                  </div>
-
-                  {/* Tabs */}
+                {/* Tabs */}
+                <div className="button-group" style={{ display: 'flex', justifyContent: 'space-between' }}>
                   <div className="button-group">
                     {["general", "pricing", "description", "variants"].map(
                       (tab) => (
                         <div
                           key={tab}
+                          style={{ borderBottom: activeTabs[selectedProduct._id] === tab ? '2px solid black' : 'none' }}
                           className={`button-${activeTabs[selectedProduct._id] === tab
                             ? "active"
                             : "inactive"
@@ -1240,373 +1136,976 @@ function ProductList() {
                       )
                     )}
                   </div>
+                  <div style={{ position: 'relative', top: '3px', right: '5px' }}>
+                    <span style={{ backgroundColor: 'red', color: 'white', padding: '5px 13px', borderRadius: '50%', cursor: 'pointer', fontSize: '20px' }} onClick={handlePopupClose}>x</span>
+                  </div>
+                </div>
 
-                  {/* Toggle Sections */}
-                  <div className="toggle-section mb-3">
-                    {activeTabs[selectedProduct._id] === "general" && (
-                      <div className="section-container">
-                        {/* All Categories */}
-                        <div className="categories">
-                          {/* Category */}
-                          <div className="category">
-                            <div className="category-item">
-                              <p className="label">Category</p>
-                              <p
-                                className="value"
+                {/* Toggle Sections */}
+                <div className="" style={{ padding: '15px 25px' }}>
+                  {activeTabs[selectedProduct._id] === "general" && (
+                    <div className="section-container">
+
+                      {/* product info */}
+                      <div className="section-header" style={{ backgroundColor: '#F5F6FA', alignItems: 'center' }}>
+                        <div className="section-title">
+                          <div
+                            className="icon-container"
+                            style={{
+                              height: "50px",
+                              width: "50px",
+                              display: "flex",
+                              justifyContent: "center",
+                              alignItems: "center",
+                              borderRadius: "8px",
+                              overflow: "hidden",
+                              padding: "2px",
+                            }}
+                          >
+                            {/* <FaShoppingBag /> */}
+                            {selectedProduct.images?.[0] && (
+                              <img
+                                src={selectedProduct.images[0].url}
+                                alt={selectedProduct.productName}
+                                className="media-image"
                                 style={{
-                                  textTransform: "capitalize",
-                                  padding: "4px 10px",
-                                  fontSize: "20px",
-                                  marginTop: "-20px",
+                                  height: "100%",
+                                  width: "100%",
+                                  objectFit: "contain",
                                 }}
-                              >
-                                {selectedProduct.category?.categoryName}
-                              </p>
-                            </div>
-                            <div className="category-item">
-                              <p className="label">Supplier SKU</p>
-                              <p
-                                className="value"
-                                style={{
-                                  textTransform: "capitalize",
-                                  padding: "4px 10px",
-                                  fontSize: "20px",
-                                  marginTop: "-20px",
-                                }}
-                              >
-                                KAPL-011
-                              </p>
-                            </div>
-                            <div className="category-item">
-                              <p className="label">Reorder Level</p>
-                              <p
-                                className="value"
-                                style={{
-                                  textTransform: "capitalize",
-                                  padding: "4px 10px",
-                                  fontSize: "20px",
-                                  marginTop: "-20px",
-                                }}
-                              >
-                                {selectedProduct.reorderLevel}
-                              </p>
-                            </div>
+                              />
+                            )}
                           </div>
 
-                          {/* Brands */}
-                          <div className="category">
-                            <div className="category-item">
-                              <p className="label">Brands/Manufacturer</p>
-                              <p
-                                className="value"
-                                style={{
-                                  textTransform: "capitalize",
-                                  padding: "4px 10px",
-                                  fontSize: "20px",
-                                  marginTop: "-20px",
-                                }}
-                              >
-                                {selectedProduct.brand?.brandName}
-                              </p>
-                            </div>
-                            <div className="category-item">
-                              <p className="label">Barcode</p>
-                              <p
-                                className="value"
-                                style={{
-                                  textTransform: "capitalize",
-                                  padding: "4px 10px",
-                                  fontSize: "20px",
-                                  marginTop: "-20px",
-                                }}
-                              >
-                                {selectedProduct.itemBarcode}
-                              </p>
-                              {/* <p className="value">EAN - 1234 5678 9090</p> */}
-                            </div>
-                            <div className="category-item">
-                              <p className="label">Initial Stock Quantity</p>
-                              <p
-                                className="value"
-                                style={{
-                                  textTransform: "capitalize",
-                                  padding: "4px 10px",
-                                  fontSize: "20px",
-                                  marginTop: "-20px",
-                                }}
-                              >
-                                {selectedProduct.initialStock}
-                              </p>
-                            </div>
-                          </div>
+                          <div>
+                            <h3 className="section-title-text" style={{ color: 'black' }}>
+                              {selectedProduct.productName}
+                            </h3>
+                            <br />
+                            <h6 className="section-subtitle">
 
-                          {/* Product Type */}
-                          <div className="category">
-                            <div className="category-item">
-                              <p className="label">Product Type</p>
-                              <p
-                                className="value"
-                                style={{
-                                  textTransform: "capitalize",
-                                  padding: "4px 10px",
-                                  fontSize: "20px",
-                                  marginTop: "-20px",
-                                }}
-                              >
-                                {selectedProduct.itemType}
-                              </p>
-                            </div>
-                            <div className="category-item">
-                              <p className="label">Warehouse Location</p>
-                              <p
-                                className="value"
-                                style={{
-                                  textTransform: "capitalize",
-                                  padding: "4px 10px",
-                                  fontSize: "20px",
-                                  marginTop: "-20px",
-                                }}
-                              >
-                                {selectedProduct.warehouse}
-                              </p>
-                            </div>
-                            <div className="category-item">
-                              <p className="label">Track by</p>
-                              <p
-                                className="value"
-                                style={{
-                                  textTransform: "capitalize",
-                                  padding: "4px 10px",
-                                  fontSize: "20px",
-                                  marginTop: "-20px",
-                                }}
-                              >
-                                Serial No.
-                              </p>
-                            </div>
+                              SKU-{selectedProduct.sku} • {selectedProduct.itemType} • Available Qty -{" "}
+                              {selectedProduct.quantity} {selectedProduct.unit}
+                              {selectedProduct.variants &&
+                                Object.keys(selectedProduct.variants).includes(
+                                  "Expiry"
+                                ) ? (
+                                Object.entries(selectedProduct.variants)
+                                  .filter(([variant]) => variant === "Expiry")
+                                  .map(([variant, qty]) => {
+                                    let statusText = "";
+                                    let displayQty = "0"; // Default display value
+                                    let statusdisc = "";
+                                    // Extract qtyString from array or use qty directly
+                                    const qtyString =
+                                      Array.isArray(qty) && qty.length > 0
+                                        ? qty[0]
+                                        : qty;
+                                    // Set displayQty to qtyString if it's a string, else keep "0"
+                                    if (typeof qtyString === "string") {
+                                      displayQty = qtyString;
+                                    }
+                                    // Process date if qtyString matches DD-MM-YYYY format
+                                    if (
+                                      typeof qtyString === "string" &&
+                                      qtyString.match(/^\d{2}-\d{2}-\d{4}$/)
+                                    ) {
+                                      try {
+                                        const [day, month, year] = qtyString
+                                          .split("-")
+                                          .map(Number);
+                                        const expiryDate = new Date(
+                                          year,
+                                          month - 1,
+                                          day
+                                        );
+                                        const today = new Date(); // Current date (August 27, 2025, 5:44 PM IST)
+                                        today.setHours(0, 0, 0, 0); // Reset time to midnight
+                                        expiryDate.setHours(0, 0, 0, 0); // Reset time for expiry
+                                        if (!isNaN(expiryDate.getTime())) {
+                                          const diffTime = expiryDate - today;
+                                          const daysDiff = Math.ceil(
+                                            diffTime / (1000 * 60 * 60 * 24)
+                                          );
+                                          if (daysDiff <= 0) {
+                                            statusdisc = "Expired";
+                                          } else if (daysDiff <= 2) {
+                                            statusdisc = "Expiring Soon";
+                                          } else {
+                                            statusdisc = "";
+                                          }
+                                        } else {
+                                          console.log(
+                                            "Invalid date for qtyString:",
+                                            qtyString
+                                          ); // Debug: Log invalid date
+                                        }
+                                      } catch (error) {
+                                        console.log(
+                                          "Error parsing date for qtyString:",
+                                          qtyString,
+                                          error
+                                        ); // Debug: Log errors
+                                      }
+                                    } else {
+                                      console.log(
+                                        "Non-string or invalid format qtyString:",
+                                        qtyString
+                                      ); // Debug: Log invalid format
+                                    }
+                                    return (
+                                      <span key={variant} style={{ color: "red" }}>
+                                        {statusdisc ? " • " + statusdisc : ""}
+                                      </span>
+                                    );
+                                  })
+                              ) : (
+                                <span key="Expiry"></span>
+                              )}
+                            </h6>
                           </div>
+                        </div>
+                        <div
+                          style={{
+                            // background: "#007bff",
+                            // color: "#fff",
+                            border: "none",
+                            padding: "6px 12px",
+                            borderRadius: "6px",
+                            cursor: "pointer",
+                            marginRight: "8px",
+                          }}
+                          onClick={() =>
+                            navigate(`/product/edit/${selectedProduct._id}`)
+                          }
+                        >
+                          <FiEdit />
+                        </div>
 
-                          {/* Supplier & Warehouse */}
-                          <div className="category">
-                            <div className="category-item">
-                              <p className="label">Supplier</p>
+                      </div>
+
+                      {/* All Categories */}
+                      <div className="categories">
+                        {/* Category */}
+                        <div className="category">
+                          <div className="category-item">
+                            <p className="label">Category</p>
+                            <p
+                              className="value"
+                              style={{
+                                color: 'black',
+                                fontWeight: '400',
+                                fontSize: "15px",
+                                marginTop: "-20px",
+                              }}
+                            >
+                              {selectedProduct.category?.categoryName || "N/A"}
+                            </p>
+                          </div>
+                          <div className="category-item">
+                            <p className="label">Sub Category</p>
+                            <p
+                              className="value"
+                              style={{
+                                color: 'black',
+                                fontWeight: '400',
+                                fontSize: "15px",
+                                marginTop: "-20px",
+                              }}
+                            >
+                              {selectedProduct.subcategory?.subCategoryName || "N/A"}
+                            </p>
+                          </div>
+                          {/* <div className="category-item">
+                              <p className="label">Initial Stock</p>
                               <p
                                 className="value"
                                 style={{
-                                  textTransform: "capitalize",
-                                  padding: "4px 10px",
-                                  fontSize: "20px",
+                                  color:'black',
+                                  fontWeight:'400',
+                                  fontSize: "15px",
                                   marginTop: "-20px",
                                 }}
                               >
-                                {selectedProduct.supplierName || "-"}
+                                {selectedProduct.initialStock || "N/A"}
                               </p>
-                            </div>
-                            <div className="category-item">
-                              <p className="label">Warehouse</p>
-                              <p
-                                className="value"
-                                style={{
-                                  textTransform: "capitalize",
-                                  padding: "4px 10px",
-                                  fontSize: "20px",
-                                  marginTop: "-20px",
-                                }}
-                              >
-                                {selectedProduct.warehouseName || "-"}
-                              </p>
-                            </div>
-                            <div className="category-item">
+                            </div> */}
+                          <div className="category-item">
+                            <p className="label">Reorder Level</p>
+                            <p
+                              className="value"
+                              style={{
+                                color: 'black',
+                                fontWeight: '400',
+                                fontSize: "15px",
+                                marginTop: "-20px",
+                              }}
+                            >
+                              {selectedProduct.reorderLevel || "N/A"}
+                            </p>
+                          </div>
+                        </div>
+
+                        {/* Brands */}
+                        <div className="category">
+                          <div className="category-item">
+                            <p className="label">Brands/Manufacturer</p>
+                            <p
+                              className="value"
+                              style={{
+                                color: 'black',
+                                fontWeight: '400',
+                                fontSize: "15px",
+                                marginTop: "-20px",
+                              }}
+                            >
+                              {selectedProduct.brand?.brandName || "N/A"}
+                            </p>
+                          </div>
+                          <div className="category-item">
+                            <p className="label">Barcode</p>
+                            <p
+                              className="value"
+                              style={{
+                                color: 'black',
+                                fontWeight: '400',
+                                fontSize: "15px",
+                                marginTop: "-20px",
+                              }}
+                            >
+                              {selectedProduct.itemBarcode || "N/A"}
+                            </p>
+                            {/* <p className="value">EAN - 1234 5678 9090</p> */}
+                          </div>
+                          <div className="category-item">
+                            <p className="label">Initial Stock Quantity</p>
+                            <p
+                              className="value"
+                              style={{
+                                color: 'black',
+                                fontWeight: '400',
+                                fontSize: "15px",
+                                marginTop: "-20px",
+                              }}
+                            >
+                              {selectedProduct.initialStock || "N/A"}
+                            </p>
+                          </div>
+                          {/* <div className="category-item">
                               <p className="label">Lead Time</p>
                               <p
                                 className="value"
                                 style={{
-                                  textTransform: "capitalize",
-                                  padding: "4px 10px",
-                                  fontSize: "20px",
+                                  color:'black',
+                                  fontWeight:'400',
+                                  fontSize: "15px",
                                   marginTop: "-20px",
                                 }}
                               >
-                                {selectedProduct.leadTime}
+                                {selectedProduct.leadTime || "N/A"}
                               </p>
-                            </div>
-                            <div className="category-item">
-                              <p className="label">Status</p>
+                            </div> */}
+                          {/* <div className="category-item">
+                              <p className="label">Serial Number</p>
                               <p
                                 className="value"
                                 style={{
-                                  textTransform: "capitalize",
-                                  padding: "4px 10px",
-                                  fontSize: "20px",
+                                  color:'black',
+                                  fontWeight:'400',
+                                  fontSize: "15px",
                                   marginTop: "-20px",
                                 }}
                               >
-                                {selectedProduct.trackType}
+                                {selectedProduct.serialNumber || "N/A"}
                               </p>
-                            </div>
-                          </div>
+                            </div> */}
                         </div>
-                      </div>
-                    )}
 
-                    {activeTabs[selectedProduct._id] === "pricing" && (
-                      <div className="section-container">
-                        {/* All Categories */}
-                        <div className="categories">
-                          {/* Category */}
-                          <div className="category">
-                            <div className="category-item">
-                              <p className="label">Purchase Price</p>
-                              <p
-                                className="value"
-                                style={{
-                                  textTransform: "capitalize",
-                                  padding: "4px 10px",
-                                  fontSize: "20px",
-                                  marginTop: "-20px",
-                                }}
-                              >
-                                {selectedProduct.purchasePrice}
-                              </p>
-                            </div>
-                            <div className="category-item">
-                              <p className="label">Unit</p>
-                              <p
-                                className="value"
-                                style={{
-                                  textTransform: "capitalize",
-                                  padding: "4px 10px",
-                                  fontSize: "20px",
-                                  marginTop: "-20px",
-                                }}
-                              >
-                                {selectedProduct.unit}
-                              </p>
-                            </div>
-                            <div className="category-item">
-                              <p className="label">HSN / SAC</p>
-                              <p
-                                className="value"
-                                style={{
-                                  textTransform: "capitalize",
-                                  padding: "4px 10px",
-                                  fontSize: "20px",
-                                  marginTop: "-20px",
-                                }}
-                              >
-                                {selectedProduct.hsnCode || "-"}
-                              </p>
-                            </div>
-                          </div>
-
-                          {/* Brands */}
-                          <div className="category">
-                            <div className="category-item">
-                              <p className="label">Selling price</p>
-                              <p
-                                className="value"
-                                style={{
-                                  textTransform: "capitalize",
-                                  padding: "4px 10px",
-                                  fontSize: "20px",
-                                  marginTop: "-20px",
-                                }}
-                              >
-                                {selectedProduct.sellingPrice}
-                              </p>
-                            </div>
-                            <div className="category-item">
-                              <p className="label">Discount</p>
-                              <p
-                                className="value"
-                                style={{
-                                  textTransform: "capitalize",
-                                  padding: "4px 10px",
-                                  fontSize: "20px",
-                                  marginTop: "-20px",
-                                }}
-                              >
-                                {selectedProduct.discountValue}
-                              </p>
-                              {/* <p className="value">EAN - 1234 5678 9090</p> */}
-                            </div>
-                            <div className="category-item">
-                              <p className="label">GST Rate</p>
-                              <p
-                                className="value"
-                                style={{
-                                  textTransform: "capitalize",
-                                  padding: "4px 10px",
-                                  fontSize: "20px",
-                                  marginTop: "-20px",
-                                }}
-                              >
-                                {selectedProduct.tax}
-                              </p>
-                            </div>
-                          </div>
-
-                          {/* Product Type */}
-                          <div className="category">
-                            <div className="category-item">
-                              <p className="label">
-                                Wholesale Price / Bulk Price
-                              </p>
-                              <p
-                                className="value"
-                                style={{
-                                  textTransform: "capitalize",
-                                  padding: "4px 10px",
-                                  fontSize: "20px",
-                                  marginTop: "-20px",
-                                }}
-                              >
-                                {selectedProduct.wholesalePrice}
-                              </p>
-                            </div>
-                            <div className="category-item">
-                              <p className="label">Discount Period</p>
-                              {/* <p className="value">{product.purchasePrice}</p> */}
-                            </div>
-                          </div>
-
-                          {/* Supplier */}
-                          <div className="category">
-                            <div className="category-item">
-                              <p className="label">Quantity</p>
-                              <p
-                                className="value"
-                                style={{
-                                  textTransform: "capitalize",
-                                  padding: "4px 10px",
-                                  fontSize: "20px",
-                                  marginTop: "-20px",
-                                }}
-                              >
-                                {selectedProduct.quantity}
-                              </p>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    )}
-
-                    {activeTabs[selectedProduct._id] === "description" && (
-                      <div className="section-container">
-                        <div>
-                          <div className="media-content">
-                            <div
+                        {/* Product Type */}
+                        <div className="category">
+                          <div className="category-item">
+                            <p className="label">Product Type</p>
+                            <p
+                              className="value"
                               style={{
-                                display: "flex",
-                                justifyContent: "center",
-                                width: "200px",
-                                height: "200px",
-                                alignItems: "center",
-                                overflow: "hidden",
-                                padding: "2px",
-                                marginRight: "20px",
+                                color: 'black',
+                                fontWeight: '400',
+                                fontSize: "15px",
+                                marginTop: "-20px",
                               }}
                             >
+                              {selectedProduct.productType || "N/A"}
+                            </p>
+                          </div>
+                          <div className="category-item">
+                            <p className="label">Warehouse Name</p>
+                            <p
+                              className="value"
+                              style={{
+                                color: 'black',
+                                fontWeight: '400',
+                                fontSize: "15px",
+                                marginTop: "-20px",
+                              }}
+                            >
+                              {selectedProduct.warehouseName || "N/A"}
+                            </p>
+                          </div>
+                          {/* <div className="category-item">
+                              <p className="label">Warehouse Location</p>
+                              <p
+                                className="value"
+                                style={{
+                                  color:'black',
+                                  fontWeight:'400',
+                                  fontSize: "15px",
+                                  marginTop: "-20px",
+                                }}
+                              >
+                                {selectedProduct.address || "N/A"}
+                              </p>
+                            </div> */}
+                          <div className="category-item">
+                            <p className="label">Track by</p>
+                            <p
+                              className="value"
+                              style={{
+                                color: 'black',
+                                fontWeight: '400',
+                                fontSize: "15px",
+                                marginTop: "-20px",
+                              }}
+                            >
+                              {selectedProduct.serialNumber || "N/A"}
+                            </p>
+                          </div>
+                        </div>
+
+                        {/* Supplier & Warehouse */}
+                        <div className="category">
+                          <div className="category-item">
+                            <p className="label">Supplier</p>
+                            <p
+                              className="value"
+                              style={{
+                                color: 'black',
+                                fontWeight: '400',
+                                fontSize: "15px",
+                                marginTop: "-20px",
+                              }}
+                            >
+                              {selectedProduct.supplierName || "-"}
+                            </p>
+                          </div>
+                          {/* <div className="category-item">
+                              <p className="label">Store</p>
+                              <p
+                                className="value"
+                                style={{
+                                  color:'black',
+                                  fontWeight:'400',
+                                  fontSize: "15px",
+                                  marginTop: "-20px",
+                                }}
+                              >
+                                {selectedProduct.store || "-"}
+                              </p>
+                            </div> */}
+                          <div className="category-item">
+                            <p className="label">Lead Time</p>
+                            <p
+                              className="value"
+                              style={{
+                                color: 'black',
+                                fontWeight: '400',
+                                fontSize: "15px",
+                                marginTop: "-20px",
+                              }}
+                            >
+                              {selectedProduct.leadTime || "N/A"}
+                            </p>
+                          </div>
+                          <div className="category-item">
+                            <p className="label">Status</p>
+                            <p
+                              className="value"
+                              style={{
+                                color: 'black',
+                                fontWeight: '400',
+                                fontSize: "15px",
+                                marginTop: "-20px",
+                              }}
+                            >
+                              {selectedProduct.isReturnable === 'true' ? 'Returnable' : 'Non-Returnable'}
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {activeTabs[selectedProduct._id] === "pricing" && (
+                    <div className="section-container">
+
+                      {/* product info */}
+                      <div className="section-header" style={{ backgroundColor: '#F5F6FA', alignItems: 'center' }}>
+                        <div className="section-title">
+                          <div
+                            className="icon-container"
+                            style={{
+                              height: "50px",
+                              width: "50px",
+                              display: "flex",
+                              justifyContent: "center",
+                              alignItems: "center",
+                              borderRadius: "8px",
+                              overflow: "hidden",
+                              padding: "2px",
+                            }}
+                          >
+                            {/* <FaShoppingBag /> */}
+                            {selectedProduct.images?.[0] && (
+                              <img
+                                src={selectedProduct.images[0].url}
+                                alt={selectedProduct.productName}
+                                className="media-image"
+                                style={{
+                                  height: "100%",
+                                  width: "100%",
+                                  objectFit: "contain",
+                                }}
+                              />
+                            )}
+                          </div>
+
+                          <div>
+                            <h3 className="section-title-text" style={{ color: 'black' }}>
+                              {selectedProduct.productName}
+                            </h3>
+                            <br />
+                            <h6 className="section-subtitle">
+
+                              SKU-{selectedProduct.sku} • {selectedProduct.itemType} • Available Qty -{" "}
+                              {selectedProduct.quantity} {selectedProduct.unit}
+                              {selectedProduct.variants &&
+                                Object.keys(selectedProduct.variants).includes(
+                                  "Expiry"
+                                ) ? (
+                                Object.entries(selectedProduct.variants)
+                                  .filter(([variant]) => variant === "Expiry")
+                                  .map(([variant, qty]) => {
+                                    let statusText = "";
+                                    let displayQty = "0"; // Default display value
+                                    let statusdisc = "";
+                                    // Extract qtyString from array or use qty directly
+                                    const qtyString =
+                                      Array.isArray(qty) && qty.length > 0
+                                        ? qty[0]
+                                        : qty;
+                                    // Set displayQty to qtyString if it's a string, else keep "0"
+                                    if (typeof qtyString === "string") {
+                                      displayQty = qtyString;
+                                    }
+                                    // Process date if qtyString matches DD-MM-YYYY format
+                                    if (
+                                      typeof qtyString === "string" &&
+                                      qtyString.match(/^\d{2}-\d{2}-\d{4}$/)
+                                    ) {
+                                      try {
+                                        const [day, month, year] = qtyString
+                                          .split("-")
+                                          .map(Number);
+                                        const expiryDate = new Date(
+                                          year,
+                                          month - 1,
+                                          day
+                                        );
+                                        const today = new Date(); // Current date (August 27, 2025, 5:44 PM IST)
+                                        today.setHours(0, 0, 0, 0); // Reset time to midnight
+                                        expiryDate.setHours(0, 0, 0, 0); // Reset time for expiry
+                                        if (!isNaN(expiryDate.getTime())) {
+                                          const diffTime = expiryDate - today;
+                                          const daysDiff = Math.ceil(
+                                            diffTime / (1000 * 60 * 60 * 24)
+                                          );
+                                          if (daysDiff <= 0) {
+                                            statusdisc = "Expired";
+                                          } else if (daysDiff <= 2) {
+                                            statusdisc = "Expiring Soon";
+                                          } else {
+                                            statusdisc = "";
+                                          }
+                                        } else {
+                                          console.log(
+                                            "Invalid date for qtyString:",
+                                            qtyString
+                                          ); // Debug: Log invalid date
+                                        }
+                                      } catch (error) {
+                                        console.log(
+                                          "Error parsing date for qtyString:",
+                                          qtyString,
+                                          error
+                                        ); // Debug: Log errors
+                                      }
+                                    } else {
+                                      console.log(
+                                        "Non-string or invalid format qtyString:",
+                                        qtyString
+                                      ); // Debug: Log invalid format
+                                    }
+                                    return (
+                                      <span key={variant} style={{ color: "red" }}>
+                                        {statusdisc ? " • " + statusdisc : ""}
+                                      </span>
+                                    );
+                                  })
+                              ) : (
+                                <span key="Expiry"></span>
+                              )}
+                            </h6>
+                          </div>
+                        </div>
+                        <div
+                          style={{
+                            // background: "#007bff",
+                            // color: "#fff",
+                            border: "none",
+                            padding: "6px 12px",
+                            borderRadius: "6px",
+                            cursor: "pointer",
+                            marginRight: "8px",
+                          }}
+                          onClick={() =>
+                            navigate(`/product/edit/${selectedProduct._id}`)
+                          }
+                        >
+                          <FiEdit />
+                        </div>
+
+                      </div>
+
+                      {/* All Categories */}
+                      <div className="categories">
+                        {/* Category */}
+                        <div className="category">
+                          <div className="category-item">
+                            <p className="label">Purchase Price</p>
+                            <p
+                              className="value"
+                              style={{
+                                color: 'black',
+                                fontWeight: '400',
+                                fontSize: "15px",
+                                marginTop: "-20px",
+                              }}
+                            >
+                              {selectedProduct.purchasePrice}
+                            </p>
+                          </div>
+                          <div className="category-item">
+                            <p className="label">Unit</p>
+                            <p
+                              className="value"
+                              style={{
+                                color: 'black',
+                                fontWeight: '400',
+                                fontSize: "15px",
+                                marginTop: "-20px",
+                              }}
+                            >
+                              {selectedProduct.unit}
+                            </p>
+                          </div>
+                          <div className="category-item">
+                            <p className="label">HSN / SAC</p>
+                            <p
+                              className="value"
+                              style={{
+                                color: 'black',
+                                fontWeight: '400',
+                                fontSize: "15px",
+                                marginTop: "-20px",
+                              }}
+                            >
+                              {selectedProduct.hsnCode || "-"}
+                            </p>
+                          </div>
+                        </div>
+
+                        {/* Brands */}
+                        <div className="category">
+                          <div className="category-item">
+                            <p className="label">Selling price</p>
+                            <p
+                              className="value"
+                              style={{
+                                color: 'black',
+                                fontWeight: '400',
+                                fontSize: "15px",
+                                marginTop: "-20px",
+                              }}
+                            >
+                              {selectedProduct.sellingPrice}
+                            </p>
+                          </div>
+                          <div className="category-item">
+                            <p className="label">Discount</p>
+                            <p
+                              className="value"
+                              style={{
+                                color: 'black',
+                                fontWeight: '400',
+                                fontSize: "15px",
+                                marginTop: "-20px",
+                              }}
+                            >
+                              {selectedProduct.discountValue} {selectedProduct.discountType == "Percentage" ? "%" : 'rupee'}
+                            </p>
+                            {/* <p className="value">EAN - 1234 5678 9090</p> */}
+                          </div>
+                          <div className="category-item">
+                            <p className="label">GST Rate</p>
+                            <p
+                              className="value"
+                              style={{
+                                color: 'black',
+                                fontWeight: '400',
+                                fontSize: "15px",
+                                marginTop: "-20px",
+                              }}
+                            >
+                              {selectedProduct.tax}%
+                            </p>
+                          </div>
+                        </div>
+
+                        {/* Product Type */}
+                        <div className="category">
+                          <div className="category-item">
+                            <p className="label">
+                              Wholesale Price / Bulk Price
+                            </p>
+                            <p
+                              className="value"
+                              style={{
+                                color: 'black',
+                                fontWeight: '400',
+                                fontSize: "15px",
+                                marginTop: "-20px",
+                              }}
+                            >
+                              {selectedProduct.wholesalePrice}
+                            </p>
+                          </div>
+                          <div className="category-item">
+                            <p className="label">
+                              Retail Price
+                            </p>
+                            <p
+                              className="value"
+                              style={{
+                                color: 'black',
+                                fontWeight: '400',
+                                fontSize: "15px",
+                                marginTop: "-20px",
+                              }}
+                            >
+                              {selectedProduct.retailPrice}
+                            </p>
+                          </div>
+                          <div className="category-item">
+                            <p className="label">GST Type</p>
+                            <p
+                              className="value"
+                              style={{
+                                color: 'black',
+                                fontWeight: '400',
+                                fontSize: "15px",
+                                marginTop: "-20px",
+                              }}
+                            >
+                              {selectedProduct.taxType}
+                            </p>
+                          </div>
+                        </div>
+
+                        {/* Supplier */}
+                        <div className="category">
+                          <div className="category-item">
+                            <p className="label">Quantity</p>
+                            <p
+                              className="value"
+                              style={{
+                                color: 'black',
+                                fontWeight: '400',
+                                fontSize: "15px",
+                                marginTop: "-20px",
+                              }}
+                            >
+                              {selectedProduct.quantity}
+                            </p>
+                          </div>
+                          <div className="category-item">
+                            <p className="label">Quantity Alert</p>
+                            <p
+                              className="value"
+                              style={{
+                                color: 'black',
+                                fontWeight: '400',
+                                fontSize: "15px",
+                                marginTop: "-20px",
+                              }}
+                            >
+                              {selectedProduct.quantityAlert}
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {activeTabs[selectedProduct._id] === "description" && (
+                    <div className="section-container">
+                      {/* product info */}
+                      <div className="section-header" style={{ backgroundColor: '#F5F6FA', alignItems: 'center' }}>
+                        <div className="section-title">
+                          <div
+                            className="icon-container"
+                            style={{
+                              height: "50px",
+                              width: "50px",
+                              display: "flex",
+                              justifyContent: "center",
+                              alignItems: "center",
+                              borderRadius: "8px",
+                              overflow: "hidden",
+                              padding: "2px",
+                            }}
+                          >
+                            {/* <FaShoppingBag /> */}
+                            {selectedProduct.images?.[0] && (
+                              <img
+                                src={selectedProduct.images[0].url}
+                                alt={selectedProduct.productName}
+                                className="media-image"
+                                style={{
+                                  height: "100%",
+                                  width: "100%",
+                                  objectFit: "contain",
+                                }}
+                              />
+                            )}
+                          </div>
+
+                          <div>
+                            <h3 className="section-title-text" style={{ color: 'black' }}>
+                              {selectedProduct.productName}
+                            </h3>
+                            <br />
+                            <h6 className="section-subtitle">
+
+                              SKU-{selectedProduct.sku} • {selectedProduct.itemType} • Available Qty -{" "}
+                              {selectedProduct.quantity} {selectedProduct.unit}
+                              {selectedProduct.variants &&
+                                Object.keys(selectedProduct.variants).includes(
+                                  "Expiry"
+                                ) ? (
+                                Object.entries(selectedProduct.variants)
+                                  .filter(([variant]) => variant === "Expiry")
+                                  .map(([variant, qty]) => {
+                                    let statusText = "";
+                                    let displayQty = "0"; // Default display value
+                                    let statusdisc = "";
+                                    // Extract qtyString from array or use qty directly
+                                    const qtyString =
+                                      Array.isArray(qty) && qty.length > 0
+                                        ? qty[0]
+                                        : qty;
+                                    // Set displayQty to qtyString if it's a string, else keep "0"
+                                    if (typeof qtyString === "string") {
+                                      displayQty = qtyString;
+                                    }
+                                    // Process date if qtyString matches DD-MM-YYYY format
+                                    if (
+                                      typeof qtyString === "string" &&
+                                      qtyString.match(/^\d{2}-\d{2}-\d{4}$/)
+                                    ) {
+                                      try {
+                                        const [day, month, year] = qtyString
+                                          .split("-")
+                                          .map(Number);
+                                        const expiryDate = new Date(
+                                          year,
+                                          month - 1,
+                                          day
+                                        );
+                                        const today = new Date(); // Current date (August 27, 2025, 5:44 PM IST)
+                                        today.setHours(0, 0, 0, 0); // Reset time to midnight
+                                        expiryDate.setHours(0, 0, 0, 0); // Reset time for expiry
+                                        if (!isNaN(expiryDate.getTime())) {
+                                          const diffTime = expiryDate - today;
+                                          const daysDiff = Math.ceil(
+                                            diffTime / (1000 * 60 * 60 * 24)
+                                          );
+                                          if (daysDiff <= 0) {
+                                            statusdisc = "Expired";
+                                          } else if (daysDiff <= 2) {
+                                            statusdisc = "Expiring Soon";
+                                          } else {
+                                            statusdisc = "";
+                                          }
+                                        } else {
+                                          console.log(
+                                            "Invalid date for qtyString:",
+                                            qtyString
+                                          ); // Debug: Log invalid date
+                                        }
+                                      } catch (error) {
+                                        console.log(
+                                          "Error parsing date for qtyString:",
+                                          qtyString,
+                                          error
+                                        ); // Debug: Log errors
+                                      }
+                                    } else {
+                                      console.log(
+                                        "Non-string or invalid format qtyString:",
+                                        qtyString
+                                      ); // Debug: Log invalid format
+                                    }
+                                    return (
+                                      <span key={variant} style={{ color: "red" }}>
+                                        {statusdisc ? " • " + statusdisc : ""}
+                                      </span>
+                                    );
+                                  })
+                              ) : (
+                                <span key="Expiry"></span>
+                              )}
+                            </h6>
+                          </div>
+                        </div>
+                        <div
+                          style={{
+                            // background: "#007bff",
+                            // color: "#fff",
+                            border: "none",
+                            padding: "6px 12px",
+                            borderRadius: "6px",
+                            cursor: "pointer",
+                            marginRight: "8px",
+                          }}
+                          onClick={() =>
+                            navigate(`/product/edit/${selectedProduct._id}`)
+                          }
+                        >
+                          <FiEdit />
+                        </div>
+
+                      </div>
+
+
+                      <div style={{ display: 'flex', justifyContent: 'start', padding: '20px' }}>
+                        <div
+                          style={{
+                            display: "flex",
+                            justifyContent: "center",
+                            width: "250px",
+                            height: "150px",
+                            alignItems: "center",
+                            overflow: "hidden",
+                            padding: "2px",
+                            border: '1px solid #ccc',
+                            borderRadius: '4px'
+                          }}
+                        >
+                          {selectedProduct.images?.[0] && (
+                            <img
+                              src={selectedProduct.images[0].url}
+                              alt={selectedProduct.productName}
+                              className="media-image"
+                              style={{
+                                height: "100%",
+                                width: "100%",
+                                objectFit: "contain",
+                              }}
+                            />
+                          )}
+                        </div>
+
+                        <div style={{}}>
+                          <div className="" style={{ display: 'flex', justifyContent: 'start' }}>
+                            <div className="category-item">
+                              <p className="label">SEO META TITLE</p>
+                              <p
+
+                                style={{
+                                  color: 'black',
+                                  fontWeight: '400',
+                                  fontSize: "15px",
+                                  marginTop: "-20px",
+                                }}
+                              >
+                                {selectedProduct.seoTitle}
+                              </p>
+                            </div>
+                            <div className="category-item">
+                              <p className="label">SEO META Description</p>
+                              <p
+
+                                style={{
+                                  color: 'black',
+                                  fontWeight: '400',
+                                  fontSize: "15px",
+                                  marginTop: "-20px",
+                                }}
+                              >
+                                {selectedProduct.seoDescription}
+                              </p>
+                            </div>
+                          </div>
+                          <div className="category-item">
+                            <p className="label">Description</p>
+                            <p
+                              className="value"
+                              style={{
+                                color: 'black',
+                                fontWeight: '400',
+                                fontSize: "15px",
+                                marginTop: "-20px",
+                              }}
+                            >
+                              {selectedProduct.description.length > 100 ? selectedProduct.description.slice(0, 100) + '...' : selectedProduct.description}
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+
+                    </div>
+                  )}
+
+                  {activeTabs[selectedProduct._id] === "variants" &&
+                    selectedProduct.variants && (
+                      <div className="section-container" style={{ border: 'none' }}>
+
+                        {/* product info */}
+                        <div className="section-header" style={{ backgroundColor: '#F5F6FA', alignItems: 'center' }}>
+                          <div className="section-title">
+                            <div
+                              className="icon-container"
+                              style={{
+                                height: "50px",
+                                width: "50px",
+                                display: "flex",
+                                justifyContent: "center",
+                                alignItems: "center",
+                                borderRadius: "8px",
+                                overflow: "hidden",
+                                padding: "2px",
+                              }}
+                            >
+                              {/* <FaShoppingBag /> */}
                               {selectedProduct.images?.[0] && (
                                 <img
                                   src={selectedProduct.images[0].url}
@@ -1622,76 +2121,127 @@ function ProductList() {
                             </div>
 
                             <div>
-                              <div className="seo-content">
-                                <div>
-                                  <p className="label">SEO META TITLE</p>
-                                  <p
-                                    className="value"
-                                    style={{
-                                      textTransform: "capitalize",
-                                      padding: "4px 10px",
-                                      fontSize: "20px",
-                                      marginTop: "-20px",
-                                    }}
-                                  >
-                                    {selectedProduct.seoTitle}
-                                  </p>
-                                </div>
-                                <div>
-                                  <p className="label">SEO META Description</p>
-                                  <p
-                                    className="value"
-                                    style={{
-                                      textTransform: "capitalize",
-                                      padding: "4px 10px",
-                                      fontSize: "20px",
-                                      marginTop: "-20px",
-                                    }}
-                                  >
-                                    {selectedProduct.seoDescription}
-                                  </p>
-                                </div>
-                              </div>
-                              <div>
-                                <p className="label">Description</p>
-                                <p
-                                  className="value"
-                                  style={{
-                                    fontWeight: "400",
-                                    padding: "4px 10px",
-                                    fontSize: "15px",
-                                    marginTop: "-20px",
-                                  }}
-                                >
-                                  {selectedProduct.description}
-                                </p>
-                              </div>
+                              <h3 className="section-title-text" style={{ color: 'black' }}>
+                                {selectedProduct.productName}
+                              </h3>
+                              <br />
+                              <h6 className="section-subtitle">
+
+                                SKU-{selectedProduct.sku} • {selectedProduct.itemType} • Available Qty -{" "}
+                                {selectedProduct.quantity} {selectedProduct.unit}
+                                {selectedProduct.variants &&
+                                  Object.keys(selectedProduct.variants).includes(
+                                    "Expiry"
+                                  ) ? (
+                                  Object.entries(selectedProduct.variants)
+                                    .filter(([variant]) => variant === "Expiry")
+                                    .map(([variant, qty]) => {
+                                      let statusText = "";
+                                      let displayQty = "0"; // Default display value
+                                      let statusdisc = "";
+                                      // Extract qtyString from array or use qty directly
+                                      const qtyString =
+                                        Array.isArray(qty) && qty.length > 0
+                                          ? qty[0]
+                                          : qty;
+                                      // Set displayQty to qtyString if it's a string, else keep "0"
+                                      if (typeof qtyString === "string") {
+                                        displayQty = qtyString;
+                                      }
+                                      // Process date if qtyString matches DD-MM-YYYY format
+                                      if (
+                                        typeof qtyString === "string" &&
+                                        qtyString.match(/^\d{2}-\d{2}-\d{4}$/)
+                                      ) {
+                                        try {
+                                          const [day, month, year] = qtyString
+                                            .split("-")
+                                            .map(Number);
+                                          const expiryDate = new Date(
+                                            year,
+                                            month - 1,
+                                            day
+                                          );
+                                          const today = new Date(); // Current date (August 27, 2025, 5:44 PM IST)
+                                          today.setHours(0, 0, 0, 0); // Reset time to midnight
+                                          expiryDate.setHours(0, 0, 0, 0); // Reset time for expiry
+                                          if (!isNaN(expiryDate.getTime())) {
+                                            const diffTime = expiryDate - today;
+                                            const daysDiff = Math.ceil(
+                                              diffTime / (1000 * 60 * 60 * 24)
+                                            );
+                                            if (daysDiff <= 0) {
+                                              statusdisc = "Expired";
+                                            } else if (daysDiff <= 2) {
+                                              statusdisc = "Expiring Soon";
+                                            } else {
+                                              statusdisc = "";
+                                            }
+                                          } else {
+                                            console.log(
+                                              "Invalid date for qtyString:",
+                                              qtyString
+                                            ); // Debug: Log invalid date
+                                          }
+                                        } catch (error) {
+                                          console.log(
+                                            "Error parsing date for qtyString:",
+                                            qtyString,
+                                            error
+                                          ); // Debug: Log errors
+                                        }
+                                      } else {
+                                        console.log(
+                                          "Non-string or invalid format qtyString:",
+                                          qtyString
+                                        ); // Debug: Log invalid format
+                                      }
+                                      return (
+                                        <span key={variant} style={{ color: "red" }}>
+                                          {statusdisc ? " • " + statusdisc : ""}
+                                        </span>
+                                      );
+                                    })
+                                ) : (
+                                  <span key="Expiry"></span>
+                                )}
+                              </h6>
                             </div>
                           </div>
+                          <div
+                            style={{
+                              // background: "#007bff",
+                              // color: "#fff",
+                              border: "none",
+                              padding: "6px 12px",
+                              borderRadius: "6px",
+                              cursor: "pointer",
+                              marginRight: "8px",
+                            }}
+                            onClick={() =>
+                              navigate(`/product/edit/${selectedProduct._id}`)
+                            }
+                          >
+                            <FiEdit />
+                          </div>
+
                         </div>
+
+                        <div className="" style={{ border: '1px solid #F5F6FA', borderRadius: '6px', marginTop: '15px' }}>
+                          {Object.entries(selectedProduct.variants).map(
+                            ([variant, qty], index) => (
+                              <div key={variant} className="" style={{ padding: '10px 15px', display: 'flex', backgroundColor: index % 2 === 0 ? 'white' : '#F5F6FA' }}>
+                                <span style={{ width: '100px' }}>{variant}</span>
+                                <span style={{ color: 'black' }}>: {qty}</span>
+                              </div>
+                            )
+                          )}
+                        </div>
+
                       </div>
                     )}
-
-                    {activeTabs[selectedProduct._id] === "variants" &&
-                      selectedProduct.variants && (
-                        <div className="section-container">
-                          <div className="variants mb-4">
-                            <div className="variants-header">
-                              <p className="label">Variant</p>
-                            </div>
-                            {Object.entries(selectedProduct.variants).map(
-                              ([variant, qty]) => (
-                                <div key={variant} className="variants-content">
-                                  <p>{variant}</p>
-                                  <p>{qty}</p>
-                                </div>
-                              )
-                            )}
-                          </div>
-                        </div>
-                      )}
-                  </div>
                 </div>
+
               </div>
 
             </div>

@@ -2225,7 +2225,7 @@ ul{
     color: #ffffff;
   }
   .user-menu.nav > li.flag-nav .dropdown-menu .dropdown-item.active, .user-menu.nav > li.flag-nav .dropdown-menu .dropdown-item:hover {
-    background: #FFF6EE;
+    /* background: #FFF6EE; */
     color: #FE9F43;
   }
   .user-menu.nav > li.flag-nav .dropdown-menu a img {
@@ -2559,7 +2559,7 @@ ul{
     font-size: 13px;
   }
   .link-item:hover {
-    background: #FFF6EE;
+    /* background: #FFF6EE; */
     border-color: #FFF6EE;
   }
   .link-item:hover .link-icon {
@@ -2658,7 +2658,7 @@ ul{
     background-color: rgba(254, 159, 67, 0.05);
   }
   .dropdown-item.active {
-    background-color: #FFF6EE !important;
+    /* background-color: #FFF6EE !important; */
   }
   
   .dropup .dropdown-toggle::after {

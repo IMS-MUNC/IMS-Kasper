@@ -199,13 +199,14 @@ const token = localStorage.getItem("token");
     }
 
     try {
+      const token = localStorage.getItem('token');
       await axios.put(`${BASE_URL}/api/user/update/${userId}`, {
         currentpassword: formData.currentpassword,
         newpassword: formData.newpassword,
         confirmpassword: formData.confirmpassword,
-         headers: {
-        Authorization: `Bearer ${token}`,
-      },
+      }, {        headers: {
+          Authorization: `Bearer ${token}`,
+        },
       });
 
       toast.success('Password updated successfully', {

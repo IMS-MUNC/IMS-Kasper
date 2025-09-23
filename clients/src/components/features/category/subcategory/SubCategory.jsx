@@ -112,9 +112,14 @@ const SubCategory = () => {
     }
 
     try {
+      const token = localStorage.getItem("token");
       await Promise.all(
         selectedSubCategories.map((id) =>
-          axios.delete(`${BASE_URL}/api/subcategory/subcategories/${id}`)
+          axios.delete(`${BASE_URL}/api/subcategory/subcategories/${id}`, {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          })
         )
       );
       toast.success("Selected subcategories deleted successfully");
@@ -122,7 +127,13 @@ const SubCategory = () => {
       setSelectedSubCategories([]);
       setSelectAll(false);
     } catch (error) {
-      toast.error("Failed to delete selected subcategories");
+      if (error.response?.status === 401) {
+        toast.error("Unauthorized: Please login again");
+      } else if (error.response?.status === 403) {
+        toast.error("Forbidden: You don't have permission to delete subcategories");
+      } else {
+        toast.error(error.response?.data?.message || "Failed to delete selected subcategories");
+      }
     }
   };
 
@@ -180,11 +191,11 @@ const SubCategory = () => {
       setImages([]);
       setImagePreviews([]);
       setSelectedCategory(null);
-      
+
       // Force immediate cleanup before fetching data
       forceCleanupModal();
       closeAddModal();
-      
+
       // Fetch updated data after modal cleanup
       setTimeout(() => {
         fetchSubcategories();
@@ -271,10 +282,10 @@ const SubCategory = () => {
         }
       );
       toast.success("Subcategory updated successfully!");
-      
+
       // Force immediate cleanup before fetching data
       forceCleanupModal();
-      
+
       fetchSubcategories();
       closeEditModal();
     } catch (error) {
@@ -310,17 +321,17 @@ const SubCategory = () => {
     // Remove ALL modal backdrops (in case there are multiple)
     const backdrops = document.querySelectorAll('.modal-backdrop');
     backdrops.forEach(backdrop => backdrop.remove());
-    
+
     // Remove modal-open class and reset body styles
     document.body.classList.remove('modal-open');
     document.body.style.overflow = '';
     document.body.style.paddingRight = '';
     document.body.style.marginRight = '';
-    
+
     // Remove any Bootstrap 5 specific classes
     document.body.classList.remove('modal-backdrop');
     document.documentElement.style.overflow = '';
-    
+
     // Force remove any lingering modal states
     const modals = document.querySelectorAll('.modal.show');
     modals.forEach(modal => {
@@ -335,10 +346,10 @@ const SubCategory = () => {
     // Close modal immediately
     const modal = window.$("#add-category");
     modal.modal("hide");
-    
+
     // Force immediate cleanup
     forceCleanupModal();
-    
+
     // Additional cleanup after animation
     setTimeout(() => {
       forceCleanupModal();
@@ -349,10 +360,10 @@ const SubCategory = () => {
     // Close modal immediately  
     const modal = window.$("#edit-category");
     modal.modal("hide");
-    
+
     // Force immediate cleanup
     forceCleanupModal();
-    
+
     // Additional cleanup after animation
     setTimeout(() => {
       forceCleanupModal();
@@ -369,7 +380,7 @@ const SubCategory = () => {
     setImagePreviews([]);
     setSelectedCategory(null);
     setErrors({});
-    
+
     closeAddModal();
   };
 
@@ -379,7 +390,7 @@ const SubCategory = () => {
     setImages([]);
     setImagePreviews([]);
     setErrors({});
-    
+
     closeEditModal();
   };
 
@@ -507,22 +518,33 @@ const SubCategory = () => {
                   Delete ({selectedSubCategories.length}) Selected
                 </button>
               )}</li>
-            <li>
-              <button type="button" className="icon-btn" title="Pdf" onClick={handlePdf}>
-                <FaFilePdf />
-              </button>
+            <li style={{ display: "flex", alignItems: "center", gap: '5px' }} className="icon-btn">
+              <label className="" title="">Export : </label>
+              <button onClick={handlePdf} title="Download PDF" style={{
+                backgroundColor: "white",
+                display: "flex",
+                alignItems: "center",
+                border: "none",
+              }}><FaFilePdf className="fs-20" style={{ color: "red" }} /></button>
+              <button onClick={handleExcel} title="Download Excel" style={{
+                backgroundColor: "white",
+                display: "flex",
+                alignItems: "center",
+                border: "none",
+              }}><FaFileExcel className="fs-20" style={{ color: "orange" }} /></button>
             </li>
-            <li>
-              <label className="icon-btn m-0" title="Import Excel">
+            <li style={{ display: "flex", alignItems: "center", gap: '5px' }} className="icon-btn">
+              <label className="" title="">Import : </label>
+              <label className="" title="Import Excel">
                 <input type="file" accept=".xlsx, .xls" hidden />
                 <FaFileExcel style={{ color: "green" }} />
               </label>
             </li>
-            <li>
+            {/* <li>
               <button type="button" className="icon-btn" title="Export Excel" onClick={handleExcel}>
                 <FaFileExcel />
               </button>
-            </li>
+            </li> */}
           </div>
           <div className="page-btn d-flex gap-2">
 
@@ -596,9 +618,12 @@ const SubCategory = () => {
                               key={i}
                               src={img}
                               alt="subcat-img"
-                              height="50"
-                              width="50"
+
+                              height="30"
+                              width="30"
+
                               className="me-1"
+                              style={{ borderRadius: '50%' }}
                             />
                           ))}
                         </td>

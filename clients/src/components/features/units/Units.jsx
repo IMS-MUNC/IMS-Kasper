@@ -125,10 +125,10 @@ const Units = () => {
     const selected = unitData.filter((unit) =>
       selectedUnits.includes(unit._id)
     );
-    
+
     // If no units are selected, export all units
     const dataToExport = selected.length === 0 ? unitData : selected;
-    
+
     if (dataToExport.length === 0) {
       toast.warn("No units available to export.");
       return;
@@ -145,7 +145,7 @@ const Units = () => {
     const ws = XLSX.utils.json_to_sheet(formattedData);
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, "Units");
-    
+
     const timestamp = new Date().toISOString().slice(0, 10);
     XLSX.writeFile(wb, `units_${timestamp}.xlsx`);
     toast.success("Excel file exported successfully!");
@@ -155,10 +155,10 @@ const Units = () => {
     const selected = unitData.filter((unit) =>
       selectedUnits.includes(unit._id)
     );
-    
+
     // If no units are selected, export all units
     const dataToExport = selected.length === 0 ? unitData : selected;
-    
+
     if (dataToExport.length === 0) {
       toast.warn("No units available to export.");
       return;
@@ -176,7 +176,7 @@ const Units = () => {
         new Date(u.createdAt).toLocaleDateString(),
       ]),
     });
-    
+
     const timestamp = new Date().toISOString().slice(0, 10);
     doc.save(`units_${timestamp}.pdf`);
     toast.success("PDF exported successfully!");
@@ -304,23 +304,29 @@ const Units = () => {
                 </button>
               )}
             </li>
-            <li>
-              <button
-                type="button"
-                className="icon-btn"
-                title="Pdf"
-                onClick={exportToPDF}
-              >
-                <FaFilePdf />
-              </button>
+            <li style={{ display: "flex", alignItems: "center", gap: '5px' }} className="icon-btn">
+              <label className="" title="">Export : </label>
+              <button onClick={exportToPDF} title="Download PDF" style={{
+                backgroundColor: "white",
+                display: "flex",
+                alignItems: "center",
+                border: "none",
+              }}><FaFilePdf className="fs-20" style={{ color: "red" }} /></button>
+              <button onClick={exportToExcel} title="Download Excel" style={{
+                backgroundColor: "white",
+                display: "flex",
+                alignItems: "center",
+                border: "none",
+              }}><FaFileExcel className="fs-20" style={{ color: "orange" }} /></button>
             </li>
-            <li>
-              <label className="icon-btn m-0" title="Import Excel">
+            <li style={{ display: "flex", alignItems: "center", gap: '5px' }} className="icon-btn">
+              <label className="" title="">Import : </label>
+              <label className="" title="Import Excel">
                 <input type="file" accept=".xlsx, .xls" hidden />
                 <FaFileExcel style={{ color: "green" }} />
               </label>
             </li>
-            <li>
+            {/* <li>
               <button
                 type="button"
                 className="icon-btn"
@@ -329,7 +335,7 @@ const Units = () => {
               >
                 <FaFileExcel />
               </button>
-            </li>
+            </li> */}
           </div>
           <div className="page-btn">
             <a

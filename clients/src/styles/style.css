@@ -1,4 +1,3 @@
-
 @charset "UTF-8";
 /****** Utils ******/
 @import url("https://fonts.googleapis.com/css2?family=Nunito:wght@300;400;500;600;700&amp;display=swap");
@@ -16547,7 +16546,7 @@ div#global-loader .whirly-loader:not(:required) {
 }
 .sidebar .sidebar-menu > ul > li.submenu-open ul li a:hover, .settings-sidebar .sidebar-menu > ul > li.submenu-open ul li a:hover {
   color: #212B36;
-  background-color: #F2F2F2;
+  /* background-color: #F2F2F2; */
 }
 .sidebar .sidebar-menu > ul > li.submenu-open ul li a:hover:after, .settings-sidebar .sidebar-menu > ul > li.submenu-open ul li a:hover:after {
   background: #007AFF;
@@ -16579,18 +16578,18 @@ div#global-loader .whirly-loader:not(:required) {
   padding: 4px 0 0;
 }
 .sidebar .sidebar-menu > ul > li > ul > li.submenu > a.subdrop, .settings-sidebar .sidebar-menu > ul > li > ul > li.submenu > a.subdrop {
-  background: #FFF6EE;
+  /* background: #FFF6EE; */
   color: #007AFF;
   border-radius: 8px;
 }
 .sidebar .sidebar-menu > ul > li > ul > li.submenu > a.subdrop span, .sidebar .sidebar-menu > ul > li > ul > li.submenu > a.subdrop i, .settings-sidebar .sidebar-menu > ul > li > ul > li.submenu > a.subdrop span, .settings-sidebar .sidebar-menu > ul > li > ul > li.submenu > a.subdrop i {
-  color: #007AFF;
+  /* color: #007AFF; */
 }
 .sidebar .sidebar-menu > ul > li > ul > li.submenu > a.subdrop .menu-arrow, .settings-sidebar .sidebar-menu > ul > li > ul > li.submenu > a.subdrop .menu-arrow {
-  background: #FFEDDD;
+  /* background: #FFEDDD; */
 }
 .sidebar .sidebar-menu > ul > li > ul > li.submenu > a.subdrop .menu-arrow::before, .settings-sidebar .sidebar-menu > ul > li > ul > li.submenu > a.subdrop .menu-arrow::before {
-  border-color: #007AFF;
+  /* border-color: #007AFF; */
 }
 .sidebar .sidebar-menu > ul li.active a, .settings-sidebar .sidebar-menu > ul li.active a {
   color: #007AFF;
@@ -16599,7 +16598,7 @@ div#global-loader .whirly-loader:not(:required) {
   color: #007AFF;
 }
 .sidebar .sidebar-menu > ul li .submenu > a.active, .settings-sidebar .sidebar-menu > ul li .submenu > a.active {
-  background: #FFF6EE;
+  /* background: #FFF6EE; */
   color: #007AFF;
   border-radius: 8px;
 }
@@ -16607,7 +16606,7 @@ div#global-loader .whirly-loader:not(:required) {
   color: #007AFF;
 }
 .sidebar .sidebar-menu > ul li .submenu > a.active .menu-arrow, .settings-sidebar .sidebar-menu > ul li .submenu > a.active .menu-arrow {
-  background: #FFEDDD;
+  /* background: #FFEDDD; */
 }
 .sidebar .sidebar-menu > ul li .submenu > a.active .menu-arrow::before, .settings-sidebar .sidebar-menu > ul li .submenu > a.active .menu-arrow::before {
   border-color: #007AFF;
@@ -16683,9 +16682,10 @@ div#global-loader .whirly-loader:not(:required) {
   line-height: 40px;
   font-size: 18px;
   line-height: 16px;
-  background: #F2F2F2;
-  width: 16px;
-  height: 16px;
+  /* background: #F2F2F2; */
+  width: 12px;
+  height: 12px;
+  font-weight: 700;
   border-radius: 50%;
   position: absolute;
   top: 10px;
@@ -45970,5 +45970,126 @@ span.flatpickr-weekday {
   position: relative;
   background: #E8E9EA;
 }
+a:hover,
+a:hover i,
+a:hover svg,
+a:hover span,
+a:hover strong,
+a:hover em {
+  color: #007AFF !important;
+}
+a.active {
+  color: #007aff !important;
+}
+a.active svg {
+  color: #007aff !important;
+}
+a:active,
+a:focus {
+  color: #007aff !important;
+  outline: none;
+  text-decoration: none;
+}
+a:hover i,
+a:hover svg {
+  color: #007AFF !important;
+}
+a:hover i,
+a:hover svg {
+  color: #007AFF !important;
+}
+a:active,
+a.active,
+a.active:focus,
+a:focus,
+a[aria-current="page"],
+a[aria-selected="true"] {
+  color: #007AFF !important;
+  outline: none;
+  text-decoration: none;
+}
 
-/*# sourceMappingURL=style.css.map */
+
+
+/* Make sure svg icons use the current text color */
+.sidebar .icons,
+.sidebar .sidebar-menu svg {
+  fill: currentColor !important;
+  stroke: currentColor !important;
+  color: inherit; /* inherit text color */
+}
+
+/* Active link styles */
+.sidebar .sidebar-menu a.active,
+.sidebar .sidebar-menu a.active span,
+.sidebar .sidebar-menu a.active .icons,
+.sidebar .sidebar-menu a[aria-current="page"] {
+  color: #007AFF !important;
+  fill: #007AFF !important;
+  stroke: #007AFF !important;
+}
+
+/* Hover (optional) */
+.sidebar .sidebar-menu a:hover,
+.sidebar .sidebar-menu a:hover .icons {
+  color: #007AFF !important;
+  fill: #007AFF !important;
+}
+
+/* If you have .subdrop and .submenu classes, ensure specificity */
+.sidebar .sidebar-menu .subdrop.active,
+.sidebar .sidebar-menu .subdrop.active .icons {
+  color: #007AFF !important;
+  fill: #007AFF !important;
+}
+
+
+
+
+/* arrow container */
+.sidebar .sidebar-menu .menu-arrow {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 18px;
+  margin-left: auto; /* pushes arrow to far right */
+  font-size: 12px;
+  line-height: 1;
+  transition: transform 0.15s ease, color 0.15s ease;
+}
+
+/* optional: rotate effect if you prefer */
+.sidebar .sidebar-menu .menu-arrow.open {
+  /* if you use characters (▾) you don't need a transform; but kept for subtle effects */
+  transform: rotate(0deg);
+}
+
+/* ensure svg icons also inherit color */
+.sidebar .icons,
+.sidebar .sidebar-menu svg {
+  fill: currentColor !important;
+  stroke: currentColor !important;
+  color: inherit;
+}
+
+/* active link style (already in your CSS but ensure specificity) */
+.sidebar .sidebar-menu a.active,
+.sidebar .sidebar-menu a.active .menu-arrow,
+.sidebar .sidebar-menu a.active .icons {
+  color: #007AFF !important;
+  fill: #007AFF !important;
+  stroke: #007AFF !important;
+}
+
+
+.menu-arrow {
+  display: inline-block;
+  transition: transform 0.3s ease;
+  margin-left: auto;
+}
+
+/* Use rotation instead of swapping icons */
+.menu-arrow.rotated {
+  transform: rotate(90deg) !important; /* right → down */
+  color: #007AFF; /* optional for open state */
+}

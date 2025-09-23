@@ -74,7 +74,7 @@ function ChooseToAddProduct() {
   //     </div>
   // </div>
     // <div style={{ marginTop: '200px', width: '100%' }}>
-     <div className="page-wrapper">
+    <div className="page-wrapper">
       <div className="content">
         <h2 style={{ textAlign: 'center' }}>How you want to add product?</h2>
       <div className='row' style={{ padding: '0px 250px', marginTop: '24px' }}>

@@ -5,6 +5,9 @@ import 'react-toastify/dist/ReactToastify.css';
 import BASE_URL from '../../../../pages/config/config';
 import axios from 'axios';
 import { TbEdit, TbRefresh, TbTrash } from 'react-icons/tb';
+import { GrFormPrevious } from 'react-icons/gr';
+import { MdNavigateNext } from 'react-icons/md';
+import { FaFileExcel, FaFilePdf } from 'react-icons/fa';
 import PDF from '../../../../assets/img/icons/pdf.svg'
 import EXCEL from '../../../../assets/img/icons/excel.svg'
 import jsPDF from 'jspdf';
@@ -24,7 +27,13 @@ const LowStock = () => {
   const [selectedCategory, setSelectedCategory] = useState('');
   const [filteredProducts, setFilteredProducts] = useState([]);
   const [filteredOutOfStockProducts, setFilteredOutOfStockProducts] = useState([]);
-  
+
+  // Pagination and selection states
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(10);
+  const [selectedProducts, setSelectedProducts] = useState([]);
+  const [selectAll, setSelectAll] = useState(false);
+
   const navigate = useNavigate();
 
   // Get export data based on active tab
@@ -134,6 +143,99 @@ const LowStock = () => {
     applyFilters();
   }, [products, outOfStockProducts, selectedWarehouse, selectedCategory]);
 
+  // Helper functions for pagination and selection
+  const getCurrentProducts = () => {
+    return activeTab === 'low' ? filteredProducts : filteredOutOfStockProducts;
+  };
+
+  const getCurrentPageProducts = () => {
+    const currentProducts = getCurrentProducts();
+    const startIndex = (currentPage - 1) * itemsPerPage;
+    const endIndex = startIndex + itemsPerPage;
+    return currentProducts.slice(startIndex, endIndex);
+  };
+
+  const handleProductSelect = (productId) => {
+    setSelectedProducts(prev => {
+      if (prev.includes(productId)) {
+        return prev.filter(id => id !== productId);
+      } else {
+        return [...prev, productId];
+      }
+    });
+  };
+
+  const handleSelectAll = () => {
+    const currentPageProducts = getCurrentPageProducts();
+    const currentPageProductIds = currentPageProducts.map(product => product._id);
+
+    if (selectAll) {
+      // Deselect all current page products
+      setSelectedProducts(prev => prev.filter(id => !currentPageProductIds.includes(id)));
+    } else {
+      // Select all current page products
+      setSelectedProducts(prev => {
+        const newSelected = [...prev];
+        currentPageProductIds.forEach(id => {
+          if (!newSelected.includes(id)) {
+            newSelected.push(id);
+          }
+        });
+        return newSelected;
+      });
+    }
+    setSelectAll(!selectAll);
+  };
+
+  const handleBulkDelete = async () => {
+    if (selectedProducts.length === 0) return;
+
+    if (window.confirm(`Are you sure you want to delete ${selectedProducts.length} selected products?`)) {
+      try {
+        const token = localStorage.getItem("token");
+
+        // Delete all selected products
+        await Promise.all(
+          selectedProducts.map(productId =>
+            axios.delete(`${BASE_URL}/api/products/pro/${productId}`, {
+              headers: {
+                Authorization: `Bearer ${token}`,
+              },
+            })
+          )
+        );
+
+        // Update both product lists
+        setProducts(prev => prev.filter(p => !selectedProducts.includes(p._id)));
+        setOutOfStockProducts(prev => prev.filter(p => !selectedProducts.includes(p._id)));
+
+        // Clear selections
+        setSelectedProducts([]);
+        setSelectAll(false);
+
+        toast.success(`${selectedProducts.length} products deleted successfully!`);
+      } catch (err) {
+        console.error("Failed to delete products:", err);
+        toast.error("Failed to delete some products. Please try again.");
+      }
+    }
+  };
+
+  // Sync selectAll state with current page selections
+  useEffect(() => {
+    const currentPageProducts = getCurrentPageProducts();
+    const currentPageProductIds = currentPageProducts.map(product => product._id);
+    const allCurrentPageSelected = currentPageProductIds.length > 0 &&
+      currentPageProductIds.every(id => selectedProducts.includes(id));
+    setSelectAll(allCurrentPageSelected);
+  }, [selectedProducts, currentPage, activeTab, filteredProducts, filteredOutOfStockProducts]);
+
+  // Reset pagination when switching tabs or applying filters
+  useEffect(() => {
+    setCurrentPage(1);
+    setSelectedProducts([]);
+    setSelectAll(false);
+  }, [activeTab, selectedWarehouse, selectedCategory]);
 
   //product delete---------------------------------------------------------------------------------------------------------------------------------------------
 
@@ -144,7 +246,7 @@ const LowStock = () => {
     ) {
       try {
         const token = localStorage.getItem("token");
-        await axios.delete(`${BASE_URL}/api/products/pro/${product._id}`, { 
+        await axios.delete(`${BASE_URL}/api/products/pro/${product._id}`, {
           headers: {
             Authorization: `Bearer ${token}`,
           },
@@ -164,7 +266,7 @@ const LowStock = () => {
     }
   };
 
-  
+
   //download pdf-------------------------------------------------------------------------------------------------------------------------------------------
 
   const handlePdf = () => {
@@ -234,7 +336,7 @@ const LowStock = () => {
 
 
   //category fetch-----------------------------------------------------------------------------------------------------------------------------------------------------------------
-  
+
   const [categories, setCategories] = useState([]);
 
   const fetchCategories = async () => {
@@ -254,7 +356,7 @@ const LowStock = () => {
   };
 
   //warehouse fetch-----------------------------------------------------------------------------------------------------------------------------------------------------------------
-  
+
   const [warehouses, setWarehouses] = useState([]);
 
   const fetchWarehouses = async () => {
@@ -282,19 +384,19 @@ const LowStock = () => {
     let filteredOutStock = outOfStockProducts;
 
     if (selectedWarehouse) {
-      filtered = filtered.filter(product => 
+      filtered = filtered.filter(product =>
         (product.warehouseName || product.warehouse || '').toLowerCase().includes(selectedWarehouse.toLowerCase())
       );
-      filteredOutStock = filteredOutStock.filter(product => 
+      filteredOutStock = filteredOutStock.filter(product =>
         (product.warehouseName || product.warehouse || '').toLowerCase().includes(selectedWarehouse.toLowerCase())
       );
     }
 
     if (selectedCategory) {
-      filtered = filtered.filter(product => 
+      filtered = filtered.filter(product =>
         (product.category?.categoryName || product.categoryName || product.category || '').toLowerCase().includes(selectedCategory.toLowerCase())
       );
-      filteredOutStock = filteredOutStock.filter(product => 
+      filteredOutStock = filteredOutStock.filter(product =>
         (product.category?.categoryName || product.categoryName || product.category || '').toLowerCase().includes(selectedCategory.toLowerCase())
       );
     }
@@ -396,12 +498,48 @@ const LowStock = () => {
             <h6>Manage your low stocks</h6>
           </div>
           <ul className="table-top-head low-stock-top-head">
-            <li>
-              <a data-bs-toggle="tooltip" data-bs-placement="top" title="Pdf" onClick={handlePdf}><img src={PDF} alt="pdf" /></a>
+            {selectedProducts.length > 0 && (
+              <li>
+                <button
+                  data-bs-toggle="tooltip"
+                  data-bs-placement="top"
+                  title="Delete Selected"
+                  onClick={handleBulkDelete}
+                  className="fs-15"
+                  style={{
+                    backgroundColor: '#dc3545',
+                    color: 'white',
+                    padding: '5px 10px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    border: '1px solid #dc3545',
+                    cursor: 'pointer',
+                    borderRadius: '4px',
+                    marginRight: '10px'
+                  }}
+                >
+                  <TbTrash className="me-1" /> Delete ({selectedProducts.length})
+                </button>
+              </li>
+            )}
+            <li style={{ display: "flex", alignItems: "center", gap: '5px' }} className="icon-btn">
+              <label className="" title="">Export : </label>
+              <button onClick={handlePdf} title="Download PDF" style={{
+                backgroundColor: "white",
+                display: "flex",
+                alignItems: "center",
+                border: "none",
+              }}><FaFilePdf className="fs-20" style={{ color: "red" }} /></button>
+              <button onClick={handleExcel} title="Download Excel" style={{
+                backgroundColor: "white",
+                display: "flex",
+                alignItems: "center",
+                border: "none",
+              }}><FaFileExcel className="fs-20" style={{ color: "orange" }} /></button>
             </li>
-            <li>
+            {/* <li>
               <a data-bs-toggle="tooltip" data-bs-placement="top" title="Excel" onClick={handleExcel}><img src={EXCEL} alt="excel" /></a>
-            </li>
+            </li> */}
             <li>
               <button data-bs-toggle="tooltip" data-bs-placement="top" title="Refresh" onClick={() => location.reload()} className="fs-20" style={{ backgroundColor: 'white', color: '', padding: '5px 5px', display: 'flex', alignItems: 'center', border: '1px solid #e8eaebff', cursor: 'pointer', borderRadius: '4px' }}><TbRefresh className="ti ti-refresh" /></button>
             </li>
@@ -470,7 +608,7 @@ const LowStock = () => {
                       <a className="dropdown-toggle btn btn-white btn-md d-inline-flex align-items-center" data-bs-toggle="dropdown">
                         {selectedWarehouse || 'Warehouse'}
                       </a>
-                      <ul className="dropdown-menu dropdown-menu-end p-3" style={{maxHeight: '200px', overflowY: 'auto'}}>
+                      <ul className="dropdown-menu dropdown-menu-end p-3" style={{ maxHeight: '200px', overflowY: 'auto' }}>
                         <li>
                           <a className="dropdown-item rounded-1" onClick={() => setSelectedWarehouse('')}>All Warehouses</a>
                         </li>
@@ -487,7 +625,7 @@ const LowStock = () => {
                       <a className="dropdown-toggle btn btn-white btn-md d-inline-flex align-items-center" data-bs-toggle="dropdown">
                         {selectedCategory || 'Category'}
                       </a>
-                      <ul className="dropdown-menu dropdown-menu-end p-3" style={{maxHeight: '200px', overflowY: 'auto'}}>
+                      <ul className="dropdown-menu dropdown-menu-end p-3" style={{ maxHeight: '200px', overflowY: 'auto' }}>
                         <li>
                           <a className="dropdown-item rounded-1" onClick={() => setSelectedCategory('')}>All Categories</a>
                         </li>
@@ -514,7 +652,12 @@ const LowStock = () => {
                         <tr>
                           <th className="no-sort">
                             <label className="checkboxs">
-                              <input type="checkbox" id="select-all" />
+                              <input
+                                type="checkbox"
+                                id="select-all"
+                                checked={selectAll}
+                                onChange={handleSelectAll}
+                              />
                               <span className="checkmarks" />
                             </label>
                           </th>
@@ -529,12 +672,16 @@ const LowStock = () => {
                         </tr>
                       </thead>
                       <tbody>
-                        {(activeTab === 'low' ? filteredProducts : filteredOutOfStockProducts).length > 0 ? (
-                          (activeTab === 'low' ? filteredProducts : filteredOutOfStockProducts).map(product => (
+                        {getCurrentPageProducts().length > 0 ? (
+                          getCurrentPageProducts().map(product => (
                             <tr key={product._id}>
                               <td>
                                 <label className="checkboxs">
-                                  <input type="checkbox" />
+                                  <input
+                                    type="checkbox"
+                                    checked={selectedProducts.includes(product._id)}
+                                    onChange={() => handleProductSelect(product._id)}
+                                  />
                                   <span className="checkmarks" />
                                 </label>
                               </td>
@@ -577,6 +724,64 @@ const LowStock = () => {
                       </tbody>
                     </table>
                   </div>
+                  {/* pagination */}
+                  <div
+                    className="d-flex justify-content-end gap-3"
+                    style={{ padding: "10px 20px" }}
+                  >
+                    <select
+                      value={itemsPerPage}
+                      onChange={(e) => {
+                        setItemsPerPage(Number(e.target.value));
+                        setCurrentPage(1);
+                      }}
+                      className="form-select w-auto"
+                    >
+                      <option value={10}>10 Per Page</option>
+                      <option value={25}>25 Per Page</option>
+                      <option value={50}>50 Per Page</option>
+                      <option value={100}>100 Per Page</option>
+                    </select>
+                    <span
+                      style={{
+                        backgroundColor: "white",
+                        boxShadow: "rgb(0 0 0 / 4%) 0px 3px 8px",
+                        padding: "7px",
+                        borderRadius: "5px",
+                        border: "1px solid #e4e0e0ff",
+                        color: "gray",
+                      }}
+                    >
+                      {filteredProducts.length === 0
+                        ? "0 of 0"
+                        : `${(currentPage - 1) * itemsPerPage + 1}-${Math.min(
+                          currentPage * itemsPerPage,
+                          filteredProducts.length
+                        )} of ${filteredProducts.length}`}
+                      <button
+                        style={{
+                          border: "none",
+                          color: "grey",
+                          backgroundColor: "white",
+                        }}
+                        onClick={() =>
+                          setCurrentPage((prev) => Math.max(prev - 1, 1))
+                        }
+                        disabled={currentPage === 1}
+                      >
+                        <GrFormPrevious />
+                      </button>{" "}
+                      <button
+                        style={{ border: "none", backgroundColor: "white" }}
+                        onClick={() =>
+                          setCurrentPage((prev) => Math.min(prev + 1, Math.ceil(filteredProducts.length / itemsPerPage)))
+                        }
+                        disabled={currentPage === Math.ceil(filteredProducts.length / itemsPerPage)}
+                      >
+                        <MdNavigateNext />
+                      </button>
+                    </span>
+                  </div>
                 </div>
               </div>
               {/* /product list */}
@@ -597,7 +802,7 @@ const LowStock = () => {
                       <a className="dropdown-toggle btn btn-white btn-md d-inline-flex align-items-center" data-bs-toggle="dropdown">
                         {selectedWarehouse || 'Warehouse'}
                       </a>
-                      <ul className="dropdown-menu dropdown-menu-end p-3" style={{maxHeight: '200px', overflowY: 'auto'}}>
+                      <ul className="dropdown-menu dropdown-menu-end p-3" style={{ maxHeight: '200px', overflowY: 'auto' }}>
                         {warehouses.map(warehouse => (
                           <li key={warehouse._id}>
                             <a className="dropdown-item rounded-1" onClick={() => handleWarehouseFilter(warehouse.warehouseName)}>
@@ -611,7 +816,7 @@ const LowStock = () => {
                       <a className="dropdown-toggle btn btn-white btn-md d-inline-flex align-items-center" data-bs-toggle="dropdown">
                         {selectedCategory || 'Category'}
                       </a>
-                      <ul className="dropdown-menu dropdown-menu-end p-3" style={{maxHeight: '200px', overflowY: 'auto'}}>
+                      <ul className="dropdown-menu dropdown-menu-end p-3" style={{ maxHeight: '200px', overflowY: 'auto' }}>
                         {categories.map(category => (
                           <li key={category._id}>
                             <a className="dropdown-item rounded-1" onClick={() => handleCategoryFilter(category.categoryName)}>
@@ -635,7 +840,12 @@ const LowStock = () => {
                         <tr>
                           <th className="no-sort">
                             <label className="checkboxs">
-                              <input type="checkbox" id="select-all-2" />
+                              <input
+                                type="checkbox"
+                                id="select-all2"
+                                checked={selectAll}
+                                onChange={handleSelectAll}
+                              />
                               <span className="checkmarks" />
                             </label>
                           </th>
@@ -650,12 +860,16 @@ const LowStock = () => {
                         </tr>
                       </thead>
                       <tbody>
-                        {filteredOutOfStockProducts.length > 0 ? (
-                          filteredOutOfStockProducts.map(product => (
+                        {getCurrentPageProducts().length > 0 ? (
+                          getCurrentPageProducts().map(product => (
                             <tr key={product._id}>
                               <td>
                                 <label className="checkboxs">
-                                  <input type="checkbox" />
+                                  <input
+                                    type="checkbox"
+                                    checked={selectedProducts.includes(product._id)}
+                                    onChange={() => handleProductSelect(product._id)}
+                                  />
                                   <span className="checkmarks" />
                                 </label>
                               </td>
@@ -696,6 +910,64 @@ const LowStock = () => {
 
                       </tbody>
                     </table>
+                  </div>
+                  {/* pagination */}
+                  <div
+                    className="d-flex justify-content-end gap-3"
+                    style={{ padding: "10px 20px" }}
+                  >
+                    <select
+                      value={itemsPerPage}
+                      onChange={(e) => {
+                        setItemsPerPage(Number(e.target.value));
+                        setCurrentPage(1);
+                      }}
+                      className="form-select w-auto"
+                    >
+                      <option value={10}>10 Per Page</option>
+                      <option value={25}>25 Per Page</option>
+                      <option value={50}>50 Per Page</option>
+                      <option value={100}>100 Per Page</option>
+                    </select>
+                    <span
+                      style={{
+                        backgroundColor: "white",
+                        boxShadow: "rgb(0 0 0 / 4%) 0px 3px 8px",
+                        padding: "7px",
+                        borderRadius: "5px",
+                        border: "1px solid #e4e0e0ff",
+                        color: "gray",
+                      }}
+                    >
+                      {filteredOutOfStockProducts.length === 0
+                        ? "0 of 0"
+                        : `${(currentPage - 1) * itemsPerPage + 1}-${Math.min(
+                          currentPage * itemsPerPage,
+                          filteredOutOfStockProducts.length
+                        )} of ${filteredOutOfStockProducts.length}`}
+                      <button
+                        style={{
+                          border: "none",
+                          color: "grey",
+                          backgroundColor: "white",
+                        }}
+                        onClick={() =>
+                          setCurrentPage((prev) => Math.max(prev - 1, 1))
+                        }
+                        disabled={currentPage === 1}
+                      >
+                        <GrFormPrevious />
+                      </button>{" "}
+                      <button
+                        style={{ border: "none", backgroundColor: "white" }}
+                        onClick={() =>
+                          setCurrentPage((prev) => Math.min(prev + 1, Math.ceil(filteredOutOfStockProducts.length / itemsPerPage)))
+                        }
+                        disabled={currentPage === Math.ceil(filteredOutOfStockProducts.length / itemsPerPage)}
+                      >
+                        <MdNavigateNext />
+                      </button>
+                    </span>
                   </div>
                 </div>
               </div>

@@ -54,8 +54,8 @@ const Security = () => {
       try {
         const res = await axios.get(`${BASE_URL}/api/user/${userData._id}`, {
           headers: {
-        Authorization: `Bearer ${token}`,
-        },
+            Authorization: `Bearer ${token}`,
+          },
         });
         console.log("Response from /api/user:", res.data);
 
@@ -81,19 +81,20 @@ const Security = () => {
   // function to toggle active and deactive
   const handleToggleStatus = async () => {
     try {
+      const token = localStorage.getItem("token");
       const res = await axios.put(
-        `${BASE_URL}/api/user/toggle-status/${userId}`, {
-          headers: {
-        Authorization: `Bearer ${token}`,
+        `${BASE_URL}/api/user/toggle-status/${userId}`, {}, {
+        headers: {
+          Authorization: `Bearer ${token}`,
         },
-        }
+      }
       );
       const updatedStatus = res.data.status;
       setCurrentUser((prev) => ({
         ...prev,
         status: updatedStatus,
       }));
-      toast.info(
+      toast.success(
         `Account ${updatedStatus === "Active" ? "reactivated" : "deactivated"
         } successfully`,
         {
@@ -111,10 +112,10 @@ const Security = () => {
     try {
       const res = await axios.delete(
         `${BASE_URL}/api/user/userDelete/${userId}`, {
-          headers: {
-        Authorization: `Bearer ${token}`,
+        headers: {
+          Authorization: `Bearer ${token}`,
         },
-        }
+      }
       );
       alert(res.data.message || "Account Deleted");
       localStorage.removeItem("userId");
@@ -130,7 +131,7 @@ const Security = () => {
     const fetchUser = async () => {
       const { data } = await axios.get(`${BASE_URL}/api/user/${userId}`, {
         headers: {
-        Authorization: `Bearer ${token}`,
+          Authorization: `Bearer ${token}`,
         },
       });
       setTwoFactorEnabled(data.twoFactorEnabled || false);
@@ -140,15 +141,18 @@ const Security = () => {
 
   const toggleTwoFactor = async () => {
     try {
+      const token = localStorage.getItem("token");
       const { data } = await axios.put(
-        `${BASE_URL}/api/user/toggle-2fa/${userId}`, {
+        `${BASE_URL}/api/user/toggle-2fa/${userId}`,
+        {},
+        {
           headers: {
-        Authorization: `Bearer ${token}`,
-        },
+            Authorization: `Bearer ${token}`,
+          },
         }
       );
       setTwoFactorEnabled(data.twoFactorEnabled);
-      toast.info(data.message, {
+      toast.success(data.message, {
         position: 'top-center'
       })
     } catch (error) {
@@ -639,7 +643,7 @@ const Security = () => {
               </div>
             </div>
             <div>
-              <img src={Delet} onClick={handleDeleteAccount} alt="" style={{cursor:'pointer'}}/>
+              <img src={Delet} onClick={handleDeleteAccount} alt="" style={{ cursor: 'pointer' }} />
             </div>
           </div>
         </div>

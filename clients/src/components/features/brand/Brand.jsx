@@ -309,13 +309,13 @@ const Brand = () => {
   const exportToPDF = async () => {
     try {
       const doc = new jsPDF();
-      
+
       // Add title
       doc.text("Brand Report", 14, 15);
-      
+
       // Define table columns
       const tableColumns = ["Brand Name", "Created Date", "Status", "Description"];
-      
+
       // Prepare table rows
       const tableRows = filteredBrands.map((brand) => [
         brand.brandName || "N/A",
@@ -323,7 +323,7 @@ const Brand = () => {
         brand.status || "N/A",
         brand.description || "N/A"
       ]);
-      
+
       // Create table using autoTable
       autoTable(doc, {
         head: [tableColumns],
@@ -338,7 +338,7 @@ const Brand = () => {
         },
         theme: "striped",
       });
-      
+
       // Save the PDF
       doc.save(`brands_report_${new Date().toISOString().split('T')[0]}.pdf`);
       toast.success("PDF exported successfully!");
@@ -359,11 +359,11 @@ const Brand = () => {
         "Status": brand.status || "N/A",
         "Description": brand.description || "N/A"
       }));
-      
+
       // Create workbook and worksheet
       const wb = XLSX.utils.book_new();
       const ws = XLSX.utils.json_to_sheet(excelData);
-      
+
       // Set column widths
       const colWidths = [
         { wch: 8 },  // S.No
@@ -373,10 +373,10 @@ const Brand = () => {
         { wch: 30 }  // Description
       ];
       ws['!cols'] = colWidths;
-      
+
       // Add worksheet to workbook
       XLSX.utils.book_append_sheet(wb, ws, "Brands");
-      
+
       // Save the file
       XLSX.writeFile(wb, `brands_report_${new Date().toISOString().split('T')[0]}.xlsx`);
       toast.success("Excel file exported successfully!");
@@ -412,23 +412,29 @@ const Brand = () => {
                 </button>
               )}
             </li>
-            <li>
-              <button 
-                type="button" 
-                className="icon-btn" 
-                title="Export PDF"
-                onClick={exportToPDF}
-              >
-                <FaFilePdf />
-              </button>
+            <li style={{ display: "flex", alignItems: "center", gap: '5px' }} className="icon-btn">
+              <label className="" title="">Export : </label>
+              <button onClick={exportToPDF} title="Download PDF" style={{
+                backgroundColor: "white",
+                display: "flex",
+                alignItems: "center",
+                border: "none",
+              }}><FaFilePdf className="fs-20" style={{ color: "red" }} /></button>
+              <button onClick={exportToExcel} title="Download Excel" style={{
+                backgroundColor: "white",
+                display: "flex",
+                alignItems: "center",
+                border: "none",
+              }}><FaFileExcel className="fs-20" style={{ color: "orange" }} /></button>
             </li>
-            <li>
-              <label className="icon-btn m-0" title="Import Excel">
+            <li style={{ display: "flex", alignItems: "center", gap: '5px' }} className="icon-btn">
+              <label className="" title="">Import : </label>
+              <label className="" title="Import Excel">
                 <input type="file" accept=".xlsx, .xls" hidden />
                 <FaFileExcel style={{ color: "green" }} />
               </label>
             </li>
-            <li>
+            {/* <li>
               <button 
                 type="button" 
                 className="icon-btn" 
@@ -437,7 +443,7 @@ const Brand = () => {
               >
                 <FaFileExcel />
               </button>
-            </li>
+            </li> */}
           </div>
           <div className="page-btn">
             <a
@@ -578,12 +584,12 @@ const Brand = () => {
                         <div className="d-flex align-items-center">
                           {brand.image?.[0]?.url ? (
                             <>
-                            <img
-                              src={brand.image?.[0]?.url}
-                              alt={brand.brandName}
-                              className="me-1"
-                              style={{objectFit:'contain',width:'30px',height:'30px',}}
-                            />
+                              <img
+                                src={brand.image?.[0]?.url}
+                                alt={brand.brandName}
+                                className="me-1"
+                                style={{ objectFit: 'contain', width: '30px', height: '30px', }}
+                              />
                             </>
                           ) : (
                             <>
@@ -591,7 +597,7 @@ const Brand = () => {
                           )}
                           <a href="#">{brand.brandName}</a>
                         </div>
-                        
+
                       </td>
                       <td>{new Date(brand.createdAt).toLocaleDateString("en-GB", {
                         day: "2-digit",
