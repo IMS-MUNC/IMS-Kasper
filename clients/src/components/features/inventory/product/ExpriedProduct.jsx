@@ -16,43 +16,54 @@ const ExpriedProduct = () => {
   const exportColumns = ['sku', 'productName', 'manufactured', 'expiry', 'quantity', 'supplierName', 'warehouseName'];
 
   // Sort state
-  const [sortBy, setSortBy] = useState('Last 7 Days');
+  const [sortBy, setSortBy] = useState('Recently Added');
   const [sortOrder, setSortOrder] = useState('desc');
 
   const navigate = useNavigate();
+
+  // Helper function to get expiry date from product
+  const getExpiryDate = (product) => {
+    const expiryArr = product.variants?.get?.('Expiry') || product.variants?.['Expiry'] || product.variants?.get?.('expiry') || product.variants?.['expiry'];
+    if (!expiryArr || expiryArr.length === 0) return new Date(0);
+    const dateStr = expiryArr[0];
+    if (typeof dateStr === "string") {
+      const dateMatch = dateStr.match(/^(\d{1,2})[-/](\d{1,2})[-/](\d{4})$/);
+      if (dateMatch) {
+        const [, day, month, year] = dateMatch;
+        return new Date(year, month - 1, day);
+      }
+    }
+    return new Date(0);
+  };
 
   // Sort function
   const sortProducts = (productsToSort) => {
     return [...productsToSort].sort((a, b) => {
       switch (sortBy) {
-        case 'Recently Added':
-          const dateA = new Date(a.createdAt || a.created_at || 0);
-          const dateB = new Date(b.createdAt || b.created_at || 0);
-          return sortOrder === 'desc' ? dateB - dateA : dateA - dateB;
+        
         case 'Ascending':
-          return a.productName.localeCompare(b.productName);
+          const nameA = (a.productName || a.name || '').toLowerCase();
+          const nameB = (b.productName || b.name || '').toLowerCase();
+          return nameA.localeCompare(nameB);
+        
         case 'Descending':
-          return b.productName.localeCompare(a.productName);
-        case 'Last Month':
-        case 'Last 7 Days':
-        default:
-          // Sort by expiry date
-          const getExpiryDate = (product) => {
-            const expiryArr = product.variants?.get?.('Expiry') || product.variants?.['Expiry'] || product.variants?.get?.('expiry') || product.variants?.['expiry'];
-            if (!expiryArr || expiryArr.length === 0) return new Date(0);
-            const dateStr = expiryArr[0];
-            if (typeof dateStr === "string") {
-              const dateMatch = dateStr.match(/^(\d{1,2})[-/](\d{1,2})[-/](\d{4})$/);
-              if (dateMatch) {
-                const [, day, month, year] = dateMatch;
-                return new Date(year, month - 1, day);
-              }
-            }
-            return new Date(0);
-          };
+          const nameA2 = (a.productName || a.name || '').toLowerCase();
+          const nameB2 = (b.productName || b.name || '').toLowerCase();
+          return nameB2.localeCompare(nameA2);
+        
+        case 'Recently Added':
+          // Sort by expiry date based on sortOrder
           const expiryA = getExpiryDate(a);
           const expiryB = getExpiryDate(b);
           return sortOrder === 'desc' ? expiryB - expiryA : expiryA - expiryB;
+        
+        case 'Last Month':
+        case 'Last 7 Days':
+        default:
+          // Default: Sort by expiry date (closest to expiry first)
+          const expiryA2 = getExpiryDate(a);
+          const expiryB2 = getExpiryDate(b);
+          return expiryA2 - expiryB2; // Ascending order (soonest expiry first)
       }
     });
   };
@@ -60,8 +71,17 @@ const ExpriedProduct = () => {
   // Handle sort selection
   const handleSortChange = (newSortBy) => {
     setSortBy(newSortBy);
-    if (newSortBy === 'Ascending' || newSortBy === 'Descending') {
-      setSortOrder(newSortBy === 'Ascending' ? 'asc' : 'desc');
+    // Set appropriate sort order for each option
+    if (newSortBy === 'Recently Added') {
+      setSortOrder('desc'); // Most recent first
+    } else if (newSortBy === 'Ascending') {
+      setSortOrder('asc'); // A to Z
+    } else if (newSortBy === 'Descending') {
+      setSortOrder('desc'); // Z to A
+    } else if (newSortBy === 'Expiry Date') {
+      setSortOrder('asc'); // Closest expiry first
+    } else {
+      setSortOrder('asc'); // For other options, closest expiry first
     }
   };
 
@@ -123,7 +143,7 @@ const ExpriedProduct = () => {
     const fetchProducts = async () => {
       try {
         const token = localStorage.getItem("token");
-        const res = await axios.get('/api/products', {
+        const res = await axios.get(`${BASE_URL}/api/products`, {
           headers: {
             Authorization: `Bearer ${token}`, // ✅ token sent properly
           },
@@ -151,7 +171,7 @@ const ExpriedProduct = () => {
       );
       setSelectAll(allCurrentPageSelected);
     }
-  }, [selectedProducts, products, currentPage, itemsPerPage]);
+  }, [selectedProducts, products, currentPage, itemsPerPage, sortBy, sortOrder]);
 
   useEffect(() => {
     if (!loading && products.length > 0 && !warned) {
@@ -252,9 +272,20 @@ const ExpriedProduct = () => {
 
   // Get filtered expired products
   const getExpiredProducts = () => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    
+    // Calculate date ranges for time-based filtering
+    const sevenDaysAgo = new Date(today);
+    sevenDaysAgo.setDate(today.getDate() - 7);
+    
+    const oneMonthAgo = new Date(today);
+    oneMonthAgo.setMonth(today.getMonth() - 1);
+
     return products.filter(product => {
       const expiryArr = product.variants?.get?.('Expiry') || product.variants?.['Expiry'] || product.variants?.get?.('expiry') || product.variants?.['expiry'];
       if (!expiryArr || expiryArr.length === 0) return false;
+      
       return expiryArr.some(dateStr => {
         if (typeof dateStr === "string") {
           const dateMatch = dateStr.match(/^(\d{1,2})[-/](\d{1,2})[-/](\d{4})$/);
@@ -262,11 +293,21 @@ const ExpriedProduct = () => {
             const [, day, month, year] = dateMatch.map(Number);
             if (day && month && year && day <= 31 && month <= 12) {
               const expDate = new Date(year, month - 1, day);
-              const today = new Date();
-              today.setHours(0, 0, 0, 0);
               expDate.setHours(0, 0, 0, 0);
+              
               if (!isNaN(expDate.getTime())) {
-                return expDate < today;
+                // Check if product is expired
+                const isExpired = expDate < today;
+                
+                // Apply time-based filtering based on sortBy
+                if (sortBy === 'Last 7 Days') {
+                  return isExpired && expDate >= sevenDaysAgo;
+                } else if (sortBy === 'Last Month') {
+                  return isExpired && expDate >= oneMonthAgo;
+                } else {
+                  // Default: show all expired products
+                  return isExpired;
+                }
               }
             }
           }
@@ -475,6 +516,9 @@ const ExpriedProduct = () => {
                 <ul className="dropdown-menu dropdown-menu-end p-3">
                   <li>
                     <a className="dropdown-item rounded-1" onClick={() => handleSortChange('Recently Added')} style={{ cursor: 'pointer' }}>Recently Added</a>
+                  </li>
+                  <li>
+                    <a className="dropdown-item rounded-1" onClick={() => handleSortChange('Expiry Date')} style={{ cursor: 'pointer' }}>Expiry Date</a>
                   </li>
                   <li>
                     <a className="dropdown-item rounded-1" onClick={() => handleSortChange('Ascending')} style={{ cursor: 'pointer' }}>Ascending</a>
