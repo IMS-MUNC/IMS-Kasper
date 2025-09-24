@@ -3,22 +3,24 @@ import axios from 'axios';
 import BASE_URL from '../../config/config';
 import { useParams } from 'react-router-dom';
 import Confirm from '../../../assets/img/icons/confirme.svg';
+import AddSupplierModals from "../../../pages/Modal/suppliers/AddSupplierModals";
 
 const ViewSupplierModal = ({ supplierId, onClose, }) => {
     const [supplier, setSupplier] = useState(null);
     const [loading, setLoading] = useState(true);
     const { id } = useParams();
-    const [EditSupplier, setEditSupplier] = useState(null);
+    const [showEditModal, setShowEditModal] = useState(false);
+    const [editSupplier, setEditSupplier] = useState(null);
 
 
     useEffect(() => {
         if (id) {
-                const token = localStorage.getItem("token");
+            const token = localStorage.getItem("token");
 
-            axios.get(`${BASE_URL}/api/suppliers/${id}`,{
-                 headers: {
-        Authorization: `Bearer ${token}`,
-      },
+            axios.get(`${BASE_URL}/api/suppliers/${id}`, {
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                },
             })
                 .then(res => {
                     setSupplier(res.data);
@@ -373,6 +375,14 @@ const ViewSupplierModal = ({ supplierId, onClose, }) => {
 
             </div>
             {/* End Content */}
+            {/* edit modal */}
+            {showEditModal && (
+                <AddSupplierModals
+                    editSupplier={editSupplier}
+                    onClose={() => setShowEditModal(false)}
+                    supplierData={editSupplier}
+                />
+            )}
         </div>
         // <div className="modal fade show" style={{ display: "block", backgroundColor: "rgba(0,0,0,0.5)" }} aria-modal="true" role="dialog">
         //   <div className="modal-dialog modal-dialog-centered modal-lg">

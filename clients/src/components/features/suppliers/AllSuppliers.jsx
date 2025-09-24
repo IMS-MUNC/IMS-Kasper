@@ -11,30 +11,30 @@ import 'react-toastify/dist/ReactToastify.css';
 import { GrFormPrevious } from "react-icons/gr";
 import { MdNavigateNext } from "react-icons/md";
 
-function formatAddress(billing) {
-  if (!billing) return '';
-  let parts = [];
-  if (billing.address1) parts.push(billing.address1);
-  if (billing.address2) parts.push(billing.address2);
-  if (billing.city?.cityName) parts.push(billing.city.cityName);
-  if (billing.state?.stateName) parts.push(billing.state.stateName);
-  if (billing.country?.name) parts.push(billing.country.name);
-  if (billing.pincode) parts.push(billing.pincode);
-  return parts.join(', ');
-}
+// function formatAddress(billing) {
+//   if (!billing) return '';
+//   let parts = [];
+//   if (billing.address1) parts.push(billing.address1);
+//   if (billing.address2) parts.push(billing.address2);
+//   if (billing.city?.cityName) parts.push(billing.city.cityName);
+//   if (billing.state?.stateName) parts.push(billing.state.stateName);
+//   if (billing.country?.name) parts.push(billing.country.name);
+//   if (billing.pincode) parts.push(billing.pincode);
+//   return parts.join(', ');
+// }
 
 
-function formatShipping(shipping) {
-  if (!shipping) return '';
-  let parts = [];
-  if (shipping.address1) parts.push(shipping.address1);
-  if (shipping.address2) parts.push(shipping.address2);
-  if (shipping.city?.cityName) parts.push(shipping.city.cityName);
-  if (shipping.state?.stateName) parts.push(shipping.state.stateName);
-  if (shipping.country?.name) parts.push(shipping.country.name);
-  if (shipping.pincode) parts.push(shipping.pincode);
-  return parts.join(', ');
-}
+// function formatShipping(shipping) {
+//   if (!shipping) return '';
+//   let parts = [];
+//   if (shipping.address1) parts.push(shipping.address1);
+//   if (shipping.address2) parts.push(shipping.address2);
+//   if (shipping.city?.cityName) parts.push(shipping.city.cityName);
+//   if (shipping.state?.stateName) parts.push(shipping.state.stateName);
+//   if (shipping.country?.name) parts.push(shipping.country.name);
+//   if (shipping.pincode) parts.push(shipping.pincode);
+//   return parts.join(', ');
+// }
 
 function AllSuppliers() {
   const [currentPage, setCurrentPage] = useState(1);
@@ -196,7 +196,7 @@ function AllSuppliers() {
             <div className="table-responsive">
               <table className="table datatable">
                 <thead className="thead-light">
-                  <tr>
+                  <tr style={{ borderTop: "1px solid #e4e0e0ff", textAlign: "center" }}>
                     <th className="no-sort">
                       <label className="checkboxs">
                         <input type="checkbox" id="select-all" />
@@ -209,12 +209,13 @@ function AllSuppliers() {
                     <th>Phone</th>
                     <th>Country</th>
                     <th>Status</th>
-                    <th className="no-sort" />
+                    <th>Action</th>
                   </tr>
                 </thead>
                 <tbody>
+                  {console.log("paginatedData", paginatedData)}
                   {paginatedData.map((supplier) => (
-                    <tr key={supplier._id}>
+                    <tr key={supplier._id} style={{ textAlign: "center" }}>
                       <td>
                         <label className="checkboxs">
                           <input type="checkbox" />
@@ -245,7 +246,7 @@ function AllSuppliers() {
                       </td>
                       <td>{supplier.email}</td>
                       <td>{supplier.phone}</td>
-                      <td>{supplier.country?.name}</td>
+                      <td>{supplier.billing?.country?.name}</td>
                       <td>
                         <span className={`badge ${supplier.status ? 'badge-success' : 'badge-danger'} d-inline-flex align-items-center badge-xs`}>
                           <i className="ti ti-point-filled me-1" />{supplier.status ? 'Active' : 'Inactive'}

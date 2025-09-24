@@ -503,7 +503,7 @@ if (selectedImages.length > 0 && selectedImages.some(img => img.file)) {
                  </div>
 
                  <div className="mb-0">
-                   <div className="image-upload mb-2">
+                   <div className="image-upload mb-2" style={{backgroundColor:"#007aff"}}>
                      <input type="file" ref={fileInputRef} style={{ display: 'none' }} accept="image/*" onChange={handleFileChange} />
                      <div className="image-uploads" onClick={handleUploadClick} style={{ cursor: 'pointer' }}>
                        <h4>Upload Image</h4>

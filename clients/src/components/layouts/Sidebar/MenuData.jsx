@@ -242,7 +242,7 @@ export const getMenuData = () => {
     },
 
 
-     {
+    {
       section: t("sales"),
       key: "sales",
       items: [
@@ -251,13 +251,18 @@ export const getMenuData = () => {
           path: "/online-orders",
           icon: <TbShoppingBag className="icons" />,
         },
-         { label: "Credit Note", path: "/credit-note", icon: <MdQrCode className="icons" /> },
-          {
+        { label: "Credit Note", path: "/credit-note", icon: <MdQrCode className="icons" /> },
+        {
           label: t("pos"),
           path: "/pos",
           icon: <MdOutlinePointOfSale className="icons" />,
         },
-        
+        // {
+        //   label: t("Invoice"),
+        //   path: "/invoice",
+        //   icon: <TbFileInvoice className="icons" />,
+        // },
+
       ],
     },
 
