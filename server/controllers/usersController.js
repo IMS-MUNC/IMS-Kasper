@@ -21,7 +21,7 @@ exports.createUser = async (req, res) => {
       passwordChangedAt,
       confirmPassword,
       role,
-      status,
+      // status,
     } = req.body;
 
     if (password !== confirmPassword) {
@@ -36,12 +36,12 @@ exports.createUser = async (req, res) => {
     let profileImage = null;
 
     if (req.file) {
-      const uploadedImages = await cloudinary.uploader.upload(req.file.path, {
+      const uploadedImage = await cloudinary.uploader.upload(req.file.path, {
         folder: "profile_images",
       });
       profileImage = {
-        url: uploadedImages[0].secure_url,
-        public_id: uploadedImages[0].public_id,
+        url: uploadedImage.secure_url,
+        public_id: uploadedImage.public_id,
       };
     }
 
@@ -61,7 +61,7 @@ exports.createUser = async (req, res) => {
       passwordChangedAt: new Date(),
       profileImage,
       role,
-      status,
+      status:"Active",
     });
 
     await newUser.save();
@@ -335,3 +335,31 @@ exports.toggleAccountStatus = async (req, res) => {
     res.status(500).json({ message: "Server error" });
   }
 };
+
+exports.bulkDeleteUsers = async (req, res) => {
+  try {
+    const { ids } = req.body; // Expecting an array of user IDs in the request body
+    if (!ids || !ids.length) {
+      return res.status(400).json({ message: "No user IDs provided" });
+    }
+    // Delete users and remove their profile images from Cloudinary
+    const users = await User.find({ _id: { $in: ids } });
+    for (const user of users) {
+      if (user.profileImage && user.profileImage.public_id) {
+        try {
+          await cloudinary.uploader.destroy(user.profileImage.public_id);
+        }
+        catch (error) {
+          console.warn(`Cloudinary delete failed for user ${user._id}:${error.message}`);
+        }
+      }
+    }
+    await User.deleteMany({ _id: { $in: ids } });
+    res
+      .status(200)
+      .json({ message: "Users deleted successfully", deletedCount: users.length });
+  } catch (error) {
+    console.error("Bulk Delete Error:", error);
+    res.status(500).json({ message: "Server error", error });
+  }
+}

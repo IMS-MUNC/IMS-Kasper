@@ -14,14 +14,22 @@ import { GrFormPrevious } from "react-icons/gr";
 import { MdNavigateNext } from "react-icons/md";
 import Iconss from "../../../assets/images/Iconss.png";
 import { Country, State, City } from "country-state-city";
+import jsPDF from 'jspdf';
+import autoTable from 'jspdf-autotable';
+import Papa from 'papaparse';
+import * as XLSX from 'xlsx';
+import { saveAs } from "file-saver";
 
 const Users = () => {
   const [activeRoles, setActiveRoles] = useState([]);
   const [selectedRole, setSelectedRole] = useState(null);
-  const [searchTerm, setSearchTerm] = useState("  ");
+  const [searchTerm, setSearchTerm] = useState("");
   const [selectedStatus, setSelectedStatus] = useState(""); //for active , inactive
   const addFileInputRef = useRef(null);
   const editFileInputRef = useRef(null);
+  // for bulk delete
+  const [selectedUsers, setSelectedUsers] = useState([]);
+  const [selectAll, setSelectAll] = useState(false);
 
   // items page
   const [currentPage, setCurrentPage] = useState(1);
@@ -73,7 +81,7 @@ const Users = () => {
     role: "",
     password: "",
     confirmPassword: "",
-    status: true,
+    status: "Active",
     profileImage: null,
     country: "",
     state: "",
@@ -136,29 +144,13 @@ const Users = () => {
   const filteredUsers = useMemo(() => {
     if (!searchTerm || !users.length || !activeRoles.length) return users;
     return users.filter((user) => {
-      let roleName = "";
+      const fullName = `${user.firstName} ${user.lastName}`.toLowerCase();
+      const email = (user.email || "").toLowerCase();
+      const phone = (user.phone || "").toLowerCase();
+      const search = (searchTerm || "").trim().toLowerCase();
 
-      // Case 1: user.role is a populated object with roleName
-      if (typeof user.role === "object" && user.role?.roleName) {
-        roleName = user.role.roleName;
-      }
 
-      // Case 2: user.role is an ID, look it up from activeRoles
-      else if (typeof user.role === "string") {
-        const matchedRole = activeRoles.find(
-          (r) => String(r.value) === String(user.role)
-        );
-        roleName = matchedRole?.label || "";
-      } else if (typeof user.role === "object" && user.role?._id) {
-        const matchedRole = activeRoles.find(
-          (r) => String(r.value) === String(user.role._id)
-        );
-        roleName = matchedRole?.label || "";
-      }
-
-      const matchesSearch = roleName
-        .toLowerCase()
-        .includes(searchTerm.trim().toLowerCase());
+      const matchesSearch = fullName.includes(search) || email.includes(search) || phone.includes(search);
       const matchesStatus = selectedStatus
         ? (user.status || "").toLowerCase() === selectedStatus.toLowerCase()
         : true;
@@ -167,6 +159,10 @@ const Users = () => {
       return matchesSearch && matchesStatus;
     });
   }, [searchTerm, selectedStatus, users, activeRoles]);
+
+  useEffect(() => {
+    setCurrentPage(1); // Reset to first page on filter change
+  }, [searchTerm, selectedStatus]);
 
   // items per page
   // Pagination
@@ -177,7 +173,7 @@ const Users = () => {
   );
 
   // validation rules
-  const nameRegex = /^[A-Za-z]{2,}$/; // only letters, min 2 chars
+  const nameRegex = /^[A-Za-z]+(?: [A-Za-z]+)*$/;
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
   const phoneRegex = /^[0-9]{10}$/;
   const zipRegex = /^[0-9]{5,6}$/;
@@ -197,7 +193,7 @@ const Users = () => {
     if (!selectedState) newErrors.state = "State is required";
     if (!selectedCity) newErrors.city = "City is required";
     if (!zipRegex.test(zip)) newErrors.zip = "Postal code must be 5–6 digits";
-    if (address.length < 5) newErrors.address = "Address must be at least 5 characters";
+    // if (address.length < 5) newErrors.address = "Address must be at least 5 characters";
     if (!passwordRegex.test(password))
       newErrors.password = "Password must be 8+ chars, include uppercase, lowercase, number & symbol";
     if (confirmPassword !== password)
@@ -223,7 +219,7 @@ const Users = () => {
     formData.append("password", password);
     formData.append("confirmPassword", confirmPassword);
     formData.append("role", selectedRole.value); // Role ID
-    formData.append("status", status ? "Active" : "Inactive");
+    // formData.append("status", status ? "Active" : "Inactive");  //the backend will now set active by default
     formData.append("country", selectedCountry);
     formData.append("state", selectedState);
     formData.append("city", selectedCity);
@@ -257,7 +253,7 @@ const Users = () => {
       setConfirmPassword("");
       setProfileImage(null);
       setSelectedRole(null);
-      setStatus(true);
+      // setStatus(true); //the backend will now set active by default
       setSelectedImages([]);
       setCountry("");
       setState("");
@@ -350,7 +346,9 @@ const Users = () => {
         formData.append("role", editUserData.role);
       }
 
-      formData.append("status", editUserData.status ? "Active" : "Inactive");
+      formData.append("status", editUserData.status === true || editUserData.status === "Active"
+        ? "Active"
+        : "Inactive");
 
       // ✅ Add location fields
       formData.append("country", editUserData.country);
@@ -414,7 +412,7 @@ const Users = () => {
       email: user.email || "",
       phone: user.phone || "",
       role: selectedRole || { label: "Unknown Role", value: user.role }, // fallback
-      status: user.status ?? true,
+      status: user.status ?? "Active",
       // profileImage: null, // only updated if changed
       profileImage:
         typeof user.profileImage === "string"
@@ -430,6 +428,113 @@ const Users = () => {
 
   console.log("Filtering:", users.status, selectedStatus);
 
+  const handleFileChange = (e) => {
+    const files = Array.from(e.target.files);
+    // check if any file exceeds 1MB
+    const oversizedFile = files.find((file) => file.size > 1 * 1024 * 1024);
+    if (oversizedFile) {
+      toast.error(`File ${oversizedFile.name} exceeds 1MB size limit.`);
+      e.target.value = null; // reset input
+      return;
+    }
+    setSelectedImages(files);
+  }
+
+  const handleEditFileChange = (e) => {
+    const file = e.target.files[0];
+    if (file && file.size > 1 * 1024 * 1024) { // 1MB limit
+      toast.error(`File ${file.name} exceeds 1MB size limit.`);
+      e.target.value = null; // reset input
+      return;
+    }
+    setEditUserData({
+      ...editUserData,
+      profileImage: file,
+    })
+  }
+
+  // handle single checkbox toggle
+  const handleCheckboxChange = (id) => {
+    setSelectedUsers((prevUsers) =>
+      prevUsers.includes(id) ? prevUsers.filter((userId) => userId !== id) : [...prevUsers, id]
+    );
+  }
+
+  const handleSelectAll = () => {
+    if (selectAll) {
+      setSelectedUsers([]);
+    } else {
+      setSelectedUsers(paginatedUsers.map((user) => user._id));
+    }
+    setSelectAll(!selectAll);
+  }
+
+  // handle bulk delete
+  const handleBulkDelete = async () => {
+    if (selectedUsers.length === 0) {
+      toast.warn("No users selected for deletion");
+      return;
+    }
+    if (!window.confirm(`Are you sure you want to delete ${selectedUsers.length} users?`)) return;
+
+    try {
+      const token = localStorage.getItem("token");
+      await axios.delete(`${BASE_URL}/api/user/bulk-delete`, {
+        data: { ids: selectedUsers },
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      toast.success(`${selectedUsers.length} users deleted successfully`);
+      setSelectedUsers([]);
+      setSelectAll(false);
+      fetchUsers();
+    }
+    catch (err) {
+      console.error(err);
+      toast.error("Bulk delete failed");
+    }
+  }
+
+  const handleExportPDF = () => {
+    const doc = new jsPDF();
+    doc.text("User List", 14, 16);
+    const tableColumn = ["First Name", "Last Name", "Email", "Role", "Phone", "Status"];
+    const tableRows = [];
+    filteredUsers.forEach(user => {
+      const userData = [
+        user.firstName,
+        user.lastName,
+        user.email,
+        user.role?.roleName || "N/A",
+        user.phone,
+        user.status || "N/A"
+      ];
+      tableRows.push(userData);
+    });
+    autoTable(doc, {
+      startY: 20,
+      head: [tableColumn],
+      body: tableRows,
+    });
+    doc.save('user_list.pdf');
+  }
+
+  const handleExportExcel = () => {
+    const worksheetData = filteredUsers.map(user => ({
+      "First Name": user.firstName,
+      "Last Name": user.lastName,
+      "Email": user.email,
+      "Role": user.role?.roleName || "N/A",
+      "Phone": user.phone,
+      "Status": user.status || "N/A"
+    }));
+    // create worksheet
+    const worksheet = XLSX.utils.json_to_sheet(worksheetData);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, "Users");
+    const excelBuffer = XLSX.write(workbook, { bookType: "xlsx", type: "array" });
+    const data = new Blob([excelBuffer], { type: "application/octet-stream" });
+    saveAs(data, "user_list.xlsx");
+  }
 
   return (
     <div className="page-wrapper user-wrappe">
@@ -452,12 +557,25 @@ const Users = () => {
           </div>
           <div className="table-top-head me-2">
             <li>
-              <button type="button" className="icon-btn" title="Pdf">
+              {selectedUsers.length > 0 && (
+                <button
+                  type="button"
+                  className="btn btn-danger"
+                  onClick={handleBulkDelete}
+                  disabled={selectedUsers.length === 0}
+                >
+                  Delete ({selectedUsers.length})
+                </button>
+              )
+              }
+            </li>
+            <li>
+              <button type="button" onClick={handleExportPDF} className="icon-btn" title="Pdf">
                 <FaFilePdf />
               </button>
             </li>
             <li>
-              <button type="button" className="icon-btn" title="Export Excel">
+              <button type="button" onClick={handleExportExcel} className="icon-btn" title="Export Excel">
                 <FaFileExcel />
               </button>
             </li>
@@ -503,40 +621,24 @@ const Users = () => {
             style={{ padding: "16px 0px 16px 0px" }}
           >
             <div className="search-set">
-              {/* <div className="search-input" style={{ position: "relative" }}>
+              <div className="search-input">
                 <BiSearch
                   style={{
                     position: "absolute",
                     top: "50%",
                     left: "10px",
                     transform: "translateY(-50%)",
+                    zIndex: 1,
+                    pointerEvents: "none",
                   }}
                 />
                 <input
                   type="text"
-                  placeholder="Search"
+                  placeholder="Search user by name ,email or phone"
                   className="search-inputsrch"
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  style={{ paddingLeft: "30px", borderRadius: '5px', padding: '4px 20px', border: '1px solid #bbbbbb' }}
-                />
-              </div> */}
-              <div className="search-input" style={{ position: 'relative' }}>
-                <BiSearch
-                  style={{
-                    position: "absolute",
-                    top: "50%",
-                    left: "10px",
-                    transform: "translateY(-50%)",
-                  }}
-                />
-                <input
-                  type="text"
-                  placeholder="Search"
-                  className="search-inputsrch"
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  style={{ paddingLeft: "35px" }}
+                  style={{ paddingLeft: "40px" }}
                 />
               </div>
               {/* search end */}
@@ -685,7 +787,7 @@ const Users = () => {
                       <label className="">
                         <input
                           type="checkbox"
-                          id="select-all"
+                          id="select-all" checked={selectAll} onChange={handleSelectAll}
                           style={{ border: "1px solid #676767" }}
                         />
                         <span className="checkmarks" />
@@ -768,6 +870,8 @@ const Users = () => {
                           <label className="">
                             <input
                               type="checkbox"
+                              checked={selectedUsers.includes(user._id)}
+                              onChange={() => handleCheckboxChange(user._id)}
                               style={{ border: "1px solid #1d1d1dff" }}
                             />
                             <span className="checkmarks" />
@@ -1101,9 +1205,7 @@ const Users = () => {
                       accept="image/*"
                       ref={addFileInputRef}
                       style={{ display: "none" }}
-                      onChange={(e) =>
-                        setSelectedImages(Array.from(e.target.files))
-                      }
+                      onChange={handleFileChange}
                     />
 
                     <div
@@ -1150,7 +1252,7 @@ const Users = () => {
                           marginTop: "10px",
                         }}
                       >
-                        Upload an image below 2MB, Accepted File format JPG, PNG
+                        Upload an image below 1MB, Accepted File format JPG, PNG
                       </p>
                     </div>
 
@@ -1176,23 +1278,26 @@ const Users = () => {
                             gap: "5px",
                           }}
                         >
-                          <label
-                            className="ffrrstname"
-                            style={{
-                              fontWeight: "400",
-                              fontSize: "14px",
-                              lineHeight: "14px",
-                            }}
-                          >
-                            First Name
-                          </label>
+                          <span>
+                            <label
+                              className="ffrrstname"
+                              style={{
+                                fontWeight: "400",
+                                fontSize: "14px",
+                                lineHeight: "14px",
+                              }}
+                            >
+                              First Name
+                            </label>
+                            <span className="text-danger ms-1">*</span>
+                          </span>
                           <input
                             type="text"
                             className="ffrrstnameinput"
                             name="firstName"
                             value={firstName}
                             onChange={(e) => setFirstName(e.target.value)}
-                            placeholder="Akash"
+                            placeholder="Enter your first name"
                             required
                           />
                           {errors.firstName && <p style={{ color: 'red', fontSize: '12px' }}>{errors.firstName}</p>}
@@ -1207,23 +1312,26 @@ const Users = () => {
                             gap: "5px",
                           }}
                         >
-                          <label
-                            className="ffrrstname"
-                            style={{
-                              fontWeight: "400",
-                              fontSize: "14px",
-                              lineHeight: "14px",
-                            }}
-                          >
-                            Last Name
-                          </label>
+                          <span>
+                            <label
+                              className="ffrrstname"
+                              style={{
+                                fontWeight: "400",
+                                fontSize: "14px",
+                                lineHeight: "14px",
+                              }}
+                            >
+                              Last Name
+                            </label>
+                            <span className="text-danger ms-1">*</span>
+                          </span>
                           <input
                             type="text"
                             className="ffrrstnameinput"
                             name="lastName"
                             value={lastName}
                             onChange={(e) => setLastName(e.target.value)}
-                            placeholder="Kumar"
+                            placeholder="Enter your last name"
                             required
                           />
                           {errors.lastName && <p style={{ color: 'red', fontSize: '12px' }}>{errors.lastName}</p>}
@@ -1254,17 +1362,19 @@ const Users = () => {
                             gap: "5px",
                           }}
                         >
-                          <label
-                            className="ffrrstname"
-                            style={{
-                              fontWeight: "400",
-                              fontSize: "14px",
-                              lineHeight: "14px",
-                            }}
-                          >
-                            Role
-                          </label>
-
+                          <span>
+                            <label
+                              className="ffrrstname"
+                              style={{
+                                fontWeight: "400",
+                                fontSize: "14px",
+                                lineHeight: "14px",
+                              }}
+                            >
+                              Role
+                            </label>
+                            <span className="text-danger ms-1">*</span>
+                          </span>
                           <Select
                             options={activeRoles}
                             value={selectedRole}
@@ -1311,23 +1421,26 @@ const Users = () => {
                               gap: "5px",
                             }}
                           >
-                            <label
-                              className="ffrrstname"
-                              style={{
-                                fontWeight: "400",
-                                fontSize: "14px",
-                                lineHeight: "14px",
-                              }}
-                            >
-                              Email
-                            </label>
+                            <span>
+                              <label
+                                className="ffrrstname"
+                                style={{
+                                  fontWeight: "400",
+                                  fontSize: "14px",
+                                  lineHeight: "14px",
+                                }}
+                              >
+                                Email
+                              </label>
+                              <span className="text-danger ms-1">*</span>
+                            </span>
                             <input
                               type="email"
                               className="ffrrstnameinput"
                               name="email"
                               value={email}
                               onChange={(e) => setEmail(e.target.value)}
-                              placeholder="akash@gmail.com"
+                              placeholder="Enter your email"
                               required
                             />
                             {errors.email && <p style={{ color: 'red', fontSize: '12px' }}>{errors.email}</p>}
@@ -1342,23 +1455,26 @@ const Users = () => {
                               gap: "5px",
                             }}
                           >
-                            <label
-                              className="ffrrstname"
-                              style={{
-                                fontWeight: "400",
-                                fontSize: "14px",
-                                lineHeight: "14px",
-                              }}
-                            >
-                              Phone
-                            </label>
+                            <span>
+                              <label
+                                className="ffrrstname"
+                                style={{
+                                  fontWeight: "400",
+                                  fontSize: "14px",
+                                  lineHeight: "14px",
+                                }}
+                              >
+                                Phone
+                              </label>
+                              <span className="text-danger ms-1">*</span>
+                            </span>
                             <input
                               type="tel"
                               className="ffrrstnameinput"
                               name="phone"
                               value={phone}
                               onChange={(e) => setPhone(e.target.value)}
-                              placeholder="9876543210"
+                              placeholder="Enter your 10 digit number"
                               required
                             />
                             {errors.phone && <p style={{ color: 'red', fontSize: '12px' }}>{errors.phone}</p>}
@@ -1383,16 +1499,19 @@ const Users = () => {
                           width: "25%",
                         }}
                       >
-                        <label
-                          className="ffrrstname"
-                          style={{
-                            fontWeight: "400",
-                            fontSize: "14px",
-                            lineHeight: "14px",
-                          }}
-                        >
-                          Country
-                        </label>
+                        <span>
+                          <label
+                            className="ffrrstname"
+                            style={{
+                              fontWeight: "400",
+                              fontSize: "14px",
+                              lineHeight: "14px",
+                            }}
+                          >
+                            Country
+                          </label>
+                          <span className="text-danger ms-1">*</span>
+                        </span>
                         <select
                           className="ffrrstnameinput"
                           value={selectedCountry}
@@ -1426,16 +1545,19 @@ const Users = () => {
                           width: "25%",
                         }}
                       >
-                        <label
-                          className="ffrrstname"
-                          style={{
-                            fontWeight: "400",
-                            fontSize: "14px",
-                            lineHeight: "14px",
-                          }}
-                        >
-                          State
-                        </label>
+                        <span>
+                          <label
+                            className="ffrrstname"
+                            style={{
+                              fontWeight: "400",
+                              fontSize: "14px",
+                              lineHeight: "14px",
+                            }}
+                          >
+                            State
+                          </label>
+                          <span className="text-danger ms-1">*</span>
+                        </span>
                         <select
                           className="ffrrstnameinput"
                           value={selectedState}
@@ -1468,16 +1590,19 @@ const Users = () => {
                           width: "25%",
                         }}
                       >
-                        <label
-                          className="ffrrstname"
-                          style={{
-                            fontWeight: "400",
-                            fontSize: "14px",
-                            lineHeight: "14px",
-                          }}
-                        >
-                          City
-                        </label>
+                        <span>
+                          <label
+                            className="ffrrstname"
+                            style={{
+                              fontWeight: "400",
+                              fontSize: "14px",
+                              lineHeight: "14px",
+                            }}
+                          >
+                            City
+                          </label>
+                          <span className="text-danger ms-1">*</span>
+                        </span>
                         <select
                           value={selectedCity}
                           onChange={(e) => setSelectedCity(e.target.value)}
@@ -1508,21 +1633,24 @@ const Users = () => {
                           width: "25%",
                         }}
                       >
-                        <label
-                          className="ffrrstname"
-                          style={{
-                            fontWeight: "400",
-                            fontSize: "14px",
-                            lineHeight: "14px",
-                          }}
-                        >
-                          Postal Code
-                        </label>
+                        <span>
+                          <label
+                            className="ffrrstname"
+                            style={{
+                              fontWeight: "400",
+                              fontSize: "14px",
+                              lineHeight: "14px",
+                            }}
+                          >
+                            Postal Code
+                          </label>
+                          <span className="text-danger ms-1">*</span>
+                        </span>
                         <input
                           value={zip}
                           onChange={(e) => setZip(e.target.value)}
                           className="ffrrstnameinput"
-                          placeholder="800007"
+                          placeholder="Enter Postal Code"
                           type="number"
                           style={{
                             backgroundColor: "#FBFBFB",
@@ -1564,8 +1692,8 @@ const Users = () => {
                           name="address"
                           value={address}
                           onChange={(e) => setAddress(e.target.value)}
-                          placeholder="Address"
-                          required
+                          placeholder="Enter your permanent Address(optional)"
+
                         />
                         {errors.address && <p style={{ color: 'red', fontSize: '12px' }}>{errors.address}</p>}
                       </div>
@@ -1594,23 +1722,26 @@ const Users = () => {
                               gap: "5px",
                             }}
                           >
-                            <label
-                              className="ffrrstname"
-                              style={{
-                                fontWeight: "400",
-                                fontSize: "14px",
-                                lineHeight: "14px",
-                              }}
-                            >
-                              Password
-                            </label>
+                            <span>
+                              <label
+                                className="ffrrstname"
+                                style={{
+                                  fontWeight: "400",
+                                  fontSize: "14px",
+                                  lineHeight: "14px",
+                                }}
+                              >
+                                Password
+                              </label>
+                              <span className="text-danger ms-1">*</span>
+                            </span>
                             <input
                               type="password"
                               className="ffrrstnameinput"
                               name="password"
                               value={password}
                               onChange={(e) => setPassword(e.target.value)}
-                              placeholder="Password@123"
+                              placeholder="Enter your Password"
                               required
                             />
                             {errors.password && <p style={{ color: 'red', fontSize: '12px' }}>{errors.password}</p>}
@@ -1625,16 +1756,19 @@ const Users = () => {
                               gap: "5px",
                             }}
                           >
-                            <label
-                              className="ffrrstname"
-                              style={{
-                                fontWeight: "400",
-                                fontSize: "14px",
-                                lineHeight: "14px",
-                              }}
-                            >
-                              Confirm Password
-                            </label>
+                            <span>
+                              <label
+                                className="ffrrstname"
+                                style={{
+                                  fontWeight: "400",
+                                  fontSize: "14px",
+                                  lineHeight: "14px",
+                                }}
+                              >
+                                Confirm Password
+                              </label>
+                              <span className="text-danger ms-1">*</span>
+                            </span>
                             <input
                               type="password"
                               className="ffrrstnameinput"
@@ -1643,7 +1777,7 @@ const Users = () => {
                               onChange={(e) =>
                                 setConfirmPassword(e.target.value)
                               }
-                              placeholder="Password@123"
+                              placeholder="confirm your Password"
                               required
                             />
                             {errors.confirmPassword && <p style={{ color: 'red', fontSize: '12px' }}>{errors.confirmPassword}</p>}
@@ -1652,7 +1786,7 @@ const Users = () => {
                         </div>
                       </div>
                     </div>
-                    <div
+                    {/* <div
                       style={{
                         flex: "0 0 50%",
                         display: "flex",
@@ -1738,18 +1872,8 @@ const Users = () => {
                             </li>
                           </ul>
                         </div>
-                        {/* <input
-                            type="checkbox"
-                            id="user1"
-                            className="check"
-                            checked={status}
-                            onChange={(e) => setStatus(e.target.checked)}
-                          />
-                          <label htmlFor="user1" className="checktoggle">
-                            {" "}
-                          </label> */}
                       </div>
-                    </div>
+                    </div> */}
                   </div>
                   <div
                     style={{
@@ -1892,12 +2016,7 @@ const Users = () => {
                       accept="image/*"
                       ref={editFileInputRef}
                       style={{ display: "none" }}
-                      onChange={(e) =>
-                        setEditUserData({
-                          ...editUserData,
-                          profileImage: e.target.files[0],
-                        })
-                      }
+                      onChange={handleEditFileChange}
                     />
 
                     {/* Upload button + hint */}
@@ -1931,7 +2050,7 @@ const Users = () => {
                           style={{ width: "20px", height: "20px" }}
                         />
                         <span className="setting-imgupload-btn">
-                          Upload Image
+                          Change Image
                         </span>
                       </div>
 
@@ -1944,7 +2063,7 @@ const Users = () => {
                           marginTop: "10px",
                         }}
                       >
-                        Upload an image below 2MB, Accepted File format JPG, PNG
+                        Upload an image below 1MB, Accepted File format JPG, PNG
                       </p>
                     </div>
 
@@ -1970,16 +2089,19 @@ const Users = () => {
                           gap: "5px",
                         }}
                       >
-                        <label
-                          className="ffrrstname"
-                          style={{
-                            fontWeight: "400",
-                            fontSize: "14px",
-                            lineHeight: "14px",
-                          }}
-                        >
-                          First Name{" "}
-                        </label>
+                        <span>
+                          <label
+                            className="ffrrstname"
+                            style={{
+                              fontWeight: "400",
+                              fontSize: "14px",
+                              lineHeight: "14px",
+                            }}
+                          >
+                            First Name{" "}
+                          </label>
+                          <span className="text-danger ms-1">*</span>
+                        </span>
                         <input
                           type="text"
                           className="ffrrstnameinput"
@@ -2005,16 +2127,19 @@ const Users = () => {
                           gap: "5px",
                         }}
                       >
-                        <label
-                          className="ffrrstname"
-                          style={{
-                            fontWeight: "400",
-                            fontSize: "14px",
-                            lineHeight: "14px",
-                          }}
-                        >
-                          Last Name{" "}
-                        </label>
+                        <span>
+                          <label
+                            className="ffrrstname"
+                            style={{
+                              fontWeight: "400",
+                              fontSize: "14px",
+                              lineHeight: "14px",
+                            }}
+                          >
+                            Last Name{" "}
+                          </label>
+                          <span className="text-danger ms-1">*</span>
+                        </span>
                         <input
                           type="text"
                           className="ffrrstnameinput"
@@ -2054,16 +2179,19 @@ const Users = () => {
                           gap: "5px",
                         }}
                       >
-                        <label
-                          className="ffrrstname"
-                          style={{
-                            fontWeight: "400",
-                            fontSize: "14px",
-                            lineHeight: "14px",
-                          }}
-                        >
-                          Role
-                        </label>
+                        <span>
+                          <label
+                            className="ffrrstname"
+                            style={{
+                              fontWeight: "400",
+                              fontSize: "14px",
+                              lineHeight: "14px",
+                            }}
+                          >
+                            Role
+                          </label>
+                          <span className="text-danger ms-1">*</span>
+                        </span>
                         <Select
                           options={activeRoles}
                           value={editUserData.role}
@@ -2111,16 +2239,19 @@ const Users = () => {
                             gap: "5px",
                           }}
                         >
-                          <label
-                            className="ffrrstname"
-                            style={{
-                              fontWeight: "400",
-                              fontSize: "14px",
-                              lineHeight: "14px",
-                            }}
-                          >
-                            Email{" "}
-                          </label>
+                          <span>
+                            <label
+                              className="ffrrstname"
+                              style={{
+                                fontWeight: "400",
+                                fontSize: "14px",
+                                lineHeight: "14px",
+                              }}
+                            >
+                              Email{" "}
+                            </label>
+                            <span className="text-danger ms-1">*</span>
+                          </span>
                           <input
                             type="email"
                             className="ffrrstnameinput"
@@ -2146,16 +2277,19 @@ const Users = () => {
                             gap: "5px",
                           }}
                         >
-                          <label
-                            className="ffrrstname"
-                            style={{
-                              fontWeight: "400",
-                              fontSize: "14px",
-                              lineHeight: "14px",
-                            }}
-                          >
-                            Phone{" "}
-                          </label>
+                          <span>
+                            <label
+                              className="ffrrstname"
+                              style={{
+                                fontWeight: "400",
+                                fontSize: "14px",
+                                lineHeight: "14px",
+                              }}
+                            >
+                              Phone{" "}
+                            </label>
+                            <span className="text-danger ms-1">*</span>
+                          </span>
                           <input
                             type="tel"
                             className="ffrrstnameinput"
@@ -2189,16 +2323,19 @@ const Users = () => {
                         width: "25%",
                       }}
                     >
-                      <label
-                        className="ffrrstname"
-                        style={{
-                          fontWeight: "400",
-                          fontSize: "14px",
-                          lineHeight: "14px",
-                        }}
-                      >
-                        Country
-                      </label>
+                      <span>
+                        <label
+                          className="ffrrstname"
+                          style={{
+                            fontWeight: "400",
+                            fontSize: "14px",
+                            lineHeight: "14px",
+                          }}
+                        >
+                          Country
+                        </label>
+                        <span className="text-danger ms-1">*</span>
+                      </span>
                       <select
                         className="ffrrstnameinput"
                         value={editUserData.country}
@@ -2239,16 +2376,19 @@ const Users = () => {
                         width: "25%",
                       }}
                     >
-                      <label
-                        className="ffrrstname"
-                        style={{
-                          fontWeight: "400",
-                          fontSize: "14px",
-                          lineHeight: "14px",
-                        }}
-                      >
-                        State
-                      </label>
+                      <span>
+                        <label
+                          className="ffrrstname"
+                          style={{
+                            fontWeight: "400",
+                            fontSize: "14px",
+                            lineHeight: "14px",
+                          }}
+                        >
+                          State
+                        </label>
+                        <span className="text-danger ms-1">*</span>
+                      </span>
                       <select
                         className="ffrrstnameinput"
                         value={editUserData.state}
@@ -2294,16 +2434,19 @@ const Users = () => {
                         width: "25%",
                       }}
                     >
-                      <label
-                        className="ffrrstname"
-                        style={{
-                          fontWeight: "400",
-                          fontSize: "14px",
-                          lineHeight: "14px",
-                        }}
-                      >
-                        City
-                      </label>
+                      <span>
+                        <label
+                          className="ffrrstname"
+                          style={{
+                            fontWeight: "400",
+                            fontSize: "14px",
+                            lineHeight: "14px",
+                          }}
+                        >
+                          City
+                        </label>
+                        <span className="text-danger ms-1">*</span>
+                      </span>
                       <select
                         value={editUserData.city}
                         onChange={(e) => setEditUserData({ ...editUserData, city: e.target.value })}
@@ -2335,16 +2478,19 @@ const Users = () => {
                         width: "25%",
                       }}
                     >
-                      <label
-                        className="ffrrstname"
-                        style={{
-                          fontWeight: "400",
-                          fontSize: "14px",
-                          lineHeight: "14px",
-                        }}
-                      >
-                        Postal Code
-                      </label>
+                      <span>
+                        <label
+                          className="ffrrstname"
+                          style={{
+                            fontWeight: "400",
+                            fontSize: "14px",
+                            lineHeight: "14px",
+                          }}
+                        >
+                          Postal Code
+                        </label>
+                        <span className="text-danger ms-1">*</span>
+                      </span>
                       <input
                         value={editUserData.postalcode}
                         onChange={(e) =>
@@ -2401,13 +2547,12 @@ const Users = () => {
                           })
                         }
                         placeholder="Address"
-                        required
                       />
                     </div>
                   </div>
                   {/* address end */}
                   {/* Password */}
-                  <div
+                  {/* <div
                     style={{
                       display: "flex",
                       gap: "20px",
@@ -2454,7 +2599,7 @@ const Users = () => {
                         </div>
                       </div>
 
-                      {/* Confirm Password */}
+                   
                       <div style={{ flex: "1" }}>
                         <div
                           style={{
@@ -2488,7 +2633,7 @@ const Users = () => {
                         </div>
                       </div>
                     </div>
-                  </div>
+                  </div> */}
 
                   {/* Status */}
                   <div
@@ -2531,7 +2676,7 @@ const Users = () => {
                             padding: "10px",
                           }}
                         >
-                          {editUserData.status ? "Active" : "Inactive"}{" "}
+                          {editUserData.status === "Active" ? "Active" : "Inactive"}
                           <BiChevronDown
                             style={{ marginLeft: "10px", fontSize: "20px" }}
                           />
@@ -2548,7 +2693,7 @@ const Users = () => {
                               onClick={() =>
                                 setEditUserData({
                                   ...editUserData,
-                                  status: true,
+                                  status: "Active",
                                 })
                               }
                               onMouseOver={(e) => {
@@ -2570,7 +2715,7 @@ const Users = () => {
                               onClick={() =>
                                 setEditUserData({
                                   ...editUserData,
-                                  status: false,
+                                  status: "Inactive",
                                 })
                               }
                               onMouseOver={(e) => {
