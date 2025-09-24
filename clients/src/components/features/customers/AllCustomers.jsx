@@ -252,7 +252,7 @@ function AllCustomers({ onClose }) {
   const fetchPurchases = async () => {
     try {
       const res = await axios.get(`${BASE_URL}/api/purchases`, {
-       
+
         headers: {
           Authorization: `Bearer ${token}`,
         },
@@ -318,17 +318,17 @@ function AllCustomers({ onClose }) {
           />
         </div>
 
-        <button
+        {/* <button
           className="btn btn-outline-secondary d-flex align-items-center"
           onClick={() => setShowFilters(!showFilters)}
           style={{ marginLeft: "240px" }}
         >
           <FaFilter className="me-1" /> Filter
-        </button>
+        </button> */}
 
         {showFilters && (
           <>
-            <select
+            {/* <select
               className="form-select border-dashed"
               style={{ maxWidth: "150px" }}
               value={filters.category}
@@ -337,7 +337,7 @@ function AllCustomers({ onClose }) {
               <option value="">All Categories</option>
               <option value="Clothing">Clothing</option>
               <option value="Electronics">Electronics</option>
-            </select>
+            </select> */}
             {/* <select className="form-select border-dashed" style={{ maxWidth: "150px" }}>
               <option>Category</option>
               <option>Clothing</option>
