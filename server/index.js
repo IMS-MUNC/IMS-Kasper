@@ -198,6 +198,26 @@ io.on("connection", (socket) => {
     }
   });
 
+  socket.on("delete-msg", (data) => {
+    const recipientSocket = onlineUsers.get(data.to);
+    if (recipientSocket) {
+      socket.to(recipientSocket).emit("delete-msg", {
+        from: data.from,
+        messageTimestamp: data.messageTimestamp
+      });
+    }
+  });
+
+  socket.on("message-read", (data) => {
+    const senderSocket = onlineUsers.get(data.from);
+    if (senderSocket) {
+      socket.to(senderSocket).emit("msg-read", {
+        from: data.to,
+        to: data.from
+      });
+    }
+  });
+
   socket.on("disconnect", () => {
     // console.log("🔴 Socket disconnected:", socket.id);
     let disconnectedUserId = null;

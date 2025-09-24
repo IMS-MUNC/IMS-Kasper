@@ -15,7 +15,7 @@ import { GrFormPrevious } from "react-icons/gr";
 import { MdNavigateNext } from "react-icons/md";
 const Units = () => {
   const [unitData, setUnitData] = useState([]);
-  const [searchTerm, setSearchTerm] = useState("  ");
+  const [searchTerm, setSearchTerm] = useState("");
   const [selectedStatus, setSelectedStatus] = useState(""); //for active , inactive
   // items page
   const [currentPage, setCurrentPage] = useState(1);
@@ -32,6 +32,14 @@ const Units = () => {
 
   const unitNameRegex = /^[A-Za-z\s]{2,50}$/;
   const shortNameRegex = /^[A-Za-z]{1,10}$/;
+
+  // Function to reset form fields
+  const resetForm = () => {
+    setUnitsName("");
+    setShortName("");
+    setStatus(true);
+    setErrors({});
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -64,9 +72,7 @@ const Units = () => {
         },
       });
       toast.success("Unit created successfully!");
-      setUnitsName("");
-      setShortName("");
-      setStatus(true);
+      resetForm();
       fetchUnits(); // Refresh unit list
       window.$(`#add-units`).modal("hide");
     } catch (error) {
@@ -619,6 +625,7 @@ const Units = () => {
                   type="button"
                   className="btn me-2 btn-secondary"
                   data-bs-dismiss="modal"
+                  onClick={resetForm}
                 >
                   Cancel
                 </button>

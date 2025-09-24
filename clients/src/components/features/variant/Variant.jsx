@@ -497,54 +497,75 @@ const Variant = ({ show, handleClose }) => {
                   </tr>
                 </thead>
                 <tbody>
-                  {filteredVariants
-                    .slice((currentPage - 1) * rowsPerPage, currentPage * rowsPerPage)
-                    .map((item, idx) => (
-                      <tr key={idx}>
-                        <td>
-                          <label className="checkboxs">
-                            <input
-                              type="checkbox"
-                              checked={selectedVariants.includes(item._id)}
-                              onChange={() => handleVariantSelection(item._id)}
-                            />
-                            <span className="checkmarks" />
-                          </label>
-                        </td>
-                        <td className="text-gray-9">{item.variant}</td>
-                        <td>{item.value}</td>
-                        <td>{dayjs(item.createdAt).format("DD MMM YYYY")}</td>
-                        <td>
-                          <span
-                            className={`badge table-badge fw-medium fs-10 ${item.status ? "bg-success" : "bg-danger"
-                              }`}
-                          >
-                            {item.status ? "Active" : "Inactive"}
-                          </span>
-                        </td>
-                        <td className="action-table-data">
-                          <div className="edit-delete-action">
-                            <a
-                              className="me-2 p-2"
-                              href="#"
-                              data-bs-toggle="modal"
-                              data-bs-target="#edit-variant"
-                              onClick={() => handleEditOpen(item)}
-                            >
-                              <TbEdit className="feather-edit" />
-                            </a>
-                            <a
-                              className="p-2"
-                              data-bs-toggle="modal"
-                              data-bs-target="#delete-modal"
-                              onClick={() => openDeleteModal(item.id)}
-                            >
-                              <TbTrash className="feather-trash-2" />
-                            </a>
+                  {filteredVariants.length === 0 ? (
+                    <tr>
+                      <td colSpan="6" className="text-center py-4">
+                        <div className="d-flex flex-column align-items-center">
+                          <div className="mb-2">
+                            <i className="fas fa-box-open fa-3x text-muted"></i>
                           </div>
-                        </td>
-                      </tr>
-                    ))}
+                          <p className="text-muted mb-1">
+                            {statusFilter === "active" 
+                              ? "No Active Variants Found" 
+                              : statusFilter === "inactive" 
+                              ? "No Inactive Variants Found"
+                              : searchTerm 
+                              ? "No Variants Match Your Search"
+                              : "No Variants Available"}
+                          </p>
+                        </div>
+                      </td>
+                    </tr>
+                  ) : (
+                    filteredVariants
+                      .slice((currentPage - 1) * rowsPerPage, currentPage * rowsPerPage)
+                      .map((item, idx) => (
+                        <tr key={idx}>
+                          <td>
+                            <label className="checkboxs">
+                              <input
+                                type="checkbox"
+                                checked={selectedVariants.includes(item._id)}
+                                onChange={() => handleVariantSelection(item._id)}
+                              />
+                              <span className="checkmarks" />
+                            </label>
+                          </td>
+                          <td className="text-gray-9">{item.variant}</td>
+                          <td>{item.value}</td>
+                          <td>{dayjs(item.createdAt).format("DD MMM YYYY")}</td>
+                          <td>
+                            <span
+                              className={`badge table-badge fw-medium fs-10 ${item.status ? "bg-success" : "bg-danger"
+                                }`}
+                            >
+                              {item.status ? "Active" : "Inactive"}
+                            </span>
+                          </td>
+                          <td className="action-table-data">
+                            <div className="edit-delete-action">
+                              <a
+                                className="me-2 p-2"
+                                href="#"
+                                data-bs-toggle="modal"
+                                data-bs-target="#edit-variant"
+                                onClick={() => handleEditOpen(item)}
+                              >
+                                <TbEdit className="feather-edit" />
+                              </a>
+                              <a
+                                className="p-2"
+                                data-bs-toggle="modal"
+                                data-bs-target="#delete-modal"
+                                onClick={() => openDeleteModal(item.id)}
+                              >
+                                <TbTrash className="feather-trash-2" />
+                              </a>
+                            </div>
+                          </td>
+                        </tr>
+                      ))
+                  )}
                 </tbody>
               </table>
             </div>
