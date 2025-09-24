@@ -4,10 +4,11 @@ import BASE_URL from '../../config/config';
 import { useParams } from 'react-router-dom';
 import Confirm from '../../../assets/img/icons/confirme.svg';
 
-const ViewSupplierModal = ({ supplierId, onClose }) => {
+const ViewSupplierModal = ({ supplierId, onClose, }) => {
     const [supplier, setSupplier] = useState(null);
     const [loading, setLoading] = useState(true);
     const { id } = useParams();
+    const [EditSupplier, setEditSupplier] = useState(null);
 
 
     useEffect(() => {
@@ -101,7 +102,7 @@ const ViewSupplierModal = ({ supplierId, onClose }) => {
                                             <p className="fs-14 fw-regular"><i className="isax isax-location fs-14 me-1 text-gray-9" /> 4712 Cherry Ridge Drive Rochester, NY 14620.</p>
                                         </div>
                                     </div>
-                                    <a href="#" className="btn btn-outline-white border border-1 border-grey border-sm bg-white"><i className="isax isax-edit-2 fs-13 fw-semibold text-dark me-1" /> Edit Profile </a>
+                                    <a href="#" className="btn btn-outline-white border border-1 border-grey border-sm bg-white" onClick={() => { setEditSupplier(supplier); setShowEditModal(true); }}><i className="isax isax-edit-2 fs-13 fw-semibold text-dark me-1" /> Edit Profile </a>
                                 </div>
                                 <div className="card border-0 shadow shadow-none mb-0 bg-white">
                                     <div className="card-body border-0 shadow shadow-none">
