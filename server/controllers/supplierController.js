@@ -23,7 +23,7 @@ exports.createSupplier = async (req, res) => {
       { supplierCode: { $ne: null } },
       {},
       { sort: { createdAt: -1 } }
-    );
+    ); 
     let supplierCode = 'SUP001';
     if (lastSupplier && lastSupplier.supplierCode) {
       const lastNum = parseInt(lastSupplier.supplierCode.replace('SUP', '')) || 0;

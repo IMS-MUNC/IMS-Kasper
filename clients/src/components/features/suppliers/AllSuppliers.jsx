@@ -45,8 +45,11 @@ function AllSuppliers() {
   const [suppliers, setSuppliers] = useState([]);
   const [loading, setLoading] = useState(false);
   const [editSupplier, setEditSupplier] = useState(null);
+  const [selectedIds, setSelectedIds] = useState([]);
+
   const [searchTerm, setSearchTerm] = useState("");
-  const [selectedStatus, setSelectedStatus] = useState(""); //for active , inactive
+//   const [selectedStatus, setSelectedStatus] = useState(""); //for active , inactive
+
 
   useEffect(() => {
     fetchSuppliers();
@@ -90,7 +93,13 @@ function AllSuppliers() {
 
   const filteredSuppliers = suppliers.filter((supplier) => {
     const fullName = `${supplier.firstName} ${supplier.lastName}`.toLowerCase();
-    const matchSearch = supplier.supplierCode?.toLowerCase().includes(searchTerm.toLowerCase()) || fullName.includes(searchTerm.toLowerCase());
+    const matchSearch = supplier.supplierCode?.toLowerCase().includes(
+      
+      
+      
+      
+      
+      .toLowerCase()) || fullName.includes(searchTerm.toLowerCase());
     const matchesStatus = selectedStatus === "" || (selectedStatus === "active" && supplier.status) || (selectedStatus === "inactive" && !supplier.status);
     return matchSearch && matchesStatus;
   })
@@ -106,6 +115,33 @@ function AllSuppliers() {
   // const [showViewModal, setShowViewModal] = useState(false);
   const [viewSupplierId, setViewSupplierId] = useState(null);
 
+  const handleBulkDelete = async () => {
+    if (selectedIds.length === 0) {
+      alert("Please select at least one supplier.");
+      return;
+    }
+    if (!window.confirm(`Delete ${selectedIds.length} selected suppliers?`)) return;
+
+    try {
+      const token = localStorage.getItem("token");
+      await Promise.all(
+        selectedIds.map(id =>
+          fetch(`${BASE_URL}/api/suppliers/${id}`, {
+            method: "DELETE",
+            headers: { Authorization: `Bearer ${token}` },
+          })
+        )
+      );
+      setSelectedIds([]);
+      fetchSuppliers();
+    } catch (err) {
+      console.error("Bulk delete failed", err);
+    }
+  };
+
+
+
+
   return (
 
     <div className="page-wrapper">
@@ -117,11 +153,39 @@ function AllSuppliers() {
               <h6>Manage your suppliers</h6>
             </div>
           </div>
-          <div className="table-top-head me-2">
+          <ul className="table-top-head">
             <li>
-              <button type="button" className="icon-btn" title="Pdf">
-                <FaFilePdf />
-              </button>
+              {/* <button
+                className="btn btn-danger me-2"
+                onClick={handleBulkDelete}
+                disabled={selectedIds.length === 0}
+              >
+                <TbTrash className="me-1" /> Delete Selected
+              </button> */}
+
+              {selectedIds.length > 0 && (
+                // <div className="d-flex align-items-center mb-2">
+
+                <button
+                  className="btn btn-danger ms-3"
+                  onClick={handleBulkDelete}
+                >
+                  <TbTrash className="me-1" /> Delete ({selectedIds.length}) Selected
+                </button>
+                // </div>
+              )}
+
+
+            </li>
+            <li className="me-2">
+              <a data-bs-toggle="tooltip" data-bs-placement="top" title="Pdf"><img src="assets/img/icons/pdf.svg" alt="img" /></a>
+            </li>
+            <li className="me-2">
+              <a data-bs-toggle="tooltip" data-bs-placement="top" title="Excel"><img src="assets/img/icons/excel.svg" alt="img" /></a>
+            </li>
+            <li className="me-2">
+              <a data-bs-toggle="tooltip" data-bs-placement="top" title="Refresh"><i className="ti ti-refresh" /></a>
+
             </li>
             <li>
               <button type="button" className="icon-btn" title="Export Excel">
@@ -199,7 +263,18 @@ function AllSuppliers() {
                   <tr style={{ borderTop: "1px solid #e4e0e0ff", textAlign: "center" }}>
                     <th className="no-sort">
                       <label className="checkboxs">
-                        <input type="checkbox" id="select-all" />
+                        {/* <input type="checkbox" id="select-all" /> */}
+                        <input
+                          type="checkbox"
+                          checked={selectedIds.length === paginatedData.length && paginatedData.length > 0}
+                          onChange={(e) => {
+                            if (e.target.checked) {
+                              setSelectedIds(paginatedData.map(s => s._id));
+                            } else {
+                              setSelectedIds([]);
+                            }
+                          }}
+                        />
                         <span className="checkmarks" />
                       </label>
                     </th>
@@ -218,7 +293,18 @@ function AllSuppliers() {
                     <tr key={supplier._id} style={{ textAlign: "center" }}>
                       <td>
                         <label className="checkboxs">
-                          <input type="checkbox" />
+                          {/* <input type="checkbox" /> */}
+                          <input
+                            type="checkbox"
+                            checked={selectedIds.includes(supplier._id)}
+                            onChange={(e) => {
+                              if (e.target.checked) {
+                                setSelectedIds([...selectedIds, supplier._id]);
+                              } else {
+                                setSelectedIds(selectedIds.filter(id => id !== supplier._id));
+                              }
+                            }}
+                          />
                           <span className="checkmarks" />
                         </label>
                       </td>
