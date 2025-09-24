@@ -12,6 +12,7 @@ const {
   searchUsersByEmail,
   toggleTwoFactor,
   toggleAccountStatus,
+  bulkDeleteUsers,
 } = require("../controllers/usersController");
 const { authMiddleware } = require("../middleware/auth.js");
 
@@ -47,4 +48,6 @@ router.put("/toggle-2fa/:id", authMiddleware, toggleTwoFactor);
 // for activate and deactivate account
 router.put("/toggle-status/:id", authMiddleware, toggleAccountStatus);
 
+// for bulk delete
+router.delete("/bulk-delete", authMiddleware, bulkDeleteUsers);
 module.exports = router;
