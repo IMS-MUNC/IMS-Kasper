@@ -314,13 +314,8 @@ const token = localStorage.getItem("token");
         }
       }, 300);
 
-<<<<<<< HEAD
       Swal.fire("Success", "Purchase created successfully", "success");
 
-=======
-      // window.$(`#add-purchase`).modal("hide");
- window.$(`#add-purchase`).modal("hide");
->>>>>>> 0dcf705b74278c28a7f1185e795c60bdfe5c3bd9
     } catch (error) {
       console.error("Failed to create purchase:", error);
     }
@@ -401,7 +396,6 @@ const token = localStorage.getItem("token");
   }, [paymentType, paidAmount, grandTotal]);
 
 
-<<<<<<< HEAD
   const fileInputRef = useRef();
 
   // ✅ Trigger hidden file input when clicking the icon
@@ -409,23 +403,6 @@ const token = localStorage.getItem("token");
     fileInputRef.current.click();
   };
   
-=======
-  const handleFileChange = (e) => {
-      const files = Array.from(e.target.files);
-      const validFiles = files.filter(
-        (file) =>
-          ["image/jpeg", "image/png"].includes(file.type) &&
-          file.size <= 2 * 1024 * 1024
-      );
-      if (validFiles.length !== files.length) {
-        toast.error("Only JPG/PNG up to 2MB allowed");
-      }
-      setSelectedImages(validFiles);
-    };
-
-
-
->>>>>>> 0dcf705b74278c28a7f1185e795c60bdfe5c3bd9
   return (
     <div className="modal fade" id="add-purchase">
       <div className="modal-dialog purchase modal-dialog-centered">
@@ -868,7 +845,6 @@ const token = localStorage.getItem("token");
 
                       </div>
                     </div>
-<<<<<<< HEAD
 
                   </div> */}
                    <div className="profile-pic-upload mb-3">
@@ -942,16 +918,6 @@ const token = localStorage.getItem("token");
                                             {imagePreviews.length > 0 ? (
                                               <img
                                                 src={URL.createObjectURL(preview[0])}
-=======
-                  </div> */}
-
-                     <div className="profile-pic-upload mb-3">
-                                        <div className="profile-pic brand-pic">
-                                          <span>
-                                            {selectedImages.length > 0 ? (
-                                              <img
-                                                src={URL.createObjectURL(selectedImages[0])}
->>>>>>> 0dcf705b74278c28a7f1185e795c60bdfe5c3bd9
                                                 alt="Preview"
                                                 height="60"
                                               />
@@ -983,11 +949,7 @@ const token = localStorage.getItem("token");
                                           </button>
                                           <p className="mt-2">JPEG, PNG up to 2 MB</p>
                                         </div>
-<<<<<<< HEAD
                                       </div> */}
-=======
-                                      </div>
->>>>>>> 0dcf705b74278c28a7f1185e795c60bdfe5c3bd9
 
                 </div>
               </div>
