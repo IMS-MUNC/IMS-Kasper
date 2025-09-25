@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState } from "react";
 import { FaFileExcel, FaFilePdf } from "react-icons/fa";
 import { TbChevronUp, TbEdit, TbRefresh, TbTrash, TbEye, TbDots } from "react-icons/tb";
@@ -13,12 +14,199 @@ import ViewPurchase from "../../../../pages/Modal/PurchaseModals/ViewPurchase";
 // import "../../../../styles/purchase/product.css"
 import "../../../../styles/product/product.css"
 import AddDebitNoteModals from "../../../../pages/Modal/debitNoteModals/AddDebitNoteModals";
+import * as XLSX from "xlsx";
+import { jsPDF } from 'jspdf';
+import autoTable from 'jspdf-autotable';
+
 
 const Purchase = () => {
   const [purchases, setPurchases] = useState([]);
   const [viewPurchaseId, setViewPurchaseId] = useState(null);
 
     const [selectedReturnData, setSelectedReturnData] = useState(null);
+
+// Export all table data to Excel
+  // const handleExportExcel = () => {
+  //   if (!purchases.length) return;
+  //   const rows = [];
+  //   purchases.forEach((purchase) => {
+  //     purchase.products.forEach((p, idx) => {
+  //       rows.push({
+  //         Supplier: purchase.supplier ? `${purchase.supplier.firstName} ${purchase.supplier.lastName}` : "N/A",
+  //         Reference: purchase.referenceNumber,
+  //         Date: new Date(purchase.purchaseDate).toLocaleDateString(),
+  //         Product: p.product?.productName || "",
+  //         Quantity: p.quantity,
+  //         Unit: p.unit,
+  //         PurchasePrice: p.purchasePrice,
+  //         Discount: p.discount,
+  //         Tax: p.tax,
+  //         TaxAmount: p.taxAmount || ((p.afterDiscount * p.tax) / 100 || 0),
+  //         ShippingCost: purchase.shippingCost,
+  //         ExtraExpense: purchase.orderTax,
+  //         UnitCost: p.unitCost,
+  //         TotalCost: p.totalCost,
+  //         Status: purchase.status,
+  //       });
+  //     });
+  //   });
+  //   const ws = XLSX.utils.json_to_sheet(rows);
+  //   const wb = XLSX.utils.book_new();
+  //   XLSX.utils.book_append_sheet(wb, ws, "Purchases");
+  //   XLSX.writeFile(wb, "purchases.xlsx");
+  // };
+  // Delete purchase
+  const handleDeletePurchase = async (purchaseId, referenceNumber) => {
+    
+    if (!window.confirm(`Are you sure you want to delete purchase ${referenceNumber}?`)) return;
+    try {
+      await axios.delete(`${BASE_URL}/api/purchases/${purchaseId}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      setPurchases((prev) => prev.filter((p) => p._id !== purchaseId));
+      // Optionally show a toast or alert
+      // alert('Purchase deleted successfully');
+    } catch (error) {
+      alert('Failed to delete purchase');
+    }
+  };
+
+
+  // final Export all table data to PDF
+const handleExportPDF = () => {
+  if (!selectedRows.length) return;
+
+  const selectedPurchases = purchases.filter((purchase) =>
+    selectedRows.includes(purchase._id)
+  );
+
+  const doc = new jsPDF("l", "pt", "a4");
+
+  const columns = [
+    "Supplier",
+    "Reference",
+    "Date",
+    "Product",
+    "Quantity",
+    "Unit",
+    "PurchasePrice",
+    "Discount",
+    "Tax",
+    "TaxAmount",
+    "ShippingCost",
+    "ExtraExpense",
+    "UnitCost",
+    "TotalCost",
+    "Status",
+    "Created By",
+    "Updated By"
+  ];
+
+  const rows = [];
+
+  selectedPurchases.forEach((purchase) => {
+    purchase.products.forEach((p) => {
+      rows.push([
+        purchase.supplier
+          ? `${purchase.supplier.firstName} ${purchase.supplier.lastName}`
+          : "N/A",
+        purchase.referenceNumber,
+        new Date(purchase.purchaseDate).toLocaleDateString(),
+        p.product?.productName || "",
+        p.quantity,
+        p.unit,
+        p.purchasePrice,
+        p.discount,
+        p.tax,
+        p.taxAmount || ((p.afterDiscount * p.tax) / 100 || 0),
+        purchase.shippingCost,
+        purchase.orderTax,
+        p.unitCost.toFixed(2),
+        p.totalCost.toFixed(2),
+        purchase.status,
+        purchase.createdBy ? `${purchase.createdBy.name} (${purchase.createdBy.email})` : "-",
+        purchase.updatedBy ? `${purchase.updatedBy.name} (${purchase.updatedBy.email})` : "-"
+      ]);
+    });
+  });
+
+  if (!rows.length) return;
+
+  doc.text("Purchases", 40, 30);
+
+  // Use autoTable as a standalone function (NOT doc.autoTable)
+  autoTable(doc, {
+    head: [columns],
+    body: rows,
+    startY: 40,
+    styles: { fontSize: 7 },
+    margin: { left: 20, right: 20 }
+  });
+
+  doc.save("selected_purchases.pdf");
+};
+
+  
+  // final Export only selected rows to Excel
+  const handleExportExcel = () => {
+    if (!selectedRows.length) return;
+    const selectedPurchases = purchases.filter((purchase) =>
+      selectedRows.includes(purchase._id)
+    );
+    const rows = [];
+    selectedPurchases.forEach((purchase) => {
+      purchase.products.forEach((p) => {
+        rows.push({
+          Supplier: purchase.supplier ? `${purchase.supplier.firstName} ${purchase.supplier.lastName}` : "N/A",
+          Reference: purchase.referenceNumber,
+          Date: new Date(purchase.purchaseDate).toLocaleDateString(),
+          Product: p.product?.productName || "",
+          Quantity: p.quantity,
+          Unit: p.unit,
+          PurchasePrice: p.purchasePrice,
+          Discount: p.discount,
+          Tax: p.tax,
+          TaxAmount: p.taxAmount || ((p.afterDiscount * p.tax) / 100 || 0),
+          ShippingCost: purchase.shippingCost,
+          ExtraExpense: purchase.orderTax,
+          UnitCost: p.unitCost.toFixed(2),
+          TotalCost: p.totalCost.toFixed(2),
+          Status: purchase.status,
+          CreatedBy: purchase.createdBy ? `${purchase.createdBy.name} (${purchase.createdBy.email})` : "-",
+          UpdatedBy: purchase.updatedBy ? `${purchase.updatedBy.name} (${purchase.updatedBy.email})` : "-"
+        });
+      });
+    });
+    if (!rows.length) return;
+    const ws = XLSX.utils.json_to_sheet(rows);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Purchases");
+    XLSX.writeFile(wb, "selected_purchases.xlsx");
+  };
+
+  
+
+ const [selectedRows, setSelectedRows] = useState([]); // For row selection
+
+  // Handle select all
+  const handleSelectAll = (e) => {
+    if (e.target.checked) {
+      // Select all visible purchase IDs
+      setSelectedRows(purchases.map((purchase) => purchase._id));
+    } else {
+      setSelectedRows([]);
+    }
+  };
+
+  // Handle single row select
+  const handleSelectRow = (purchaseId) => {
+    setSelectedRows((prev) =>
+      prev.includes(purchaseId)
+        ? prev.filter((id) => id !== purchaseId)
+        : [...prev, purchaseId]
+    );
+  };
+
   
     const handleConvertToReturn = (purchase) => {
       setSelectedReturnData(purchase);
@@ -30,7 +218,7 @@ const Purchase = () => {
 
     
 
-  console.log("Purchase component rendered", purchases);
+  // console.log("Purchase component rendered", purchases);
 
   const [filters, setFilters] = useState({
     search: "",
@@ -133,6 +321,11 @@ const token = localStorage.getItem("token");
     setActiveSection(section);
   };
 
+
+
+
+  
+
   return (
     <div className="page-wrapper">
       <div className="content">
@@ -193,15 +386,15 @@ const token = localStorage.getItem("token");
           </div> */}
 
           <div className="table-top-head me-2">
-            <li><button type="button" className="icon-btn" title="Pdf"><FaFilePdf /></button></li>
+            <li onClick={handleExportPDF}><button type="button" className="icon-btn" title="Pdf"><FaFilePdf /></button></li>
             <li><label className="icon-btn m-0" title="Import Excel"><input type="file" accept=".xlsx, .xls" hidden /><FaFileExcel style={{ color: "green" }} /></label></li>
-            <li><button type="button" className="icon-btn" title="Export Excel"><FaFileExcel /></button></li>
+            <li onClick={handleExportExcel}><button type="button" className="icon-btn" title="Export Excel" ><FaFileExcel /></button></li>
           </div>
 
 
           <div className="d-flex gap-2">
             <a className="btn btn-primary" data-bs-toggle="modal" data-bs-target="#add-purchase"><CiCirclePlus className="me-1" />Add Purchase</a>
-            <a className="btn btn-secondary" data-bs-toggle="modal" data-bs-target="#view-notes"><i data-feather="download" className="me-2" />Import Purchase</a>
+            {/* <a className="btn btn-secondary" data-bs-toggle="modal" data-bs-target="#view-notes"><i data-feather="download" className="me-2" />Import Purchase</a> */}
           </div>
         </div>
 
@@ -222,6 +415,7 @@ const token = localStorage.getItem("token");
                   <option value="">All Status</option>
                   <option value="Pending">Pending</option>
                   <option value="Received">Received</option>
+                  <option value="Ordered">Ordered</option>
                 </select>
               </div>
             </div>
@@ -232,7 +426,15 @@ const token = localStorage.getItem("token");
               <table className="table datatable text-center align-middle">
                 <thead className="thead-light text-center">
                   <tr>
-                    <th><label className="checkboxs"><input type="checkbox" /><span className="checkmarks" /></label></th>
+                    <th><label className="checkboxs">
+                      {/* <input type="checkbox" /> */}
+                      <input
+                        type="checkbox"
+                        checked={purchases.length > 0 && selectedRows.length === purchases.length}
+                        onChange={handleSelectAll}
+                        indeterminate={selectedRows.length > 0 && selectedRows.length < purchases.length ? "indeterminate" : undefined}
+                      />
+                      <span className="checkmarks" /></label></th>
                     <th>Supplier</th>
                     <th>Reference</th>
                     <th>Date</th>
@@ -247,21 +449,31 @@ const token = localStorage.getItem("token");
                     <th>Unit cost</th>
                     <th>Total cost</th>
                     <th>Status</th>
+                     <th>Created By</th>
+                    <th>Updated By</th>
                     <th>Action</th>
                   </tr>
                 </thead>
                 <tbody>
                   {purchases.length === 0 ? (
-                    <tr><td colSpan="7" className="text-center">No purchases found.</td></tr>
+                    <tr><td colSpan="16" className="text-center">No purchases found.</td></tr>
                   ) : (
                     purchases.map((purchase) => (
                       <tr key={purchase._id}>
-                        <td><label className="checkboxs"><input type="checkbox" /><span className="checkmarks" /></label></td>
+                        <td><label className="checkboxs"><input
+                            type="checkbox"
+                            checked={selectedRows.includes(purchase._id)}
+                            onChange={() => handleSelectRow(purchase._id)}
+                          /><span className="checkmarks" /></label></td>
                         <td>{purchase.supplier ? `${purchase.supplier.firstName} ${purchase.supplier.lastName}` : "N/A"}</td>
                         <td>{purchase.referenceNumber}</td>
                         <td>{new Date(purchase.purchaseDate).toLocaleDateString()}</td>
                         <td>
-                          <ul>{purchase.products.map((p, idx) => (<li key={idx}>{p.product?.productName} - {p.quantity} × {settings.currencySymbol}{convertCurrency(p.purchasePrice)}</li>))}</ul>
+                          <ul>{purchase.products.map((p, idx) => (
+                            <li key={idx}>{p.product?.productName} 
+                            {/* - {p.quantity} × {settings.currencySymbol}{convertCurrency(p.purchasePrice)} */}
+                            </li>
+                          ))}</ul>
                         </td>
                         <td><ul>{purchase.products.map((p, idx) => (<li key={idx}>{p.quantity} {p.unit}</li>))}</ul></td>
                         <td><ul>{purchase.products.map((p, idx) => (<li key={idx}>{settings.currencySymbol}{convertCurrency(p.purchasePrice)}</li>))}</ul></td>
@@ -272,8 +484,24 @@ const token = localStorage.getItem("token");
                         <td>{settings.currencySymbol}{convertCurrency(purchase.orderTax)}</td>
                         <td><ul>{purchase.products.map((p, idx) => (<li key={idx}>{settings.currencySymbol}{convertCurrency(p.unitCost)}</li>))}</ul></td>
                         <td><ul>{purchase.products.map((p, idx) => (<li key={idx}>{settings.currencySymbol}{convertCurrency(p.totalCost)}</li>))}</ul></td>
-                        <td><span className={`badge ${purchase.status === "Pending" ? "bg-warning" : "bg-success"}`}>{purchase.status}</span></td>
-                        
+                        <td>
+                          {/* <span className={`badge ${purchase.status === "Pending" ? "bg-warning" : "bg-success"}`}>{purchase.status}</span> */}
+                           <span
+    className={`badge ${
+      purchase.status === "Pending"
+        ? "bg-warning text-dark" // Yellow badge with dark text
+        : purchase.status === "Received"
+        ? "bg-success" // Green badge
+        : purchase.status === "Ordered"
+        ? "bg-primary" // Blue badge
+        : "bg-secondary" // Fallback if none match
+    }`}
+  >
+    {purchase.status}
+  </span>
+                          </td>
+                         <td>{purchase.createdBy ? `${purchase.createdBy.name}` : '--'}</td>
+                       <td>{purchase.updatedBy ? `${purchase.updatedBy.name} ` : '--'}</td>
                           <td class="action-item">
                           <a href="" data-bs-toggle="dropdown">
                             <TbDots/>
@@ -283,7 +511,7 @@ const token = localStorage.getItem("token");
                               <a class="dropdown-item d-flex align-items-center" onClick={() => handleEditClick(purchase)}><TbEdit className="me-2" />Edit</a>
                             </li>
                             <li>
-                              <a href="" class="dropdown-item d-flex align-items-center" data-bs-toggle="modal" data-bs-target="#delete_modal" onClick={() => handleDeletePurchase(purchase._id, purchase.referenceNumber)}> <TbTrash className="me-2" />Delete</a>
+                              <a className="dropdown-item d-flex align-items-center" onClick={() => handleDeletePurchase(purchase._id, purchase.referenceNumber)}><TbTrash className="me-2" />Delete</a>
                             </li>
                             <li>
                               <a  class="dropdown-item d-flex align-items-center" onClick={() => setViewPurchaseId(purchase._id)}><TbEye class="isax isax-send-2 me-2"/>View </a>
@@ -323,7 +551,8 @@ const token = localStorage.getItem("token");
           </div>
         </div>
 
-        <AddPurchaseModal />
+        {/* <AddPurchaseModal /> */}
+  <AddPurchaseModal onSuccess={fetchPurchases} />
         {/* <EditPurchaseModal /> */}
         <EditPurchaseModal editData={selectedPurchase} onUpdate={fetchPurchases} />
         <AddDebitNoteModals purchaseData={selectedReturnData} onReturnCreated={fetchPurchases} />
@@ -544,6 +773,8 @@ export default Purchase;
 //                     <th>Unit cost</th>
 //                     <th>Total cost</th>
 //                     <th>Status</th>
+//                     <th>Created By</th>
+//                     <th>Updated By</th>
 //                     <th>Action</th>
 //                   </tr>
 //                 </thead>
@@ -653,6 +884,8 @@ export default Purchase;
 
 
 
+//                         <td>{purchase.createdBy ? `${purchase.createdBy.name} (${purchase.createdBy.email})` : '-'}</td>
+//                         <td>{purchase.updatedBy ? `${purchase.updatedBy.name} (${purchase.updatedBy.email})` : '-'}</td>
 //                         <td className="action-table-data">
 //                           <div className="edit-delete-action">
 //                             <a
