@@ -91,17 +91,6 @@ const productSchema = new mongoose.Schema(
     //   default: 0,
     // },
 
-    batches: [
-      {
-        batchNumber: { type: String, required: true },
-        quantity: { type: Number, required: true },
-        expirationDate: { type: Date },
-        manufactureDate: { type: Date },
-        purchasePrice: { type: Number },
-        createdAt: { type: Date, default: Date.now }
-      }
-    ],
-
 
   },
   { timestamps: true }
