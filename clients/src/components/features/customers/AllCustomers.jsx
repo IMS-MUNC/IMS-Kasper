@@ -245,41 +245,9 @@ function AllCustomers({ onClose }) {
     }
   };
 
-  const [purchases, setPurchases] = useState([]);
-  // const [page, setPage] = useState(1);
-  const token = localStorage.getItem("token");
-
-  const fetchPurchases = async () => {
-    try {
-      const res = await axios.get(`${BASE_URL}/api/purchases`, {
-
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-
-
-      });
-      console.log("Fetch data", JSON.stringify(res.data.purchases));
-
-      setPurchases(res.data.purchases);
-      // setTotalPages(res.data.totalPages);
-    } catch (error) {
-      console.error("Error fetching purchases:", error);
-    }
-  };
-
-  useEffect(() => {
-    fetchPurchases();
-  }, []);
-
-
-
-
-
-
-
   return (
-    <div className="page-wrapper  shadow rounded bg-white  p-4 mt-5 ">
+    <div className="page-wrapper">
+  <div className="content">
       <div className="d-flex justify-content-between align-items-center mb-3">
         <h5 className="fw-bold">All Customer</h5>
         <div className="d-flex gap-2">
@@ -390,7 +358,8 @@ function AllCustomers({ onClose }) {
                     checked={selectedCustomers.includes(customer._id)}
                     onChange={() => handleCheckboxChange(customer._id)} />
                 </td>
-                <td className="" onClick={() => handleCustomerClick(customer)}>
+                <td className="" onClick={() => handleCustomerClick(customer)} style={{}}>
+                  <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
                   {/* <img
                     src="https://via.placeholder.com/32"
                     alt={customer.name?.charAt(0)}
@@ -399,21 +368,27 @@ function AllCustomers({ onClose }) {
                     width="32"
                     height="32"
                   /> */}
+                  {customer.images && customer.images.length > 0 ? (
                   <img
-                    src={customer.images && customer.images.length > 0 ? customer.images[0] : "https://via.placeholder.com/32"}
-                    alt={customer.name?.charAt(0) || "N/A"}
-                    className="rounded-circle"
+                    src={customer.images && customer.images.length > 0 ? customer.images[0] : ""}
+                    className="rounded"
                     width="32"
                     height="32"
                   // onError={(e) => { e.target.src = "https://via.placeholder.com/32"; }} // Fallback on error
                   />
+                ) : (
+                  <div className="avatar-placeholder rounded d-flex align-items-center justify-content-center" style={{ width: 32, height: 32, backgroundColor: '#6c757d', color: 'white', fontWeight: 'bold' }}>
+                    {customer.name ? customer.name.charAt(0).toUpperCase() : 'N/A'}
+                  </div>
+                )}
                   {customer.name}
+                  </div>
                 </td>
                 {/* <td>{customer.address}</td> */}
                 <td>{formatAddress(customer.billing)}</td>
                 <td>{customer.phone}</td>
                 {/* <td>{customer.orders}</td> */}
-                <td>hi{ }</td>
+                <td>{customer.name}</td>
 
                 <td>{customer.spent}</td>
                 <td>
@@ -674,7 +649,7 @@ function AllCustomers({ onClose }) {
 
       )}
     </div>
-
+</div>
   );
 }
 

@@ -140,7 +140,7 @@ const Sales = () => {
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
-  console.log("salessss", sales);
+  // console.log("salessss", sales);
 
   // Fetch sales from backend
   const fetchSales = async () => {
