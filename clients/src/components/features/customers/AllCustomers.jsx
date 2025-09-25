@@ -8,6 +8,8 @@ import { CiSearch } from "react-icons/ci";
 import { IoFilter } from "react-icons/io5";
 import { LuArrowUpDown } from "react-icons/lu";
 import { FaExclamationTriangle } from "react-icons/fa";
+import { GrFormPrevious } from "react-icons/gr";
+import { MdNavigateNext } from "react-icons/md";
 import "./AllCustomers.css";
 import { Link } from "react-router-dom";
 import AddCustomerModal from "../../../pages/Modal/customerModals/AddCustomerModal";
@@ -57,10 +59,14 @@ function AllCustomers({ onClose }) {
   const [showEditModal, setShowEditModal] = useState(false);
   const [showFilters, setShowFilters] = React.useState(false);
   const [selectedCustomers, setSelectedCustomers] = useState([]);
+  const [sales, setSales] = useState([]);
+  const [customerStats, setCustomerStats] = useState({});
 
   const [search, setSearch] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
-  const [rowsPerPage, setRowsPerPage] = useState(10);
+
+  const [itemsPerPage, setItemsPerPage] = useState(10);
+  const [selectAll, setSelectAll] = useState(false);
 
   const [filters, setFilters] = useState({
     category: "",
@@ -72,7 +78,23 @@ function AllCustomers({ onClose }) {
 
   useEffect(() => {
     fetchCustomers();
+    fetchSales();
   }, []);
+
+  // Sync selectAll state with selectedCustomers (only for current page)
+  useEffect(() => {
+    const currentPageCustomers = getCurrentPageCustomers();
+    const currentPageCustomerIds = currentPageCustomers.map(customer => customer._id);
+
+    if (currentPageCustomerIds.length === 0) {
+      setSelectAll(false);
+    } else {
+      const allCurrentPageSelected = currentPageCustomerIds.every(id =>
+        selectedCustomers.includes(id)
+      );
+      setSelectAll(allCurrentPageSelected);
+    }
+  }, [selectedCustomers, customers, currentPage, itemsPerPage, search, filters]);
 
   // const fetchCustomers = async () => {
   //   try {
@@ -99,6 +121,45 @@ function AllCustomers({ onClose }) {
     } finally {
       setLoading(false);
     }
+  };
+
+  const fetchSales = async () => {
+    try {
+      const token = localStorage.getItem("token");
+      const res = await axios.get(`${BASE_URL}/api/sales`, {
+        params: {
+          limit: 1000, // Fetch all sales to calculate statistics
+        },
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      setSales(res.data.sales || []);
+      calculateCustomerStats(res.data.sales || []);
+    } catch (err) {
+      setSales([]);
+      setCustomerStats({});
+    }
+  };
+
+  const calculateCustomerStats = (salesData) => {
+    const stats = {};
+    
+    salesData.forEach(sale => {
+      const customerId = sale.customer?._id || sale.customer?.id;
+      if (customerId) {
+        if (!stats[customerId]) {
+          stats[customerId] = {
+            orderCount: 0,
+            totalAmount: 0,
+          };
+        }
+        stats[customerId].orderCount += 1;
+        stats[customerId].totalAmount += parseFloat(sale.grandTotal || 0);
+      }
+    });
+    
+    setCustomerStats(stats);
   };
 
 
@@ -140,23 +201,10 @@ function AllCustomers({ onClose }) {
     { id: 6, product: "Office Chair", qty: 5, total: 25000 },
   ];
 
-  const handleCheckboxChange = (customerId) => {
-    setSelectedCustomers((prev) =>
-      prev.includes(customerId)
-        ? prev.filter((id) => id !== customerId)
-        : [...prev, customerId]
-    );
-  };
 
 
-  const handleSelectAll = (e) => {
-    if (e.target.checked) {
-      const allIds = customers.map((c) => c._id);
-      setSelectedCustomers(allIds);
-    } else {
-      setSelectedCustomers([]);
-    }
-  };
+
+
 
 
   const handleBulkDelete = async () => {
@@ -203,9 +251,46 @@ function AllCustomers({ onClose }) {
     c.name?.toLowerCase().includes(search.toLowerCase())
   ); */
 
-  const totalPages = Math.ceil(filtered.length / rowsPerPage);
-  const start = (currentPage - 1) * rowsPerPage;
-  const visible = filtered.slice(start, start + rowsPerPage);
+  // Enhanced pagination functions from ExpriedProduct.jsx
+  const getCurrentPageCustomers = () => {
+    const startIndex = (currentPage - 1) * itemsPerPage;
+    return filtered.slice(startIndex, startIndex + itemsPerPage);
+  };
+
+  const totalPages = Math.ceil(filtered.length / itemsPerPage);
+
+  // Handle individual customer selection
+  const handleCustomerSelect = (customerId) => {
+    setSelectedCustomers(prev => {
+      if (prev.includes(customerId)) {
+        return prev.filter(id => id !== customerId);
+      } else {
+        return [...prev, customerId];
+      }
+    });
+  };
+
+  // Handle select all for current page
+  const handleSelectAll = () => {
+    const currentPageCustomers = getCurrentPageCustomers();
+    const currentPageCustomerIds = currentPageCustomers.map(customer => customer._id);
+
+    if (selectAll) {
+      // Deselect all current page customers
+      setSelectedCustomers(prev => prev.filter(id => !currentPageCustomerIds.includes(id)));
+    } else {
+      // Select all current page customers
+      setSelectedCustomers(prev => {
+        const newSelected = [...prev];
+        currentPageCustomerIds.forEach(id => {
+          if (!newSelected.includes(id)) {
+            newSelected.push(id);
+          }
+        });
+        return newSelected;
+      });
+    }
+  };
 
   // New handler for filter changes
   const handleFilterChange = (e, filterName) => {
@@ -220,9 +305,9 @@ function AllCustomers({ onClose }) {
       const doc = new jsPDF();
 
       doc.setFontSize(18);
-      doc.text("Customer List", 14, 20);
+      doc.text("Customer List with Order Statistics", 14, 20);
 
-      const tableColumn = ["#", "Name", "Email", "Phone", "Country", "State"];
+      const tableColumn = ["#", "Name", "Email", "Phone", "Country", "State", "Total Orders", "Total Spent"];
       const tableRows = customers.map((c, i) => [
         i + 1,
         c.name || "N/A",
@@ -230,6 +315,8 @@ function AllCustomers({ onClose }) {
         c.phone || "N/A",
         c.billing?.country?.name || "N/A",
         c.billing?.state?.stateName || "N/A",
+        `${customerStats[c._id]?.orderCount || 0} times`,
+        `₹ ${(customerStats[c._id]?.totalAmount || 0).toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
       ]);
 
       autoTable(doc, {
@@ -238,7 +325,7 @@ function AllCustomers({ onClose }) {
         body: tableRows,
       });
 
-      doc.save("customers.pdf");
+      doc.save("customers-with-order-stats.pdf");
     } catch (error) {
       console.error("Error generating PDF:", error);
       toast.error("Failed to generate PDF.");
@@ -334,29 +421,40 @@ function AllCustomers({ onClose }) {
       </div>
 
       <div className="table-responsive">
-        <table className="table table-hover">
-          <thead className="table-light">
+        <table className="table datatable">
+          <thead className="thead-light">
             <tr>
-              <th>
-                <input type="checkbox"
-                  onChange={handleSelectAll}
-                  checked={selectedCustomers.length === customers.length && customers.length > 0} />
+              <th className="no-sort">
+                <label className="checkboxs">
+                  <input 
+                    type="checkbox"
+                    id="select-all"
+                    onChange={handleSelectAll}
+                    checked={selectAll} 
+                  />
+                  <span className="checkmarks" />
+                </label>
               </th>
               <th>Customer Name</th>
               <th>Address</th>
               <th>Contact No.</th>
               <th>Total Order</th>
               <th>Total Spent</th>
-              <th>Action</th>
+              <th className="no-sort">Action</th>
             </tr>
           </thead>
           <tbody>
-            {visible.map((customer, index) => (
+            {getCurrentPageCustomers().map((customer, index) => (
               <tr key={index} style={{ cursor: "pointer" }}>
                 <td>
-                  <input type="checkbox"
-                    checked={selectedCustomers.includes(customer._id)}
-                    onChange={() => handleCheckboxChange(customer._id)} />
+                  <label className="checkboxs">
+                    <input 
+                      type="checkbox"
+                      checked={selectedCustomers.includes(customer._id)}
+                      onChange={() => handleCustomerSelect(customer._id)} 
+                    />
+                    <span className="checkmarks" />
+                  </label>
                 </td>
                 <td className="" onClick={() => handleCustomerClick(customer)} style={{}}>
                   <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
@@ -388,9 +486,9 @@ function AllCustomers({ onClose }) {
                 <td>{formatAddress(customer.billing)}</td>
                 <td>{customer.phone}</td>
                 {/* <td>{customer.orders}</td> */}
-                <td>{customer.name}</td>
+                <td>{customerStats[customer._id]?.orderCount || 0} times</td>
 
-                <td>{customer.spent}</td>
+                <td>₹ {(customerStats[customer._id]?.totalAmount || 0)}</td>
                 <td>
                   <div className="edit-delete-action d-flex gap-2">
                     <a
@@ -417,60 +515,64 @@ function AllCustomers({ onClose }) {
         </table>
       </div>
 
-      <div className="d-flex justify-content-between align-items-center mt-3">
-        <div className="d-flex align-items-center gap-2">
-          <span>Rows per page:</span>
-
-          <select
-            className="form-select form-select-sm"
-            style={{ width: "80px" }}
-            value={rowsPerPage} // Added to sync with state
-            onChange={(e) => {
-              setRowsPerPage(Number(e.target.value)); // Update rowsPerPage state
-              setCurrentPage(1); // Reset to first page
-            }}
+          {/* Pagination */}
+          <div
+            className="d-flex justify-content-end gap-3"
+            style={{ padding: "10px 20px" }}
           >
-            <option value="10">10</option>
-            <option value="25">25</option>
-            <option value="50">50</option>
-          </select>
-        </div>
-        {/* <span>1-10 of 369</span> */}
-        <span>{start + 1}-{Math.min(start + rowsPerPage, filtered.length)} of {filtered.length}</span>
-
-
-        <div className="d-flex gap-2">
-
-          <button
-            className="btn btn-light btn-sm"
-            disabled={currentPage === 1}
-            onClick={() => setCurrentPage(1)}
-          >
-            &lt;&lt;
-          </button>
-          <button
-            className="btn btn-light btn-sm"
-            disabled={currentPage === 1}
-            onClick={() => setCurrentPage((p) => p - 1)}
-          >
-            &lt;
-          </button>
-          <button
-            className="btn btn-light btn-sm"
-            disabled={currentPage === totalPages}
-            onClick={() => setCurrentPage((p) => p + 1)}
-          >
-            &gt;
-          </button>
-          <button
-            className="btn btn-light btn-sm"
-            disabled={currentPage === totalPages}
-            onClick={() => setCurrentPage(totalPages)}
-          >
-            &gt;&gt;
-          </button>
-        </div>
-      </div>
+            <select
+              value={itemsPerPage}
+              onChange={(e) => {
+                setItemsPerPage(Number(e.target.value));
+                setCurrentPage(1);
+              }}
+              className="form-select w-auto"
+            >
+              <option value={10}>10 Per Page</option>
+              <option value={25}>25 Per Page</option>
+              <option value={50}>50 Per Page</option>
+              <option value={100}>100 Per Page</option>
+            </select>
+            <span
+              style={{
+                backgroundColor: "white",
+                boxShadow: "rgb(0 0 0 / 4%) 0px 3px 8px",
+                padding: "7px",
+                borderRadius: "5px",
+                border: "1px solid #e4e0e0ff",
+                color: "gray",
+              }}
+            >
+              {filtered.length === 0
+                ? "0 of 0"
+                : `${(currentPage - 1) * itemsPerPage + 1}-${Math.min(
+                  currentPage * itemsPerPage,
+                  filtered.length
+                )} of ${filtered.length}`}
+              <button
+                style={{
+                  border: "none",
+                  color: "grey",
+                  backgroundColor: "white",
+                }}
+                onClick={() =>
+                  setCurrentPage((prev) => Math.max(prev - 1, 1))
+                }
+                disabled={currentPage === 1}
+              >
+                <GrFormPrevious />
+              </button>{" "}
+              <button
+                style={{ border: "none", backgroundColor: "white" }}
+                onClick={() =>
+                  setCurrentPage((prev) => Math.min(prev + 1, Math.ceil(filtered.length / itemsPerPage)))
+                }
+                disabled={currentPage === Math.ceil(filtered.length / itemsPerPage)}
+              >
+                <MdNavigateNext />
+              </button>
+            </span>
+          </div>
 
 
       {showAddModal && !showEditModal && (
