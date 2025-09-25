@@ -744,10 +744,12 @@ const Chat = () => {
       // Listen for real-time message deletion
       socketInstance.on('delete-msg', (data) => {
         setMessages(prev => {
-          const userMessages = prev[data.from] || [];
+          // Update messages for the conversation between current user and the sender
+          const conversationKey = data.from;
+          const userMessages = prev[conversationKey] || [];
           return {
             ...prev,
-            [data.from]: userMessages.filter(msg => String(msg.timestamp) !== String(data.messageTimestamp))
+            [conversationKey]: userMessages.filter(msg => String(msg.timestamp) !== String(data.messageTimestamp))
           };
         });
       });
@@ -799,26 +801,32 @@ const Chat = () => {
             replyTo: msg.replyTo
           }))
         }));
-        // Mark messages as read
-        await fetch(`${BASE_URL}/api/messages/read`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${token}`,
-          },
-          body: JSON.stringify({ from: selectedUser._id, to: currentUserId }),
-        });
-        socket.current.emit('message-read', { from: selectedUser._id, to: currentUserId });
-        setReadStatus((prev) => ({ ...prev, [selectedUser._id]: true }));
 
-        // Update messages to mark them as read
-        setMessages((prev) => ({
-          ...prev,
-          [selectedUser._id]: (prev[selectedUser._id] || []).map(msg => ({
-            ...msg,
-            read: msg.from === selectedUser._id ? true : msg.read
-          }))
-        }));
+        // Check if there are any unread messages from the selected user
+        const unreadMessages = data.filter(msg => msg.from === selectedUser._id && !msg.read);
+        
+        // Only mark messages as read if there are actually unread messages
+        if (unreadMessages.length > 0) {
+          await fetch(`${BASE_URL}/api/messages/read`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              Authorization: `Bearer ${token}`,
+            },
+            body: JSON.stringify({ from: selectedUser._id, to: currentUserId }),
+          });
+          socket.current.emit('message-read', { from: currentUserId, to: selectedUser._id });
+          setReadStatus((prev) => ({ ...prev, [selectedUser._id]: true }));
+
+          // Update messages to mark them as read
+          setMessages((prev) => ({
+            ...prev,
+            [selectedUser._id]: (prev[selectedUser._id] || []).map(msg => ({
+              ...msg,
+              read: msg.from === selectedUser._id ? true : msg.read
+            }))
+          }));
+        }
 
         // Update unread counts after marking messages as read
         setUnreadCounts((prev) => ({
@@ -941,6 +949,15 @@ const Chat = () => {
             )
           }));
         }
+
+        // Emit socket event for real-time bulk deletion
+        selectedMessageData.forEach(msg => {
+          socket.current.emit('delete-msg', {
+            from: currentUserId,
+            to: selectedUser._id,
+            messageTimestamp: msg.timestamp
+          });
+        });
 
         // Exit selection mode
         setIsSelectionMode(false);

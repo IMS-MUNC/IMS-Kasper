@@ -15,12 +15,19 @@ import autoTable from 'jspdf-autotable';
 import * as XLSX from 'xlsx';
 
 const LowStock = () => {
+  
+  // Check authentication status
+  const user = JSON.parse(localStorage.getItem("user"));
+  
   const [activeTab, setActiveTab] = useState('low');
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const shownToastsRef = useRef(new Set());
   const [outOfStockProducts, setOutOfStockProducts] = useState([]);
-  const [notificationsEnabled, setNotificationsEnabled] = useState(true);
+  const [notificationsEnabled, setNotificationsEnabled] = useState(() => {
+    const saved = localStorage.getItem('lowStockNotificationsEnabled');
+    return saved !== null ? JSON.parse(saved) : true;
+  });
 
   // Filter states
   const [selectedWarehouse, setSelectedWarehouse] = useState('');
@@ -51,6 +58,11 @@ const LowStock = () => {
     }));
   };
 
+  // Persist notifications toggle state to localStorage
+  useEffect(() => {
+    localStorage.setItem('lowStockNotificationsEnabled', JSON.stringify(notificationsEnabled));
+  }, [notificationsEnabled]);
+
   useEffect(() => {
     fetchCategories();
     fetchWarehouses();
@@ -64,52 +76,66 @@ const LowStock = () => {
             Authorization: `Bearer ${token}`,
           },
         });
+        
+        
         // Calculate availableQty as in StockAdujestment, then filter for availableQty <= quantityAlert
         const allProducts = res.data.products || res.data || [];
         const lowStockProducts = allProducts
           .map(p => {
-            let availableQty = 0;
-            if (typeof p.availableQty === 'number') {
-              availableQty = p.availableQty;
-            } else {
-              const quantity = Number(p.quantity ?? 0);
-              let newQuantitySum = 0;
-              if (Array.isArray(p.newQuantity)) {
-                newQuantitySum = p.newQuantity.reduce((acc, n) => {
-                  const num = Number(n);
-                  return acc + (isNaN(num) ? 0 : num);
-                }, 0);
-              } else if (typeof p.newQuantity === 'number') {
-                newQuantitySum = Number(p.newQuantity);
-              }
-              availableQty = quantity + newQuantitySum;
+            // Always calculate availableQty since it doesn't exist as a field in DB
+            const quantity = Number(p.quantity ?? 0);
+            let newQuantitySum = 0;
+            
+            if (Array.isArray(p.newQuantity)) {
+              newQuantitySum = p.newQuantity.reduce((acc, n) => {
+                const num = Number(n);
+                return acc + (isNaN(num) ? 0 : num);
+              }, 0);
+            } else if (typeof p.newQuantity === 'number') {
+              newQuantitySum = Number(p.newQuantity);
             }
+            
+            const availableQty = quantity + newQuantitySum;
+            
             return { ...p, availableQty };
           })
-          .filter(p => typeof p.quantityAlert === 'number' && p.availableQty <= p.quantityAlert && p.availableQty > 0);
+          .filter(p => {
+            // Ensure products with base quantity 0 are never in low stock
+            const baseQuantity = Number(p.quantity ?? 0);
+            const shouldInclude = typeof p.quantityAlert === 'number' && 
+                   p.availableQty < p.quantityAlert && 
+                   p.availableQty > 0 && 
+                   baseQuantity > 0;
+
+            
+            return shouldInclude;
+          });
+        
         setProducts(lowStockProducts);
         // Out of stock products
         const outStock = allProducts
           .map(p => {
-            let availableQty = 0;
-            if (typeof p.availableQty === 'number') {
-              availableQty = p.availableQty;
-            } else {
-              const quantity = Number(p.quantity ?? 0);
-              let newQuantitySum = 0;
-              if (Array.isArray(p.newQuantity)) {
-                newQuantitySum = p.newQuantity.reduce((acc, n) => {
-                  const num = Number(n);
-                  return acc + (isNaN(num) ? 0 : num);
-                }, 0);
-              } else if (typeof p.newQuantity === 'number') {
-                newQuantitySum = Number(p.newQuantity);
-              }
-              availableQty = quantity + newQuantitySum;
+            // Always calculate availableQty since it doesn't exist as a field in DB
+            const quantity = Number(p.quantity ?? 0);
+            let newQuantitySum = 0;
+            
+            if (Array.isArray(p.newQuantity)) {
+              newQuantitySum = p.newQuantity.reduce((acc, n) => {
+                const num = Number(n);
+                return acc + (isNaN(num) ? 0 : num);
+              }, 0);
+            } else if (typeof p.newQuantity === 'number') {
+              newQuantitySum = Number(p.newQuantity);
             }
+            
+            const availableQty = quantity + newQuantitySum;
             return { ...p, availableQty };
           })
-          .filter(p => p.availableQty === 0);
+          .filter(p => {
+            // Products are out of stock if availableQty <= 0 OR base quantity is 0
+            const baseQuantity = Number(p.quantity ?? 0);
+            return p.availableQty <= 0 || baseQuantity === 0;
+          });
         setOutOfStockProducts(outStock);
 
         // Out of stock toast will be shown only when tab is opened
@@ -130,6 +156,8 @@ const LowStock = () => {
           newProducts.forEach(product => shownToastsRef.current.add(product._id));
         }
       } catch (err) {
+        console.error('Error fetching products:', err);
+        console.error('Error details:', err.response?.data || err.message);
         setProducts([]);
       } finally {
         setLoading(false);
@@ -240,7 +268,6 @@ const LowStock = () => {
   //product delete---------------------------------------------------------------------------------------------------------------------------------------------
 
   const handleDelete = async (product) => {
-    console.log("Deleting product:", product);
     if (
       window.confirm(`Are you sure you want to delete ${product.productName}?`)
     ) {
@@ -368,9 +395,7 @@ const LowStock = () => {
         },
       });
       const data = await res.json();
-      console.log('Warehouse API Response:', data);
       const warehouseData = data.data || data.warehouses || data || [];
-      console.log('Setting warehouses to:', warehouseData);
       setWarehouses(warehouseData);
     } catch (error) {
       console.error("Error fetching warehouses:", error);
@@ -701,7 +726,7 @@ const LowStock = () => {
                               <td>{product.category?.categoryName || product.category || 'N/A'}</td>
 
                               <td>{product.sku}</td>
-                              <td>{product.availableQty} {product.unit}</td>
+                              <td>{product.quantity} {product.unit}</td>
                               <td>{product.quantityAlert} {product.unit}</td>
                               <td className="action-table-data">
                                 <div className="edit-delete-action">
@@ -888,7 +913,7 @@ const LowStock = () => {
                               <td>{product.category?.categoryName || product.category || 'N/A'}</td>
 
                               <td>{product.sku}</td>
-                              <td>{product.availableQty} {product.unit}</td>
+                              <td>{product.quantity} {product.unit}</td>
                               <td>{product.quantityAlert} {product.unit}</td>
                               <td className="action-table-data">
                                 <div className="edit-delete-action">
