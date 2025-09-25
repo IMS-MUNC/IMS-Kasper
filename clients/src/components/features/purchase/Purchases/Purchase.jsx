@@ -460,12 +460,8 @@ const token = localStorage.getItem("token");
                   ) : (
                     purchases.map((purchase) => (
                       <tr key={purchase._id}>
-                        <td><label className="checkboxs"><input
-                            type="checkbox"
-                            checked={selectedRows.includes(purchase._id)}
-                            onChange={() => handleSelectRow(purchase._id)}
-                          /><span className="checkmarks" /></label></td>
-                        <td className="text-capitalize">{purchase.supplier ? `${purchase.supplier.firstName} ${purchase.supplier.lastName}` : "N/A"}</td>
+                        <td><label className="checkboxs"><input type="checkbox" /><span className="checkmarks" /></label></td>
+                        <td>{purchase.supplier ? `${purchase.supplier.firstName} ${purchase.supplier.lastName}` : "N/A"}</td>
                         <td>{purchase.referenceNumber}</td>
                         <td>{new Date(purchase.purchaseDate).toLocaleDateString()}</td>
                         <td>
