@@ -7,6 +7,12 @@ import AddHsnModals from '../../../../pages/Modal/hsn/AddHsnModals';
 import { toast } from 'react-toastify';
 import BASE_URL from '../../../../pages/config/config';
 import * as XLSX from "xlsx";
+import { GrFormPrevious } from "react-icons/gr";
+import { MdNavigateNext } from "react-icons/md";
+import DeleteAlert from "../../../../utils/sweetAlert/DeleteAlert";
+import { sanitizeInput } from "../../../../utils/sanitize";
+import jsPDF from "jspdf";
+import autoTable from "jspdf-autotable";
 
 const HSNList = () => {
   const [data, setData] = useState([]);
@@ -17,14 +23,20 @@ const HSNList = () => {
   const [search, setSearch] = useState('');
   const [modalData, setModalData] = useState({ hsnCode: '', description: '', id: null });
   const [showModal, setShowModal] = useState(false);
+  const [errors, setErrors] = useState({});
+  const hsnRegex = /^[0-9]{2,8}$/;
+  // === BULK DELETE STATE ===
+  const [selectedHSN, setSelectedHSN] = useState([]);
+
+
   useEffect(() => { load(); }, [page, limit, search]);
 
   const load = async () => {
     try {
-      const token = localStorage.getItem("token"); 
+      const token = localStorage.getItem("token")
       const res = await axios.get(`${BASE_URL}/api/hsn/paginated`, {
         params: { page, limit, search },
-                   headers: {
+        headers: {
           Authorization: `Bearer ${token}`, // ✅ token sent properly
         },
       });
@@ -37,24 +49,30 @@ const HSNList = () => {
   };
 
   const remove = async (id) => {
+    const confirmed = await DeleteAlert({});
+    if (!confirmed) return;
+
     try {
-      await axios.delete(`${BASE_URL}/api/hsn/${id}`,{
-                   headers: {
+      const token = localStorage.getItem("token")
+      await axios.delete(`${BASE_URL}/api/hsn/${id}`, {
+        headers: {
           Authorization: `Bearer ${token}`, // ✅ token sent properly
         },
       });
       load();
+      toast.success("HSN deleted successfully!");
     } catch (err) {
       console.error('Error deleting HSN:', err);
+      toast.error("Failed to delete HSN. Please try again.");
     }
   };
 
   const handleExport = async () => {
     try {
-      const token = localStorage.getItem("token"); 
+      const token = localStorage.getItem("token")
       const res = await axios.get(`${BASE_URL}/api/hsn/export`, {
         responseType: 'blob',
-                   headers: {
+        headers: {
           Authorization: `Bearer ${token}`, // ✅ token sent properly
         },
       });
@@ -69,6 +87,67 @@ const HSNList = () => {
     }
   };
 
+  // PDF download functionality
+  const handlePdf = () => {
+    const doc = new jsPDF();
+    doc.text("HSN List", 14, 15);
+    const tableColumns = [
+      "HSN Code",
+      "Description",
+      "Created Date",
+    ];
+
+    const tableRows = data.map((e) => [
+      e.hsnCode,
+      e.description,
+      new Date(e.createdAt).toLocaleDateString(),
+    ]);
+
+    autoTable(doc, {
+      head: [tableColumns],
+      body: tableRows,
+      startY: 20,
+      styles: {
+        fontSize: 8,
+      },
+      headStyles: {
+        fillColor: [155, 155, 155],
+        textColor: "white",
+      },
+      theme: "striped",
+    });
+
+    doc.save("hsn-list.pdf");
+  };
+
+  // Excel export functionality
+  const handleExcel = () => {
+    // Prepare data for Excel export
+    const excelData = data.map((hsn) => ({
+      "HSN Code": hsn.hsnCode,
+      "Description": hsn.description,
+      "Created Date": new Date(hsn.createdAt).toLocaleDateString(),
+    }));
+
+    // Create a new workbook and worksheet
+    const workbook = XLSX.utils.book_new();
+    const worksheet = XLSX.utils.json_to_sheet(excelData);
+
+    // Set column widths for better formatting
+    const columnWidths = [
+      { wch: 15 }, // HSN Code
+      { wch: 40 }, // Description
+      { wch: 15 }, // Created Date
+    ];
+    worksheet["!cols"] = columnWidths;
+
+    // Add the worksheet to the workbook
+    XLSX.utils.book_append_sheet(workbook, worksheet, "HSN List");
+
+    // Generate Excel file and trigger download
+    XLSX.writeFile(workbook, "hsn-list.xlsx");
+  };
+
 
   const fileInputRef = useRef(null);
 
@@ -77,7 +156,7 @@ const HSNList = () => {
     if (!file) return;
 
     try {
-      const token = localStorage.getItem("token"); 
+      const token = localStorage.getItem("token")
       const reader = new FileReader();
       reader.onload = async (event) => {
         const data = new Uint8Array(event.target.result);
@@ -95,9 +174,9 @@ const HSNList = () => {
         // ✅ Send all at once
         const res = await axios.post(`${BASE_URL}/api/hsn/import`, {
           hsnItems: formattedData,
-           headers: {
-          Authorization: `Bearer ${token}`, // ✅ token sent properly
-        },
+          headers: {
+            Authorization: `Bearer ${token}`, // ✅ token sent properly
+          },
         });
 
         toast.success(res.data.message);
@@ -112,70 +191,138 @@ const HSNList = () => {
   };
 
 
-  // const handleModalSubmit = async () => {
-  //   try {
-  //     const token = localStorage.getItem("token"); 
-  //     if (modalData.id) {
-  //       await axios.put(`${BASE_URL}/api/hsn/${modalData.id}`, modalData);
-  //     } else {
-  //       await axios.post(`${BASE_URL}/api/hsn`, modalData);
-  //     }
-  //     setModalData({ hsnCode: '', description: '', id: null });
-  //     setShowModal(false);
-  //     load();
-  //   } catch (err) {
-  //     console.error('Save error:', err);
-  //   }
-  // };
+  const handleModalSubmit = async () => {
+    let newErrors = {};
+    const { hsnCode, description, id } = modalData;
 
-
-
-const handleModalSubmit = async () => {
-  try {
-    const token = localStorage.getItem("token"); 
-
-    if (modalData.id) {
-      // Update HSN
-      await axios.put(
-        `${BASE_URL}/api/hsn/${modalData.id}`,
-        modalData,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
-      toast.success("HSN updated successfully ✅");
-    } else {
-      // Create HSN
-      await axios.post(
-        `${BASE_URL}/api/hsn`,
-        modalData,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
-      toast.success("HSN created successfully 🎉");
+    // Validate HSN Code
+    const hsnRegex = /^[0-9]{2,8}$/;
+    if (!hsnCode || !hsnCode.trim()) {
+      newErrors.hsnCode = "HSN code is required";
+    } else if (!hsnRegex.test(hsnCode.trim())) {
+      newErrors.hsnCode = "HSN code must be 2-8 digits";
     }
 
-    // Reset and reload
-    setModalData({ hsnCode: "", description: "", id: null });
-    setShowModal(false);
-    load();
+    // Validate Description
+    if (!description || !description.trim()) {
+      newErrors.description = "Description is required";
+    }
 
-  } catch (err) {
-    console.error("Save error:", err);
-    toast.error("Failed to save HSN ❌");
-  }
-};
+    // If there are validation errors, show them and return
+    if (Object.keys(newErrors).length > 0) {
+      setErrors(newErrors);
+      toast.error("Please fix the validation errors");
+      return;
+    }
+
+    // Clear any previous errors
+    setErrors({});
+
+    try {
+      const token = localStorage.getItem("token");
+      const cleanhsnCode = sanitizeInput(hsnCode.trim());
+      const cleanhsnDescription = sanitizeInput(description.trim());
+
+      if (modalData.id) {
+        // Update existing HSN
+        await axios.put(`${BASE_URL}/api/hsn/${modalData.id}`, {
+          hsnCode: cleanhsnCode,
+          description: cleanhsnDescription
+        }, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+        toast.success("HSN updated successfully!");
+      } else {
+        // Create new HSN
+        await axios.post(`${BASE_URL}/api/hsn`, {
+          hsnCode: cleanhsnCode,
+          description: cleanhsnDescription
+        }, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+        toast.success("HSN created successfully!");
+      }
+
+      // Reset modal and reload data
+      setModalData({ hsnCode: '', description: '', id: null });
+      setShowModal(false);
+      setErrors({});
+      load();
+    } catch (err) {
+      console.error('Save error:', err);
+
+      // Handle specific error cases
+      if (err.response?.status === 400) {
+        toast.error(err.response.data.message || "Invalid data provided");
+      } else if (err.response?.status === 409) {
+        toast.error("HSN code already exists");
+      } else if (err.response?.status === 401) {
+        toast.error("Unauthorized. Please login again");
+      } else {
+        toast.error("Failed to save HSN. Please try again");
+      }
+    }
+  };
 
   const openModal = (item = null) => {
-    if (item) setModalData({ hsnCode: item.hsnCode, description: item.description, id: item._id });
-    else setModalData({ hsnCode: '', description: '', id: null });
+    if (item) {
+      setModalData({ hsnCode: item.hsnCode, description: item.description, id: item._id });
+    } else {
+      setModalData({ hsnCode: '', description: '', id: null });
+    }
+    setErrors({}); // Clear any previous errors
     setShowModal(true);
   };
+
+  // === BULK DELETE HANDLERS ===
+  const handleCheckboxChange = (id) => {
+    setSelectedHSN((prev) =>
+      prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]
+    );
+  };
+
+  const handleSelectAll = (e) => {
+    if (e.target.checked) {
+      const allIds = data.map((item) => item._id); // current page data
+      setSelectedHSN(allIds);
+    } else {
+      setSelectedHSN([]);
+    }
+  };
+
+  // bulk delete start from here
+
+  const handleBulkDelete = async () => {
+    if (selectedHSN.length === 0) return;
+    if (!window.confirm(`Delete ${selectedHSN.length} selected HSN records?`)) return;
+
+    try {
+      const token = localStorage.getItem("token")
+      await Promise.all(
+        selectedHSN.map((id) => axios.delete(`${BASE_URL}/api/hsn/${id}`, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }))
+      );
+      toast.success("Selected HSNs deleted");
+      setSelectedHSN([]);
+      load();
+    } catch (err) {
+      console.error("Bulk delete error:", err);
+      toast.error("Failed to delete selected HSNs");
+    }
+  };
+
+  useEffect(() => {
+    setSelectedHSN((prev) => prev.filter((id) => data.some((d) => d._id === id)));
+  }, [data]);
+
+
 
   return (
     <div className="page-wrapper">
@@ -189,12 +336,32 @@ const handleModalSubmit = async () => {
           </div>
           <div className="table-top-head me-2">
             <li>
-              <button type="button" className="icon-btn" title="Pdf">
-                <FaFilePdf />
-              </button>
+
+              {selectedHSN.length > 0 && (
+                <button className="btn btn-danger me-2" onClick={handleBulkDelete}>
+                  Delete ({selectedHSN.length}) Selected
+                </button>
+              )}
+
             </li>
-            <li>
-              <label className="icon-btn m-0" title="Import Excel">
+            <li style={{ display: "flex", alignItems: "center", gap: '5px' }} className="icon-btn">
+              <label className="" title="">Export : </label>
+              <button onClick={handlePdf} title="Download PDF" style={{
+                backgroundColor: "white",
+                display: "flex",
+                alignItems: "center",
+                border: "none",
+              }}><FaFilePdf className="fs-20" style={{ color: "red" }} /></button>
+              <button onClick={handleExcel} title="Download Excel" style={{
+                backgroundColor: "white",
+                display: "flex",
+                alignItems: "center",
+                border: "none",
+              }}><FaFileExcel className="fs-20" style={{ color: "orange" }} /></button>
+            </li>
+            <li style={{ display: "flex", alignItems: "center", gap: '5px' }} className="icon-btn">
+              <label className="" title="">Import : </label>
+              <label className="" title="Import Excel">
                 <input
                   type="file"
                   accept=".xlsx,.xls,.csv"
@@ -205,11 +372,11 @@ const handleModalSubmit = async () => {
                 <FaFileExcel style={{ color: 'green', cursor: 'pointer' }} />
               </label>
             </li>
-            <li>
-              <button type="button" className="icon-btn" title="Export Excel">
+            {/* <li>
+              <button type="button" className="icon-btn" title="Export Excel" onClick={handleExcel}>
                 <FaFileExcel />
               </button>
-            </li>
+            </li> */}
           </div>
           <div className="page-btn">
             <a
@@ -242,17 +409,18 @@ const handleModalSubmit = async () => {
             <div className="table-responsive">
               <table className="table datatable">
                 <thead className="thead-light">
-                  <tr>
+                  <tr style={{ textAlign: 'start' }}>
                     <th className="no-sort">
                       <label className="checkboxs">
-                        <input type="checkbox" id="select-all" />
+                        <input type="checkbox" id="select-all" checked={data.length > 0 && selectedHSN.length === data.length}
+                          onChange={handleSelectAll} />
                         <span className="checkmarks" />
                       </label>
                     </th>
                     <th>HSN Code</th>
                     <th>Description</th>
                     <th>Created Date</th>
-                    <th className="no-sort" />
+                    <th style={{ textAlign: 'center', width: '120px' }}>Action</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -265,20 +433,27 @@ const handleModalSubmit = async () => {
                       <tr key={hsn._id}>
                         <td>
                           <label className="checkboxs">
-                            <input type="checkbox" />
+                            <input type="checkbox" checked={selectedHSN.includes(hsn._id)}
+                              onChange={() => handleCheckboxChange(hsn._id)} />
                             <span className="checkmarks" />
                           </label>
                         </td>
                         <td>{hsn.hsnCode}</td>
-                        <td>{hsn.description}</td>
-                        <td>{new Date(hsn.createdAt).toLocaleDateString()}</td>
+                        <td>{hsn.description.length > 100 ? hsn.description.slice(0, 100) + '...' : hsn.description}</td>
+                        <td>{new Date(hsn.createdAt).toLocaleDateString("en-GB", {
+                          day: '2-digit',
+                          month: 'short',
+                          year: 'numeric'
+                        })}</td>
                         <td className="action-table-data">
                           <div className="edit-delete-action">
                             <a
                               className="me-2 p-2"
-                              data-bs-toggle="modal"
-                              data-bs-target="#edit-brand"
-                              onClick={() => openModal(hsn)}
+                              href="#"
+                              onClick={(e) => {
+                                e.preventDefault();
+                                openModal(hsn);
+                              }}
                             >
                               <TbEdit />
                             </a>
@@ -297,45 +472,56 @@ const handleModalSubmit = async () => {
               </table>
             </div>
             {/* pagination */}
-            <div className="d-flex justify-content-between align-items-center p-3">
-              <div className="d-flex justify-content-end align-items-center">
-                <label className="me-2">Items per page:</label>
-                <select
-                  value={limit}
-                  onChange={e => { setLimit(Number(e.target.value)); setPage(1); }}
-                  className="form-select w-auto"
-                >
-                  <option value={10}>10</option>
-                  <option value={25}>25</option>
-                  <option value={50}>50</option>
-                  <option value={100}>100</option>
-                </select>
-              </div>
-              <div>
+            <div
+              className="d-flex justify-content-end gap-3"
+              style={{ padding: "10px 20px" }}
+            >
+              <select
+                value={limit}
+                onChange={(e) => {
+                  setLimit(Number(e.target.value));
+                  setPage(1);
+                }}
+                className="form-select w-auto"
+              >
+                <option value={10}>10 Per Page</option>
+                <option value={25}>25 Per Page</option>
+                <option value={50}>50 Per Page</option>
+                <option value={100}>100 Per Page</option>
+              </select>
+
+              <span
+                style={{
+                  backgroundColor: "white",
+                  boxShadow: "rgb(0 0 0 / 4%) 0px 3px 8px",
+                  padding: "7px",
+                  borderRadius: "5px",
+                  border: "1px solid #e4e0e0ff",
+                  color: "gray",
+                }}
+              >
+                {total === 0
+                  ? "0 of 0"
+                  : `${(page - 1) * limit + 1}-${Math.min(page * limit, total)} of ${total}`}
                 <button
-                  className="btn btn-light btn-sm me-2"
-                  onClick={() => setPage(prev => Math.max(prev - 1, 1))}
+                  style={{
+                    border: "none",
+                    color: "grey",
+                    backgroundColor: "white",
+                  }}
+                  onClick={() => setPage((prev) => Math.max(prev - 1, 1))}
                   disabled={page === 1}
                 >
-                  Prev
+                  <GrFormPrevious />
                 </button>
-                {Array.from({ length: pages }, (_, i) => (
-                  <button
-                    key={i}
-                    className={`btn btn-sm me-1 ${page === i + 1 ? "btn-primary" : "btn-outline-primary"}`}
-                    onClick={() => setPage(i + 1)}
-                  >
-                    {i + 1}
-                  </button>
-                ))}
                 <button
-                  className="btn btn-light btn-sm"
-                  onClick={() => setPage(prev => Math.min(prev + 1, pages))}
+                  style={{ border: "none", backgroundColor: "white" }}
+                  onClick={() => setPage((prev) => Math.min(prev + 1, pages))}
                   disabled={page === pages}
                 >
-                  Next
+                  <MdNavigateNext />
                 </button>
-              </div>
+              </span>
             </div>
           </div>
         </div>
@@ -345,6 +531,7 @@ const handleModalSubmit = async () => {
           modalData={modalData}
           setModalData={setModalData}
           onSubmit={handleModalSubmit}
+          errors={errors}
         />
       </div>
     </div>

@@ -23,7 +23,7 @@ exports.createSupplier = async (req, res) => {
       { supplierCode: { $ne: null } },
       {},
       { sort: { createdAt: -1 } }
-    );
+    ); 
     let supplierCode = 'SUP001';
     if (lastSupplier && lastSupplier.supplierCode) {
       const lastNum = parseInt(lastSupplier.supplierCode.replace('SUP', '')) || 0;
@@ -64,12 +64,12 @@ exports.createSupplier = async (req, res) => {
 exports.getAllSuppliers = async (req, res) => {
   try {
     const suppliers = await Supplier.find()
-      .populate('billing.country')
-      .populate('billing.state')
-      .populate('billing.city')
-      .populate('shipping.country')
-      .populate('shipping.state')
-      .populate('shipping.city');
+      .populate('billing.country', 'name' )
+      .populate('billing.state', 'stateName' )
+      .populate('billing.city', 'cityName' )
+      .populate('shipping.country', 'name' )
+      .populate('shipping.state', 'stateName' )
+      .populate('shipping.city', 'cityName' );
     res.json(suppliers);
   } catch (err) {
     res.status(500).json({ error: 'Failed to fetch suppliers', details: err.message });

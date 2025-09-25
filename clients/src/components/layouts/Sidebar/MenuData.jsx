@@ -701,6 +701,7 @@ const { t } = useTranslation();
           path: "/manage-stocks",
           icon: <TbShoppingBag className="icons" />,
         },
+
         canAccess("StockAdjustment", "read") && {
           label: t("Stock Adjustment"),
           path: "/stock-adjustment",
@@ -710,6 +711,22 @@ const { t } = useTranslation();
     },
 
     // SALES
+
+        // {
+        //   label: t("Stock Adjustment"),
+        //   path: "/stock-adjustment",
+        //   icon: <TbFileUnknown className="icons" />,
+        // },
+        // {
+        //   label: t("Stock Transfer"),
+        //   path: "/stock-transfer",
+        //   icon: <TbFileUpload className="icons" />,
+        // },
+      ],
+    },
+
+
+
     {
       section: t("sales"),
       key: "sales",
@@ -719,22 +736,37 @@ const { t } = useTranslation();
           path: "/online-orders",
           icon: <TbShoppingBag className="icons" />,
         },
+
         canAccess("CreditNote", "read") && {
           label: "Credit Note",
           path: "/credit-note",
           icon: <MdQrCode className="icons" />,
         },
         canAccess("POS", "read") && {
-          label: t("pos"),
-          path: "/pos",
-          icon: <MdOutlinePointOfSale className="icons" />,
-        },
+// =======
+//         { label: "Credit Note", path: "/credit-note", icon: <MdQrCode className="icons" /> },
+        {
+
+//           label: t("pos"),
+//           path: "/pos",
+//           icon: <MdOutlinePointOfSale className="icons" />,
+//         },
+// <<<<<<< AfrozZeelani
           {
           label: t("invoices"),
           path: "/invoice",
           icon: <TbFileInvoice className="icons" />,
         },
       ].filter(Boolean),
+// =======
+        // {
+        //   label: t("Invoice"),
+        //   path: "/invoice",
+        //   icon: <TbFileInvoice className="icons" />,
+        // },
+
+      ],
+// >>>>>>> main
     },
 
 

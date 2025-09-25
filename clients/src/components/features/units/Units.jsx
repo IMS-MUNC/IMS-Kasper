@@ -7,20 +7,56 @@ import { toast } from "react-toastify";
 import EditUnitModal from "../../../pages/Modal/unitsModals/EditUnitsModals.jsx";
 import * as XLSX from "xlsx";
 import jsPDF from "jspdf";
-import "jspdf-autotable";
+import autoTable from "jspdf-autotable";
 import DeleteAlert from "../../../utils/sweetAlert/DeleteAlert";
 import Swal from "sweetalert2";
-
+import { sanitizeInput } from "../../../utils/sanitize.js";
+import { GrFormPrevious } from "react-icons/gr";
+import { MdNavigateNext } from "react-icons/md";
 const Units = () => {
   const [unitData, setUnitData] = useState([]);
-  console.log(unitData);
-
+  const [searchTerm, setSearchTerm] = useState("");
+  const [selectedStatus, setSelectedStatus] = useState(""); //for active , inactive
+  // items page
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(10);
   const [unitsName, setUnitsName] = useState("");
   const [shortName, setShortName] = useState("");
   const [status, setStatus] = useState(true); // true = Active
+  const [errors, setErrors] = useState({})
+
+  // === START BULK DELETE STATE CHANGES ===
+  // const [selectedUnits, setSelectedUnits] = useState([]);
+  const [selectAll, setSelectAll] = useState(false);
+
+
+  const unitNameRegex = /^[A-Za-z\s]{2,50}$/;
+  const shortNameRegex = /^[A-Za-z]{1,10}$/;
+
+  // Function to reset form fields
+  const resetForm = () => {
+    setUnitsName("");
+    setShortName("");
+    setStatus(true);
+    setErrors({});
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    let newErrors = {};
+    // validate unit Name
+    if (!unitNameRegex.test(unitsName)) {
+      newErrors.unitsName = "Unit name must be 2–50 letters only.";
+    }
+    if (!shortNameRegex.test(shortName)) {
+      newErrors.shortName = "Short name must be 1–10 letters only.";
+    }
+
+    if (Object.keys(newErrors).length > 0) {
+      setErrors(newErrors);
+      return;
+    }
+
 
     const formData = {
       unitsName,
@@ -29,17 +65,14 @@ const Units = () => {
     };
 
     try {
-          const token = localStorage.getItem("token");
-
-      await axios.post(`${BASE_URL}/api/unit/units`, formData,{
+      const token = localStorage.getItem("token");
+      await axios.post(`${BASE_URL}/api/unit/units`, formData, {
         headers: {
-        Authorization: `Bearer ${token}`,
-      },
+          Authorization: `Bearer ${token}`,
+        },
       });
       toast.success("Unit created successfully!");
-      setUnitsName("");
-      setShortName("");
-      setStatus(true);
+      resetForm();
       fetchUnits(); // Refresh unit list
       window.$(`#add-units`).modal("hide");
     } catch (error) {
@@ -54,12 +87,11 @@ const Units = () => {
 
   const fetchUnits = async () => {
     try {
-          const token = localStorage.getItem("token");
-
-      const res = await axios.get(`${BASE_URL}/api/unit/units`,{
-         headers: {
-        Authorization: `Bearer ${token}`,
-      },
+      const token = localStorage.getItem("token")
+      const res = await axios.get(`${BASE_URL}/api/unit/units`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
       });
       setUnitData(res.data);
     } catch (error) {
@@ -88,8 +120,10 @@ const Units = () => {
     if (e.target.checked) {
       const allIds = unitData.map((unit) => unit._id);
       setSelectedUnits(allIds);
+      setSelectAll(true);
     } else {
       setSelectedUnits([]);
+      setSelectAll(false);
     }
   };
 
@@ -97,51 +131,72 @@ const Units = () => {
     const selected = unitData.filter((unit) =>
       selectedUnits.includes(unit._id)
     );
-    if (selected.length === 0) {
-      toast.warn("No units selected.");
+
+    // If no units are selected, export all units
+    const dataToExport = selected.length === 0 ? unitData : selected;
+
+    if (dataToExport.length === 0) {
+      toast.warn("No units available to export.");
       return;
     }
 
-    const ws = XLSX.utils.json_to_sheet(selected);
+    // Format data for Excel export
+    const formattedData = dataToExport.map((unit) => ({
+      "Unit Name": unit.unitsName,
+      "Short Name": unit.shortName,
+      "Status": unit.status,
+      "Created At": new Date(unit.createdAt).toLocaleDateString(),
+    }));
+
+    const ws = XLSX.utils.json_to_sheet(formattedData);
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, "Units");
-    XLSX.writeFile(wb, "units.xlsx");
+
+    const timestamp = new Date().toISOString().slice(0, 10);
+    XLSX.writeFile(wb, `units_${timestamp}.xlsx`);
+    toast.success("Excel file exported successfully!");
   };
 
   const exportToPDF = () => {
     const selected = unitData.filter((unit) =>
       selectedUnits.includes(unit._id)
     );
-    if (selected.length === 0) {
-      toast.warn("No units selected.");
+
+    // If no units are selected, export all units
+    const dataToExport = selected.length === 0 ? unitData : selected;
+
+    if (dataToExport.length === 0) {
+      toast.warn("No units available to export.");
       return;
     }
 
     const doc = new jsPDF();
     doc.text("Units List", 14, 10);
-    doc.autoTable({
+    autoTable(doc, {
       startY: 20,
       head: [["Unit", "Short Name", "Status", "Created At"]],
-      body: selected.map((u) => [
+      body: dataToExport.map((u) => [
         u.unitsName,
         u.shortName,
         u.status,
         new Date(u.createdAt).toLocaleDateString(),
       ]),
     });
-    doc.save("units.pdf");
+
+    const timestamp = new Date().toISOString().slice(0, 10);
+    doc.save(`units_${timestamp}.pdf`);
+    toast.success("PDF exported successfully!");
   };
 
   const handleDeleteUnit = async (unitId, unitsName) => {
     const confirmed = await DeleteAlert({});
     if (!confirmed) return;
     try {
-          const token = localStorage.getItem("token");
-
-      await axios.delete(`${BASE_URL}/api/unit/units/${unitId}`,{
-         headers: {
-        Authorization: `Bearer ${token}`,
-      },
+      const token = localStorage.getItem("token")
+      await axios.delete(`${BASE_URL}/api/unit/units/${unitId}`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
       });
       toast.success("Unit deleted successfully");
       fetchUnits(); // Refresh the list
@@ -151,6 +206,59 @@ const Units = () => {
       toast.error("Failed to delete unit");
     }
   };
+
+  // === START BULK DELETE FUNCTION ===
+  const handleBulkDelete = async () => {
+    if (selectedUnits.length === 0) return;
+
+    const confirmed = await DeleteAlert({});
+    if (!confirmed) return;
+
+    try {
+      const token = localStorage.getItem("token");
+
+      // Option A: if backend supports a bulk API endpoint, prefer this:
+      // await axios.post(`${BASE_URL}/api/unit/units/bulk-delete`, { ids: selectedUnits }, { headers: { Authorization: `Bearer ${token}` }});
+
+      // Option B: fallback to multiple delete calls (current safe approach)
+      await Promise.all(
+        selectedUnits.map((id) =>
+          axios.delete(`${BASE_URL}/api/unit/units/${id}`, {
+            headers: { Authorization: `Bearer ${token}` },
+          })
+        )
+      );
+
+      toast.success("Selected units deleted successfully");
+      setSelectedUnits([]);
+      setSelectAll(false);
+      fetchUnits();
+    } catch (error) {
+      console.error("Bulk Delete Units Error:", error.response?.data || error.message);
+      toast.error("Failed to delete selected units");
+    }
+  };
+
+
+  useEffect(() => {
+    setSelectedUnits((prev) => prev.filter((id) => unitData.some((u) => u._id === id)));
+
+  }, [unitData]);
+
+  const filteredUnits = unitData.filter((u) => {
+    const matchesSearch = u.unitsName?.toLowerCase().includes(searchTerm.toLowerCase().trim());
+    const matchesStatus = selectedStatus
+      ? u.status === selectedStatus
+      : true;
+    return matchesSearch && matchesStatus;
+  })
+
+  const totalPages = Math.ceil(filteredUnits.length / itemsPerPage);
+  const paginatedUnits = filteredUnits.slice(
+    (currentPage - 1) * itemsPerPage,
+    currentPage * itemsPerPage
+  );
+
 
   return (
     <div className="page-wrapper">
@@ -196,22 +304,35 @@ const Units = () => {
 
           <div className="table-top-head me-2">
             <li>
-              <button
-                type="button"
-                className="icon-btn"
-                title="Pdf"
-                onClick={exportToPDF}
-              >
-                <FaFilePdf />
-              </button>
+              {selectedUnits.length > 0 && (
+                <button className="btn btn-danger ms-2" onClick={handleBulkDelete}>
+                  Delete ({selectedUnits.length}) Selected
+                </button>
+              )}
             </li>
-            <li>
-              <label className="icon-btn m-0" title="Import Excel">
+            <li style={{ display: "flex", alignItems: "center", gap: '5px' }} className="icon-btn">
+              <label className="" title="">Export : </label>
+              <button onClick={exportToPDF} title="Download PDF" style={{
+                backgroundColor: "white",
+                display: "flex",
+                alignItems: "center",
+                border: "none",
+              }}><FaFilePdf className="fs-20" style={{ color: "red" }} /></button>
+              <button onClick={exportToExcel} title="Download Excel" style={{
+                backgroundColor: "white",
+                display: "flex",
+                alignItems: "center",
+                border: "none",
+              }}><FaFileExcel className="fs-20" style={{ color: "orange" }} /></button>
+            </li>
+            <li style={{ display: "flex", alignItems: "center", gap: '5px' }} className="icon-btn">
+              <label className="" title="">Import : </label>
+              <label className="" title="Import Excel">
                 <input type="file" accept=".xlsx, .xls" hidden />
                 <FaFileExcel style={{ color: "green" }} />
               </label>
             </li>
-            <li>
+            {/* <li>
               <button
                 type="button"
                 className="icon-btn"
@@ -220,7 +341,7 @@ const Units = () => {
               >
                 <FaFileExcel />
               </button>
-            </li>
+            </li> */}
           </div>
           <div className="page-btn">
             <a
@@ -238,6 +359,13 @@ const Units = () => {
           <div className="card-header d-flex align-items-center justify-content-between flex-wrap row-gap-3">
             <div className="search-set">
               <div className="search-input">
+                <input
+                  type="text"
+                  placeholder="Search Units..."
+                  className="form-control"
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                />
                 <span className="btn-searchset">
                   <i className="ti ti-search fs-14 feather-search" />
                 </span>
@@ -246,28 +374,39 @@ const Units = () => {
             <div className="table-dropdown my-xl-auto right-content">
               <div className="dropdown">
                 <a
-                  
+
                   className="dropdown-toggle btn btn-white btn-md d-inline-flex align-items-center"
                   data-bs-toggle="dropdown"
                 >
-                  Status
+                  {selectedStatus || "Status"}
                 </a>
                 <ul className="dropdown-menu  dropdown-menu-end p-3">
                   <li>
-                    <a
-                      
+                    <button
+
                       className="dropdown-item rounded-1"
+                      onClick={() => setSelectedStatus("")}
                     >
-                      Active
-                    </a>
+                      All
+                    </button>
                   </li>
                   <li>
-                    <a
-                      
+                    <button
+
                       className="dropdown-item rounded-1"
+                      onClick={() => setSelectedStatus("Active")}
+                    >
+                      Active
+                    </button>
+                  </li>
+                  <li>
+                    <button
+
+                      className="dropdown-item rounded-1"
+                      onClick={() => setSelectedStatus("Inactive")}
                     >
                       Inactive
-                    </a>
+                    </button>
                   </li>
                 </ul>
               </div>
@@ -277,12 +416,13 @@ const Units = () => {
             <div className="table-responsive">
               <table className="table datatable">
                 <thead className="thead-light">
-                  <tr>
+                  <tr style={{ textAlign: 'start' }}>
                     <th className="no-sort">
                       <label className="checkboxs">
                         <input
                           type="checkbox"
                           id="select-all"
+                          checked={unitData.length > 0 && selectedUnits.length === unitData.length}
                           onChange={handleSelectAll}
                         />
                         <span className="checkmarks" />
@@ -292,12 +432,13 @@ const Units = () => {
                     <th>Short name</th>
                     <th>Created Date</th>
                     <th>Status</th>
-                    <th className="no-sort" />
+                    <th style={{ textAlign: "center", width: "120px" }}>Action</th>
+                    {/* <th className="no-sort" /> */}
                   </tr>
                 </thead>
                 <tbody>
-                  {unitData.length > 0 ? (
-                    unitData.map((unit) => (
+                  {paginatedUnits.length > 0 ? (
+                    paginatedUnits.map((unit) => (
                       <tr key={unit._id}>
                         <td>
                           <label className="checkboxs">
@@ -311,17 +452,20 @@ const Units = () => {
                         </td>
                         <td className="text-gray-9">{unit.unitsName}</td>
                         <td>{unit.shortName}</td>
-                        <td>{new Date(unit.createdAt).toLocaleString()}</td>
+                        <td>{new Date(unit.createdAt).toLocaleDateString("en-GB", {
+                          day: "2-digit",
+                          month: "short",
+                          year: "numeric"
+                        })}</td>
                         <td>
                           {/* <span className="badge table-badge bg-success fw-medium fs-10">
                             Active
                           </span> */}
                           <span
-                            className={`badge table-badge fw-medium fs-10 ${
-                              unit.status === "Active"
-                                ? "bg-success"
-                                : "bg-danger"
-                            }`}
+                            className={`badge table-badge fw-medium fs-10 ${unit.status === "Active"
+                              ? "bg-success"
+                              : "bg-danger"
+                              }`}
                           >
                             {unit.status}
                           </span>
@@ -357,86 +501,83 @@ const Units = () => {
                 </tbody>
               </table>
             </div>
+            <div
+              className="d-flex justify-content-end gap-3"
+              style={{ padding: "10px 20px" }}
+            >
+              <select
+                value={itemsPerPage}
+                onChange={(e) => {
+                  setItemsPerPage(Number(e.target.value));
+                  setCurrentPage(1);
+                }}
+                className="form-select w-auto"
+              >
+                <option value={10}>10 Per Page</option>
+                <option value={25}>25 Per Page</option>
+                <option value={50}>50 Per Page</option>
+                <option value={100}>100 Per Page</option>
+              </select>
+              <span
+                style={{
+                  backgroundColor: "white",
+                  boxShadow: "rgb(0 0 0 / 4%) 0px 3px 8px",
+                  padding: "7px",
+                  borderRadius: "5px",
+                  border: "1px solid #e4e0e0ff",
+                  color: "gray",
+                }}
+              >
+                {filteredUnits.length === 0
+                  ? "0 of 0"
+                  : `${(currentPage - 1) * itemsPerPage + 1}-${Math.min(
+                    currentPage * itemsPerPage,
+                    filteredUnits.length
+                  )} of ${filteredUnits.length}`}
+                <button
+                  style={{
+                    border: "none",
+                    color: "grey",
+                    backgroundColor: "white",
+                  }}
+                  onClick={() =>
+                    setCurrentPage((prev) => Math.max(prev - 1, 1))
+                  }
+                  disabled={currentPage === 1}
+                >
+                  <GrFormPrevious />
+                </button>{" "}
+                <button
+                  style={{ border: "none", backgroundColor: "white" }}
+                  onClick={() =>
+                    setCurrentPage((prev) => Math.min(prev + 1, totalPages))
+                  }
+                  disabled={currentPage === totalPages}
+                >
+                  <MdNavigateNext />
+                </button>
+              </span>
+            </div>
           </div>
         </div>
         {/* /product list */}
       </div>
 
       {/* Add Unit */}
-      {/* <div className="modal fade" id="add-units">
-        <div className="modal-dialog modal-dialog-centered">
-          <div className="modal-content">
-            <div className="modal-header">
-              <div className="page-title">
-                <h4>Add Unit</h4>
-              </div>
-              <button
-                type="button"
-                className="close bg-danger text-white fs-16"
-                data-bs-dismiss="modal"
-                aria-label="Close"
-              >
-                <span aria-hidden="true">×</span>
-              </button>
-            </div>
-            <form>
-              <div className="modal-body">
-                <div className="mb-3">
-                  <label className="form-label">
-                    Unit<span className="text-danger ms-1">*</span>
-                  </label>
-                  <input type="text" className="form-control" />
-                </div>
-                <div className="mb-3">
-                  <label className="form-label">
-                    Short Name<span className="text-danger ms-1">*</span>
-                  </label>
-                  <input type="text" className="form-control" />
-                </div>
-                <div className="mb-0">
-                  <div className="status-toggle modal-status d-flex justify-content-between align-items-center">
-                    <span className="status-label">Status</span>
-                    <input
-                      type="checkbox"
-                      id="user2"
-                      className="check"
-                      defaultChecked
-                    />
-                    <label htmlFor="user2" className="checktoggle" />
-                  </div>
-                </div>
-              </div>
-              <div className="modal-footer">
-                <button
-                  type="button"
-                  className="btn me-2 btn-secondary"
-                  data-bs-dismiss="modal"
-                >
-                  Cancel
-                </button>
-                <button type="submit" className="btn btn-primary">
-                  Add Unit
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      </div> */}
-
-      <div className="modal fade" id="add-units">
+      <div className="modal" id="add-units">
         <div className="modal-dialog modal-dialog-centered">
           <div className="modal-content">
             <form onSubmit={handleSubmit}>
               <div className="modal-header">
                 <h4>Add Unit</h4>
-                <button
+                {/* <button
                   type="button"
                   className="close bg-danger text-white fs-16"
                   data-bs-dismiss="modal"
                   aria-label="Close"
                 >
                   <span aria-hidden="true">×</span>
-                </button>
+                </button> */}
               </div>
               <div className="modal-body">
                 <div className="mb-3">
@@ -450,6 +591,7 @@ const Units = () => {
                     onChange={(e) => setUnitsName(e.target.value)}
                     required
                   />
+                  {errors.unitsName && <p className="text-danger">{errors.unitsName}</p>}
                 </div>
                 <div className="mb-3">
                   <label className="form-label">
@@ -462,6 +604,7 @@ const Units = () => {
                     onChange={(e) => setShortName(e.target.value)}
                     required
                   />
+                  {errors.shortName && <p className="text-danger">{errors.shortName}</p>}
                 </div>
                 <div className="mb-0">
                   <div className="status-toggle modal-status d-flex justify-content-between align-items-center">
@@ -482,6 +625,7 @@ const Units = () => {
                   type="button"
                   className="btn me-2 btn-secondary"
                   data-bs-dismiss="modal"
+                  onClick={resetForm}
                 >
                   Cancel
                 </button>
@@ -496,74 +640,7 @@ const Units = () => {
       {/* /Add Unit */}
 
       {/* Edit Unit */}
-      {/* <div className="modal fade" id="edit-units">
-        <div className="modal-dialog modal-dialog-centered">
-          <div className="modal-content">
-            <div className="modal-header">
-              <div className="page-title">
-                <h4>Edit Unit</h4>
-              </div>
-              <button
-                type="button"
-                className="close bg-danger text-white fs-16"
-                data-bs-dismiss="modal"
-                aria-label="Close"
-              >
-                <span aria-hidden="true">×</span>
-              </button>
-            </div>
-            <form>
-              <div className="modal-body">
-                <div className="mb-3">
-                  <label className="form-label">
-                    Unit<span className="text-danger ms-1">*</span>
-                  </label>
-                  <input
-                    type="text"
-                    className="form-control"
-                    defaultValue="Kilograms"
-                  />
-                </div>
-                <div className="mb-3">
-                  <label className="form-label">
-                    Short Name<span className="text-danger ms-1">*</span>
-                  </label>
-                  <input
-                    type="text"
-                    className="form-control"
-                    defaultValue="kg"
-                  />
-                </div>
-                <div className="mb-0">
-                  <div className="status-toggle modal-status d-flex justify-content-between align-items-center">
-                    <span className="status-label">Status</span>
-                    <input
-                      type="checkbox"
-                      id="user3"
-                      className="check"
-                      defaultChecked
-                    />
-                    <label htmlFor="user3" className="checktoggle" />
-                  </div>
-                </div>
-              </div>
-              <div className="modal-footer">
-                <button
-                  type="button"
-                  className="btn me-2 btn-secondary"
-                  data-bs-dismiss="modal"
-                >
-                  Cancel
-                </button>
-                <button type="submit" className="btn btn-primary">
-                  Save Changes
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      </div> */}
-      <EditUnitModal selectedUnit={selectedUnit} onUnitUpdated={fetchUnits} />
+      <EditUnitModal selectedUnit={selectedUnit} onUnitUpdated={fetchUnits} errors={errors} />
       {/* /Edit Unit */}
     </div>
   );

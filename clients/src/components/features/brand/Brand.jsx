@@ -9,6 +9,13 @@ import DeleteAlert from "../../../utils/sweetAlert/DeleteAlert";
 import Swal from "sweetalert2";
 import { toast } from "react-toastify";
 import { hasPermission } from "../../../utils/permission/hasPermission";
+import { sanitizeInput } from "../../../utils/sanitize";
+import { GrFormPrevious } from "react-icons/gr";
+import { MdNavigateNext } from "react-icons/md";
+import jsPDF from "jspdf";
+import autoTable from "jspdf-autotable";
+import html2canvas from "html2canvas";
+import * as XLSX from "xlsx";
 
 const Brand = () => {
   const [brandName, setBrandName] = useState("");
@@ -20,6 +27,11 @@ const Brand = () => {
   const [editStatus, setEditStatus] = useState(true);
   const [editImagePreview, setEditImagePreview] = useState("");
   const [brands, setBrands] = useState([]);
+  const [errors, setErrors] = useState({});
+
+  const [selectedBrands, setSelectedBrands] = useState([]);
+
+  const brandNameRegex = /^[A-Za-z0-9\s]{2,50}$/;
 
   console.log(brands);
 
@@ -27,7 +39,7 @@ const Brand = () => {
   const [statusFilter, setStatusFilter] = useState("All");
   const [sortOrder, setSortOrder] = useState("Latest");
   const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 10;
+  const [itemsPerPage, setItemsPerPage] = useState(10);
 
   useEffect(() => {
     fetchBrands();
@@ -40,7 +52,7 @@ const Brand = () => {
     console.log("Delete Permission:", hasPermission("brand", "delete"));
   }, []);
 
- //======================================================================================================
+  //======================================================================================================
   const fetchBrands = async () => {
     try {
       const token = localStorage.getItem("token"); // Make sure the token is stored here after login
@@ -52,6 +64,7 @@ const Brand = () => {
       });
 
       setBrands(res.data.brands);
+      console.log("Brnad :", res.data.brands);
     } catch (error) {
       console.error(
         "Fetch Brands Error:",
@@ -62,127 +75,152 @@ const Brand = () => {
 
   //==================================================================================================
 
- const handleAddBrand = async (e) => {
-  e.preventDefault();
+  const handleAddBrand = async (e) => {
+    e.preventDefault();
+    let newErrors = {};
+    // validation
+    if (!brandNameRegex.test(brandName)) {
+      newErrors.brandName =
+        "Brand name must be 2–50 characters (letters, numbers, spaces only).";
+    }
 
-  const formData = new FormData();
-  formData.append("brandName", brandName);
-  formData.append("status", status ? "Active" : "Inactive");
+    if (Object.keys(newErrors).length > 0) {
+      setErrors(newErrors);
+      return;
+    }
 
-  selectedImages.forEach((file) => {
-    formData.append("image", file);
-  });
+    const formData = new FormData();
+    formData.append("brandName", sanitizeInput(brandName));
+    formData.append("status", status ? "Active" : "Inactive");
 
-  try {
-    const token = localStorage.getItem("token"); // ✅ get token from storage
-
-    const res = await axios.post(
-      `${BASE_URL}/api/brands/addBrands`,
-      formData,
-      {
-        headers: {
-          "Content-Type": "multipart/form-data",
-          Authorization: `Bearer ${token}`, // ✅ include token in headers
-        },
+    selectedImages.forEach((file) => {
+      if (file instanceof File) {
+        formData.append("image", file);
       }
-    );
-
-    console.log("Brand Added:", res.data);
-
-    // Reset form
-    setBrandName("");
-    setStatus(true);
-    setSelectedImages([]);
-
-    // fetchBrands to refresh list
-    fetchBrands();
-    window.$(`#add-brand`).modal("hide");
-
-    toast.success("Brand added successfully!");
-  } catch (error) {
-    console.error("Add Brand Error:", error.response?.data || error.message);
-
-    toast.error(
-      error.response?.data?.message || "Failed to add brand. Please try again."
-    );
-  }
-};
-
-// ==================================================================================================
-const handleEditBrand = async (e) => {
-  e.preventDefault();
-
-  const formData = new FormData();
-  formData.append("brandName", editBrandName);
-  formData.append("status", editStatus ? "Active" : "Inactive");
-
-  selectedImages.forEach((file) => {
-    formData.append("image", file); // "image" must match multer field name
-  });
-
-  try {
-    const token = localStorage.getItem("token");
-
-    await axios.put(
-      `${BASE_URL}/api/brands/editBrands/${editBrandId}`,
-      formData,
-      {
-        headers: {
-          "Content-Type": "multipart/form-data",
-          Authorization: `Bearer ${token}`,
-        },
-      }
-    );
-
-    fetchBrands();
-    window.$(`#edit-brand`).modal("hide");
-    toast.success("Brand updated successfully!");
-  } catch (error) {
-    console.error("Update brand failed:", error.response?.data || error.message);
-    toast.error("Failed to update brand");
-  }
-};
-
-const handleOpenEditModal = (brand) => {
-  console.log("Editing brand:", brand); // ✅ Debug log
-  setEditBrandId(brand._id);
-  setEditBrandName(brand.brandName);
-  setEditStatus(brand.status === "Active");
-  setEditImagePreview(brand.image?.[0]?.url); // Show current image
-  setSelectedImages([]); // Reset selected files
-};
-
-
-
-///================================================================================== 
-
-
-
-const handleDeleteBrand = async (brandId, brandName) => {
-  const confirmed = await DeleteAlert({});
-  if (!confirmed) return;
-
-  try {
-    const token = localStorage.getItem("token");
-
-    await axios.delete(`${BASE_URL}/api/brands/deleteBrand/${brandId}`, {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
     });
 
-    fetchBrands();
-    Swal.fire(
-      "Deleted!",
-      `Brand "${brandName}" has been deleted.`,
-      "success"
-    );
-  } catch (error) {
-    console.error("Delete brand failed:", error.response?.data || error.message);
-    toast.error("Failed to delete brand");
-  }
-};
+    try {
+      const token = localStorage.getItem("token"); // ✅ get token from storage
 
+      const res = await axios.post(
+        `${BASE_URL}/api/brands/addBrands`,
+        formData,
+        {
+          headers: {
+            "Content-Type": "multipart/form-data",
+            Authorization: `Bearer ${token}`, // ✅ include token in headers
+          },
+        }
+      );
+
+      console.log("Brand Added:", res.data);
+
+      // Reset form
+      setBrandName("");
+      setStatus(true);
+      setSelectedImages([]);
+
+      // fetchBrands to refresh list
+      fetchBrands();
+      window.$(`#add-brand`).modal("hide");
+
+      toast.success("Brand added successfully!");
+    } catch (error) {
+      console.error("Add Brand Error:", error.response?.data || error.message);
+
+      toast.error(
+        error.response?.data?.message ||
+        "Failed to add brand. Please try again."
+      );
+    }
+  };
+
+  // ==================================================================================================
+  const handleEditBrand = async (e) => {
+    e.preventDefault();
+    let newErrors = {};
+    if (!brandNameRegex.test(editBrandName)) {
+      newErrors.editBrandName =
+        "Brand name must be 2–50 characters (letters, numbers, spaces only).";
+    }
+
+    if (Object.keys(newErrors).length > 0) {
+      setErrors(newErrors);
+      return;
+    }
+
+    const formData = new FormData();
+    formData.append("brandName", sanitizeInput(editBrandName));
+    formData.append("status", editStatus ? "Active" : "Inactive");
+
+    selectedImages.forEach((file) => {
+      formData.append("image", file); // "image" must match multer field name
+    });
+
+    try {
+      const token = localStorage.getItem("token");
+
+      await axios.put(
+        `${BASE_URL}/api/brands/editBrands/${editBrandId}`,
+        formData,
+        {
+          headers: {
+            "Content-Type": "multipart/form-data",
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      fetchBrands();
+      window.$(`#edit-brand`).modal("hide");
+      toast.success("Brand updated successfully!");
+    } catch (error) {
+      console.error(
+        "Update brand failed:",
+        error.response?.data || error.message
+      );
+      toast.error("Failed to update brand");
+    }
+  };
+
+  const handleOpenEditModal = (brand) => {
+    console.log("Editing brand:", brand); // ✅ Debug log
+    setEditBrandId(brand._id);
+    setEditBrandName(brand.brandName);
+    setEditStatus(brand.status === "Active");
+    setEditImagePreview(brand.image?.[0]?.url); // Show current image
+    setSelectedImages([]); // Reset selected files
+  };
+
+  ///==================================================================================
+
+  const handleDeleteBrand = async (brandId, brandName) => {
+    const confirmed = await DeleteAlert({});
+    if (!confirmed) return;
+
+    try {
+      const token = localStorage.getItem("token");
+
+      await axios.delete(`${BASE_URL}/api/brands/deleteBrand/${brandId}`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      fetchBrands();
+      Swal.fire(
+        "Deleted!",
+        `Brand "${brandName}" has been deleted.`,
+        "success"
+      );
+    } catch (error) {
+      console.error(
+        "Delete brand failed:",
+        error.response?.data || error.message
+      );
+      toast.error("Failed to delete brand");
+    }
+  };
 
   const filteredBrands = brands
     .filter((brand) => {
@@ -203,21 +241,155 @@ const handleDeleteBrand = async (brandId, brandName) => {
       return 0;
     });
 
-
-
   const paginatedBrands = filteredBrands.slice(
     (currentPage - 1) * itemsPerPage,
     currentPage * itemsPerPage
   );
 
-
-
   const totalPages = Math.ceil(filteredBrands.length / itemsPerPage);
 
+  const handleFileChange = (e) => {
+    const files = Array.from(e.target.files);
+    const validFiles = files.filter(
+      (file) =>
+        ["image/jpeg", "image/png"].includes(file.type) &&
+        file.size <= 2 * 1024 * 1024
+    );
+    if (validFiles.length !== files.length) {
+      toast.error("Only JPG/PNG up to 2MB allowed");
+    }
+    setSelectedImages(validFiles);
+  };
 
+  /// bulk delete concept start from here
 
+  const handleCheckboxChange = (id) => {
+    setSelectedBrands((prev) =>
+      prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]
+    );
+  };
 
+  // select/unselect all on current page
+  const handleSelectAll = (pageIds, allSelectedOnPage) => {
+    if (allSelectedOnPage) {
+      setSelectedBrands((prev) => prev.filter((id) => !pageIds.includes(id)));
+    } else {
+      setSelectedBrands((prev) => [...new Set([...prev, ...pageIds])]);
+    }
+  };
 
+  // bulk delete selected brands
+  const handleBulkDelete = async () => {
+    if (selectedBrands.length === 0) return;
+
+    const confirmed = await DeleteAlert({});
+    if (!confirmed) return;
+
+    try {
+      const token = localStorage.getItem("token");
+
+      await Promise.all(
+        selectedBrands.map((id) =>
+          axios.delete(`${BASE_URL}/api/brands/deleteBrand/${id}`, {
+            headers: { Authorization: `Bearer ${token}` },
+          })
+        )
+      );
+
+      toast.success("Selected brands deleted");
+      setSelectedBrands([]);
+      fetchBrands();
+    } catch (err) {
+      console.error("Bulk delete failed:", err.response?.data || err.message);
+      toast.error("Failed to delete selected brands");
+    }
+  };
+
+  // PDF export function
+  const exportToPDF = async () => {
+    try {
+      const doc = new jsPDF();
+
+      // Add title
+      doc.text("Brand Report", 14, 15);
+
+      // Define table columns
+      const tableColumns = ["Brand Name", "Created Date", "Status", "Description"];
+
+      // Prepare table rows
+      const tableRows = filteredBrands.map((brand) => [
+        brand.brandName || "N/A",
+        new Date(brand.createdAt).toLocaleDateString(),
+        brand.status || "N/A",
+        brand.description || "N/A"
+      ]);
+
+      // Create table using autoTable
+      autoTable(doc, {
+        head: [tableColumns],
+        body: tableRows,
+        startY: 20,
+        styles: {
+          fontSize: 8,
+        },
+        headStyles: {
+          fillColor: [155, 155, 155],
+          textColor: "white",
+        },
+        theme: "striped",
+      });
+
+      // Save the PDF
+      doc.save(`brands_report_${new Date().toISOString().split('T')[0]}.pdf`);
+      toast.success("PDF exported successfully!");
+    } catch (error) {
+      console.error("PDF export failed:", error);
+      toast.error("Failed to export PDF");
+    }
+  };
+
+  // Excel export function
+  const exportToExcel = () => {
+    try {
+      // Prepare data for Excel
+      const excelData = filteredBrands.map((brand, index) => ({
+        "S.No": index + 1,
+        "Brand Name": brand.brandName || "N/A",
+        "Created Date": new Date(brand.createdAt).toLocaleDateString(),
+        "Status": brand.status || "N/A",
+        "Description": brand.description || "N/A"
+      }));
+
+      // Create workbook and worksheet
+      const wb = XLSX.utils.book_new();
+      const ws = XLSX.utils.json_to_sheet(excelData);
+
+      // Set column widths
+      const colWidths = [
+        { wch: 8 },  // S.No
+        { wch: 20 }, // Brand Name
+        { wch: 15 }, // Created Date
+        { wch: 12 }, // Status
+        { wch: 30 }  // Description
+      ];
+      ws['!cols'] = colWidths;
+
+      // Add worksheet to workbook
+      XLSX.utils.book_append_sheet(wb, ws, "Brands");
+
+      // Save the file
+      XLSX.writeFile(wb, `brands_report_${new Date().toISOString().split('T')[0]}.xlsx`);
+      toast.success("Excel file exported successfully!");
+    } catch (error) {
+      console.error("Excel export failed:", error);
+      toast.error("Failed to export Excel file");
+    }
+  };
+
+  // derive page IDs + select-all status
+  const pageIds = paginatedBrands.map((b) => b._id);
+  const allSelectedOnPage =
+    pageIds.length > 0 && pageIds.every((id) => selectedBrands.includes(id));
 
   return (
     <div className="page-wrapper">
@@ -231,21 +403,47 @@ const handleDeleteBrand = async (brandId, brandName) => {
           </div>
           <div className="table-top-head me-2">
             <li>
-              <button type="button" className="icon-btn" title="Pdf">
-                <FaFilePdf />
-              </button>
+              {selectedBrands.length > 0 && (
+                <button
+                  className="btn btn-danger ms-2"
+                  onClick={handleBulkDelete}
+                >
+                  Delete ({selectedBrands.length}) Selected
+                </button>
+              )}
             </li>
-            <li>
-              <label className="icon-btn m-0" title="Import Excel">
+            <li style={{ display: "flex", alignItems: "center", gap: '5px' }} className="icon-btn">
+              <label className="" title="">Export : </label>
+              <button onClick={exportToPDF} title="Download PDF" style={{
+                backgroundColor: "white",
+                display: "flex",
+                alignItems: "center",
+                border: "none",
+              }}><FaFilePdf className="fs-20" style={{ color: "red" }} /></button>
+              <button onClick={exportToExcel} title="Download Excel" style={{
+                backgroundColor: "white",
+                display: "flex",
+                alignItems: "center",
+                border: "none",
+              }}><FaFileExcel className="fs-20" style={{ color: "orange" }} /></button>
+            </li>
+            <li style={{ display: "flex", alignItems: "center", gap: '5px' }} className="icon-btn">
+              <label className="" title="">Import : </label>
+              <label className="" title="Import Excel">
                 <input type="file" accept=".xlsx, .xls" hidden />
                 <FaFileExcel style={{ color: "green" }} />
               </label>
             </li>
-            <li>
-              <button type="button" className="icon-btn" title="Export Excel">
+            {/* <li>
+              <button 
+                type="button" 
+                className="icon-btn" 
+                title="Export Excel"
+                onClick={exportToExcel}
+              >
                 <FaFileExcel />
               </button>
-            </li>
+            </li> */}
           </div>
           <div className="page-btn">
             <a
@@ -349,17 +547,24 @@ const handleDeleteBrand = async (brandId, brandName) => {
             <div className="table-responsive">
               <table className="table datatable">
                 <thead className="thead-light">
-                  <tr>
+                  <tr style={{ textAlign: 'start' }}>
                     <th className="no-sort">
                       <label className="checkboxs">
-                        <input type="checkbox" id="select-all" />
+                        <input
+                          type="checkbox"
+                          id="select-all"
+                          checked={allSelectedOnPage}
+                          onChange={() =>
+                            handleSelectAll(pageIds, allSelectedOnPage)
+                          }
+                        />
                         <span className="checkmarks" />
                       </label>
                     </th>
                     <th>Brand</th>
                     <th>Created Date</th>
                     <th>Status</th>
-                    <th className="no-sort" />
+                    <th style={{ textAlign: 'center', width: '120px' }}>Action</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -367,34 +572,44 @@ const handleDeleteBrand = async (brandId, brandName) => {
                     <tr key={brand._id}>
                       <td>
                         <label className="checkboxs">
-                          <input type="checkbox" />
+                          <input
+                            type="checkbox"
+                            checked={selectedBrands.includes(brand._id)}
+                            onChange={() => handleCheckboxChange(brand._id)}
+                          />
                           <span className="checkmarks" />
                         </label>
                       </td>
                       <td>
                         <div className="d-flex align-items-center">
-                          <a
-                            href="#"
-                            className="avatar avatar-md bg-light-900 p-1 me-2"
-                          >
-                            <img
-                              className="object-fit-contain"
-                              // src={brand.image?.[0] || "assets/img/default.png"}
-                              src={brand.image?.[0]?.url}
-                              alt={brand.brandName}
-                            />
-                          </a>
+                          {brand.image?.[0]?.url ? (
+                            <>
+                              <img
+                                src={brand.image?.[0]?.url}
+                                alt={brand.brandName}
+                                className="me-1"
+                                style={{ objectFit: 'contain', width: '30px', height: '30px', }}
+                              />
+                            </>
+                          ) : (
+                            <>
+                            </>
+                          )}
                           <a href="#">{brand.brandName}</a>
                         </div>
+
                       </td>
-                      <td>{new Date(brand.createdAt).toLocaleDateString()}</td>
+                      <td>{new Date(brand.createdAt).toLocaleDateString("en-GB", {
+                        day: "2-digit",
+                        month: "short",
+                        year: "numeric"
+                      })}</td>
                       <td>
                         <span
-                          className={`badge table-badge fw-medium fs-10 ${
-                            brand.status === "Active"
-                              ? "bg-success"
-                              : "bg-danger"
-                          }`}
+                          className={`badge table-badge fw-medium fs-10 ${brand.status === "Active"
+                            ? "bg-success"
+                            : "bg-danger"
+                            }`}
                         >
                           {brand.status}
                         </span>
@@ -423,79 +638,93 @@ const handleDeleteBrand = async (brandId, brandName) => {
                     </tr>
                   ))}
                 </tbody>
-               
               </table>
             </div>
             {/* pagination */}
-            <div className="d-flex justify-content-between align-items-center p-3">
-             
-              <div className="d-flex justify-content-end align-items-center">
-                <label className="me-2">Items per page:</label>
-                <select
-                  value={itemsPerPage}
-
-                  className="form-select w-auto"
-                >
-                  <option value={10}>10</option>
-                  <option value={25}>25</option>
-                  <option value={50}>50</option>
-                  <option value={100}>100</option>
-                </select>
-              </div>
-              <div>
+            <div
+              className="d-flex justify-content-end gap-3"
+              style={{ padding: "10px 20px" }}
+            >
+              <select
+                value={itemsPerPage}
+                onChange={(e) => {
+                  setItemsPerPage(Number(e.target.value));
+                  setCurrentPage(1);
+                }}
+                className="form-select w-auto"
+              >
+                <option value={10}>10 Per Page</option>
+                <option value={25}>25 Per Page</option>
+                <option value={50}>50 Per Page</option>
+                <option value={100}>100 Per Page</option>
+              </select>
+              <span
+                style={{
+                  backgroundColor: "white",
+                  boxShadow: "rgb(0 0 0 / 4%) 0px 3px 8px",
+                  padding: "7px",
+                  borderRadius: "5px",
+                  border: "1px solid #e4e0e0ff",
+                  color: "gray",
+                }}
+              >
+                {filteredBrands.length === 0
+                  ? "0 of 0"
+                  : `${(currentPage - 1) * itemsPerPage + 1}-${Math.min(
+                    currentPage * itemsPerPage,
+                    filteredBrands.length
+                  )} of ${filteredBrands.length}`}
                 <button
-                  className="btn btn-light btn-sm me-2"
+                  style={{
+                    border: "none",
+                    color: "grey",
+                    backgroundColor: "white",
+                  }}
                   onClick={() =>
                     setCurrentPage((prev) => Math.max(prev - 1, 1))
                   }
                   disabled={currentPage === 1}
                 >
-                  Prev
-                </button>
-                {Array.from({ length: totalPages }, (_, i) => (
-                  <button
-                    key={i}
-                    className={`btn btn-sm me-1 ${
-                      currentPage === i + 1
-                        ? "btn-primary"
-                        : "btn-outline-primary"
-                    }`}
-                    onClick={() => setCurrentPage(i + 1)}
-                  >
-                    {i + 1}
-                  </button>
-                ))}
+                  <GrFormPrevious />
+                </button>{" "}
                 <button
-                  className="btn btn-light btn-sm"
+                  style={{ border: "none", backgroundColor: "white" }}
                   onClick={() =>
                     setCurrentPage((prev) => Math.min(prev + 1, totalPages))
                   }
                   disabled={currentPage === totalPages}
                 >
-                  Next
+                  <MdNavigateNext />
                 </button>
-              </div>
+              </span>
             </div>
           </div>
         </div>
         {/* /product list */}
         <div>
           {/* Add Brand */}
-          <div className="modal fade" id="add-brand">
+          <div className="modal" id="add-brand">
             <div className="modal-dialog modal-dialog-centered">
               <div className="modal-content">
-                <div className="modal-header">
+                <div
+                  className="modal-header"
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "space-between",
+                  }}
+                >
                   <div className="page-title">
                     <h4>Add Brand</h4>
                   </div>
-                  <button
+                  {/* <button
                     type="button"
                     className="close bg-danger text-white fs-16"
                     data-bs-dismiss="modal"
                     aria-label="Close"
                   >
                     <span aria-hidden="true">×</span>
-                  </button>
+                  </button> */}
                 </div>
                 <form onSubmit={handleAddBrand}>
                   <div className="modal-body new-employee-field">
@@ -516,19 +745,24 @@ const handleDeleteBrand = async (brandId, brandName) => {
                           )}{" "}
                         </span>
                       </div>
-                      <div>
-                        <div className="image-upload mb-0">
-                          <input
-                            type="file"
-                            accept="image/png, image/jpeg"
-                            onChange={(e) =>
-                              setSelectedImages(Array.from(e.target.files))
-                            }
-                          />
-                          <div className="image-uploads">
-                            <h4>Upload Image</h4>
-                          </div>
-                        </div>
+                      <div className=" mb-0">
+                        <input
+                          type="file"
+                          id="brandImageInput"
+                          accept="image/png, image/jpeg"
+                          onChange={handleFileChange}
+                          style={{ display: "none" }}
+                        />
+                        <button
+                          style={{}}
+                          type="button"
+                          onClick={() =>
+                            document.getElementById("brandImageInput").click()
+                          }
+                          className="btn btn-outline-primary"
+                        >
+                          Upload Image
+                        </button>
                         <p className="mt-2">JPEG, PNG up to 2 MB</p>
                       </div>
                     </div>
@@ -541,8 +775,10 @@ const handleDeleteBrand = async (brandId, brandName) => {
                         className="form-control"
                         value={brandName}
                         onChange={(e) => setBrandName(e.target.value)}
-                        required
                       />
+                      {errors.brandName && (
+                        <p className="text-danger">{errors.brandName}</p>
+                      )}
                     </div>
                     <div className="mb-0">
                       <div className="status-toggle modal-status d-flex justify-content-between align-items-center">
@@ -554,6 +790,9 @@ const handleDeleteBrand = async (brandId, brandName) => {
                           checked={status}
                           onChange={(e) => setStatus(e.target.checked)}
                         />
+                        {errors.editBrandName && (
+                          <p className="text-danger">{errors.editBrandName}</p>
+                        )}
                         <label htmlFor="user2" className="checktoggle" />
                       </div>
                     </div>
@@ -577,21 +816,21 @@ const handleDeleteBrand = async (brandId, brandName) => {
           {/* /Add Brand */}
         </div>
 
-        <div className="modal fade" id="edit-brand">
+        <div className="modal" id="edit-brand">
           <div className="modal-dialog modal-dialog-centered">
             <div className="modal-content">
               <div className="modal-header">
                 <div className="page-title">
                   <h4>Edit Brand</h4>
                 </div>
-                <button
+                {/* <button
                   type="button"
                   className="close bg-danger text-white fs-16"
                   data-bs-dismiss="modal"
                   aria-label="Close"
                 >
                   <span aria-hidden="true">×</span>
-                </button>
+                </button> */}
               </div>
               <form onSubmit={handleEditBrand}>
                 <div className="modal-body new-employee-field">
@@ -606,13 +845,12 @@ const handleDeleteBrand = async (brandId, brandName) => {
                           />
                         )}
                       </span>
-                      <a href="javascript:void(0);" className="remove-photo">
+                      {/* <a href="javascript:void(0);" className="remove-photo">x
                         <i data-feather="x" className="x-square-add" />
-                      </a>
+                      </a> */}
                     </div>
                     <div>
-                      
-                      <div className="image-upload mb-0">
+                      <div className="mb-0">
                         <input
                           type="file"
                           multiple
@@ -627,12 +865,17 @@ const handleDeleteBrand = async (brandId, brandName) => {
                             }
                           }}
                         />
-                        <div className="image-uploads">
-                          <h4>Change Image</h4>
-                        </div>
+                        <button
+                          type="button"
+                          onClick={() =>
+                            document.getElementById("brandImageInput").click()
+                          }
+                          className="btn btn-outline-primary"
+                        >
+                          Change Image
+                        </button>
+                        <p className="mt-2">JPEG, PNG up to 2 MB</p>
                       </div>
-
-                      <p className="mt-2">JPEG, PNG up to 2 MB</p>
                     </div>
                   </div>
                   <div className="mb-3">
@@ -644,8 +887,10 @@ const handleDeleteBrand = async (brandId, brandName) => {
                       className="form-control"
                       value={editBrandName}
                       onChange={(e) => setEditBrandName(e.target.value)}
-                      required
                     />
+                    {errors.editBrandName && (
+                      <p className="text-danger">{errors.editBrandName}</p>
+                    )}
                   </div>
                   <div className="mb-0">
                     <div className="status-toggle modal-status d-flex justify-content-between align-items-center">

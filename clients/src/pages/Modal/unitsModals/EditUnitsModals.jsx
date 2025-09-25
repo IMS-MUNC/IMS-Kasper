@@ -6,7 +6,7 @@ const EditUnitModal = ({ selectedUnit, onUnitUpdated }) => {
   const [unitsName, setUnitsName] = useState("");
   const [shortName, setShortName] = useState("");
   const [status, setStatus] = useState(true);
-const token = localStorage.getItem("token");
+  const token = localStorage.getItem("token");
   useEffect(() => {
     if (selectedUnit) {
       setUnitsName(selectedUnit.unitsName);
@@ -25,11 +25,11 @@ const token = localStorage.getItem("token");
       };
       const response = await axios.put(
         `${BASE_URL}/api/unit/units/${selectedUnit._id}`,
-        updatedData,{
-           headers: {
+        updatedData, {
+        headers: {
           Authorization: `Bearer ${token}`,
         },
-        }
+      }
       );
       console.log("Update response:", response.data);
       onUnitUpdated(); // Refresh list or close modal
@@ -39,24 +39,24 @@ const token = localStorage.getItem("token");
     }
   };
 
-  
+
 
   return (
-    <div className="modal fade" id="edit-units">
+    <div className="modal" id="edit-units">
       <div className="modal-dialog modal-dialog-centered">
         <div className="modal-content">
           <div className="modal-header">
             <div className="page-title">
               <h4>Edit Unit</h4>
             </div>
-            <button
+            {/* <button
               type="button"
               className="close bg-danger text-white fs-16"
               data-bs-dismiss="modal"
               aria-label="Close"
             >
               <span aria-hidden="true">×</span>
-            </button>
+            </button> */}
           </div>
           <form onSubmit={handleSubmit}>
             <div className="modal-body">

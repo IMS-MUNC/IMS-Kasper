@@ -3,34 +3,39 @@ import "./AllSupplier.css";
 
 import AddSupplierModals from "../../../pages/Modal/suppliers/AddSupplierModals";
 import BASE_URL from "../../../pages/config/config";
-import { TbCirclePlus, TbEdit, TbEye, TbTrash } from 'react-icons/tb'
+import { TbCirclePlus, TbEdit, TbEye, TbRefresh, TbTrash } from 'react-icons/tb'
 import ViewSupplierModal from "../../../pages/Modal/suppliers/ViewSupplierModal";
 import { Link } from "react-router-dom";
+import { FaFileExcel, FaFilePdf, FaPencilAlt } from "react-icons/fa";
 
-function formatAddress(billing) {
-  if (!billing) return '';
-  let parts = [];
-  if (billing.address1) parts.push(billing.address1);
-  if (billing.address2) parts.push(billing.address2);
-  if (billing.city?.cityName) parts.push(billing.city.cityName);
-  if (billing.state?.stateName) parts.push(billing.state.stateName);
-  if (billing.country?.name) parts.push(billing.country.name);
-  if (billing.pincode) parts.push(billing.pincode);
-  return parts.join(', ');
-}
+import jsPDF from "jspdf";
+import autoTable from "jspdf-autotable";
+import * as XLSX from "xlsx";
+
+// function formatAddress(billing) {
+//   if (!billing) return '';
+//   let parts = [];
+//   if (billing.address1) parts.push(billing.address1);
+//   if (billing.address2) parts.push(billing.address2);
+//   if (billing.city?.cityName) parts.push(billing.city.cityName);
+//   if (billing.state?.stateName) parts.push(billing.state.stateName);
+//   if (billing.country?.name) parts.push(billing.country.name);
+//   if (billing.pincode) parts.push(billing.pincode);
+//   return parts.join(', ');
+// }
 
 
-function formatShipping(shipping) {
-  if (!shipping) return '';
-  let parts = [];
-  if (shipping.address1) parts.push(shipping.address1);
-  if (shipping.address2) parts.push(shipping.address2);
-  if (shipping.city?.cityName) parts.push(shipping.city.cityName);
-  if (shipping.state?.stateName) parts.push(shipping.state.stateName);
-  if (shipping.country?.name) parts.push(shipping.country.name);
-  if (shipping.pincode) parts.push(shipping.pincode);
-  return parts.join(', ');
-}
+// function formatShipping(shipping) {
+//   if (!shipping) return '';
+//   let parts = [];
+//   if (shipping.address1) parts.push(shipping.address1);
+//   if (shipping.address2) parts.push(shipping.address2);
+//   if (shipping.city?.cityName) parts.push(shipping.city.cityName);
+//   if (shipping.state?.stateName) parts.push(shipping.state.stateName);
+//   if (shipping.country?.name) parts.push(shipping.country.name);
+//   if (shipping.pincode) parts.push(shipping.pincode);
+//   return parts.join(', ');
+// }
 
 function AllSuppliers() {
   const [currentPage, setCurrentPage] = useState(1);
@@ -42,6 +47,10 @@ function AllSuppliers() {
   const [loading, setLoading] = useState(false);
   const [editSupplier, setEditSupplier] = useState(null);
 
+  const [selectedIds, setSelectedIds] = useState([]);
+  const [selectedStatus, setSelectedStatus] = useState("");
+
+
   useEffect(() => {
     fetchSuppliers();
   }, []);
@@ -49,13 +58,15 @@ function AllSuppliers() {
   const fetchSuppliers = async () => {
     setLoading(true);
     try {
-          const token = localStorage.getItem("token");
+      const token = localStorage.getItem("token");
 
-      const res = await fetch(`${BASE_URL}/api/suppliers`,{
-         headers: {
-        Authorization: `Bearer ${token}`,
-      },
+      const res = await fetch(`${BASE_URL}/api/suppliers`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
       });
+
+
       const data = await res.json();
       setSuppliers(data);
     } catch (err) {
@@ -68,30 +79,131 @@ function AllSuppliers() {
   const handleDeleteSupplier = async (id) => {
     if (!window.confirm('Are you sure you want to delete this supplier?')) return;
     try {
-          const token = localStorage.getItem("token");
+      const token = localStorage.getItem("token");
 
-      await fetch(`${BASE_URL}/api/suppliers/${id}`, { method: 'DELETE', headers: {
-        Authorization: `Bearer ${token}`,
-      }, });
+      await fetch(`${BASE_URL}/api/suppliers/${id}`, {
+        method: 'DELETE', headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
       fetchSuppliers();
     } catch (err) {
       // handle error
     }
   };
 
+// <<<<<<< akashDev
+
+//   const filteredSuppliers = suppliers.filter((supplier) => {
+//     const fullName = `${supplier.firstName} ${supplier.lastName}`.toLowerCase();
+//     const matchSearch = supplier.supplierCode?.toLowerCase().includes(searchTerm.toLowerCase()) || fullName.includes(searchTerm.toLowerCase());
+//     const matchesStatus = selectedStatus === "" || (selectedStatus === "active" && supplier.status) || (selectedStatus === "inactive" && !supplier.status);
+//     return matchSearch && matchesStatus;
+//   })
+// =======
+  // Filtered suppliers based on status
+  const filteredSuppliers = suppliers.filter((s) => {
+    const matchesStatus = selectedStatus
+      ? (s.status ? "Active" : "Inactive") === selectedStatus
+      : true;
+    return matchesStatus;
+  });
+// >>>>>>> main
+
   // Pagination logic
-  const totalItems = suppliers.length;
+  const totalItems = filteredSuppliers.length;
   const totalPages = Math.ceil(totalItems / itemsPerPage);
   const startIndex = (currentPage - 1) * itemsPerPage;
   const endIndex = startIndex + itemsPerPage;
-  const paginatedData = suppliers.slice(startIndex, endIndex);
+  const paginatedData = filteredSuppliers.slice(startIndex, endIndex);
 
-  console.log(paginatedData);
+  // console.log(paginatedData[6]?.shipping.country.name);
 
 
   // const [showViewModal, setShowViewModal] = useState(false);
   const [viewSupplierId, setViewSupplierId] = useState(null);
 
+// <<<<<<< akashDev
+// =======
+//   const handleBulkDelete = async () => {
+//     if (selectedIds.length === 0) {
+//       alert("Please select at least one supplier.");
+//       return;
+//     }
+//     if (!window.confirm(`Delete ${selectedIds.length} selected suppliers?`)) return;
+
+//     try {
+//       const token = localStorage.getItem("token");
+//       await Promise.all(
+//         selectedIds.map(id =>
+//           fetch(`${BASE_URL}/api/suppliers/${id}`, {
+//             method: "DELETE",
+//             headers: { Authorization: `Bearer ${token}` },
+//           })
+//         )
+//       );
+//       setSelectedIds([]);
+//       fetchSuppliers();
+//     } catch (err) {
+//       console.error("Bulk delete failed", err);
+//     }
+//   };
+
+//   const handlePdf = () => {
+//     const doc = new jsPDF();
+//     doc.text("Category", 14, 15);
+//     const tableColumns = ["Code", "Supplier", "Email", "Phone", "Country", "Status"];
+
+//     const tableRows = paginatedData.map((e) => [
+//       e.supplierCode,
+//       e.firstName + " " + e.lastName,
+//       e.email,
+//       e.phone,
+//       e?.shipping?.country?.name || '-',
+//       e.status,
+//     ]);
+
+//     autoTable(doc, {
+//       head: [tableColumns],
+//       body: tableRows,
+//       startY: 20,
+//       styles: {
+//         fontSize: 8,
+//       },
+//       headStyles: {
+//         fillColor: [155, 155, 155],
+//         textColor: "white",
+//       },
+//       theme: "striped",
+//     });
+
+//     doc.save("Suppliers.pdf");
+//   };
+
+//   const handleExcel = () => {
+
+//     const tableColumns = ["Code", "Supplier", "Email", "Phone", "Country", "Status"];
+
+//     const tableRows = paginatedData.map((e) => [
+//       e.supplierCode,
+//       e.firstName + " " + e.lastName,
+//       e.email,
+//       e.phone,
+//       e?.shipping?.country?.name || '-',
+//       e.status,
+//     ]);
+
+//     const data = [tableColumns, ...tableRows];
+
+//     const worksheet = XLSX.utils.aoa_to_sheet(data);
+
+//     const workbook = XLSX.utils.book_new();
+//     XLSX.utils.book_append_sheet(workbook, worksheet, "Products");
+
+//     XLSX.writeFile(workbook, "Suppliers.xlsx");
+//   };
+
+// >>>>>>> main
   return (
 
     <div className="page-wrapper">
@@ -103,19 +215,86 @@ function AllSuppliers() {
               <h6>Manage your suppliers</h6>
             </div>
           </div>
-          <ul className="table-top-head">
-            <li className="me-2">
-              <a data-bs-toggle="tooltip" data-bs-placement="top" title="Pdf"><img src="assets/img/icons/pdf.svg" alt="img" /></a>
+          <div className="table-top-head me-2">
+            <li>
+// <<<<<<< akashDev
+//               <button type="button" className="icon-btn" title="Pdf">
+//                 <FaFilePdf />
+//               </button>
+//             </li>
+//             <li>
+//               <button type="button" className="icon-btn" title="Export Excel">
+//                 <FaFileExcel />
+//               </button>
+// =======
+              {/* <button
+                className="btn btn-danger me-2"
+                onClick={handleBulkDelete}
+                disabled={selectedIds.length === 0}
+              >
+                <TbTrash className="me-1" /> Delete Selected
+              </button> */}
+
+              {selectedIds.length > 0 && (
+                // <div className="d-flex align-items-center mb-2">
+
+                <button
+                  className="btn btn-danger ms-3"
+                  onClick={handleBulkDelete}
+                >
+                  <TbTrash className="me-1" /> Delete ({selectedIds.length}) Selected
+                </button>
+                // </div>
+              )}
+
+
             </li>
             <li className="me-2">
-              <a data-bs-toggle="tooltip" data-bs-placement="top" title="Excel"><img src="assets/img/icons/excel.svg" alt="img" /></a>
+              <li style={{ display: "flex", alignItems: "center", gap: '5px' }} className="icon-btn">
+                {/* <label className="" title="">Export : </label> */}
+                <button
+                  type="button"
+                  title="Pdf"
+                  style={{
+                    backgroundColor: "white",
+                    display: "flex",
+                    alignItems: "center",
+                    border: "none",
+                  }}
+                  onClick={handlePdf}
+                >
+                  <FaFilePdf style={{ color: "red" }} />
+                </button>
+
+              </li>
             </li>
             <li className="me-2">
-              <a data-bs-toggle="tooltip" data-bs-placement="top" title="Refresh"><i className="ti ti-refresh" /></a>
+              <li style={{ display: "flex", alignItems: "center", gap: '5px' }} className="icon-btn">
+                {/* <a data-bs-toggle="tooltip" data-bs-placement="top" title="Excel"><img src="assets/img/icons/excel.svg" alt="img" /></a> */}
+                <button
+                  type="button"
+                  title="Export Excel"
+                  style={{
+                    backgroundColor: "white",
+                    display: "flex",
+                    alignItems: "center",
+                    border: "none",
+                  }}
+                  onClick={handleExcel}
+                >
+                  <FaFileExcel style={{ color: "green" }} />
+                </button>
+              </li>
             </li>
             <li className="me-2">
+              <li>
+                <button data-bs-toggle="tooltip" data-bs-placement="top" title="Refresh" onClick={() => location.reload()} className="fs-20" style={{ backgroundColor: 'white', color: '', padding: '5px 5px', display: 'flex', alignItems: 'center', border: '1px solid #e8eaebff', cursor: 'pointer', borderRadius: '4px' }}><TbRefresh className="ti ti-refresh" /></button>
+              </li>
+// >>>>>>> main
+            </li>
+            {/* <li className="me-2">
               <a data-bs-toggle="tooltip" data-bs-placement="top" title="Collapse" id="collapse-header"><i className="ti ti-chevron-up" /></a>
-            </li>
+            </li> */}
           </ul>
           <div className="page-btn">
             <button onClick={() => { setShowAddModal(true); }} className="add-btn">
@@ -132,15 +311,39 @@ function AllSuppliers() {
             </div>
             <div className="d-flex table-dropdown my-xl-auto right-content align-items-center flex-wrap row-gap-3">
               <div className="dropdown">
-                <a href="javascript:void(0);" className="dropdown-toggle btn btn-white btn-md d-inline-flex align-items-center" data-bs-toggle="dropdown">
-                  Status
+                <a
+                  className="dropdown-toggle btn btn-white btn-md d-inline-flex align-items-center"
+                  data-bs-toggle="dropdown"
+                >
+                  {selectedStatus || "Status"}
                 </a>
                 <ul className="dropdown-menu  dropdown-menu-end p-3">
                   <li>
-                    <a href="javascript:void(0);" className="dropdown-item rounded-1">Active</a>
+                    <button
+
+                      className="dropdown-item rounded-1"
+                      onClick={() => setSelectedStatus("")}
+                    >
+                      All
+                    </button>
                   </li>
                   <li>
-                    <a href="javascript:void(0);" className="dropdown-item rounded-1">Inactive</a>
+                    <button
+
+                      className="dropdown-item rounded-1"
+                      onClick={() => setSelectedStatus("Active")}
+                    >
+                      Active
+                    </button>
+                  </li>
+                  <li>
+                    <button
+
+                      className="dropdown-item rounded-1"
+                      onClick={() => setSelectedStatus("Inactive")}
+                    >
+                      Inactive
+                    </button>
                   </li>
                 </ul>
               </div>
@@ -150,7 +353,7 @@ function AllSuppliers() {
             <div className="table-responsive">
               <table className="table datatable">
                 <thead className="thead-light">
-                  <tr>
+                  <tr style={{ borderTop: "1px solid #e4e0e0ff", textAlign: "center" }}>
                     <th className="no-sort">
                       <label className="checkboxs">
                         <input type="checkbox" id="select-all" />
@@ -163,12 +366,13 @@ function AllSuppliers() {
                     <th>Phone</th>
                     <th>Country</th>
                     <th>Status</th>
-                    <th className="no-sort" />
+                    <th>Action</th>
                   </tr>
                 </thead>
                 <tbody>
+                  {console.log("paginatedData", paginatedData)}
                   {paginatedData.map((supplier) => (
-                    <tr key={supplier._id}>
+                    <tr key={supplier._id} style={{ textAlign: "center" }}>
                       <td>
                         <label className="checkboxs">
                           <input type="checkbox" />
@@ -199,7 +403,13 @@ function AllSuppliers() {
                       </td>
                       <td>{supplier.email}</td>
                       <td>{supplier.phone}</td>
-                      <td>{supplier.country?.name}</td>
+
+//                       <td>{supplier.billing?.country?.name}</td>
+
+
+                      {/* <td>{supplier?.country}</td> */}
+                      <td>{supplier?.billing?.country?.name || supplier?.shipping?.country?.name || '-'}</td>
+
                       <td>
                         <span className={`badge ${supplier.status ? 'badge-success' : 'badge-danger'} d-inline-flex align-items-center badge-xs`}>
                           <i className="ti ti-point-filled me-1" />{supplier.status ? 'Active' : 'Inactive'}

@@ -472,7 +472,27 @@ function Barcode() {
 
   const closeForm = () => {
     setIsFormOpen(false);
-    setProduct((prev) => ({ ...prev, barcode: "" }));
+    // Reset all form data
+    setSelectedProduct(null);
+    setSearchQuery('');
+    setNumberOfBarcodes('');
+    setProduct({
+      productName: "",
+      sku: "",
+      price: "",
+      expiryDate: "",
+      quantity: "",
+      barcode: "",
+      barcodeImg: "",
+      uniqueBarcodes: [],
+      showProductName: false,
+      showSku: false,
+      showPrice: false,
+      showExpiryDate: false,
+      showQuantity: false,
+    });
+    setProducts([]);
+    setShowDropdown(false);
   };
 
   const handlePopupClose = () => {

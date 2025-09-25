@@ -4,9 +4,14 @@ const addressSchema = new mongoose.Schema({
   name: String,
   address1: String,
   address2: String,
-  country: { type: mongoose.Schema.Types.ObjectId, ref: 'Country' },
-  state: { type: mongoose.Schema.Types.ObjectId, ref: 'State' },
-  city: { type: mongoose.Schema.Types.ObjectId, ref: 'City' },
+  // country: { type: mongoose.Schema.Types.ObjectId, ref: 'Country' },
+
+  // state: { type: mongoose.Schema.Types.ObjectId, ref: 'State' },
+  // city: { type: mongoose.Schema.Types.ObjectId, ref: 'City' },
+  country: String,
+  state: String,
+  city: String,
+
   postalCode: String,
   pincode: String,
 });
@@ -29,7 +34,8 @@ const customerSchema = new mongoose.Schema({
   billing: addressSchema,
   shipping: addressSchema,
   bank: bankSchema,
-  
+  images: [String],
+
   status: { type: Boolean, default: true },
 }, { timestamps: true });
 

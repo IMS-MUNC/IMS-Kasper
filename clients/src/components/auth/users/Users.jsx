@@ -1,866 +1,3 @@
-// import axios from "axios";
-// import React, { useEffect, useState } from "react";
-// import { FaFileExcel, FaFilePdf } from "react-icons/fa";
-// import { TbEdit, TbEye, TbSearch, TbTrash } from "react-icons/tb";
-// import BASE_URL from "../../../pages/config/config";
-// import Select from "react-select";
-// import { CiCirclePlus } from "react-icons/ci";
-// import AddUserModal from "../../../pages/Modal/users/AddUserModal";
-// import { toast } from "react-toastify";
-
-// const Users = () => {
-//   const [activeRoles, setActiveRoles] = useState([]);
-//   const [selectedRole, setSelectedRole] = useState(null);
-
-//   const [firstName, setFirstName] = useState("");
-//   const [lastName, setLastName] = useState("");
-//   const [email, setEmail] = useState("");
-//   const [phone, setPhone] = useState("");
-//   const [password, setPassword] = useState("");
-//   const [confirmPassword, setConfirmPassword] = useState("");
-//   const [status, setStatus] = useState(true);
-//   const [profileImage, setProfileImage] = useState(null);
-//   const [users, setUsers] = useState([]);
-
-//   const [selectedImages, setSelectedImages] = useState([]);
-//   // console.log(users);
-//   // console.log("Uploaded image:", profileImage?.[0]?.url);
-
-//     const [editUserId, setEditUserdId] = useState(null);
-//   const token = localStorage.getItem("token");
-//   const [editUserData, setEditUserData] = useState({
-//     firstName: '',
-//     lastName: '',
-//     email: '',
-//     phone: '',
-//     role: '',
-//     password: '',
-//     confirmPassword: '',
-//     status: true,
-//     profileImage: null,
-//   });
-
-
-//   const fetchUsers = async () => {
-//     try {
-//       const token = localStorage.getItem("token"); // ⬅️ Get token from localStorage
-
-//       const res = await axios.get(`${BASE_URL}/api/user/getuser`, {
-//         headers: {
-//           Authorization: `Bearer ${token}`,
-//         },
-//       });
-
-//       setUsers(res.data);
-//     } catch (err) {
-//       console.error(err);
-//       toast.error("Failed to fetch users");
-//     }
-//   };
-
-//   useEffect(() => {
-//     fetchUsers();
-//   }, []);
-
-
-
-
-//   const handleAddUser = async (e) => {
-//     e.preventDefault();
-
-//     if (!selectedRole) {
-//       return toast.error("Please select a role.");
-//     }
-
-//     const formData = new FormData();
-//     formData.append("firstName", firstName);
-//     formData.append("lastName", lastName);
-//     formData.append("email", email);
-//     formData.append("phone", phone);
-//     formData.append("password", password);
-//     formData.append("confirmPassword", confirmPassword);
-//     formData.append("role", selectedRole.value); // Role ID
-//     formData.append("status", status ? "Active" : "Inactive");
-
-//     // ✅ Append image if provided (multiple format, even if only one)
-//     if (selectedImages.length > 0) {
-//       selectedImages.forEach((file) => {
-//         formData.append("profileImage", file); // match backend's `upload.array("profileImage")`
-//       });
-//     }
-
-//     try {
-//       const res = await axios.post(`${BASE_URL}/api/user/add`, formData, {
-//         headers: {
-//           "Content-Type": "multipart/form-data",
-//                     Authorization: `Bearer ${token}`,
-
-//         },
-//       });
-
-//       toast.success("User added successfully!");
-//       console.log("Created user:", res.data);
-
-//       // Reset form
-//       setFirstName("");
-//       setLastName("");
-//       setEmail("");
-//       setPhone("");
-//       setPassword("");
-//       setConfirmPassword("");
-//       setProfileImage(null);
-//       setSelectedRole(null);
-//       setStatus(true);
-//       setSelectedImages([]);
-//       fetchUsers();
-
-//       window.$(`#add-user`).modal("hide");
-//     } catch (error) {
-//       console.error("User creation failed:", error);
-//       toast.error(error.response?.data?.message || "Failed to add user");
-//     }
-//   };
-
-//   const fetchActiveRoles = async () => {
-//     try {
-//       const res = await axios.get(`${BASE_URL}/api/role/getRole/active`,{
-//          headers: {
-//           Authorization: `Bearer ${token}`,
-//         },
-//       });
-//       const formattedRoles = res.data.map((role) => ({
-//         label: role.roleName,
-//         value: role._id,
-//       }));
-//       setActiveRoles(formattedRoles);
-//     } catch (error) {
-//       console.error("Error fetching active roles", error);
-//     }
-//   };
-
-//   useEffect(() => {
-//     fetchActiveRoles();
-//   }, []);
-
-//   const handleDelete = async (id) => {
-//     if (!window.confirm("Are you sure you want to delete this user?")) return;
-//     try {
-//       await axios.delete(`${BASE_URL}/api/user/userDelete/${id}`,{
-//          headers: {
-//           Authorization: `Bearer ${token}`,
-//         },
-//       });
-//       toast.success("User deleted");
-//       fetchUsers();
-//     } catch (err) {
-//       console.log(err);
-
-//       toast.error("Failed to delete user");
-//     }
-//   };
-
-
-
-
-// const handleUpdate = async (e) => {
-//     e.preventDefault();
-
-//     try {
-//       const formData = new FormData();
-//       formData.append('firstName', editUserData.firstName);
-//       formData.append('lastName', editUserData.lastName);
-//       formData.append('email', editUserData.email);
-//       formData.append('phone', editUserData.phone);
-
-//       // Role handling
-//       if (editUserData.role?.value) {
-//         formData.append('role', editUserData.role.value);
-//       } else if (typeof editUserData.role === 'string') {
-//         formData.append('role', editUserData.role);
-//       }
-
-//       formData.append('status', editUserData.status ? "Active" : "Inactive");
-
-//       if (editUserData.profileImage) {
-//         formData.append('profileImage', editUserData.profileImage);
-//       }
-
-//       await axios.put(`${BASE_URL}/api/user/update/${editUserId}`, formData, {
-//         headers: { 'Content-Type': 'multipart/form-data',          Authorization: `Bearer ${token}`,
-//  },
-//       });
-
-//       toast.success('User updated successfully');
-//       fetchUsers();
-//       window.$(`#edit-user`).modal("hide");
-
-//     } catch (error) {
-//       toast.error('Failed to update user');
-//       console.error(error);
-//     }
-//   };
-
-
-// const handleOpenEditModal = (user) => {
-//     setEditUserdId(user._id);
-
-//     // Find the selected role from activeRoles
-//     const selectedRole = activeRoles.find(role => role.value === user.role);
-
-//     setEditUserData({
-//       firstName: user.firstName || '',
-//       lastName: user.lastName || '',
-//       email: user.email || '',
-//       phone: user.phone || '',
-//       role: selectedRole || { label: user.role, value: user.role }, // fallback
-//       status: user.status ?? true,
-//       profileImage: null, // only updated if changed
-//     });
-//   };
-
-//   return (
-//     <div className="page-wrapper">
-//       <div className="content">
-//         <div className="page-header">
-//           <div className="add-item d-flex">
-//             <div className="page-title">
-//               <h4 className="fw-bold">Users</h4>
-//               <h6>Manage your users</h6>
-//             </div>
-//           </div>
-//           <div className="table-top-head me-2">
-//             <li>
-//               <button type="button" className="icon-btn" title="Pdf">
-//                 <FaFilePdf />
-//               </button>
-//             </li>
-//             <li>
-//               <button type="button" className="icon-btn" title="Export Excel">
-//                 <FaFileExcel />
-//               </button>
-//             </li>
-//           </div>
-//           <div className="page-btn">
-//             <a
-//               href="#"
-//               className="btn btn-primary"
-//               data-bs-toggle="modal"
-//               data-bs-target="#add-user"
-//             >
-//               <CiCirclePlus className=" me-1" />
-//               Add User
-//             </a>
-//           </div>
-//         </div>
-//         {/* /product list */}
-//         <div className="card">
-//           <div className="card-header d-flex align-items-center justify-content-between flex-wrap row-gap-3">
-//             <div className="search-set">
-//               <div className="search-input">
-//                 <span className="btn-searchset position-relative">
-//                   <input
-//                     type="text"
-//                     placeholder="Search roles..."
-//                     className="form-control ps-5"
-//                     // value={searchTerm}
-//                     // onChange={(e) => setSearchTerm(e.target.value)}
-//                   />
-//                   <TbSearch
-//                     className="position-absolute top-50 start-0 translate-middle-y ms-3 text-muted"
-//                     size={20}
-//                   />
-//                 </span>
-//               </div>
-//             </div>
-//             <div className="d-flex table-dropdown my-xl-auto right-content align-items-center flex-wrap row-gap-3">
-//               <div className="dropdown">
-//                 <a
-//                   href="javascript:void(0);"
-//                   className="dropdown-toggle btn btn-white btn-md d-inline-flex align-items-center"
-//                   data-bs-toggle="dropdown"
-//                 >
-//                   Status
-//                 </a>
-//                 <ul className="dropdown-menu  dropdown-menu-end p-3">
-//                   <li>
-//                     <a
-//                       href="javascript:void(0);"
-//                       className="dropdown-item rounded-1"
-//                     >
-//                       Active
-//                     </a>
-//                   </li>
-//                   <li>
-//                     <a
-//                       href="javascript:void(0);"
-//                       className="dropdown-item rounded-1"
-//                     >
-//                       Inactive
-//                     </a>
-//                   </li>
-//                 </ul>
-//               </div>
-//             </div>
-//           </div>
-//           <div className="card-body p-0">
-//             <div className="table-responsive">
-//               <table className="table datatable">
-//                 <thead className="thead-light">
-//                   <tr>
-//                     <th className="no-sort">
-//                       <label className="checkboxs">
-//                         <input type="checkbox" id="select-all" />
-//                         <span className="checkmarks" />
-//                       </label>
-//                     </th>
-//                     <th>User Name</th>
-//                     <th>Phone</th>
-//                     <th>Email</th>
-//                     <th>Role</th>
-//                     <th>Status</th>
-//                     <th className="no-sort" />
-//                   </tr>
-//                 </thead>
-//                 <tbody>
-//                   {users.length > 0 ? (
-//                     users.map((user) => (
-//                       <tr>
-//                         <td>
-//                           <label className="checkboxs">
-//                             <input type="checkbox" />
-//                             <span className="checkmarks" />
-//                           </label>
-//                         </td>
-//                         <td>
-//                           <div className="d-flex align-items-center">
-//                             <a
-//                               href="javascript:void(0);"
-//                               className="avatar avatar-md me-2"
-//                             >
-
-//                               {user.profileImage &&
-//                               user.profileImage.length > 0 ? (
-//                                 <img
-//                                   src={user.profileImage[0].url}
-//                                   alt="Profile"
-//                                   style={{
-//                                     width: "50px",
-//                                     height: "50px",
-//                                     borderRadius: "10%",
-//                                   }}
-//                                 />
-//                               ) : (
-//                                 <div
-//                                   className="bg-secondary text-white  d-flex justify-content-center align-items-center"
-//                                   style={{ width: "40px", height: "40px" }}
-//                                 >
-//                                   {user.firstName?.charAt(0)}
-//                                   {user.lastName?.charAt(0)}
-//                                 </div>
-//                               )}
-//                             </a>
-//                             <a>
-//                               {" "}
-//                               <td>
-//                                 {user.firstName} {user.lastName}
-//                               </td>
-//                             </a>
-//                           </div>
-//                         </td>
-//                         <td>{user.phone}</td>
-//                         <td>
-//                           <a className="email">{user.email}</a>
-//                         </td>
-//                         <td>{user.role?.roleName}</td>
-//                         <td>
-//                           <span
-//                             className={`badge table-badge fw-medium fs-10 ${
-//                               user.status === "Active"
-//                                 ? "bg-success"
-//                                 : "bg-danger"
-//                             }`}
-//                           >
-//                             {user.status}
-//                           </span>
-//                         </td>
-//                         <td className="action-table-data">
-//                           <div className="edit-delete-action">
-//                             <a className="me-2 p-2">
-//                               <TbEye />
-//                             </a>
-//                             <a
-//                               className="me-2 p-2"
-//                               data-bs-toggle="modal"
-//                               data-bs-target="#edit-user"
-//                               onClick={() => handleOpenEditModal(user)}
-//                             >
-//                               <TbEdit />
-//                             </a>
-
-//                             <a
-//                               className="p-2"
-//                               onClick={() => handleDelete(user._id)}
-//                             >
-//                               <TbTrash />
-//                             </a>
-//                           </div>
-//                         </td>
-//                       </tr>
-//                     ))
-//                   ) : (
-//                     <tr>
-//                       <td colSpan="6" className="text-center text-muted">
-//                         No Users found.
-//                       </td>
-//                     </tr>
-//                   )}
-//                 </tbody>
-//               </table>
-//             </div>
-//           </div>
-//         </div>
-//         {/* /product list */}
-
-//         {/* Add User */}
-//         <div className="modal fade" id="add-user">
-//           <div className="modal-dialog modal-dialog-centered">
-//             <div className="modal-content">
-//               <div className="page-wrapper-new p-0">
-//                 <div className="content">
-//                   <div className="modal-header">
-//                     <div className="page-title">
-//                       <h4>Add User</h4>
-//                     </div>
-//                     <button
-//                       type="button"
-//                       className="close"
-//                       data-bs-dismiss="modal"
-//                       aria-label="Close"
-//                     >
-//                       <span aria-hidden="true">×</span>
-//                     </button>
-//                   </div>
-//                   <form onSubmit={handleAddUser}>
-//                     <div className="modal-body">
-//                       <div className="row">
-//                         <div className="col-lg-12">
-//                           <div className="new-employee-field">
-//                             <div className="profile-pic-upload mb-2">
-//                               <div className="profile-pic">
-//                                 {/* <span>
-//                                   <i
-//                                     data-feather="plus-circle"
-//                                     className="plus-down-add"
-//                                   />
-//                                   Add Image
-//                                 </span> */}
-//                                 <span>
-//                                   {selectedImages.length > 0 ? (
-//                                     <img
-//                                       src={URL.createObjectURL(
-//                                         selectedImages[0]
-//                                       )}
-//                                       alt="Preview"
-//                                       height="60"
-//                                     />
-//                                   ) : (
-//                                     <>
-//                                       <CiCirclePlus className="plus-down-add" />{" "}
-//                                       Add Image
-//                                     </>
-//                                   )}{" "}
-//                                 </span>
-//                               </div>
-//                               <div className="mb-0">
-//                                 <div className="image-upload mb-0">
-//                                   <input
-//                                     type="file"
-//                                     accept="image/*"
-//                                     onChange={(e) =>
-//                                       setSelectedImages(
-//                                         Array.from(e.target.files)
-//                                       )
-//                                     }
-//                                   />
-
-//                                   <div className="image-uploads">
-//                                     <h4>Upload Image</h4>
-//                                   </div>
-//                                 </div>
-//                                 <p className="fs-13 mt-2">
-//                                   JPEG, PNG up to 2 MB
-//                                 </p>
-//                               </div>
-//                             </div>
-//                           </div>
-//                         </div>
-//                         <div className="col-lg-6">
-//                           <div className="mb-3">
-//                             <label className="form-label">
-//                               First Name
-//                               <span className="text-danger ms-1">*</span>
-//                             </label>
-//                             <input
-//                               type="text"
-//                               className="form-control"
-//                               name="firstName"
-//                               value={firstName}
-//                               onChange={(e) => setFirstName(e.target.value)}
-//                             />
-//                           </div>
-//                         </div>
-//                         <div className="col-lg-6">
-//                           <div className="mb-3">
-//                             <label className="form-label">
-//                               Last Name
-//                               <span className="text-danger ms-1">*</span>
-//                             </label>
-//                             <input
-//                               type="text"
-//                               className="form-control"
-//                               name="lastName"
-//                               value={lastName}
-//                               onChange={(e) => setLastName(e.target.value)}
-//                             />
-//                           </div>
-//                         </div>
-//                         <div className="col-lg-12">
-//                           <div className="mb-3">
-//                             <label className="form-label">
-//                               Role<span className="text-danger ms-1">*</span>
-//                             </label>
-
-//                             <Select
-//                               options={activeRoles}
-//                               value={selectedRole}
-//                               onChange={setSelectedRole}
-//                               placeholder="Search or select a role..."
-//                               isSearchable
-//                             />
-//                           </div>
-//                         </div>
-//                         <div className="col-lg-12">
-//                           <div className="mb-3">
-//                             <label className="form-label">
-//                               Email<span className="text-danger ms-1">*</span>
-//                             </label>
-//                             <input
-//                               type="email"
-//                               className="form-control"
-//                               name="email"
-//                               value={email}
-//                               onChange={(e) => setEmail(e.target.value)}
-//                             />
-//                           </div>
-//                         </div>
-//                         <div className="col-lg-12">
-//                           <div className="mb-3">
-//                             <label className="form-label">
-//                               Phone<span className="text-danger ms-1">*</span>
-//                             </label>
-//                             <input
-//                               type="tel"
-//                               className="form-control"
-//                               name="phone"
-//                               value={phone}
-//                               onChange={(e) => setPhone(e.target.value)}
-//                             />
-//                           </div>
-//                         </div>
-//                         <div className="col-lg-6">
-//                           <div className="mb-3">
-//                             <label className="form-label">
-//                               Password
-//                               <span className="text-danger ms-1">*</span>
-//                             </label>
-//                             <div className="pass-group">
-//                               <input
-//                                 type="password"
-//                                 className="pass-input form-control"
-//                                 name="password"
-//                                 value={password}
-//                                 onChange={(e) => setPassword(e.target.value)}
-//                               />
-//                               {/* <TbEye className="ti ti-eye-off toggle-password" /> */}
-//                             </div>
-//                           </div>
-//                         </div>
-//                         <div className="col-lg-6">
-//                           <div className="mb-3">
-//                             <label className="form-label">
-//                               Confirm Password
-//                               <span className="text-danger ms-1">*</span>
-//                             </label>
-//                             <div className="pass-group">
-//                               <input
-//                                 type="password"
-//                                 className="pass-input form-control"
-//                                 name="confirmPassword"
-//                                 value={confirmPassword}
-//                                 onChange={(e) =>
-//                                   setConfirmPassword(e.target.value)
-//                                 }
-//                               />
-//                               <i className="ti ti-eye-off toggle-password" />
-//                             </div>
-//                           </div>
-//                         </div>
-//                         <div className="col-lg-12">
-//                           <div className="status-toggle modal-status d-flex justify-content-between align-items-center">
-//                             <span className="status-label">Status</span>
-//                             <input
-//                               type="checkbox"
-//                               id="user1"
-//                               className="check"
-//                               checked={status}
-//                               onChange={(e) => setStatus(e.target.checked)}
-//                             />
-//                             <label htmlFor="user1" className="checktoggle">
-//                               {" "}
-//                             </label>
-//                           </div>
-//                         </div>
-//                       </div>
-//                     </div>
-//                     <div className="modal-footer">
-//                       <button
-//                         type="button"
-//                         className="btn me-2 btn-secondary"
-//                         data-bs-dismiss="modal"
-//                       >
-//                         Cancel
-//                       </button>
-//                       <button type="submit" className="btn btn-primary">
-//                         Add User
-//                       </button>
-//                     </div>
-//                   </form>
-//                 </div>
-//               </div>
-//             </div>
-//           </div>
-//         </div>
-
-//         {/* Add User Modal Component */}
-//         {/* <AddUserModal
-//         activeRoles={activeRoles}
-//         selectedRole={selectedRole}
-//         setSelectedRole={setSelectedRole}
-//       /> */}
-
-//         {/* Edit User */}
-//         <div className="modal fade" id="edit-user">
-//       <div className="modal-dialog modal-dialog-centered">
-//         <div className="modal-content">
-//           <div className="page-wrapper-new p-0">
-//             <div className="content">
-//               <div className="modal-header">
-//                 <div className="page-title">
-//                   <h4>Edit User</h4>
-//                 </div>
-//                 <button
-//                   type="button"
-//                   className="close"
-//                   data-bs-dismiss="modal"
-//                   aria-label="Close"
-//                   id="edit-user-close-btn"
-//                 >
-//                   <span aria-hidden="true">×</span>
-//                 </button>
-//               </div>
-//               <form onSubmit={handleUpdate}>
-//                 <div className="modal-body">
-//                   <div className="row">
-//                     <div className="col-lg-12">
-//                       <div className="new-employee-field">
-//                         <div className="profile-pic-upload image-field">
-//                           <div className="profile-pic p-2">
-//                             <img
-//                               src={
-//                                 editUserData.profileImage
-//                                   ? URL.createObjectURL(editUserData.profileImage)
-//                                   : 'assets/img/users/user-49.png'
-//                               }
-//                               className="object-fit-cover h-100 rounded-1"
-//                               alt="user"
-//                             />
-//                           </div>
-//                           <div className="mb-3">
-//                             <div className="image-upload mb-0">
-//                               <input
-//                                 type="file"
-//                                 onChange={(e) =>
-//                                   setEditUserData({
-//                                     ...editUserData,
-//                                     profileImage: e.target.files[0],
-//                                   })
-//                                 }
-//                               />
-//                               <div className="image-uploads">
-//                                 <h4>Change Image</h4>
-//                               </div>
-//                             </div>
-//                             <p className="mt-2">JPEG, PNG up to 2 MB</p>
-//                           </div>
-//                         </div>
-//                       </div>
-//                     </div>
-
-//                     {/* First Name */}
-//                     <div className="col-lg-6">
-//                       <div className="mb-3">
-//                         <label className="form-label">First Name *</label>
-//                         <input
-//                           type="text"
-//                           className="form-control"
-//                           value={editUserData.firstName}
-//                           onChange={(e) =>
-//                             setEditUserData({ ...editUserData, firstName: e.target.value })
-//                           }
-//                         />
-//                       </div>
-//                     </div>
-
-//                     {/* Last Name */}
-//                     <div className="col-lg-6">
-//                       <div className="mb-3">
-//                         <label className="form-label">Last Name *</label>
-//                         <input
-//                           type="text"
-//                           className="form-control"
-//                           value={editUserData.lastName}
-//                           onChange={(e) =>
-//                             setEditUserData({ ...editUserData, lastName: e.target.value })
-//                           }
-//                         />
-//                       </div>
-//                     </div>
-
-//                     {/* Role */}
-// <div className="col-lg-12">
-//   <div className="mb-3">
-//     <label className="form-label">
-//       Role<span className="text-danger ms-1">*</span>
-//     </label>
-//     <Select
-//       options={activeRoles}
-//       value={selectedRole}
-//       onChange={(selectedOption) => {
-//         setSelectedRole(selectedOption);
-//         setEditUserData({ ...editUserData, role: selectedOption?.value });
-//       }}
-//       placeholder="Search or select a role..."
-//       isSearchable
-//     />
-//   </div>
-// </div>
-
-//                     {/* Email */}
-//                     <div className="col-lg-12">
-//                       <div className="mb-3">
-//                         <label className="form-label">Email *</label>
-//                         <input
-//                           type="email"
-//                           className="form-control"
-//                           value={editUserData.email}
-//                           onChange={(e) =>
-//                             setEditUserData({ ...editUserData, email: e.target.value })
-//                           }
-//                         />
-//                       </div>
-//                     </div>
-
-//                     {/* Phone */}
-//                     <div className="col-lg-12">
-//                       <div className="mb-3">
-//                         <label className="form-label">Phone *</label>
-//                         <input
-//                           type="tel"
-//                           className="form-control"
-//                           value={editUserData.phone}
-//                           onChange={(e) =>
-//                             setEditUserData({ ...editUserData, phone: e.target.value })
-//                           }
-//                         />
-//                       </div>
-//                     </div>
-
-//                     {/* Password */}
-//                     <div className="col-lg-6">
-//                       <div className="mb-3">
-//                         <label className="form-label">Password *</label>
-//                         <input
-//                           type="password"
-//                           className="form-control"
-//                           value={editUserData.password}
-//                           onChange={(e) =>
-//                             setEditUserData({ ...editUserData, password: e.target.value })
-//                           }
-//                         />
-//                       </div>
-//                     </div>
-
-//                     {/* Confirm Password */}
-//                     <div className="col-lg-6">
-//                       <div className="mb-3">
-//                         <label className="form-label">Confirm Password *</label>
-//                         <input
-//                           type="password"
-//                           className="form-control"
-//                           value={editUserData.confirmPassword}
-//                           onChange={(e) =>
-//                             setEditUserData({ ...editUserData, confirmPassword: e.target.value })
-//                           }
-//                         />
-//                       </div>
-//                     </div>
-
-//                     {/* Status */}
-//                     <div className="col-lg-12">
-//                       <div className="status-toggle modal-status d-flex justify-content-between align-items-center">
-//                         <span className="status-label">Status</span>
-//                         <input
-//                           type="checkbox"
-//                           id="user-status"
-//                           className="check"
-//                           checked={editUserData.status}
-//                           onChange={(e) =>
-//                             setEditUserData({ ...editUserData, status: e.target.checked })
-//                           }
-//                         />
-//                         <label htmlFor="user-status" className="checktoggle" />
-//                       </div>
-//                     </div>
-//                   </div>
-//                 </div>
-
-//                 <div className="modal-footer">
-//                   <button
-//                     type="button"
-//                     className="btn me-2 btn-secondary"
-//                     data-bs-dismiss="modal"
-//                   >
-//                     Cancel
-//                   </button>
-//                   <button type="submit" className="btn btn-primary">
-//                     Save Changes
-//                   </button>
-//                 </div>
-//               </form>
-//             </div>
-//           </div>
-//         </div>
-//       </div>
-//     </div>
-//       </div>
-//     </div>
-//   );
-// };
-
-// export default Users;
-
-
-
 import axios from "axios";
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { FaFileExcel, FaFilePdf } from "react-icons/fa";
@@ -877,14 +14,22 @@ import { GrFormPrevious } from "react-icons/gr";
 import { MdNavigateNext } from "react-icons/md";
 import Iconss from "../../../assets/images/Iconss.png";
 import { Country, State, City } from "country-state-city";
+import jsPDF from 'jspdf';
+import autoTable from 'jspdf-autotable';
+import Papa from 'papaparse';
+import * as XLSX from 'xlsx';
+import { saveAs } from "file-saver";
 
 const Users = () => {
   const [activeRoles, setActiveRoles] = useState([]);
   const [selectedRole, setSelectedRole] = useState(null);
-  const [searchTerm, setSearchTerm] = useState("  ");
+  const [searchTerm, setSearchTerm] = useState("");
   const [selectedStatus, setSelectedStatus] = useState(""); //for active , inactive
   const addFileInputRef = useRef(null);
   const editFileInputRef = useRef(null);
+  // for bulk delete
+  const [selectedUsers, setSelectedUsers] = useState([]);
+  const [selectAll, setSelectAll] = useState(false);
 
   // items page
   const [currentPage, setCurrentPage] = useState(1);
@@ -936,7 +81,7 @@ const Users = () => {
     role: "",
     password: "",
     confirmPassword: "",
-    status: true,
+    status: "Active",
     profileImage: null,
     country: "",
     state: "",
@@ -999,29 +144,13 @@ const Users = () => {
   const filteredUsers = useMemo(() => {
     if (!searchTerm || !users.length || !activeRoles.length) return users;
     return users.filter((user) => {
-      let roleName = "";
+      const fullName = `${user.firstName} ${user.lastName}`.toLowerCase();
+      const email = (user.email || "").toLowerCase();
+      const phone = (user.phone || "").toLowerCase();
+      const search = (searchTerm || "").trim().toLowerCase();
 
-      // Case 1: user.role is a populated object with roleName
-      if (typeof user.role === "object" && user.role?.roleName) {
-        roleName = user.role.roleName;
-      }
 
-      // Case 2: user.role is an ID, look it up from activeRoles
-      else if (typeof user.role === "string") {
-        const matchedRole = activeRoles.find(
-          (r) => String(r.value) === String(user.role)
-        );
-        roleName = matchedRole?.label || "";
-      } else if (typeof user.role === "object" && user.role?._id) {
-        const matchedRole = activeRoles.find(
-          (r) => String(r.value) === String(user.role._id)
-        );
-        roleName = matchedRole?.label || "";
-      }
-
-      const matchesSearch = roleName
-        .toLowerCase()
-        .includes(searchTerm.trim().toLowerCase());
+      const matchesSearch = fullName.includes(search) || email.includes(search) || phone.includes(search);
       const matchesStatus = selectedStatus
         ? (user.status || "").toLowerCase() === selectedStatus.toLowerCase()
         : true;
@@ -1030,6 +159,10 @@ const Users = () => {
       return matchesSearch && matchesStatus;
     });
   }, [searchTerm, selectedStatus, users, activeRoles]);
+
+  useEffect(() => {
+    setCurrentPage(1); // Reset to first page on filter change
+  }, [searchTerm, selectedStatus]);
 
   // items per page
   // Pagination
@@ -1040,7 +173,7 @@ const Users = () => {
   );
 
   // validation rules
-  const nameRegex = /^[A-Za-z]{2,}$/; // only letters, min 2 chars
+  const nameRegex = /^[A-Za-z]+(?: [A-Za-z]+)*$/;
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
   const phoneRegex = /^[0-9]{10}$/;
   const zipRegex = /^[0-9]{5,6}$/;
@@ -1060,7 +193,7 @@ const Users = () => {
     if (!selectedState) newErrors.state = "State is required";
     if (!selectedCity) newErrors.city = "City is required";
     if (!zipRegex.test(zip)) newErrors.zip = "Postal code must be 5–6 digits";
-    if (address.length < 5) newErrors.address = "Address must be at least 5 characters";
+    // if (address.length < 5) newErrors.address = "Address must be at least 5 characters";
     if (!passwordRegex.test(password))
       newErrors.password = "Password must be 8+ chars, include uppercase, lowercase, number & symbol";
     if (confirmPassword !== password)
@@ -1086,7 +219,7 @@ const Users = () => {
     formData.append("password", password);
     formData.append("confirmPassword", confirmPassword);
     formData.append("role", selectedRole.value); // Role ID
-    formData.append("status", status ? "Active" : "Inactive");
+    // formData.append("status", status ? "Active" : "Inactive");  //the backend will now set active by default
     formData.append("country", selectedCountry);
     formData.append("state", selectedState);
     formData.append("city", selectedCity);
@@ -1120,7 +253,7 @@ const Users = () => {
       setConfirmPassword("");
       setProfileImage(null);
       setSelectedRole(null);
-      setStatus(true);
+      // setStatus(true); //the backend will now set active by default
       setSelectedImages([]);
       setCountry("");
       setState("");
@@ -1213,7 +346,9 @@ const Users = () => {
         formData.append("role", editUserData.role);
       }
 
-      formData.append("status", editUserData.status ? "Active" : "Inactive");
+      formData.append("status", editUserData.status === true || editUserData.status === "Active"
+        ? "Active"
+        : "Inactive");
 
       // ✅ Add location fields
       formData.append("country", editUserData.country);
@@ -1277,7 +412,7 @@ const Users = () => {
       email: user.email || "",
       phone: user.phone || "",
       role: selectedRole || { label: "Unknown Role", value: user.role }, // fallback
-      status: user.status ?? true,
+      status: user.status ?? "Active",
       // profileImage: null, // only updated if changed
       profileImage:
         typeof user.profileImage === "string"
@@ -1293,6 +428,113 @@ const Users = () => {
 
   console.log("Filtering:", users.status, selectedStatus);
 
+  const handleFileChange = (e) => {
+    const files = Array.from(e.target.files);
+    // check if any file exceeds 1MB
+    const oversizedFile = files.find((file) => file.size > 1 * 1024 * 1024);
+    if (oversizedFile) {
+      toast.error(`File ${oversizedFile.name} exceeds 1MB size limit.`);
+      e.target.value = null; // reset input
+      return;
+    }
+    setSelectedImages(files);
+  }
+
+  const handleEditFileChange = (e) => {
+    const file = e.target.files[0];
+    if (file && file.size > 1 * 1024 * 1024) { // 1MB limit
+      toast.error(`File ${file.name} exceeds 1MB size limit.`);
+      e.target.value = null; // reset input
+      return;
+    }
+    setEditUserData({
+      ...editUserData,
+      profileImage: file,
+    })
+  }
+
+  // handle single checkbox toggle
+  const handleCheckboxChange = (id) => {
+    setSelectedUsers((prevUsers) =>
+      prevUsers.includes(id) ? prevUsers.filter((userId) => userId !== id) : [...prevUsers, id]
+    );
+  }
+
+  const handleSelectAll = () => {
+    if (selectAll) {
+      setSelectedUsers([]);
+    } else {
+      setSelectedUsers(paginatedUsers.map((user) => user._id));
+    }
+    setSelectAll(!selectAll);
+  }
+
+  // handle bulk delete
+  const handleBulkDelete = async () => {
+    if (selectedUsers.length === 0) {
+      toast.warn("No users selected for deletion");
+      return;
+    }
+    if (!window.confirm(`Are you sure you want to delete ${selectedUsers.length} users?`)) return;
+
+    try {
+      const token = localStorage.getItem("token");
+      await axios.delete(`${BASE_URL}/api/user/bulk-delete`, {
+        data: { ids: selectedUsers },
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      toast.success(`${selectedUsers.length} users deleted successfully`);
+      setSelectedUsers([]);
+      setSelectAll(false);
+      fetchUsers();
+    }
+    catch (err) {
+      console.error(err);
+      toast.error("Bulk delete failed");
+    }
+  }
+
+  const handleExportPDF = () => {
+    const doc = new jsPDF();
+    doc.text("User List", 14, 16);
+    const tableColumn = ["First Name", "Last Name", "Email", "Role", "Phone", "Status"];
+    const tableRows = [];
+    filteredUsers.forEach(user => {
+      const userData = [
+        user.firstName,
+        user.lastName,
+        user.email,
+        user.role?.roleName || "N/A",
+        user.phone,
+        user.status || "N/A"
+      ];
+      tableRows.push(userData);
+    });
+    autoTable(doc, {
+      startY: 20,
+      head: [tableColumn],
+      body: tableRows,
+    });
+    doc.save('user_list.pdf');
+  }
+
+  const handleExportExcel = () => {
+    const worksheetData = filteredUsers.map(user => ({
+      "First Name": user.firstName,
+      "Last Name": user.lastName,
+      "Email": user.email,
+      "Role": user.role?.roleName || "N/A",
+      "Phone": user.phone,
+      "Status": user.status || "N/A"
+    }));
+    // create worksheet
+    const worksheet = XLSX.utils.json_to_sheet(worksheetData);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, "Users");
+    const excelBuffer = XLSX.write(workbook, { bookType: "xlsx", type: "array" });
+    const data = new Blob([excelBuffer], { type: "application/octet-stream" });
+    saveAs(data, "user_list.xlsx");
+  }
 
   return (
     <div className="page-wrapper user-wrappe">
@@ -1315,12 +557,25 @@ const Users = () => {
           </div>
           <div className="table-top-head me-2">
             <li>
-              <button type="button" className="icon-btn" title="Pdf">
+              {selectedUsers.length > 0 && (
+                <button
+                  type="button"
+                  className="btn btn-danger"
+                  onClick={handleBulkDelete}
+                  disabled={selectedUsers.length === 0}
+                >
+                  Delete ({selectedUsers.length})
+                </button>
+              )
+              }
+            </li>
+            <li>
+              <button type="button" onClick={handleExportPDF} className="icon-btn" title="Pdf">
                 <FaFilePdf />
               </button>
             </li>
             <li>
-              <button type="button" className="icon-btn" title="Export Excel">
+              <button type="button" onClick={handleExportExcel} className="icon-btn" title="Export Excel">
                 <FaFileExcel />
               </button>
             </li>
@@ -1366,40 +621,24 @@ const Users = () => {
             style={{ padding: "16px 0px 16px 0px" }}
           >
             <div className="search-set">
-              {/* <div className="search-input" style={{ position: "relative" }}>
+              <div className="search-input">
                 <BiSearch
                   style={{
                     position: "absolute",
                     top: "50%",
                     left: "10px",
                     transform: "translateY(-50%)",
+                    zIndex: 1,
+                    pointerEvents: "none",
                   }}
                 />
                 <input
                   type="text"
-                  placeholder="Search"
+                  placeholder="Search user by name ,email or phone"
                   className="search-inputsrch"
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  style={{ paddingLeft: "30px", borderRadius: '5px', padding: '4px 20px', border: '1px solid #bbbbbb' }}
-                />
-              </div> */}
-              <div className="search-input" style={{ position: 'relative' }}>
-                <BiSearch
-                  style={{
-                    position: "absolute",
-                    top: "50%",
-                    left: "10px",
-                    transform: "translateY(-50%)",
-                  }}
-                />
-                <input
-                  type="text"
-                  placeholder="Search"
-                  className="search-inputsrch"
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  style={{ paddingLeft: "35px" }}
+                  style={{ paddingLeft: "40px" }}
                 />
               </div>
               {/* search end */}
@@ -1548,7 +787,7 @@ const Users = () => {
                       <label className="">
                         <input
                           type="checkbox"
-                          id="select-all"
+                          id="select-all" checked={selectAll} onChange={handleSelectAll}
                           style={{ border: "1px solid #676767" }}
                         />
                         <span className="checkmarks" />
@@ -1631,6 +870,8 @@ const Users = () => {
                           <label className="">
                             <input
                               type="checkbox"
+                              checked={selectedUsers.includes(user._id)}
+                              onChange={() => handleCheckboxChange(user._id)}
                               style={{ border: "1px solid #1d1d1dff" }}
                             />
                             <span className="checkmarks" />
@@ -1653,7 +894,7 @@ const Users = () => {
                               style={{
                                 width: "36px",
                                 height: "36px",
-                                borderRadius: "4px",
+                                borderRadius: "50%",
                               }}
                             >
                               {user.profileImage && user.profileImage.url ? (
@@ -1663,7 +904,7 @@ const Users = () => {
                                   style={{
                                     width: "36px",
                                     height: "36px",
-                                    borderRadius: "4px",
+                                    borderRadius: "50%",
                                   }}
                                 />
                               ) : (
@@ -1672,7 +913,7 @@ const Users = () => {
                                   style={{
                                     width: "36px",
                                     height: "36px",
-                                    borderRadius: "4px",
+                                    borderRadius: "50%",
                                     border: "1px solid #E6E6E6",
                                     textDecoration: "none",
                                   }}
@@ -1964,9 +1205,7 @@ const Users = () => {
                       accept="image/*"
                       ref={addFileInputRef}
                       style={{ display: "none" }}
-                      onChange={(e) =>
-                        setSelectedImages(Array.from(e.target.files))
-                      }
+                      onChange={handleFileChange}
                     />
 
                     <div
@@ -2013,7 +1252,7 @@ const Users = () => {
                           marginTop: "10px",
                         }}
                       >
-                        Upload an image below 2MB, Accepted File format JPG, PNG
+                        Upload an image below 1MB, Accepted File format JPG, PNG
                       </p>
                     </div>
 
@@ -2039,23 +1278,26 @@ const Users = () => {
                             gap: "5px",
                           }}
                         >
-                          <label
-                            className="ffrrstname"
-                            style={{
-                              fontWeight: "400",
-                              fontSize: "14px",
-                              lineHeight: "14px",
-                            }}
-                          >
-                            First Name
-                          </label>
+                          <span>
+                            <label
+                              className="ffrrstname"
+                              style={{
+                                fontWeight: "400",
+                                fontSize: "14px",
+                                lineHeight: "14px",
+                              }}
+                            >
+                              First Name
+                            </label>
+                            <span className="text-danger ms-1">*</span>
+                          </span>
                           <input
                             type="text"
                             className="ffrrstnameinput"
                             name="firstName"
                             value={firstName}
                             onChange={(e) => setFirstName(e.target.value)}
-                            placeholder="Akash"
+                            placeholder="Enter your first name"
                             required
                           />
                           {errors.firstName && <p style={{ color: 'red', fontSize: '12px' }}>{errors.firstName}</p>}
@@ -2070,23 +1312,26 @@ const Users = () => {
                             gap: "5px",
                           }}
                         >
-                          <label
-                            className="ffrrstname"
-                            style={{
-                              fontWeight: "400",
-                              fontSize: "14px",
-                              lineHeight: "14px",
-                            }}
-                          >
-                            Last Name
-                          </label>
+                          <span>
+                            <label
+                              className="ffrrstname"
+                              style={{
+                                fontWeight: "400",
+                                fontSize: "14px",
+                                lineHeight: "14px",
+                              }}
+                            >
+                              Last Name
+                            </label>
+                            <span className="text-danger ms-1">*</span>
+                          </span>
                           <input
                             type="text"
                             className="ffrrstnameinput"
                             name="lastName"
                             value={lastName}
                             onChange={(e) => setLastName(e.target.value)}
-                            placeholder="Kumar"
+                            placeholder="Enter your last name"
                             required
                           />
                           {errors.lastName && <p style={{ color: 'red', fontSize: '12px' }}>{errors.lastName}</p>}
@@ -2117,17 +1362,19 @@ const Users = () => {
                             gap: "5px",
                           }}
                         >
-                          <label
-                            className="ffrrstname"
-                            style={{
-                              fontWeight: "400",
-                              fontSize: "14px",
-                              lineHeight: "14px",
-                            }}
-                          >
-                            Role
-                          </label>
-
+                          <span>
+                            <label
+                              className="ffrrstname"
+                              style={{
+                                fontWeight: "400",
+                                fontSize: "14px",
+                                lineHeight: "14px",
+                              }}
+                            >
+                              Role
+                            </label>
+                            <span className="text-danger ms-1">*</span>
+                          </span>
                           <Select
                             options={activeRoles}
                             value={selectedRole}
@@ -2174,23 +1421,26 @@ const Users = () => {
                               gap: "5px",
                             }}
                           >
-                            <label
-                              className="ffrrstname"
-                              style={{
-                                fontWeight: "400",
-                                fontSize: "14px",
-                                lineHeight: "14px",
-                              }}
-                            >
-                              Email
-                            </label>
+                            <span>
+                              <label
+                                className="ffrrstname"
+                                style={{
+                                  fontWeight: "400",
+                                  fontSize: "14px",
+                                  lineHeight: "14px",
+                                }}
+                              >
+                                Email
+                              </label>
+                              <span className="text-danger ms-1">*</span>
+                            </span>
                             <input
                               type="email"
                               className="ffrrstnameinput"
                               name="email"
                               value={email}
                               onChange={(e) => setEmail(e.target.value)}
-                              placeholder="akash@gmail.com"
+                              placeholder="Enter your email"
                               required
                             />
                             {errors.email && <p style={{ color: 'red', fontSize: '12px' }}>{errors.email}</p>}
@@ -2205,23 +1455,26 @@ const Users = () => {
                               gap: "5px",
                             }}
                           >
-                            <label
-                              className="ffrrstname"
-                              style={{
-                                fontWeight: "400",
-                                fontSize: "14px",
-                                lineHeight: "14px",
-                              }}
-                            >
-                              Phone
-                            </label>
+                            <span>
+                              <label
+                                className="ffrrstname"
+                                style={{
+                                  fontWeight: "400",
+                                  fontSize: "14px",
+                                  lineHeight: "14px",
+                                }}
+                              >
+                                Phone
+                              </label>
+                              <span className="text-danger ms-1">*</span>
+                            </span>
                             <input
                               type="tel"
                               className="ffrrstnameinput"
                               name="phone"
                               value={phone}
                               onChange={(e) => setPhone(e.target.value)}
-                              placeholder="9876543210"
+                              placeholder="Enter your 10 digit number"
                               required
                             />
                             {errors.phone && <p style={{ color: 'red', fontSize: '12px' }}>{errors.phone}</p>}
@@ -2246,16 +1499,19 @@ const Users = () => {
                           width: "25%",
                         }}
                       >
-                        <label
-                          className="ffrrstname"
-                          style={{
-                            fontWeight: "400",
-                            fontSize: "14px",
-                            lineHeight: "14px",
-                          }}
-                        >
-                          Country
-                        </label>
+                        <span>
+                          <label
+                            className="ffrrstname"
+                            style={{
+                              fontWeight: "400",
+                              fontSize: "14px",
+                              lineHeight: "14px",
+                            }}
+                          >
+                            Country
+                          </label>
+                          <span className="text-danger ms-1">*</span>
+                        </span>
                         <select
                           className="ffrrstnameinput"
                           value={selectedCountry}
@@ -2289,16 +1545,19 @@ const Users = () => {
                           width: "25%",
                         }}
                       >
-                        <label
-                          className="ffrrstname"
-                          style={{
-                            fontWeight: "400",
-                            fontSize: "14px",
-                            lineHeight: "14px",
-                          }}
-                        >
-                          State
-                        </label>
+                        <span>
+                          <label
+                            className="ffrrstname"
+                            style={{
+                              fontWeight: "400",
+                              fontSize: "14px",
+                              lineHeight: "14px",
+                            }}
+                          >
+                            State
+                          </label>
+                          <span className="text-danger ms-1">*</span>
+                        </span>
                         <select
                           className="ffrrstnameinput"
                           value={selectedState}
@@ -2331,16 +1590,19 @@ const Users = () => {
                           width: "25%",
                         }}
                       >
-                        <label
-                          className="ffrrstname"
-                          style={{
-                            fontWeight: "400",
-                            fontSize: "14px",
-                            lineHeight: "14px",
-                          }}
-                        >
-                          City
-                        </label>
+                        <span>
+                          <label
+                            className="ffrrstname"
+                            style={{
+                              fontWeight: "400",
+                              fontSize: "14px",
+                              lineHeight: "14px",
+                            }}
+                          >
+                            City
+                          </label>
+                          <span className="text-danger ms-1">*</span>
+                        </span>
                         <select
                           value={selectedCity}
                           onChange={(e) => setSelectedCity(e.target.value)}
@@ -2371,21 +1633,24 @@ const Users = () => {
                           width: "25%",
                         }}
                       >
-                        <label
-                          className="ffrrstname"
-                          style={{
-                            fontWeight: "400",
-                            fontSize: "14px",
-                            lineHeight: "14px",
-                          }}
-                        >
-                          Postal Code
-                        </label>
+                        <span>
+                          <label
+                            className="ffrrstname"
+                            style={{
+                              fontWeight: "400",
+                              fontSize: "14px",
+                              lineHeight: "14px",
+                            }}
+                          >
+                            Postal Code
+                          </label>
+                          <span className="text-danger ms-1">*</span>
+                        </span>
                         <input
                           value={zip}
                           onChange={(e) => setZip(e.target.value)}
                           className="ffrrstnameinput"
-                          placeholder="800007"
+                          placeholder="Enter Postal Code"
                           type="number"
                           style={{
                             backgroundColor: "#FBFBFB",
@@ -2427,8 +1692,8 @@ const Users = () => {
                           name="address"
                           value={address}
                           onChange={(e) => setAddress(e.target.value)}
-                          placeholder="Address"
-                          required
+                          placeholder="Enter your permanent Address(optional)"
+
                         />
                         {errors.address && <p style={{ color: 'red', fontSize: '12px' }}>{errors.address}</p>}
                       </div>
@@ -2457,23 +1722,26 @@ const Users = () => {
                               gap: "5px",
                             }}
                           >
-                            <label
-                              className="ffrrstname"
-                              style={{
-                                fontWeight: "400",
-                                fontSize: "14px",
-                                lineHeight: "14px",
-                              }}
-                            >
-                              Password
-                            </label>
+                            <span>
+                              <label
+                                className="ffrrstname"
+                                style={{
+                                  fontWeight: "400",
+                                  fontSize: "14px",
+                                  lineHeight: "14px",
+                                }}
+                              >
+                                Password
+                              </label>
+                              <span className="text-danger ms-1">*</span>
+                            </span>
                             <input
                               type="password"
                               className="ffrrstnameinput"
                               name="password"
                               value={password}
                               onChange={(e) => setPassword(e.target.value)}
-                              placeholder="Password@123"
+                              placeholder="Enter your Password"
                               required
                             />
                             {errors.password && <p style={{ color: 'red', fontSize: '12px' }}>{errors.password}</p>}
@@ -2488,16 +1756,19 @@ const Users = () => {
                               gap: "5px",
                             }}
                           >
-                            <label
-                              className="ffrrstname"
-                              style={{
-                                fontWeight: "400",
-                                fontSize: "14px",
-                                lineHeight: "14px",
-                              }}
-                            >
-                              Confirm Password
-                            </label>
+                            <span>
+                              <label
+                                className="ffrrstname"
+                                style={{
+                                  fontWeight: "400",
+                                  fontSize: "14px",
+                                  lineHeight: "14px",
+                                }}
+                              >
+                                Confirm Password
+                              </label>
+                              <span className="text-danger ms-1">*</span>
+                            </span>
                             <input
                               type="password"
                               className="ffrrstnameinput"
@@ -2506,7 +1777,7 @@ const Users = () => {
                               onChange={(e) =>
                                 setConfirmPassword(e.target.value)
                               }
-                              placeholder="Password@123"
+                              placeholder="confirm your Password"
                               required
                             />
                             {errors.confirmPassword && <p style={{ color: 'red', fontSize: '12px' }}>{errors.confirmPassword}</p>}
@@ -2515,7 +1786,7 @@ const Users = () => {
                         </div>
                       </div>
                     </div>
-                    <div
+                    {/* <div
                       style={{
                         flex: "0 0 50%",
                         display: "flex",
@@ -2601,18 +1872,8 @@ const Users = () => {
                             </li>
                           </ul>
                         </div>
-                        {/* <input
-                            type="checkbox"
-                            id="user1"
-                            className="check"
-                            checked={status}
-                            onChange={(e) => setStatus(e.target.checked)}
-                          />
-                          <label htmlFor="user1" className="checktoggle">
-                            {" "}
-                          </label> */}
                       </div>
-                    </div>
+                    </div> */}
                   </div>
                   <div
                     style={{
@@ -2755,12 +2016,7 @@ const Users = () => {
                       accept="image/*"
                       ref={editFileInputRef}
                       style={{ display: "none" }}
-                      onChange={(e) =>
-                        setEditUserData({
-                          ...editUserData,
-                          profileImage: e.target.files[0],
-                        })
-                      }
+                      onChange={handleEditFileChange}
                     />
 
                     {/* Upload button + hint */}
@@ -2794,7 +2050,7 @@ const Users = () => {
                           style={{ width: "20px", height: "20px" }}
                         />
                         <span className="setting-imgupload-btn">
-                          Upload Image
+                          Change Image
                         </span>
                       </div>
 
@@ -2807,7 +2063,7 @@ const Users = () => {
                           marginTop: "10px",
                         }}
                       >
-                        Upload an image below 2MB, Accepted File format JPG, PNG
+                        Upload an image below 1MB, Accepted File format JPG, PNG
                       </p>
                     </div>
 
@@ -2833,16 +2089,19 @@ const Users = () => {
                           gap: "5px",
                         }}
                       >
-                        <label
-                          className="ffrrstname"
-                          style={{
-                            fontWeight: "400",
-                            fontSize: "14px",
-                            lineHeight: "14px",
-                          }}
-                        >
-                          First Name{" "}
-                        </label>
+                        <span>
+                          <label
+                            className="ffrrstname"
+                            style={{
+                              fontWeight: "400",
+                              fontSize: "14px",
+                              lineHeight: "14px",
+                            }}
+                          >
+                            First Name{" "}
+                          </label>
+                          <span className="text-danger ms-1">*</span>
+                        </span>
                         <input
                           type="text"
                           className="ffrrstnameinput"
@@ -2868,16 +2127,19 @@ const Users = () => {
                           gap: "5px",
                         }}
                       >
-                        <label
-                          className="ffrrstname"
-                          style={{
-                            fontWeight: "400",
-                            fontSize: "14px",
-                            lineHeight: "14px",
-                          }}
-                        >
-                          Last Name{" "}
-                        </label>
+                        <span>
+                          <label
+                            className="ffrrstname"
+                            style={{
+                              fontWeight: "400",
+                              fontSize: "14px",
+                              lineHeight: "14px",
+                            }}
+                          >
+                            Last Name{" "}
+                          </label>
+                          <span className="text-danger ms-1">*</span>
+                        </span>
                         <input
                           type="text"
                           className="ffrrstnameinput"
@@ -2917,16 +2179,19 @@ const Users = () => {
                           gap: "5px",
                         }}
                       >
-                        <label
-                          className="ffrrstname"
-                          style={{
-                            fontWeight: "400",
-                            fontSize: "14px",
-                            lineHeight: "14px",
-                          }}
-                        >
-                          Role
-                        </label>
+                        <span>
+                          <label
+                            className="ffrrstname"
+                            style={{
+                              fontWeight: "400",
+                              fontSize: "14px",
+                              lineHeight: "14px",
+                            }}
+                          >
+                            Role
+                          </label>
+                          <span className="text-danger ms-1">*</span>
+                        </span>
                         <Select
                           options={activeRoles}
                           value={editUserData.role}
@@ -2974,16 +2239,19 @@ const Users = () => {
                             gap: "5px",
                           }}
                         >
-                          <label
-                            className="ffrrstname"
-                            style={{
-                              fontWeight: "400",
-                              fontSize: "14px",
-                              lineHeight: "14px",
-                            }}
-                          >
-                            Email{" "}
-                          </label>
+                          <span>
+                            <label
+                              className="ffrrstname"
+                              style={{
+                                fontWeight: "400",
+                                fontSize: "14px",
+                                lineHeight: "14px",
+                              }}
+                            >
+                              Email{" "}
+                            </label>
+                            <span className="text-danger ms-1">*</span>
+                          </span>
                           <input
                             type="email"
                             className="ffrrstnameinput"
@@ -3009,16 +2277,19 @@ const Users = () => {
                             gap: "5px",
                           }}
                         >
-                          <label
-                            className="ffrrstname"
-                            style={{
-                              fontWeight: "400",
-                              fontSize: "14px",
-                              lineHeight: "14px",
-                            }}
-                          >
-                            Phone{" "}
-                          </label>
+                          <span>
+                            <label
+                              className="ffrrstname"
+                              style={{
+                                fontWeight: "400",
+                                fontSize: "14px",
+                                lineHeight: "14px",
+                              }}
+                            >
+                              Phone{" "}
+                            </label>
+                            <span className="text-danger ms-1">*</span>
+                          </span>
                           <input
                             type="tel"
                             className="ffrrstnameinput"
@@ -3052,16 +2323,19 @@ const Users = () => {
                         width: "25%",
                       }}
                     >
-                      <label
-                        className="ffrrstname"
-                        style={{
-                          fontWeight: "400",
-                          fontSize: "14px",
-                          lineHeight: "14px",
-                        }}
-                      >
-                        Country
-                      </label>
+                      <span>
+                        <label
+                          className="ffrrstname"
+                          style={{
+                            fontWeight: "400",
+                            fontSize: "14px",
+                            lineHeight: "14px",
+                          }}
+                        >
+                          Country
+                        </label>
+                        <span className="text-danger ms-1">*</span>
+                      </span>
                       <select
                         className="ffrrstnameinput"
                         value={editUserData.country}
@@ -3102,16 +2376,19 @@ const Users = () => {
                         width: "25%",
                       }}
                     >
-                      <label
-                        className="ffrrstname"
-                        style={{
-                          fontWeight: "400",
-                          fontSize: "14px",
-                          lineHeight: "14px",
-                        }}
-                      >
-                        State
-                      </label>
+                      <span>
+                        <label
+                          className="ffrrstname"
+                          style={{
+                            fontWeight: "400",
+                            fontSize: "14px",
+                            lineHeight: "14px",
+                          }}
+                        >
+                          State
+                        </label>
+                        <span className="text-danger ms-1">*</span>
+                      </span>
                       <select
                         className="ffrrstnameinput"
                         value={editUserData.state}
@@ -3157,16 +2434,19 @@ const Users = () => {
                         width: "25%",
                       }}
                     >
-                      <label
-                        className="ffrrstname"
-                        style={{
-                          fontWeight: "400",
-                          fontSize: "14px",
-                          lineHeight: "14px",
-                        }}
-                      >
-                        City
-                      </label>
+                      <span>
+                        <label
+                          className="ffrrstname"
+                          style={{
+                            fontWeight: "400",
+                            fontSize: "14px",
+                            lineHeight: "14px",
+                          }}
+                        >
+                          City
+                        </label>
+                        <span className="text-danger ms-1">*</span>
+                      </span>
                       <select
                         value={editUserData.city}
                         onChange={(e) => setEditUserData({ ...editUserData, city: e.target.value })}
@@ -3198,16 +2478,19 @@ const Users = () => {
                         width: "25%",
                       }}
                     >
-                      <label
-                        className="ffrrstname"
-                        style={{
-                          fontWeight: "400",
-                          fontSize: "14px",
-                          lineHeight: "14px",
-                        }}
-                      >
-                        Postal Code
-                      </label>
+                      <span>
+                        <label
+                          className="ffrrstname"
+                          style={{
+                            fontWeight: "400",
+                            fontSize: "14px",
+                            lineHeight: "14px",
+                          }}
+                        >
+                          Postal Code
+                        </label>
+                        <span className="text-danger ms-1">*</span>
+                      </span>
                       <input
                         value={editUserData.postalcode}
                         onChange={(e) =>
@@ -3264,13 +2547,12 @@ const Users = () => {
                           })
                         }
                         placeholder="Address"
-                        required
                       />
                     </div>
                   </div>
                   {/* address end */}
                   {/* Password */}
-                  <div
+                  {/* <div
                     style={{
                       display: "flex",
                       gap: "20px",
@@ -3317,7 +2599,7 @@ const Users = () => {
                         </div>
                       </div>
 
-                      {/* Confirm Password */}
+                   
                       <div style={{ flex: "1" }}>
                         <div
                           style={{
@@ -3351,7 +2633,7 @@ const Users = () => {
                         </div>
                       </div>
                     </div>
-                  </div>
+                  </div> */}
 
                   {/* Status */}
                   <div
@@ -3394,7 +2676,7 @@ const Users = () => {
                             padding: "10px",
                           }}
                         >
-                          {editUserData.status ? "Active" : "Inactive"}{" "}
+                          {editUserData.status === "Active" ? "Active" : "Inactive"}
                           <BiChevronDown
                             style={{ marginLeft: "10px", fontSize: "20px" }}
                           />
@@ -3411,7 +2693,7 @@ const Users = () => {
                               onClick={() =>
                                 setEditUserData({
                                   ...editUserData,
-                                  status: true,
+                                  status: "Active",
                                 })
                               }
                               onMouseOver={(e) => {
@@ -3433,7 +2715,7 @@ const Users = () => {
                               onClick={() =>
                                 setEditUserData({
                                   ...editUserData,
-                                  status: false,
+                                  status: "Inactive",
                                 })
                               }
                               onMouseOver={(e) => {

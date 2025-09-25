@@ -1,5 +1,3 @@
-
-
 import React, { useEffect, useRef, useState } from 'react';
 import axios from 'axios';
 import Select from "react-select";
@@ -107,7 +105,7 @@ const AddSupplierModals = ({ onClose, onSuccess, editSupplier }) => {
   const [gstDetails, setGstDetails] = useState(null);
   const [gstLoading, setGstLoading] = useState(false);
   const [gstError, setGstError] = useState('');
-const token = localStorage.getItem("token");
+  const token = localStorage.getItem("token");
 
   const businessTypeOptions = [
     { value: 'Manufacturer', label: 'Manufacturer' },
@@ -123,8 +121,9 @@ const token = localStorage.getItem("token");
 
   const fetchCountries = async () => {
     try {
+      const token = localStorage.getItem("token");
       const res = await axios.get(`${BASE_URL}/api/countries`,{
-         headers: {
+        headers: {
         Authorization: `Bearer ${token}`,
       },
       });
@@ -137,8 +136,9 @@ const token = localStorage.getItem("token");
 
   const fetchStates = async () => {
     try {
+      const token = localStorage.getItem("token");
       const res = await axios.get(`${BASE_URL}/api/states`,{
-         headers: {
+        headers: {
         Authorization: `Bearer ${token}`,
       },
       });
@@ -150,8 +150,9 @@ const token = localStorage.getItem("token");
 
   const fetchCities = async () => {
     try {
+      const token = localStorage.getItem("token");
       const res = await axios.get(`${BASE_URL}/api/city/cities`,{
-         headers: {
+        headers: {
         Authorization: `Bearer ${token}`,
       },
       });
@@ -214,10 +215,12 @@ const token = localStorage.getItem("token");
       const res = await axios.post(`${BASE_URL}/api/suppliers/verify-gstin`, {
 
         gstin: form.gstin,
-         headers: {
+      },
+        {
+        headers: {
         Authorization: `Bearer ${token}`,
       },
-      });
+        });
       const data = res.data;
       if (data.valid) {
         setForm(prev => ({
@@ -500,8 +503,8 @@ if (selectedImages.length > 0 && selectedImages.some(img => img.file)) {
                  </div>
 
                  <div className="mb-0">
-                   <div className="image-upload mb-2">
-                     <input type="file" ref={fileInputRef} style={{ display: 'none' }} onChange={handleFileChange} />
+                   <div className="image-upload mb-2" style={{backgroundColor:"#007aff"}}>
+                     <input type="file" ref={fileInputRef} style={{ display: 'none' }} accept="image/*" onChange={handleFileChange} />
                      <div className="image-uploads" onClick={handleUploadClick} style={{ cursor: 'pointer' }}>
                        <h4>Upload Image</h4>
                      </div>
@@ -730,7 +733,7 @@ if (selectedImages.length > 0 && selectedImages.some(img => img.file)) {
              <label className="form-check-label">Status</label>
            </div>
          </div>
-         <div className="modal-footer">
+         <div className="modal-footer" style={{display:'flex', gap:'5px'}}>
            <button type="button" className="btn btn-secondary" onClick={onClose}>Cancel</button>
            <button type="submit" className="btn btn-primary" disabled={loading}>
              {loading ? 'Saving...' : (editSupplier ? 'Update Supplier' : 'Add Supplier')}

@@ -23,8 +23,7 @@ exports.createCategory = async (req, res) => {
 
     const category = await Category.create({
       categoryName,
-      categorySlug:
-        categorySlug && categorySlug.trim() !== "" ? categorySlug : undefined,
+      categorySlug: categorySlug?.trim() ? categorySlug.trim() : null,
       categoryCode,
     });
 
