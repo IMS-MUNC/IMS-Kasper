@@ -316,6 +316,11 @@ const token = localStorage.getItem("token");
 
       Swal.fire("Success", "Purchase created successfully", "success");
 
+
+
+      // window.$(`#add-purchase`).modal("hide");
+      navigate("/purchase-list");
+
     } catch (error) {
       console.error("Failed to create purchase:", error);
     }
@@ -396,13 +401,14 @@ const token = localStorage.getItem("token");
   }, [paymentType, paidAmount, grandTotal]);
 
 
+
   const fileInputRef = useRef();
 
   // ✅ Trigger hidden file input when clicking the icon
   const handleIconClick = () => {
     fileInputRef.current.click();
   };
-  
+
   return (
     <div className="modal fade" id="add-purchase">
       <div className="modal-dialog purchase modal-dialog-centered">
@@ -816,7 +822,7 @@ const token = localStorage.getItem("token");
                     </div>
                   </div>
 
-                  {/* <div className="profile-pic-upload mb-3">
+                  <div className="profile-pic-upload mb-3">
                     <div className="d-flex gap-2 flex-wrap">
                       {imagePreviews.length > 0 ? (
                         imagePreviews.map((preview, index) => (
@@ -845,6 +851,7 @@ const token = localStorage.getItem("token");
 
                       </div>
                     </div>
+
 
                   </div> */}
                    <div className="profile-pic-upload mb-3">
@@ -950,6 +957,9 @@ const token = localStorage.getItem("token");
                                           <p className="mt-2">JPEG, PNG up to 2 MB</p>
                                         </div>
                                       </div> */}
+
+                  </div>
+
 
                 </div>
               </div>
