@@ -881,7 +881,7 @@ const Product = () => {
             style={{
               position: "fixed",
               top: "0",
-              left: "0",
+              left: "100px",
               width: "100%",
               height: "100%",
               backgroundColor: "rgba(199, 197, 197, 0.4)",
@@ -1292,7 +1292,7 @@ const Product = () => {
 
                         {/* Supplier & Warehouse */}
                         <div className="category">
-                          <div className="category-item">
+                          {/* <div className="category-item">
                             <p className="label">Supplier</p>
                             <p
                               className="value"
@@ -1305,7 +1305,10 @@ const Product = () => {
                             >
                               {selectedProduct.supplierName || "-"}
                             </p>
-                          </div>
+                          </div> */}
+
+
+                          
                           {/* <div className="category-item">
                               <p className="label">Store</p>
                               <p

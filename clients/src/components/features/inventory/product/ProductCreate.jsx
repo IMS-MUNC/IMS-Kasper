@@ -7,6 +7,7 @@ import axios from "axios";
 import { toast } from "react-toastify";
 import { useDropzone } from "react-dropzone";
 import { MdImageSearch } from "react-icons/md";
+import { TbTrash } from "react-icons/tb";
 import CategoryModal from "../../../../pages/Modal/categoryModals/CategoryModal";
 import { TbChevronUp, TbEye, TbRefresh } from "react-icons/tb";
 import { useTranslation } from "react-i18next";
@@ -19,14 +20,31 @@ const ProductForm = () => {
   const { t } = useTranslation();
 
 
-  // Define regex patterns for validation
+
+  // Improved regex patterns for validation with examples
+  // Example: productName: "Apple iPhone 15"
+  // Example: sku: "SKU-1234"
+  // Example: price: "199.99"
+  // Example: quantity: "100"
+  // Example: description: "A great product!"
+  // Example: seoTitle: "Best iPhone 2025"
+  // Example: seoDescription: "Buy the best iPhone at a great price."
+  // Example: leadTime: "7"
+  // Example: reorderLevel: "50"
+  // Example: initialStock: "200"
+  // Example: serialNumber: "SN-123456"
+  // Example: batchNumber: "BATCH-001"
+  // Example: discountValue: "10.50"
+  // Example: quantityAlert: "5"
+  // Example: categoryName: "Electronics"
+  // Example: categorySlug: "electronics"
+  // Example: variantValue: "Red, Blue, Green"
   const validationPatterns = {
-    productName: /^[A-Za-z\s]{2,50}$/,
+    productName: /^[A-Za-z0-9\s\-]{2,50}$/,
     sku: /^[A-Z0-9\-]{3,20}$/,
-    // itemBarcode: /^[A-Z0-9]{6,20}$/,
     price: /^\d+(\.\d{1,2})?$/,
     quantity: /^\d{1,10}$/,
-    description: /^[\w\s.,!?-]{0,300}$/,
+    description: /^[\w\s.,!?\-]{0,300}$/,
     seoTitle: /^[a-zA-Z0-9\s\-]{2,60}$/,
     seoDescription: /^[a-zA-Z0-9\s\-,.]{2,160}$/,
     leadTime: /^\d{1,4}$/,
@@ -41,14 +59,23 @@ const ProductForm = () => {
     variantValue: /^[a-zA-Z0-9\s,]{1,100}$/,
   };
 
-  // Sanitization function
+  // Improved sanitization: strips HTML, trims, and normalizes whitespace
+  // Example: sanitizeInput('<b>  Apple  </b>') => 'Apple'
+
+  // Improved sanitization: strips HTML, trims, and normalizes whitespace
+  // Example: sanitizeInput('<b>  Apple  </b>') => 'Apple'
   const sanitizeInput = (value, preserveSpaces = false) => {
     if (typeof value !== "string") return value;
-    const input = preserveSpaces ? value : value.trim();
-    return DOMPurify.sanitize(input, {
-      ALLOWED_TAGS: [],
-      ALLOWED_ATTR: [],
-    });
+    let input = value;
+    // Remove HTML tags
+    input = input.replace(/<[^>]*>?/gm, "");
+    // Normalize whitespace
+    input = preserveSpaces ? input.replace(/\s+/g, " ") : input.trim().replace(/\s+/g, " ");
+    // Remove dangerous characters (optional)
+    input = input.replace(/[\u0000-\u001F\u007F-\u009F]/g, "");
+    // DOMPurify fallback for extra safety
+    input = DOMPurify.sanitize(input, { ALLOWED_TAGS: [], ALLOWED_ATTR: [] });
+    return input;
   };
 
 
@@ -96,10 +123,10 @@ const ProductForm = () => {
     if (step === 2) {
       return formData.description;
     }
-    if (step === 3) {
-      // Check if at least one variant has both name and value
-      return variants.some(variant => variant.variantName && variant.variantValue);
-    }
+    // if (step === 3) {
+    //   // Check if at least one variant has both name and value
+    //   return variants.some(variant => variant.variantName && variant.variantValue);
+    // }
     return true;
     // Improved comprehensive validation
     const errors = {};
@@ -254,26 +281,72 @@ const ProductForm = () => {
 
     // Newly added
     itemType: "Good",
-    // isAdvanced: false,
-    // trackType: "serial",
-    // isReturnable: false,
-    // leadTime: "",
-    // reorderLevel: "",
-    // initialStock: "",
-    // serialNumber: "",
-    // batchNumber: "",
-    // returnable: false,
-    // expirationDate: "",
+    isAdvanced: false,
+    trackType: "serial",
+    isReturnable: false,
+    leadTime: "",
+    reorderLevel: "",
+    initialStock: "",
+    serialNumber: "",
+    batchNumber: "",
+    returnable: false,
+    expirationDate: "",
   });
 
   const handleChange = (e) => {
-    // const { name, value } = e.target;
-    // setFormData((prev) => ({ ...prev, [name]: value }));
     const { name, value } = e.target;
     const sanitizedValue = sanitizeInput(value, true);
     const error = validateField(name, sanitizedValue);
     setFormErrors((prev) => ({ ...prev, [name]: error }));
-    setFormData((prev) => ({ ...prev, [name]: sanitizedValue }));
+
+    // If switching itemType, reset fields specific to the other type
+    if (name === "itemType") {
+      if (value === "Service") {
+        // Clear all Good-specific fields
+        setFormData((prev) => ({
+          ...prev,
+          itemType: value,
+          purchasePrice: "",
+          sellingPrice: "",
+          wholesalePrice: "",
+          retailPrice: "",
+          quantity: "",
+          unit: "",
+          taxType: "",
+          tax: "",
+          discountType: "",
+          discountValue: "",
+          quantityAlert: "",
+          description: "",
+          seoTitle: "",
+          seoDescription: "",
+          sellingType: "",
+          barcodeSymbology: "",
+          productType: "Single",
+          isAdvanced: false,
+          trackType: "serial",
+          isReturnable: false,
+          leadTime: "",
+          reorderLevel: "",
+          initialStock: "",
+          serialNumber: "",
+          batchNumber: "",
+          returnable: false,
+          expirationDate: "",
+        }));
+      } else if (value === "Good") {
+        // Clear all Service-specific fields (if any in future)
+        setFormData((prev) => ({
+          ...prev,
+          itemType: value,
+          // Add service-specific fields here if needed
+        }));
+      } else {
+        setFormData((prev) => ({ ...prev, [name]: sanitizedValue }));
+      }
+    } else {
+      setFormData((prev) => ({ ...prev, [name]: sanitizedValue }));
+    }
   };
 
 
@@ -507,26 +580,33 @@ const ProductForm = () => {
     formPayload.append("seoTitle", sanitizeInput(formData.seoTitle, true));
     formPayload.append("seoDescription", sanitizeInput(formData.seoDescription, true));
     formPayload.append("itemType", sanitizeInput(formData.itemType));
-    // formPayload.append("isAdvanced", formData.isAdvanced);
-    // formPayload.append("trackType", sanitizeInput(formData.trackType));
-    // formPayload.append("isReturnable", formData.isReturnable);
-    // formPayload.append("leadTime", sanitizeInput(formData.leadTime));
-    // formPayload.append("reorderLevel", sanitizeInput(formData.reorderLevel));
-    // formPayload.append("initialStock", sanitizeInput(formData.initialStock));
-    // formPayload.append("serialNumber", sanitizeInput(formData.serialNumber));
-    // formPayload.append("batchNumber", sanitizeInput(formData.batchNumber));
-    // formPayload.append("returnable", formData.returnable);
-    // formPayload.append("expirationDate", sanitizeInput(formData.expirationDate));
+    formPayload.append("isAdvanced", formData.isAdvanced);
+    formPayload.append("trackType", sanitizeInput(formData.trackType));
+  formPayload.append("isReturnable", Boolean(formData.isReturnable));
+  formPayload.append("leadTime", sanitizeInput(formData.leadTime));
+  formPayload.append("reorderLevel", sanitizeInput(formData.reorderLevel));
+  formPayload.append("initialStock", sanitizeInput(formData.initialStock));
+  formPayload.append("serialNumber", sanitizeInput(formData.serialNumber));
+  formPayload.append("batchNumber", sanitizeInput(formData.batchNumber));
+  formPayload.append("returnable", Boolean(formData.returnable));
+  formPayload.append("expirationDate", formData.expirationDate ? sanitizeInput(formData.expirationDate) : "");
 
+    // Build variantsMap from selectedVariant and selectedValue
     const variantsMap = {};
     variants.forEach((variant) => {
-      if (variant.variantName && variant.variantValue) {
-        const values = sanitizeInput(variant.variantValue, true)
+      if (variant.selectedVariant && variant.selectedValue) {
+        // Support multiple values if selectedValue is comma separated
+        const values = sanitizeInput(variant.selectedValue, true)
           .split(",")
           .map((v) => v.trim())
           .filter((v) => v);
         if (values.length > 0) {
-          variantsMap[variant.variantName] = values;
+          if (variantsMap[variant.selectedVariant]) {
+            // Merge values if variant already exists
+            variantsMap[variant.selectedVariant] = Array.from(new Set([...variantsMap[variant.selectedVariant], ...values]));
+          } else {
+            variantsMap[variant.selectedVariant] = values;
+          }
         }
       }
     });
@@ -841,38 +921,146 @@ const ProductForm = () => {
 
   //variants----------------------------------------------------------------------------------------------------------------------------------------------
 
-  const [variants, setVariants] = useState([
-    { variantName: '', variantValue: '' }, // Initial row
+  // const [variants, setVariants] = useState([
+  //   { variantName: '', variantValue: '' }, // Initial row
+  // ]);
+
+  // const handleVariantChange = (index, e) => {
+  //   // const { name, value } = e.target;
+  //   // setVariants((prev) =>
+  //   //   prev.map((variant, i) =>
+  //   //     i === index ? { ...variant, [name]: value } : variant
+  //   //   )
+  //   // );
+
+  //   const { name, value } = e.target;
+  //   const sanitizedValue = sanitizeInput(value, true);
+  //   const error = name === "variantValue" ? validateField(name, sanitizedValue) : "";
+  //   setFormErrors((prev) => ({ ...prev, [`variantValue_${index}`]: error }));
+  //   setVariants((prev) =>
+  //     prev.map((variant, i) =>
+  //       i === index ? { ...variant, [name]: sanitizedValue } : variant
+  //     )
+  //   );
+  // };
+
+  // const handleAddVariant = () => {
+  //   setVariants((prev) => [...prev, { variantName: '', variantValue: '' }]);
+  // };
+
+  // const handleRemoveVariant = (index) => {
+  //   if (variants.length > 1) {
+  //     setVariants((prev) => prev.filter((_, i) => i !== index));
+  //   }
+  // };
+
+
+    const [variants, setVariants] = useState([
+    { selectedVariant: "", selectedValue: "", valueDropdown: [] },
   ]);
 
-  const handleVariantChange = (index, e) => {
-    // const { name, value } = e.target;
-    // setVariants((prev) =>
-    //   prev.map((variant, i) =>
-    //     i === index ? { ...variant, [name]: value } : variant
-    //   )
-    // );
+  const [variantDropdown, setVariantDropdown] = useState([]);
 
-    const { name, value } = e.target;
-    const sanitizedValue = sanitizeInput(value, true);
-    const error = name === "variantValue" ? validateField(name, sanitizedValue) : "";
-    setFormErrors((prev) => ({ ...prev, [`variantValue_${index}`]: error }));
-    setVariants((prev) =>
-      prev.map((variant, i) =>
-        i === index ? { ...variant, [name]: sanitizedValue } : variant
+
+  // Fetch all active variants for dropdown
+  useEffect(() => {
+    const token = localStorage.getItem("token");
+    if (!token) return;
+
+    fetch(`${BASE_URL}/api/variant-attributes/active-variants`, {
+      headers: { Authorization: `Bearer ${token}` },
+    })
+      .then(res => res.json())
+      .then(data => setVariantDropdown(data))
+      .catch(err => console.error("Error fetching variant dropdown:", err));
+  }, []);
+
+  // Handle variant change per row
+  const handleVariantChange = (index, value) => {
+    const token = localStorage.getItem("token");
+    setVariants(prev =>
+      prev.map((v, i) =>
+        i === index ? { ...v, selectedVariant: value, selectedValue: "", valueDropdown: [] } : v
       )
+    );
+
+    if (!value || !token) return;
+
+    fetch(`${BASE_URL}/api/variant-attributes/values/${encodeURIComponent(value)}`, {
+      headers: { Authorization: `Bearer ${token}` },
+    })
+      .then(res => res.json())
+      .then(data => {
+        let values = [];
+        data.forEach(val => {
+          if (typeof val === "string") {
+            values.push(...val.split(",").map(v => v.trim()).filter(Boolean));
+          }
+        });
+        setVariants(prev =>
+          prev.map((v, i) => (i === index ? { ...v, valueDropdown: values } : v))
+        );
+      })
+      .catch(err => console.error("Error fetching value dropdown:", err));
+  };
+
+  const handleValueChange = (index, value) => {
+    setVariants(prev =>
+      prev.map((v, i) => (i === index ? { ...v, selectedValue: value } : v))
     );
   };
 
   const handleAddVariant = () => {
-    setVariants((prev) => [...prev, { variantName: '', variantValue: '' }]);
+    setVariants(prev => [...prev, { selectedVariant: "", selectedValue: "", valueDropdown: [] }]);
   };
 
-  const handleRemoveVariant = (index) => {
+  const handleRemoveVariant = index => {
     if (variants.length > 1) {
-      setVariants((prev) => prev.filter((_, i) => i !== index));
+      setVariants(prev => prev.filter((_, i) => i !== index));
     }
   };
+  //   const [selectedVariant, setSelectedVariant] = useState("");
+  //   const [variantDropdown, setVariantDropdown] = useState([]);
+  //   // const [selectedVariant, setSelectedVariant] = useState("");
+  //   const [valueDropdown, setValueDropdown] = useState([]);
+  //   const [selectedValue, setSelectedValue] = useState("");
+
+  //  // Fetch all variants for dropdown (status true only)
+  //   useEffect(() => {
+  //     const token = localStorage.getItem("token");
+  //     fetch(`${BASE_URL}/api/variant-attributes/active-variants`, {
+  //       headers: { Authorization: `Bearer ${token}` },
+  //     })
+  //       .then(res => res.json())
+  //       .then(data => setVariantDropdown(data))
+  //       .catch(err => console.error("Error fetching variant dropdown:", err));
+  //   }, []);
+  
+  //   // Fetch values for selected variant and split comma-separated values
+  //   useEffect(() => {
+  //     if (selectedVariant) {
+  //       const token = localStorage.getItem("token");
+  //       fetch(`${BASE_URL}/api/variant-attributes/values/${encodeURIComponent(selectedVariant)}`, {
+  //         headers: { Authorization: `Bearer ${token}` },
+  //       })
+  //         .then(res => res.json())
+  //         .then(data => {
+  //           // If backend returns array of comma-separated strings, flatten them
+  //           let values = [];
+  //           data.forEach(val => {
+  //             if (typeof val === 'string') {
+  //               values.push(...val.split(',').map(v => v.trim()).filter(Boolean));
+  //             }
+  //           });
+  //           setValueDropdown(values);
+  //         })
+  //         .catch(err => console.error("Error fetching value dropdown:", err));
+  //     } else {
+  //       setValueDropdown([]);
+  //       setSelectedValue("");
+  //     }
+  //   }, [selectedVariant]);
+  
 
   return (
     <div className="page-wrapper mt-2">
@@ -884,8 +1072,6 @@ const ProductForm = () => {
               <h6>{t("createNewProduct")}</h6>
               {/* <h4 className="fw-bold">Create Product</h4>
               <h6>Create new product</h6> */}
-
-
             </div>
           </div>
           <div className="table-top-head me-2">
@@ -1218,7 +1404,7 @@ const ProductForm = () => {
                       {formErrors.supplier && <div className="text-danger">{formErrors.supplier}</div>}
                     </div>
 
-                    <div className="col-lg-6 col-sm-6 col-12">
+                    {/* <div className="col-lg-6 col-sm-6 col-12">
                       <div className="mb-3 list position-relative">
                         <label className="form-label">
                           {t("itemBarcode")}
@@ -1246,7 +1432,7 @@ const ProductForm = () => {
                         </button>
                         {formErrors.itemBarcode && <div className="text-danger">{formErrors.itemBarcode}</div>}
                       </div>
-                    </div>
+                    </div> */}
 
                     {/* Store */}
                     <div className="col-sm-6 col-12 mb-3">
@@ -1285,7 +1471,7 @@ const ProductForm = () => {
                     </div>
 
                     {/* Advance Toggle */}
-                    {/* <div
+                     <div
                       className="d-flex align-items-center mb-4"
                       style={{ gap: "1rem" }}
                     >
@@ -1311,10 +1497,10 @@ const ProductForm = () => {
                           }
                         />
                       </div>
-                    </div> */}
+                    </div> 
 
                     {/* Advanced Section */}
-                    {/* {formData.isAdvanced && (
+                     {formData.isAdvanced && (
                       <>
                         <div className="col-sm-6 col-12 mb-3">
                           <label className="form-label">{t("leadTime")}</label>
@@ -1477,7 +1663,7 @@ const ProductForm = () => {
                           </div>
                         )}
                       </>
-                    )} */}
+                    )} 
                   </div>
                 ) : (
                   <>
@@ -1677,10 +1863,10 @@ const ProductForm = () => {
   {images.length > 0 && (
     <div className="row g-3 mb-4">
       {images.map((file, i) => (
-        <div className="col-6 col-sm-4 col-md-3" key={i}>
+        <div className="col-6 col-sm-4 col-md-3" key={i} style={{ position: 'relative' }}>
           <div
             className="border rounded-3 shadow-sm overflow-hidden"
-            style={{ height: 120 }}
+            style={{ height: 120, position: 'relative' }}
           >
             <img
               src={file.preview}
@@ -1688,6 +1874,32 @@ const ProductForm = () => {
               className="w-100 h-100"
               style={{ objectFit: "cover" }}
             />
+            <button
+              type="button"
+              onClick={() => {
+                setImages(prev => {
+                  if (prev[i]?.preview) URL.revokeObjectURL(prev[i].preview);
+                  return prev.filter((_, idx) => idx !== i);
+                });
+              }}
+              style={{
+                position: 'absolute',
+                top: 6,
+                right: 6,
+                background: 'rgba(255,255,255,0.85)',
+                border: 'none',
+                borderRadius: '50%',
+                cursor: 'pointer',
+                padding: 2,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                boxShadow: '0 1px 4px rgba(0,0,0,0.08)'
+              }}
+              title="Delete image"
+            >
+              <TbTrash color="#d00" size={18} />
+            </button>
           </div>
         </div>
       ))}
@@ -1745,71 +1957,7 @@ const ProductForm = () => {
   </div>
 </>
 
-              // <>
-              //   <div
-              //     {...getRootProps({
-              //       className:
-              //         "dropzone p-4 text-center image-upload image-upload-two mb-3",
-              //     })}
-              //   >
-              //     <input {...getInputProps()} />
-              //     <MdImageSearch style={{ fontSize: "50px" }} />
-              //     <p>Drag your image here, or browse</p>
-              //     <p>Supports JPEG, PNG, JPG</p>
-              //   </div>
-
-              //   <div className="row mt-3">
-              //     {images.map((file, i) => (
-              //       <div className="col-3 mb-3" key={i}>
-              //         <img
-              //           src={file.preview}
-              //           className="img-thumbnail"
-              //           style={{ height: 120, objectFit: "cover" }}
-              //         />
-              //       </div>
-              //     ))}
-              //   </div>
-
-              //   <div className="col-lg-12 mb-3">
-              //     <label>{t("description")}</label>
-              //     <textarea
-              //       name="description"
-              //       className="form-control"
-              //       maxLength={300}
-              //       value={formData.description}
-              //       onChange={handleChange}
-              //       placeholder={t("enterDescription")}
-              //     />
-              //     {formErrors.description && <div className="text-danger">{formErrors.description}</div>}
-              //   </div>
-
-              //   <div className="row">
-              //     <div className="col-sm-6 col-12 mb-3">
-              //       <label className="form-label">{t("seoMetaTitle")}</label>
-              //       <input
-              //         type="text"
-              //         name="seoTitle"
-              //         className="form-control"
-              //         value={formData.seoTitle || ""}
-              //         onChange={handleChange}
-              //         placeholder={t("enterSeoMetaTitle")}
-              //       />
-              //       {formErrors.seoTitle && <div className="text-danger">{formErrors.seoTitle}</div>}
-              //     </div>
-              //     <div className="col-sm-6 col-12 mb-3">
-              //       <label className="form-label">{t("seoMetaDescription")}</label>
-              //       <input
-              //         type="text"
-              //         name="seoDescription"
-              //         className="form-control"
-              //         value={formData.seoDescription || ""}
-              //         onChange={handleChange}
-              //         placeholder={t("enterSeoMetaDescription")}
-              //       />
-              //       {formErrors.seoDescription && <div className="text-danger">{formErrors.seoDescription}</div>}
-              //     </div>
-              //   </div>
-              // </>
+              
             )}
 
             {/* Step 3 - Variants */}
@@ -1843,7 +1991,102 @@ const ProductForm = () => {
                 </div> */}
 
                 {/* Variants */}
-                <div className="">
+                 {/* <div className="card mt-4">
+          <div className="card-body">
+            <div className="row">
+              <div className="col-md-6">
+                <label className="form-label">Variant</label>
+                <select
+                  className="form-select"
+                  value={selectedVariant}
+                  onChange={e => setSelectedVariant(e.target.value)}
+                >
+                  <option value="">Select Variant</option>
+                  {variantDropdown.map((variant, idx) => (
+                    <option key={idx} value={variant}>{variant}</option>
+                  ))}
+                </select>
+              </div>
+              <div className="col-md-6">
+                <label className="form-label">Value</label>
+                <select
+                  className="form-select"
+                  value={selectedValue}
+                  onChange={e => setSelectedValue(e.target.value)}
+                  disabled={!selectedVariant}
+                >
+                  <option value="">Select Value</option>
+                  {valueDropdown.map((value, idx) => (
+                    <option key={idx} value={value}>{value}</option>
+                  ))}
+                </select>
+              </div>
+            </div>
+            <button type="button" className="" onClick={handleAddVariant} style={{ border: 'none', borderRadius: '4px', backgroundColor: 'white', color: '#007BFF', padding: '6px' }}>
+                    + Add another variants
+                  </button>
+          </div>
+        </div> */}
+
+
+         <div className="card mt-4">
+      <div className="card-body">
+        {variants.map((variant, index) => (
+          <div className="row mb-3" key={index}>
+            <div className="col-md-5">
+              <label className="form-label">Variant</label>
+              <select
+                className="form-select"
+                value={variant.selectedVariant}
+                onChange={e => handleVariantChange(index, e.target.value)}
+              >
+                <option value="">Select Variant</option>
+                {variantDropdown.map((v, idx) => (
+                  <option key={idx} value={v}>{v}</option>
+                ))}
+              </select>
+            </div>
+            <div className="col-md-5">
+              <label className="form-label">Value</label>
+              <select
+                className="form-select"
+                value={variant.selectedValue}
+                onChange={e => handleValueChange(index, e.target.value)}
+                disabled={!variant.selectedVariant}
+              >
+                <option value="">Select Value</option>
+                {variant.valueDropdown.map((val, idx) => (
+                  <option key={idx} value={val}>{val}</option>
+                ))}
+              </select>
+            </div>
+            <div className="col-md-2 d-flex align-items-end">
+              {variants.length > 1 && (
+                <button
+                  type="button"
+                  className="btn btn-danger"
+                  onClick={() => handleRemoveVariant(index)}
+                >
+                  ×
+                </button>
+              )}
+            </div>
+          </div>
+        ))}
+
+        <button
+          type="button"
+          className="btn btn-outline-primary"
+          onClick={handleAddVariant}
+        >
+          + Add another variant
+        </button>
+      </div>
+    </div>
+
+
+        {/* fina;l */}
+                {/* <div className="">
                   <h3 className="" >Add Variants</h3>
                   <br />
 
@@ -1907,7 +2150,7 @@ const ProductForm = () => {
                     + Add another variants
                   </button>
 
-                </div>
+                </div> */}
 
               </>
             )}

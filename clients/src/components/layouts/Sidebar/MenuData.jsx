@@ -43,19 +43,42 @@ import { IoLogoWebComponent } from "react-icons/io5";
 import { useAuth } from "../../auth/AuthContext";
 
 export const getMenuData = () => {
+
+  // old code 
+// const { t } = useTranslation();
+//   const { user } = useAuth();
+
+//   // 🛑 If no user (logged out or not yet logged in) → return empty sidebar
+//   if (!user) return [];
+
+//   const id = user?._id;
+//   const permissions = user?.role?.modulePermissions || {};
+
+//   const canAccess = (module, action = "read") => {
+//     if (!permissions || !permissions[module]) return true;
+//     return permissions[module]?.all || permissions[module]?.[action] || true;
+//   };
+
+
 const { t } = useTranslation();
-  const { user } = useAuth();
+const { user } = useAuth();
 
-  // 🛑 If no user (logged out or not yet logged in) → return empty sidebar
-  if (!user) return [];
+// 🛑 If no user (logged out or not yet logged in) → return empty sidebar
+if (!user) return [];
 
-  const id = user?._id;
-  const permissions = user?.role?.modulePermissions || {};
+const id = user?._id;
+const permissions = user?.role?.modulePermissions || {};
 
-  const canAccess = (module, action = "read") => {
-    if (!permissions || !permissions[module]) return true;
-    return permissions[module]?.all || permissions[module]?.[action] || true;
-  };
+const canAccess = (module, action = "read") => {
+  // ✅ SuperAdmin bypass: full access to everything
+  if (user?.role?.name === "SuperAdmin") return true;
+
+  // If no permissions or module not defined → deny
+  if (!permissions || !permissions[module]) return false;
+
+  // ✅ Allow only if all:true or specific action:true
+  return permissions[module]?.all === true || permissions[module]?.[action] === true;
+};
 
 
   const menu = [

@@ -31,21 +31,35 @@ exports.createProduct = async (req, res) => {
       seoTitle,
       seoDescription,
       itemType,
-      // isAdvanced,
-      // trackType,
-      // isReturnable,
-      // leadTime,
-      // reorderLevel,
-      // initialStock,
-      // serialNumber,
-      // batchNumber,
-      // returnable,
-      // expirationDate,
+      isAdvanced,
+      trackType,
+      isReturnable,
+      leadTime,
+      reorderLevel,
+      initialStock,
+      serialNumber,
+      batchNumber,
+      returnable,
+      expirationDate,
       hsn,
     } = req.body;
 
-    // Parse variants if provided
-    const variants = req.body.variants ? JSON.parse(req.body.variants) : {};
+    // Parse variants if provided and ensure it's a plain object
+    let variants = {};
+    if (req.body.variants) {
+      try {
+        if (typeof req.body.variants === 'string') {
+          variants = JSON.parse(req.body.variants);
+        } else if (typeof req.body.variants === 'object') {
+          variants = req.body.variants;
+        }
+      } catch (e) {
+        variants = {};
+      }
+    }
+    if (!variants || typeof variants !== 'object' || Array.isArray(variants)) {
+      variants = {};
+    }
 
     let images = [];
 
@@ -85,7 +99,7 @@ exports.createProduct = async (req, res) => {
       category,
       subcategory: subCatValue,
       supplier: supplierValue,
-      itemBarcode,
+      // itemBarcode,
       store,
       warehouse,
       purchasePrice,
@@ -105,16 +119,16 @@ exports.createProduct = async (req, res) => {
       seoDescription,
       variants,
       itemType,
-      // isAdvanced,
-      // trackType,
-      // isReturnable,
-      // leadTime,
-      // reorderLevel,
-      // initialStock,
-      // serialNumber,
-      // batchNumber,
-      // returnable,
-      // expirationDate,
+      isAdvanced,
+      trackType,
+      isReturnable,
+      leadTime,
+      reorderLevel,
+      initialStock,
+      serialNumber,
+      batchNumber,
+      returnable,
+      expirationDate,
       hsn: hsnValue,
     });
 
@@ -552,7 +566,7 @@ exports.updateProduct = async (req, res) => {
       category,
       subcategory,
       supplier,
-      itemBarcode,
+      // itemBarcode,
       store,
       warehouse,
       purchasePrice,
@@ -672,7 +686,7 @@ exports.importProducts = async (req, res) => {
         category: row.category,
         subcategory: row.subcategory,
         supplier: row.supplier,
-        itemBarcode: row.itemBarcode,
+        // itemBarcode: row.itemBarcode,
         store: row.store,
         warehouse: row.warehouse,
         purchasePrice: row.purchasePrice,

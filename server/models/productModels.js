@@ -15,14 +15,16 @@ const productSchema = new mongoose.Schema(
       required: true,
     },
     subcategory: { type: mongoose.Schema.Types.ObjectId, ref: "Subcategory" },
-    hsn: {type: mongoose.Schema.Types.ObjectId,ref: "HSN", required: false,
+    hsn: {
+      type: mongoose.Schema.Types.ObjectId, ref: "HSN", required: false,
     },
 
 
     supplier: { type: mongoose.Schema.Types.ObjectId, ref: "Supplier" },
     // itemBarcode: { type: String },
     store: { type: String },
-    warehouse: {type: mongoose.Schema.Types.ObjectId, ref: "Warehouse", required: false,
+    warehouse: {
+      type: mongoose.Schema.Types.ObjectId, ref: "Warehouse", required: false,
     },
     // Pricing Section
     purchasePrice: { type: Number },
@@ -37,7 +39,7 @@ const productSchema = new mongoose.Schema(
     discountValue: { type: Number },
     quantityAlert: { type: Number },
 
-   
+
     images: [
       {
         url: { type: String, required: true },
@@ -61,16 +63,16 @@ const productSchema = new mongoose.Schema(
     productType: { type: String, default: "Single" },
     itemType: { type: String },
 
-    // isAdvanced: { type: Boolean },
-    // trackType: { type: String },
-    // isReturnable: { type: Boolean },
-    // leadTime: { type: Number },
-    // reorderLevel: { type: String },
-    // initialStock: { type: String },
-    // serialNumber: { type: String },
-    // batchNumber: { type: String },
-    // returnable: { type: Boolean },
-    // expirationDate: { type: Date },
+    isAdvanced: { type: Boolean },
+    trackType: { type: String },
+    isReturnable: { type: Boolean },
+    leadTime: { type: Number },
+    reorderLevel: { type: String },
+    initialStock: { type: String },
+    serialNumber: { type: String },
+    batchNumber: { type: String },
+    returnable: { type: Boolean },
+    expirationDate: { type: Date },
 
     newPurchasePrice: {
       type: [Number], // Array of numbers
