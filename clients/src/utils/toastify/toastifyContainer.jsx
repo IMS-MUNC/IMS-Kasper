@@ -6,7 +6,7 @@ import '../../styles/ToastStyles.css'; // custom styles for toast types
 const ToastProvider = () => {
   return (
     <ToastContainer
-      position="top-right"
+      position="top-center"
       autoClose={3000}
       hideProgressBar={false}
       newestOnTop={true}

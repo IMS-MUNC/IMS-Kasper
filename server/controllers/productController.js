@@ -13,7 +13,7 @@ exports.createProduct = async (req, res) => {
       category,
       subCategory,
       supplier,
-      itemBarcode,
+      // itemBarcode,
       store,
       warehouse,
       purchasePrice,
@@ -31,16 +31,16 @@ exports.createProduct = async (req, res) => {
       seoTitle,
       seoDescription,
       itemType,
-      isAdvanced,
-      trackType,
-      isReturnable,
-      leadTime,
-      reorderLevel,
-      initialStock,
-      serialNumber,
-      batchNumber,
-      returnable,
-      expirationDate,
+      // isAdvanced,
+      // trackType,
+      // isReturnable,
+      // leadTime,
+      // reorderLevel,
+      // initialStock,
+      // serialNumber,
+      // batchNumber,
+      // returnable,
+      // expirationDate,
       hsn,
     } = req.body;
 
@@ -105,16 +105,16 @@ exports.createProduct = async (req, res) => {
       seoDescription,
       variants,
       itemType,
-      isAdvanced,
-      trackType,
-      isReturnable,
-      leadTime,
-      reorderLevel,
-      initialStock,
-      serialNumber,
-      batchNumber,
-      returnable,
-      expirationDate,
+      // isAdvanced,
+      // trackType,
+      // isReturnable,
+      // leadTime,
+      // reorderLevel,
+      // initialStock,
+      // serialNumber,
+      // batchNumber,
+      // returnable,
+      // expirationDate,
       hsn: hsnValue,
     });
 
@@ -573,7 +573,7 @@ exports.updateProduct = async (req, res) => {
       variants: variantsString
     } = req.body;
 
- // Parse variants if sent as JSON string
+    // Parse variants if sent as JSON string
     const variants = variantsString ? JSON.parse(variantsString) : {};
 
     // Upload new images if provided
@@ -588,27 +588,27 @@ exports.updateProduct = async (req, res) => {
     // Merge existing images from frontend
     let existingImages = [];
     if (req.body.existingImages) {
-  const parsed = JSON.parse(req.body.existingImages);
+      const parsed = JSON.parse(req.body.existingImages);
 
-  // Make sure each item is an object with url & public_id
-  existingImages = parsed.map(img => {
-    if (typeof img === "string") {
-      return { url: img, public_id: "" }; // no public_id if not sent
-    } else {
-      return img;
+      // Make sure each item is an object with url & public_id
+      existingImages = parsed.map(img => {
+        if (typeof img === "string") {
+          return { url: img, public_id: "" }; // no public_id if not sent
+        } else {
+          return img;
+        }
+      });
     }
-  });
-}
 
     const allImages = [...existingImages, ...newImages];
-    
+
 
     const updatedProduct = await Product.findByIdAndUpdate(
       req.params.id,
       {
-       ...req.body,
-       images: allImages,
-       variants
+        ...req.body,
+        images: allImages,
+        variants
       },
       { new: true }
     );
@@ -621,18 +621,18 @@ exports.updateProduct = async (req, res) => {
     res.status(400).json({ message: err.message });
   }
 };
-exports.deleteProductImage = async(req, res) => {
+exports.deleteProductImage = async (req, res) => {
   try {
-    const {id} = req.params;
-    const {public_id} = req.body;
-    if(!public_id) return res.status(400).json({message:"public_id is required"})
-      // delete from cloudinary
+    const { id } = req.params;
+    const { public_id } = req.body;
+    if (!public_id) return res.status(400).json({ message: "public_id is required" })
+    // delete from cloudinary
     await cloudinary.uploader.destroy(public_id)
     // remove from mongodb
     const updatedProduct = await Product.findByIdAndUpdate(
       id,
-      {$pull:{images:{public_id}}},
-      {new: true}
+      { $pull: { images: { public_id } } },
+      { new: true }
     );
     if (!updatedProduct) return res.status(404).json({ message: "Product not found" });
 

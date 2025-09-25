@@ -9,18 +9,18 @@ const {
   deleteCategory,
   bulkAssignCategoryCodes,
   bulkDeleteCategories
-//   getNextCategoryCode
+  //   getNextCategoryCode
 } = require("../controllers/categoryController");
-const  {authMiddleware}=require("../middleware/auth.js")
+const { authMiddleware } = require("../middleware/auth.js")
 
 
-router.post("/categories", authMiddleware,createCategory);        // CREATE
-router.get("/categories",authMiddleware, getAllCategories);       // READ ALL
-router.get("/categories/:id",authMiddleware, getCategoryById);    // READ ONE
-router.put("/categories/:id", authMiddleware,updateCategory);     // UPDATE
-router.delete("/categories/:id",authMiddleware, deleteCategory);  // DELETE
+router.post("/categories", authMiddleware, createCategory);        // CREATE
+router.get("/categories", authMiddleware, getAllCategories);       // READ ALL
+router.get("/categories/:id", authMiddleware, getCategoryById);    // READ ONE
+router.put("/categories/:id", authMiddleware, updateCategory);     // UPDATE
+router.delete("/categories/:id", authMiddleware, deleteCategory);  // DELETE
 // router.get("/next-category-code", getNextCategoryCode);
-router.post("/bulk-assign-codes",authMiddleware, bulkAssignCategoryCodes);
-router.post("/categories/bulk-delete",authMiddleware, bulkDeleteCategories);
+router.post("/bulk-assign-codes", authMiddleware, bulkAssignCategoryCodes);
+router.post("/categories/bulk-delete", authMiddleware, bulkDeleteCategories);
 
 module.exports = router;

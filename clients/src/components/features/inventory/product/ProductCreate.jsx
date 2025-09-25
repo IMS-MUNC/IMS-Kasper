@@ -21,9 +21,9 @@ const ProductForm = () => {
 
   // Define regex patterns for validation
   const validationPatterns = {
-    productName: /^[a-zA-Z0-9\s,-]{2,50}$/,
+    productName: /^[A-Za-z\s]{2,50}$/,
     sku: /^[A-Z0-9\-]{3,20}$/,
-    itemBarcode: /^[A-Z0-9]{6,20}$/,
+    // itemBarcode: /^[A-Z0-9]{6,20}$/,
     price: /^\d+(\.\d{1,2})?$/,
     quantity: /^\d{1,10}$/,
     description: /^[\w\s.,!?-]{0,300}$/,
@@ -38,7 +38,7 @@ const ProductForm = () => {
     quantityAlert: /^\d{1,6}$/,
     categoryName: /^[A-Za-z\s]{2,50}$/,
     categorySlug: /^[a-z0-9\-]{2,50}$/,
-    variantValue: /^[a-zA-Z0-9\s,-]{1,100}$/,
+    variantValue: /^[a-zA-Z0-9\s,]{1,100}$/,
   };
 
   // Sanitization function
@@ -87,64 +87,64 @@ const ProductForm = () => {
   };
 
   const validateStep = () => {
-    // if (step === 0) {
-    //   return formData.productName;
-    // }
-    // if (step === 1) {
-    //   return formData.purchasePrice;
-    // }
-    // if (step === 2) {
-    //   return formData.description;
-    // }
-    // if (step === 3) {
-    //   // Check if at least one variant has both name and value
-    //   return variants.some(variant => variant.variantName && variant.variantValue);
-    // }
-    // return true;
+    if (step === 0) {
+      return formData.productName;
+    }
+    if (step === 1) {
+      return formData.purchasePrice;
+    }
+    if (step === 2) {
+      return formData.description;
+    }
+    if (step === 3) {
+      // Check if at least one variant has both name and value
+      return variants.some(variant => variant.variantName && variant.variantValue);
+    }
+    return true;
     // Improved comprehensive validation
     const errors = {};
     let isValid = true;
 
-    if (step === 0) {
-      if (!formData.productName) errors.productName = t("fieldRequired");
-      if (!formData.sku) errors.sku = t("fieldRequired");
-      if (!formData.itemBarcode) errors.itemBarcode = t("fieldRequired");
-      if (!selectedCategory) errors.category = t("fieldRequired");
-      if (!selectedsubCategory) errors.subCategory = t("fieldRequired");
-      if (!selectedSupplier) errors.supplier = t("fieldRequired");
-      if (!formData.store) errors.store = t("fieldRequired");
-      if (!selectedWarehouse) errors.warehouse = t("fieldRequired");
-      if (!selectedHSN) errors.hsn = t("fieldRequired");
-      if (formData.isAdvanced) {
-        if (!formData.leadTime) errors.leadTime = t("fieldRequired");
-        if (!formData.reorderLevel) errors.reorderLevel = t("fieldRequired");
-        if (!formData.initialStock) errors.initialStock = t("fieldRequired");
-        if (formData.trackType === "serial" && !formData.serialNumber) errors.serialNumber = t("fieldRequired");
-        if (formData.trackType === "batch" && !formData.batchNumber) errors.batchNumber = t("fieldRequired");
-      }
-    } else if (step === 1) {
-      if (!formData.purchasePrice) errors.purchasePrice = t("fieldRequired");
-      if (!formData.quantity) errors.quantity = t("fieldRequired");
-      if (!selectedUnits) errors.unit = t("fieldRequired");
-      if (!formData.taxType) errors.taxType = t("fieldRequired");
-      if (!formData.tax) errors.tax = t("fieldRequired");
-      if (!formData.discountType) errors.discountType = t("fieldRequired");
-      if (!formData.discountValue) errors.discountValue = t("fieldRequired");
-      if (!formData.quantityAlert) errors.quantityAlert = t("fieldRequired");
-    } else if (step === 2) {
-      if (!formData.description) errors.description = t("fieldRequired");
-    } else if (step === 3) {
-      const hasValidVariant = variants.some(variant => variant.variantName && variant.variantValue);
-      if (!hasValidVariant) {
-        errors.variants = t("atLeastOneVariantRequired");
-      }
-      variants.forEach((variant, index) => {
-        if (variant.variantValue) {
-          const error = validateField("variantValue", variant.variantValue);
-          if (error) errors[`variantValue_${index}`] = error;
-        }
-      });
-    }
+    // if (step === 0) {
+    //   if (!formData.productName) errors.productName = t("fieldRequired");
+    //   if (!formData.sku) errors.sku = t("fieldRequired");
+    //   if (!formData.itemBarcode) errors.itemBarcode = t("fieldRequired");
+    //   if (!selectedCategory) errors.category = t("fieldRequired");
+    //   if (!selectedsubCategory) errors.subCategory = t("fieldRequired");
+    //   if (!selectedSupplier) errors.supplier = t("fieldRequired");
+    //   if (!formData.store) errors.store = t("fieldRequired");
+    //   if (!selectedWarehouse) errors.warehouse = t("fieldRequired");
+    //   if (!selectedHSN) errors.hsn = t("fieldRequired");
+    //   if (formData.isAdvanced) {
+    //     if (!formData.leadTime) errors.leadTime = t("fieldRequired");
+    //     if (!formData.reorderLevel) errors.reorderLevel = t("fieldRequired");
+    //     if (!formData.initialStock) errors.initialStock = t("fieldRequired");
+    //     if (formData.trackType === "serial" && !formData.serialNumber) errors.serialNumber = t("fieldRequired");
+    //     if (formData.trackType === "batch" && !formData.batchNumber) errors.batchNumber = t("fieldRequired");
+    //   }
+    // } else if (step === 1) {
+    //   if (!formData.purchasePrice) errors.purchasePrice = t("fieldRequired");
+    //   if (!formData.quantity) errors.quantity = t("fieldRequired");
+    //   if (!selectedUnits) errors.unit = t("fieldRequired");
+    //   if (!formData.taxType) errors.taxType = t("fieldRequired");
+    //   if (!formData.tax) errors.tax = t("fieldRequired");
+    //   if (!formData.discountType) errors.discountType = t("fieldRequired");
+    //   if (!formData.discountValue) errors.discountValue = t("fieldRequired");
+    //   if (!formData.quantityAlert) errors.quantityAlert = t("fieldRequired");
+    // } else if (step === 2) {
+    //   if (!formData.description) errors.description = t("fieldRequired");
+    // } else if (step === 3) {
+    //   const hasValidVariant = variants.some(variant => variant.variantName && variant.variantValue);
+    //   if (!hasValidVariant) {
+    //     errors.variants = t("atLeastOneVariantRequired");
+    //   }
+    //   variants.forEach((variant, index) => {
+    //     if (variant.variantValue) {
+    //       const error = validateField("variantValue", variant.variantValue);
+    //       if (error) errors[`variantValue_${index}`] = error;
+    //     }
+    //   });
+    // }
 
     setFormErrors(errors);
     isValid = Object.keys(errors).length === 0;
@@ -160,8 +160,19 @@ const ProductForm = () => {
   // };
 
   const handleNext = () => {
+    // const isValid = validateStep();
+    // const updatedStatus = [...stepStatus];
+    // updatedStatus[step] = isValid ? "complete" : "incomplete";
+    // setStepStatus(updatedStatus);
+
+    // if (isValid && step < steps.length - 1) {
+    //   setStep((prev) => prev + 1);
+    // }
     const isValid = validateStep();
-    
+    const updatedStatus = [...stepStatus];
+    updatedStatus[step] = isValid ? "complete" : "incomplete";
+    setStepStatus(updatedStatus);
+
     if (isValid && step < steps.length - 1) {
       setStep((prev) => prev + 1);
     } else if (!isValid) {
@@ -203,12 +214,6 @@ const ProductForm = () => {
   const [optionsware, setOptionsWare] = useState([]);
   const [selectedSupplier, setSelectedSupplier] = useState(null);
   const [selectedWarehouse, setSelectedWarehouse] = useState(null);
-  const [selectedHSN, setSelectedHSN] = useState(null);
-  const [optionsHsn, setOptionsHsn] = useState([]);
-  const [showHSNModal, setShowHSNModal] = useState(false);
-  const [variants, setVariants] = useState([
-    { variantName: '', variantValue: '' }, // Initial row
-  ]);
 
 
   const [formData, setFormData] = useState({
@@ -219,7 +224,7 @@ const ProductForm = () => {
     category: "",
     subCategory: "",
     supplier: "",
-    itemBarcode: "",
+    // itemBarcode: "",
     store: "",
     warehouse: "",
 
@@ -245,18 +250,20 @@ const ProductForm = () => {
     sellingType: "",
     barcodeSymbology: "",
     productType: "Single",
+
+
     // Newly added
     itemType: "Good",
-    isAdvanced: false,
-    trackType: "serial",
-    isReturnable: false,
-    leadTime: "",
-    reorderLevel: "",
-    initialStock: "",
-    serialNumber: "",
-    batchNumber: "",
-    returnable: false,
-    expirationDate: "",
+    // isAdvanced: false,
+    // trackType: "serial",
+    // isReturnable: false,
+    // leadTime: "",
+    // reorderLevel: "",
+    // initialStock: "",
+    // serialNumber: "",
+    // batchNumber: "",
+    // returnable: false,
+    // expirationDate: "",
   });
 
   const handleChange = (e) => {
@@ -271,7 +278,7 @@ const ProductForm = () => {
 
 
   const validateField = (name, value) => {
-    if (!value && ["productName", "sku", "itemBarcode", "quantity", "discountValue", "quantityAlert"].includes(name)) {
+    if (!value && ["productName", "sku",  "quantity", "discountValue", "quantityAlert"].includes(name)) {
       return t("fieldRequired");
     }
 
@@ -280,8 +287,8 @@ const ProductForm = () => {
         return validationPatterns.productName.test(value) ? "" : t("invalidProductName");
       case "sku":
         return validationPatterns.sku.test(value) ? "" : t("invalidSKUFormat");
-      case "itemBarcode":
-        return validationPatterns.itemBarcode.test(value) ? "" : t("invalidBarcodeFormat");
+      // case "itemBarcode":
+      //   return validationPatterns.itemBarcode.test(value) ? "" : t("invalidBarcodeFormat");
       case "purchasePrice":
       case "sellingPrice":
       case "wholesalePrice":
@@ -448,77 +455,6 @@ const ProductForm = () => {
     fetchUnits();
   }, []);
 
-  // Validation function for specific step without modifying state
-  const validateSpecificStep = (stepIndex) => {
-    const errors = {};
-    let isValid = true;
-
-    if (stepIndex === 0) {
-      if (!formData.productName) errors.productName = t("fieldRequired");
-      if (!formData.sku) errors.sku = t("fieldRequired");
-      if (!formData.itemBarcode) errors.itemBarcode = t("fieldRequired");
-      if (!selectedCategory) errors.category = t("fieldRequired");
-      if (!selectedsubCategory) errors.subCategory = t("fieldRequired");
-      if (!selectedSupplier) errors.supplier = t("fieldRequired");
-      if (!formData.store) errors.store = t("fieldRequired");
-      if (!selectedWarehouse) errors.warehouse = t("fieldRequired");
-      if (!selectedHSN) errors.hsn = t("fieldRequired");
-      if (formData.isAdvanced) {
-        if (!formData.leadTime) errors.leadTime = t("fieldRequired");
-        if (!formData.reorderLevel) errors.reorderLevel = t("fieldRequired");
-        if (!formData.initialStock) errors.initialStock = t("fieldRequired");
-        if (formData.trackType === "serial" && !formData.serialNumber) errors.serialNumber = t("fieldRequired");
-        if (formData.trackType === "batch" && !formData.batchNumber) errors.batchNumber = t("fieldRequired");
-      }
-    } else if (stepIndex === 1) {
-      if (!formData.purchasePrice) errors.purchasePrice = t("fieldRequired");
-      if (!formData.quantity) errors.quantity = t("fieldRequired");
-      if (!selectedUnits) errors.unit = t("fieldRequired");
-      if (!formData.taxType) errors.taxType = t("fieldRequired");
-      if (!formData.tax) errors.tax = t("fieldRequired");
-      if (!formData.discountType) errors.discountType = t("fieldRequired");
-      if (!formData.discountValue) errors.discountValue = t("fieldRequired");
-      if (!formData.quantityAlert) errors.quantityAlert = t("fieldRequired");
-    } else if (stepIndex === 2) {
-      if (!formData.description) errors.description = t("fieldRequired");
-    } else if (stepIndex === 3) {
-      const hasValidVariant = variants.some(variant => variant.variantName && variant.variantValue);
-      if (!hasValidVariant) {
-        errors.variants = t("atLeastOneVariantRequired");
-      }
-    }
-
-    isValid = Object.keys(errors).length === 0;
-    return isValid;
-  };
-
-  // Update step status based on form validation
-  useEffect(() => {
-    const updateStepStatus = () => {
-      const updatedStatus = [...stepStatus];
-      
-      // Check each step's validation status
-      for (let i = 0; i < steps.length; i++) {
-        if (i < step) {
-          // Previous steps should be validated
-          updatedStatus[i] = validateSpecificStep(i) ? "complete" : "incomplete";
-        } else if (i === step) {
-          // Current step should show as active/pending unless complete
-          updatedStatus[i] = validateSpecificStep(i) ? "complete" : "pending";
-        } else {
-          // Future steps remain pending
-          updatedStatus[i] = "pending";
-        }
-      }
-      
-      setStepStatus(updatedStatus);
-    };
-
-    // Only update if we have form data changes
-    const timeoutId = setTimeout(updateStepStatus, 300); // Debounce updates
-    return () => clearTimeout(timeoutId);
-  }, [formData, selectedCategory, selectedsubCategory, selectedSupplier, selectedWarehouse, selectedHSN, selectedUnits, variants, step]);
-
   const subCategoryChange = (selectedOption) => {
     setSelectedsubCategory(selectedOption);
     console.log("Selected subcategory:", selectedOption);
@@ -550,7 +486,7 @@ const ProductForm = () => {
     if (selectedSupplier?.value && typeof selectedSupplier.value === "string" && selectedSupplier.value.trim() !== "") {
       formPayload.append("supplier", selectedSupplier.value);
     }
-    formPayload.append("itemBarcode", sanitizeInput(formData.itemBarcode));
+    // formPayload.append("itemBarcode", sanitizeInput(formData.itemBarcode));
     formPayload.append("store", sanitizeInput(formData.store));
     formPayload.append("warehouse", selectedWarehouse?.value || "");
     if (selectedHSN?.value) {
@@ -571,16 +507,16 @@ const ProductForm = () => {
     formPayload.append("seoTitle", sanitizeInput(formData.seoTitle, true));
     formPayload.append("seoDescription", sanitizeInput(formData.seoDescription, true));
     formPayload.append("itemType", sanitizeInput(formData.itemType));
-    formPayload.append("isAdvanced", formData.isAdvanced);
-    formPayload.append("trackType", sanitizeInput(formData.trackType));
-    formPayload.append("isReturnable", formData.isReturnable);
-    formPayload.append("leadTime", sanitizeInput(formData.leadTime));
-    formPayload.append("reorderLevel", sanitizeInput(formData.reorderLevel));
-    formPayload.append("initialStock", sanitizeInput(formData.initialStock));
-    formPayload.append("serialNumber", sanitizeInput(formData.serialNumber));
-    formPayload.append("batchNumber", sanitizeInput(formData.batchNumber));
-    formPayload.append("returnable", formData.returnable);
-    formPayload.append("expirationDate", sanitizeInput(formData.expirationDate));
+    // formPayload.append("isAdvanced", formData.isAdvanced);
+    // formPayload.append("trackType", sanitizeInput(formData.trackType));
+    // formPayload.append("isReturnable", formData.isReturnable);
+    // formPayload.append("leadTime", sanitizeInput(formData.leadTime));
+    // formPayload.append("reorderLevel", sanitizeInput(formData.reorderLevel));
+    // formPayload.append("initialStock", sanitizeInput(formData.initialStock));
+    // formPayload.append("serialNumber", sanitizeInput(formData.serialNumber));
+    // formPayload.append("batchNumber", sanitizeInput(formData.batchNumber));
+    // formPayload.append("returnable", formData.returnable);
+    // formPayload.append("expirationDate", sanitizeInput(formData.expirationDate));
 
     const variantsMap = {};
     variants.forEach((variant) => {
@@ -686,14 +622,14 @@ const ProductForm = () => {
     }
   };
 
-  const generateBarcode = () => {
-    const prefix = "BR"; // Optional
-    const randomNumber = Math.floor(100000000 + Math.random() * 900000000);
-    const barcode = `${prefix}${randomNumber}`;
-    setFormErrors((prev) => ({ ...prev, itemBarcode: "" }));
-    setFormData((prev) => ({ ...prev, itemBarcode: barcode }));
-    return `${prefix}${randomNumber}`;
-  };
+  // const generateBarcode = () => {
+  //   const prefix = "BR"; // Optional
+  //   const randomNumber = Math.floor(100000000 + Math.random() * 900000000);
+  //   const barcode = `${prefix}${randomNumber}`;
+  //   setFormErrors((prev) => ({ ...prev, itemBarcode: "" }));
+  //   setFormData((prev) => ({ ...prev, itemBarcode: barcode }));
+  //   return `${prefix}${randomNumber}`;
+  // };
 
 
   const [categoryName, setCategoryName] = useState("");
@@ -863,6 +799,10 @@ const ProductForm = () => {
     setSelectedWarehouse(selectedOption);
   };
 
+  const [optionsHsn, setOptionsHsn] = useState([]);
+  const [selectedHSN, setSelectedHSN] = useState(null);
+  const [showHSNModal, setShowHSNModal] = useState(false);
+
   useEffect(() => {
     const fetchHSN = async () => {
       try {
@@ -900,6 +840,10 @@ const ProductForm = () => {
 
 
   //variants----------------------------------------------------------------------------------------------------------------------------------------------
+
+  const [variants, setVariants] = useState([
+    { variantName: '', variantValue: '' }, // Initial row
+  ]);
 
   const handleVariantChange = (index, e) => {
     // const { name, value } = e.target;
@@ -956,7 +900,7 @@ const ProductForm = () => {
                 <TbRefresh />
               </button>
             </li>
-            {/* <li>
+            <li>
               <button
                 type="button"
                 data-bs-toggle="tooltip"
@@ -967,15 +911,13 @@ const ProductForm = () => {
               >
                 <TbChevronUp />
               </button>
-            </li> */}
+            </li>
           </div>
 
           <div className="page-btn mt-0">
-            <div className="d-flex gap-2">
-              <Link to="/product">
-                <a className="btn btn-primary">Back to Product</a>
-              </Link>
-            </div>
+            <button className="btn" style={{ backgroundColor: '#007BFF' }}>
+              <Link to="/product" style={{ color: 'white' }}>{t("backToProduct")}</Link>
+            </button>
           </div>
         </div>
         {/* <h5 className="mb-3">{steps[step]}</h5> */}
@@ -986,14 +928,6 @@ const ProductForm = () => {
             const isActive = index === step;
             const isComplete = status === "complete";
             const isIncomplete = status === "incomplete";
-            
-            // Line status should be based on the current step's completion
-            // Line connects current step to next step, so it should be complete if current step is complete
-            const lineStatus = status === "complete" 
-              ? "line-complete" 
-              : status === "incomplete" 
-                ? "line-incomplete" 
-                : "line-pending";
 
             return (
               <div key={index} className="step-wrapper">
@@ -1011,7 +945,14 @@ const ProductForm = () => {
                 </div>
                 <div className="step-text">{label}</div>
                 {index < steps.length - 1 && (
-                  <div className={`progress-line ${lineStatus}`} />
+                  <div
+                    className={`progress-line ${status === "complete"
+                      ? "line-complete"
+                      : status === "incomplete"
+                        ? "line-incomplete"
+                        : "line-pending"
+                      }`}
+                  />
                 )}
               </div>
             );
@@ -1340,19 +1281,11 @@ const ProductForm = () => {
                         onChange={handleWarehouseChange}
                       />
                       {formErrors.warehouse && <div className="text-danger">{formErrors.warehouse}</div>}
-                      {/* <select
-                        className="form-select"
-                        name="warehouse"
-                        value={formData.warehouse}
-                        onChange={handleChange}
-                      >
-                        <option value="">{t("select")}</option>
-                        <option value="Warehouse1">{t("warehouse1")}</option>
-                      </select> */}
+               
                     </div>
 
                     {/* Advance Toggle */}
-                    <div
+                    {/* <div
                       className="d-flex align-items-center mb-4"
                       style={{ gap: "1rem" }}
                     >
@@ -1378,10 +1311,10 @@ const ProductForm = () => {
                           }
                         />
                       </div>
-                    </div>
+                    </div> */}
 
                     {/* Advanced Section */}
-                    {formData.isAdvanced && (
+                    {/* {formData.isAdvanced && (
                       <>
                         <div className="col-sm-6 col-12 mb-3">
                           <label className="form-label">{t("leadTime")}</label>
@@ -1422,7 +1355,6 @@ const ProductForm = () => {
                           {formErrors.initialStock && <div className="text-danger">{formErrors.initialStock}</div>}
                         </div>
 
-                        {/* Track Name */}
                         <div className="col-sm-6 col-12 mb-3">
                           <label className="form-label fw-bold d-block mb-2">
                             Track Name
@@ -1434,8 +1366,7 @@ const ProductForm = () => {
                               type="radio"
                               name="track"
                               value="serial"
-                              // checked={trackType === "serial"}
-                              // onChange={() => setTrackType("serial")}
+                            
                               id="serial"
                               checked={formData.trackType === "serial"}
                               onChange={(e) =>
@@ -1456,8 +1387,7 @@ const ProductForm = () => {
                               type="radio"
                               name="track"
                               value="batch"
-                              // checked={trackType === "batch"}
-                              // onChange={() => setTrackType("batch")}
+                             
                               id="batch"
                               checked={formData.trackType === "batch"}
                               onChange={(e) =>
@@ -1478,8 +1408,7 @@ const ProductForm = () => {
                               type="radio"
                               name="track"
                               value="status"
-                              // checked={trackType === "status"}
-                              // onChange={() => setTrackType("status")}
+                         
                               id="status"
                               checked={formData.trackType === "status"}
                               onChange={(e) =>
@@ -1495,7 +1424,6 @@ const ProductForm = () => {
                           </div>
                         </div>
 
-                        {/* Serial No Input */}
                         {formData.trackType === "serial" && (
                           <div className="col-sm-6 col-12 mb-3">
                             <label className="form-label">{t("serialNo")}</label>
@@ -1511,7 +1439,6 @@ const ProductForm = () => {
                           </div>
                         )}
 
-                        {/* Batch No Input */}
                         {formData.trackType === "batch" && (
                           <div className="col-sm-6 col-12 mb-3">
                             <label className="form-label">{t("batchNo")}</label>
@@ -1527,7 +1454,6 @@ const ProductForm = () => {
                           </div>
                         )}
 
-                        {/* Returnable checkbox */}
                         {formData.trackType === "status" && (
                           <div className="form-check mb-3">
                             <input
@@ -1551,7 +1477,7 @@ const ProductForm = () => {
                           </div>
                         )}
                       </>
-                    )}
+                    )} */}
                   </div>
                 ) : (
                   <>
@@ -1559,7 +1485,6 @@ const ProductForm = () => {
                       <label className="block text-sm font-medium">
                         {t("expireDate")}
                       </label>
-                      {/* <input type="date" className="w-full p-2 border rounded" placeholder={t("enterExpireDate")} /> */}
                       <input
                         type="date"
                         className="form-control"
@@ -1572,11 +1497,7 @@ const ProductForm = () => {
                     </div>
                     <div>
                       <label className="block text-sm font-medium">{t("brand")}</label>
-                      {/* <input
-                        type="text"
-                        className="w-full p-2 border rounded"
-                        placeholder={t("enterBrand")}
-                      /> */}
+                   
                       <input
                         type="text"
                         className="form-control"
@@ -1735,73 +1656,160 @@ const ProductForm = () => {
             {/* Step 2 - Images and SEO */}
             {step === 2 && (
               <>
-                <div
-                style={{width:'100%'}}
-                  {...getRootProps({
-                    className:
-                      "dropzone p-4 text-center image-upload image-upload-two mb-3",
-                  })}
-                >
-                  <input {...getInputProps()} />
-                  <MdImageSearch style={{ fontSize: "50px" }} />
-                  <br/>
-                  <span>Drag your image here, or browse</span>
-                  <br/>
-                  <span>Supports JPEG, PNG, JPG</span>
-                </div>
+  {/* Image Upload Section */}
+  <div
+    {...getRootProps({
+      className:
+        "dropzone p-4 text-center border-2 border-dashed rounded-2xl bg-light mb-4",
+    })}
+    style={{
+      cursor: "pointer",
+      transition: "0.3s ease",
+    }}
+  >
+    <input {...getInputProps()} />
+    <MdImageSearch style={{ fontSize: "50px", color: "#6c757d" }} />
+    <p className="mt-2 mb-1 fw-semibold">Drag & Drop your image here</p>
+    <small className="text-muted">Supports JPEG, PNG, JPG (Max 5MB)</small>
+  </div>
 
-                <div className="row mt-3">
-                  {images.map((file, i) => (
-                    <div className="col-3 mb-3" key={i}>
-                      <img
-                        src={file.preview}
-                        className="img-thumbnail"
-                        style={{ height: 120, objectFit: "cover" }}
-                      />
-                    </div>
-                  ))}
-                </div>
+  {/* Preview Images Grid */}
+  {images.length > 0 && (
+    <div className="row g-3 mb-4">
+      {images.map((file, i) => (
+        <div className="col-6 col-sm-4 col-md-3" key={i}>
+          <div
+            className="border rounded-3 shadow-sm overflow-hidden"
+            style={{ height: 120 }}
+          >
+            <img
+              src={file.preview}
+              alt={`preview-${i}`}
+              className="w-100 h-100"
+              style={{ objectFit: "cover" }}
+            />
+          </div>
+        </div>
+      ))}
+    </div>
+  )}
 
-                <div className="col-lg-12 mb-3">
-                  <label>{t("description")}</label>
-                  <textarea
-                    name="description"
-                    className="form-control"
-                    maxLength={300}
-                    value={formData.description}
-                    onChange={handleChange}
-                    placeholder={t("enterDescription")}
-                  />
-                  {formErrors.description && <div className="text-danger">{formErrors.description}</div>}
-                </div>
+  {/* Description */}
+  <div className="mb-4">
+    <label className="form-label fw-semibold">{t("description")}</label>
+    <textarea
+      name="description"
+      className="form-control rounded-3"
+      rows="3"
+      maxLength={300}
+      value={formData.description}
+      onChange={handleChange}
+      placeholder={t("enterDescription")}
+    />
+    {formErrors.description && (
+      <small className="text-danger">{formErrors.description}</small>
+    )}
+  </div>
 
-                <div className="row">
-                  <div className="col-sm-6 col-12 mb-3">
-                    <label className="form-label">{t("seoMetaTitle")}</label>
-                    <input
-                      type="text"
-                      name="seoTitle"
-                      className="form-control"
-                      value={formData.seoTitle || ""}
-                      onChange={handleChange}
-                      placeholder={t("enterSeoMetaTitle")}
-                    />
-                    {formErrors.seoTitle && <div className="text-danger">{formErrors.seoTitle}</div>}
-                  </div>
-                  <div className="col-sm-6 col-12 mb-3">
-                    <label className="form-label">{t("seoMetaDescription")}</label>
-                    <input
-                      type="text"
-                      name="seoDescription"
-                      className="form-control"
-                      value={formData.seoDescription || ""}
-                      onChange={handleChange}
-                      placeholder={t("enterSeoMetaDescription")}
-                    />
-                    {formErrors.seoDescription && <div className="text-danger">{formErrors.seoDescription}</div>}
-                  </div>
-                </div>
-              </>
+  {/* SEO Fields */}
+  <div className="row g-3">
+    <div className="col-sm-6">
+      <label className="form-label fw-semibold">{t("seoMetaTitle")}</label>
+      <input
+        type="text"
+        name="seoTitle"
+        className="form-control rounded-3"
+        value={formData.seoTitle || ""}
+        onChange={handleChange}
+        placeholder={t("enterSeoMetaTitle")}
+      />
+      {formErrors.seoTitle && (
+        <small className="text-danger">{formErrors.seoTitle}</small>
+      )}
+    </div>
+
+    <div className="col-sm-6">
+      <label className="form-label fw-semibold">{t("seoMetaDescription")}</label>
+      <input
+        type="text"
+        name="seoDescription"
+        className="form-control rounded-3"
+        value={formData.seoDescription || ""}
+        onChange={handleChange}
+        placeholder={t("enterSeoMetaDescription")}
+      />
+      {formErrors.seoDescription && (
+        <small className="text-danger">{formErrors.seoDescription}</small>
+      )}
+    </div>
+  </div>
+</>
+
+              // <>
+              //   <div
+              //     {...getRootProps({
+              //       className:
+              //         "dropzone p-4 text-center image-upload image-upload-two mb-3",
+              //     })}
+              //   >
+              //     <input {...getInputProps()} />
+              //     <MdImageSearch style={{ fontSize: "50px" }} />
+              //     <p>Drag your image here, or browse</p>
+              //     <p>Supports JPEG, PNG, JPG</p>
+              //   </div>
+
+              //   <div className="row mt-3">
+              //     {images.map((file, i) => (
+              //       <div className="col-3 mb-3" key={i}>
+              //         <img
+              //           src={file.preview}
+              //           className="img-thumbnail"
+              //           style={{ height: 120, objectFit: "cover" }}
+              //         />
+              //       </div>
+              //     ))}
+              //   </div>
+
+              //   <div className="col-lg-12 mb-3">
+              //     <label>{t("description")}</label>
+              //     <textarea
+              //       name="description"
+              //       className="form-control"
+              //       maxLength={300}
+              //       value={formData.description}
+              //       onChange={handleChange}
+              //       placeholder={t("enterDescription")}
+              //     />
+              //     {formErrors.description && <div className="text-danger">{formErrors.description}</div>}
+              //   </div>
+
+              //   <div className="row">
+              //     <div className="col-sm-6 col-12 mb-3">
+              //       <label className="form-label">{t("seoMetaTitle")}</label>
+              //       <input
+              //         type="text"
+              //         name="seoTitle"
+              //         className="form-control"
+              //         value={formData.seoTitle || ""}
+              //         onChange={handleChange}
+              //         placeholder={t("enterSeoMetaTitle")}
+              //       />
+              //       {formErrors.seoTitle && <div className="text-danger">{formErrors.seoTitle}</div>}
+              //     </div>
+              //     <div className="col-sm-6 col-12 mb-3">
+              //       <label className="form-label">{t("seoMetaDescription")}</label>
+              //       <input
+              //         type="text"
+              //         name="seoDescription"
+              //         className="form-control"
+              //         value={formData.seoDescription || ""}
+              //         onChange={handleChange}
+              //         placeholder={t("enterSeoMetaDescription")}
+              //       />
+              //       {formErrors.seoDescription && <div className="text-danger">{formErrors.seoDescription}</div>}
+              //     </div>
+              //   </div>
+              // </>
             )}
 
             {/* Step 3 - Variants */}
@@ -1847,7 +1855,7 @@ const ProductForm = () => {
                         <input
                           type="text"
                           name="variantName"
-                          placeholder="E.g., Color, Expiry..."
+                          placeholder=""
                           value={variant.variantName}
                           onChange={(e) => handleVariantChange(index, e)}
                           style={{ color: "#999797ff", backgroundColor: "white", border: '1px solid gray', borderRadius: '4px', width: '300px', padding: '8px' }}
@@ -1860,7 +1868,7 @@ const ProductForm = () => {
                         <input
                           type="text"
                           name="variantValue"
-                          placeholder="E.g., Red, 15-08-1947..."
+                          placeholder=""
                           value={variant.variantValue}
                           onChange={(e) => handleVariantChange(index, e)}
                           style={{ color: "#999797ff", backgroundColor: "white", border: '1px solid gray', borderRadius: '4px', width: '300px', padding: '8px' }}

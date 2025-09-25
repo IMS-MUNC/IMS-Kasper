@@ -59,57 +59,71 @@ exports.createPurchase = async (req, res) => {
 
         const finalProducts = [];
 
-        for (const item of products) {
-            const {
-                productId,
-                quantity,
-                unit = '',
-                purchasePrice,
-                     returnQty,
-                discount = 0,
-                tax = 0,
-                taxAmount = 0,
-                unitCost = 0,
-                totalCost = 0,
-            } = item;
+    for (const item of products) {
+      const {
+        productId,
+        quantity,
+        unit = '',
+        purchasePrice,
+        returnQty,
+        discount = 0,
+        discountType = 'Fixed',
+        discountAmount = 0,
+        tax = 0,
+        taxAmount = 0,
+        unitCost = 0,
+        totalCost = 0,
+      } = item;
 
-            const product = await Product.findById(productId);
-            if (!product) {
-                return res.status(404).json({ message: `Product not found: ${productId}` });
-            }
+      const product = await Product.findById(productId);
+      if (!product) {
+        return res.status(404).json({ message: `Product not found: ${productId}` });
+      }
 
-            // Update product quantity and push history
-            await Product.findByIdAndUpdate(productId, {
-                $inc: { quantity },
-                $push: {
-                    newPurchasePrice: purchasePrice,
-                    newQuantity: quantity,
-                },
-            });
+      // Update product quantity and push history
+      await Product.findByIdAndUpdate(productId, {
+        $inc: { quantity },
+        $push: {
+          newPurchasePrice: purchasePrice,
+          newQuantity: quantity,
+        },
+      });
 
-            // Stock history
-            await StockHistory.create({
-                product: productId,
-                date: parsedDate,
-                quantityChanged: quantity,
-                priceChanged: purchasePrice,
-                type: 'purchase',
-                notes: `Purchase ref: ${referenceNumber}`,
-            });
+      // Stock history
+      await StockHistory.create({
+        product: productId,
+        date: parsedDate,
+        quantityChanged: quantity,
+        priceChanged: purchasePrice,
+        type: 'purchase',
+        notes: `Purchase ref: ${referenceNumber}`,
+      });
 
-            finalProducts.push({
-                product: productId,
-                quantity,
-                unit,
-                returnQty,
-                purchasePrice,
-                discount,
-                tax,
-                taxAmount,
-                unitCost,
-                totalCost,
-            });
+      // Calculate discountAmount if not sent (for safety)
+      let calcDiscountAmount = discountAmount;
+      if (!calcDiscountAmount) {
+        if (discountType === 'Percentage') {
+          calcDiscountAmount = ((quantity * purchasePrice) * discount) / 100;
+        } else {
+          calcDiscountAmount = discount;
         }
+      }
+
+      finalProducts.push({
+        product: productId,
+        quantity,
+        unit,
+        returnQty,
+        purchasePrice,
+        discount,
+        discountType,
+        discountAmount: calcDiscountAmount,
+        tax,
+        taxAmount,
+        unitCost,
+        totalCost,
+      });
+    }
 
         // ✅ Upload images if provided
         let imageUrls = [];
@@ -127,30 +141,39 @@ exports.createPurchase = async (req, res) => {
         }
 
         // ✅ Build purchase object
-        const purchase = new Purchase({
-            supplier,
-            purchaseDate: parsedDate,
-            referenceNumber,
-            products: finalProducts,
-            orderTax,
-            orderDiscount,
-            shippingCost,
-            grandTotal,
-            status,
-            description,
-            image: imageUrls,
-            payment: {
-                paymentType,
-                paymentStatus,
-                paidAmount,
-                dueAmount,
-                dueDate: dueDate ? new Date(dueDate) : null,
-                paymentMethod,
-                transactionId,
-                transactionDate: transactionDate ? new Date(transactionDate) : null,
-                onlineMethod,
-            },
-        });
+    const purchase = new Purchase({
+      supplier,
+      purchaseDate: parsedDate,
+      referenceNumber,
+      products: finalProducts,
+      orderTax,
+      orderDiscount,
+      shippingCost,
+      grandTotal,
+      status,
+      description,
+      image: imageUrls,
+      payment: {
+        paymentType,
+        paymentStatus,
+        paidAmount,
+        dueAmount,
+        dueDate: dueDate ? new Date(dueDate) : null,
+        paymentMethod,
+        transactionId,
+        transactionDate: transactionDate ? new Date(transactionDate) : null,
+        onlineMethod,
+      },
+      createdBy: req.user ? {
+        name: req.user.firstName + ' ' + req.user.lastName,
+        email: req.user.email
+      } : undefined,
+
+      updatedBy: req.user ? {
+        name: req.user.firstName + ' ' + req.user.lastName,
+        email: req.user.email
+      } : undefined,
+    });
 
         await purchase.save();
 
@@ -186,16 +209,18 @@ exports.getNextReferenceNumber = async (req, res) => {
 
 exports.getAllPurchases = async (req, res) => {
     try {
-        const {
-            search = "",
-            status,
-            supplier,
-            productName,
-            startDate,
-            endDate,
-            page = 1,
-            limit = 10,
-        } = req.query;
+      const {
+        search = "",
+        status,
+        supplier,
+        productName,
+        startDate,
+        endDate,
+        page = 1,
+        limit = 10,
+        isDeleted
+
+      } = req.query;
 
         const query = { $and: [] };
 
@@ -239,6 +264,13 @@ exports.getAllPurchases = async (req, res) => {
                 "products.product": { $in: products.map(p => p._id) },
             });
         }
+
+            // Add isDeleted filter
+    if (typeof isDeleted !== 'undefined') {
+      query.$and.push({ isDeleted: isDeleted === 'true' });
+    } else {
+      query.$and.push({ isDeleted: false }); // Default: only show not deleted
+    }
 
         if (query.$and.length === 0) delete query.$and;
 
@@ -455,7 +487,14 @@ exports.updatePurchase = async (req, res) => {
             // }
         };
 
-        const updatedPurchase = await Purchase.findByIdAndUpdate(id, updatedPayload, { new: true });
+    // Add updatedBy info
+    if (req.user) {
+      updatedPayload.updatedBy = {
+        name: req.user.firstName + ' ' + req.user.lastName,
+        email: req.user.email
+      };
+    }
+    const updatedPurchase = await Purchase.findByIdAndUpdate(id, updatedPayload, { new: true });
 
         if (!updatedPurchase) {
             return res.status(404).json({ message: 'Purchase not found' });
@@ -533,153 +572,6 @@ exports.getNextReferenceNumber = async (req, res) => {
         res.status(500).json({ error: "Failed to generate reference number" });
     }
 };
-
-
-// exports.createProductReturn = async (req, res) => {
-//   try {
-//     // 1. Auto-generate debitNoteId
-//     if (!req.body.debitNoteId) {
-//       req.body.debitNoteId = await getNextDebitNoteId();
-//     }
-
-//     // 2. Clean up fields
-//     const cleanBody = { ...req.body };
-//     ['billFrom', 'billTo', 'purchase'].forEach(field => {
-//       if (cleanBody[field] === '') delete cleanBody[field];
-//     });
-
-//     // 3. Prepare product & item arrays
-//     const finalProducts = [];
-//     cleanBody.items = [];
-
-//     if (Array.isArray(cleanBody.products)) {
-//       cleanBody.products.forEach(p => {
-//         const returnQty = Number(p.returnQty) || 0;
-//         const price = Number(p.purchasePrice) || 0;
-//         const discount = Number(p.discount) || 0;
-//         const tax = Number(p.tax) || 0;
-
-//         const baseAmount = returnQty * price - discount;
-//         const taxAmount = (baseAmount * tax) / 100;
-//         const total = baseAmount + taxAmount;
-
-//         finalProducts.push({
-//           product: p.productId,
-//           quantity: Number(p.quantity) - returnQty,
-//           returnQty,
-//           unit: p.unit || '',
-//           purchasePrice: price,
-//           discount,
-//           tax,
-//           taxAmount,
-//           unitCost: price,
-//           totalCost: total,
-//         });
-
-//         cleanBody.items.push({
-//           product: p.productId,
-//           quantity: returnQty,
-//           unit: p.unit || '',
-//           purchasePrice: price,
-//           discount,
-//           tax,
-//           taxAmount,
-//           unitCost: price,
-//           totalCost: total,
-//           quantityReturned: returnQty,
-//         });
-//       });
-
-//       cleanBody.products = finalProducts;
-//     }
-
-//     // 4. Create debit note
-//     const debitNote = new DebitNote({
-//       debitNoteId: cleanBody.debitNoteId,
-//       referenceNumber: cleanBody.referenceNumber,
-//       debitNoteDate: cleanBody.debitNoteDate || new Date(),
-//       dueDate: cleanBody.dueDate,
-//       status: cleanBody.status || 'Pending',
-//       currency: cleanBody.currency || 'USD',
-//       enableTax: cleanBody.enableTax || false,
-//       billFrom: cleanBody.billFrom,
-//       billTo: cleanBody.billTo,
-//       products: cleanBody.products,
-//       extraInfo: cleanBody.extraInfo || {},
-//       amount: cleanBody.amount || 0,
-//       cgst: cleanBody.cgst || 0,
-//       sgst: cleanBody.sgst || 0,
-//       discount: cleanBody.discount || '0',
-//       roundOff: cleanBody.roundOff || false,
-//       total: cleanBody.total || 0,
-//       totalInWords: cleanBody.totalInWords || '',
-//       signature: cleanBody.signature || '',
-//       signatureName: cleanBody.signatureName || '',
-//       signatureImage: cleanBody.signatureImage || '',
-//       purchase: cleanBody.purchase || null,
-//       items: cleanBody.items,
-//     });
-
-//     await debitNote.save();
-
-//     // 5. If linked to a purchase, update products & stock history
-//     if (Array.isArray(cleanBody.products) && cleanBody.purchase) {
-//       const relatedPurchase = await Purchase.findById(cleanBody.purchase);
-//       if (relatedPurchase) {
-//         for (const item of cleanBody.products) {
-//           const { product: productId, returnQty = 0, purchasePrice } = item;
-//           const qty = parseFloat(returnQty);
-//           if (!productId || qty <= 0) continue;
-
-//           // a. Update Product stock
-//           await Product.findByIdAndUpdate(productId, {
-//             $inc: { quantity: -qty },
-//             $push: {
-//               newPurchasePrice: purchasePrice,
-//               newQuantity: -qty,
-//             },
-//           });
-
-//           // b. Update Purchase.product returnQty
-//           const purchaseItem = relatedPurchase.products.find(p =>
-//             p.product.toString() === productId.toString()
-//           );
-//           if (purchaseItem) {
-//             purchaseItem.quantity = Math.max(0, purchaseItem.quantity - qty);
-//             purchaseItem.returnQty = (Number(purchaseItem.returnQty) || 0) + qty;
-//           }
-
-//           // c. Create StockHistory
-//           await StockHistory.create({
-//             product: productId,
-//             date: new Date(),
-//             quantityChanged: -qty,
-//             quantityReturned: qty,
-//             priceChanged: purchasePrice,
-//             type: 'return',
-//             notes: `Debit Note for purchase ref: ${relatedPurchase.referenceNumber}`,
-//           });
-//         }
-
-//         await relatedPurchase.save();
-//       }
-//     }
-
-//     // 6. Response
-//     return res.status(201).json({
-//       message: 'Debit Note created successfully',
-//       data: debitNote,
-//       finalProducts,
-//     });
-
-//   } catch (error) {
-//     console.error('Error creating debit note:', error);
-//     return res.status(500).json({
-//       message: 'Failed to create debit note',
-//       error: error.message,
-//     });
-//   }
-// };
 
 
 
@@ -851,6 +743,467 @@ exports.createProductReturn = async (req, res) => {
   }
 };
 
+
+
+
+
+// GET /api/purchases/debit-notes
+exports.getAllDebitNotes = async (req, res) => {
+  try {
+    const { page = 1, limit = 10, search = "", startDate, endDate } = req.query;
+
+    const filter = {};
+
+    if (search) {
+      filter.$or = [
+        { referenceNumber: { $regex: search, $options: "i" } },
+        { debitNoteId: { $regex: search, $options: "i" } },
+        { "purchase.supplier": { $regex: search, $options: "i" } },
+      ];
+    }
+
+    if (startDate && endDate) {
+      filter.returnDate = {
+        $gte: new Date(startDate),
+        $lte: new Date(endDate),
+      };
+    }
+
+    const skip = (page - 1) * limit;
+
+    const total = await DebitNote.countDocuments(filter);
+
+    const debitNotes = await DebitNote.find(filter)
+      .populate({
+        path: "purchase",
+        select: "referenceNumber supplier status purchaseDate",
+      })
+      .populate({
+        path: "products.product",
+        select: "name sku stock quantity image",
+      })
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(Number(limit));
+
+    res.status(200).json({
+      total,
+      totalPages: Math.ceil(total / limit),
+      currentPage: Number(page),
+      debitNotes,
+    });
+  } catch (error) {
+    console.error("Error fetching debit notes:", error);
+    res.status(500).json({ message: "Failed to fetch debit notes", error });
+  }
+};
+
+
+ 
+exports.getAllReturns = async (req, res) => {
+    try {
+        const returns = await ProductReturn.find()
+            .populate('originalPurchase', 'referenceNumber')
+            .populate('supplier', 'firstName lastName')
+            .populate('returnedProducts.product', 'productName');
+
+        res.status(200).json({ success: true, returns });
+    } catch (error) {
+        console.error("Fetch Returns Error:", error);
+        res.status(500).json({ success: false, message: 'Server error' });
+    }
+};
+
+
+exports.updatePurchaseOnReturn = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { returnedProducts, returnAmount, referenceNumber } = req.body;
+
+    const purchase = await Purchase.findById(id);
+    if (!purchase) {
+      return res.status(404).json({ message: "Purchase not found" });
+    }
+
+    // Update product quantities and returnQty, match by product (ObjectId)
+    returnedProducts.forEach((returnedItem) => {
+      const product = purchase.products.find(p => {
+        // Support both product and productId keys
+        const prodId = p.product? p.product.toString() : (p.product ? p.product.toString() : '');
+        return prodId === (returnedItem.product?.toString() || returnedItem.productId?.toString());
+      });
+      if (product) {
+        product.quantity = Math.max(0, (Number(product.quantity) || 0) - (Number(returnedItem.returnQty) || 0));
+        product.returnQty = (Number(product.returnQty) || 0) + (Number(returnedItem.returnQty) || 0);
+      }
+    });
+
+    // Optionally track returns history with normalized returnedProducts
+    purchase.returns = purchase.returns || [];
+    purchase.returns.push({
+      referenceNumber,
+      returnedProducts: returnedProducts.map(rp => ({
+        product: rp.product || rp.productId,
+        returnQty: Number(rp.returnQty) || 0,
+        unit: rp.unit || '',
+        purchasePrice: Number(rp.purchasePrice) || 0,
+        discount: Number(rp.discount) || 0,
+        tax: Number(rp.tax) || 0,
+        taxAmount: Number(rp.taxAmount) || 0,
+        unitCost: Number(rp.unitCost) || 0,
+        totalCost: Number(rp.totalCost) || 0,
+      })),
+      returnAmount,
+      returnDate: new Date()
+    });
+
+    await purchase.save();
+
+    res.status(200).json({ message: "Purchase updated with return info" });
+  } catch (err) {
+    console.error("Error updating purchase on return:", err);
+    res.status(500).json({ message: "Internal Server Error" });
+  }
+};
+
+
+// Purchase Report API
+exports.getPurchaseReport = async (req, res) => {
+  try {
+    const { search = "", fromDate, toDate, page = 1, limit = 10 } = req.query;
+    const query = { $and: [] };
+
+    // Search by reference, supplier name, or product name
+    if (search) {
+      const matchingProductIds = await Product.find({
+        productName: { $regex: search, $options: "i" }
+      }).select("_id");
+      const matchingSupplierIds = await Supplier.find({
+        $or: [
+          { firstName: { $regex: search, $options: "i" } },
+          { lastName: { $regex: search, $options: "i" } },
+        ]
+      }).select("_id");
+      query.$and.push({
+        $or: [
+          { referenceNumber: { $regex: search, $options: "i" } },
+          { supplier: { $in: matchingSupplierIds.map(s => s._id) } },
+          { "products.product": { $in: matchingProductIds.map(p => p._id) } }
+        ]
+      });
+    }
+
+    // Date filter
+    if (fromDate || toDate) {
+      const dateQuery = {};
+      if (fromDate) dateQuery.$gte = new Date(fromDate);
+      if (toDate) dateQuery.$lte = new Date(toDate);
+      query.$and.push({ purchaseDate: dateQuery });
+    }
+    if (query.$and.length === 0) delete query.$and;
+
+    const pageNum = parseInt(page);
+    const limitNum = parseInt(limit);
+
+    const totalRecords = await Purchase.countDocuments(query);
+
+    const purchases = await Purchase.find(query)
+      .populate("supplier", "firstName lastName")
+      .populate("products.product", "productName")
+      .sort({ createdAt: -1 })
+      .skip((pageNum - 1) * limitNum)
+      .limit(limitNum);
+
+    // Totals
+    let totalPurchase = totalRecords;
+    let totalQuantity = 0;
+    let totalReturn = 0;
+    purchases.forEach(p => {
+      p.products.forEach(pr => {
+        totalQuantity += pr.quantity || 0;
+        totalReturn += pr.returnQty || 0;
+      });
+    });
+
+    res.status(200).json({
+      data: purchases,
+      totals: {
+        purchase: totalPurchase,
+        quantity: totalQuantity,
+        return: totalReturn,
+      },
+      pagination: {
+        totalRecords,
+        currentPage: pageNum,
+        totalPages: Math.ceil(totalRecords / limitNum),
+        pageSize: limitNum,
+      },
+    });
+  } catch (error) {
+    console.error("Purchase Report Error:", error);
+    res.status(500).json({ message: "Failed to fetch report", error: error.message });
+  }
+};
+
+
+
+exports.restorePurchase = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    // ✅ Validate ID
+    if (!id || id.length !== 24) {
+      return res.status(400).json({ success: false, message: 'Invalid purchase ID' });
+    }
+
+    // ✅ Find purchase
+    const purchase = await Purchase.findById(id);
+    if (!purchase) {
+      return res.status(404).json({ success: false, message: 'Purchase not found' });
+    }
+
+    // ✅ Check if already restored
+    if (!purchase.isDeleted) {
+      return res.status(400).json({ success: false, message: 'Purchase is already active' });
+    }
+
+    // ✅ Restore
+    purchase.isDeleted = false;
+    await purchase.save();
+
+    res.status(200).json({
+      success: true,
+      message: 'Purchase restored successfully',
+      data: purchase,
+    });
+  } catch (error) {
+    console.error('Error restoring purchase:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Internal server error while restoring purchase',
+      error: error.message,
+    });
+  }
+};
+
+exports.permanentDeletePurchase = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    // ✅ Validate ID
+    if (!id || id.length !== 24) {
+      return res.status(400).json({ success: false, message: 'Invalid purchase ID' });
+    }
+
+    // ✅ Find purchase
+    const purchase = await Purchase.findById(id);
+    if (!purchase) {
+      return res.status(404).json({ success: false, message: 'Purchase not found' });
+    }
+
+    // ✅ Remove associated images from Cloudinary (if any)
+    if (purchase.image && purchase.image.length > 0) {
+      for (const img of purchase.image) {
+        if (img.public_id) {
+          try {
+            await cloudinary.uploader.destroy(img.public_id);
+          } catch (cloudErr) {
+            console.error(`Cloudinary deletion failed for ${img.public_id}:`, cloudErr);
+          }
+        }
+      }
+    }
+
+    // ✅ Remove related stock history entries
+    if (purchase.products && purchase.products.length > 0) {
+      await StockHistory.deleteMany({
+        product: { $in: purchase.products.map((p) => p.product) },
+        notes: new RegExp(purchase.referenceNumber, 'i'),
+      });
+    }
+
+    // ✅ Delete the purchase itself
+    await Purchase.findByIdAndDelete(id);
+
+    res.status(200).json({
+      success: true,
+      message: 'Purchase permanently deleted',
+    });
+  } catch (error) {
+    console.error('Permanent Delete Purchase Error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to permanently delete purchase',
+      error: error.message,
+    });
+  }
+};
+
+
+// Soft delete a purchase (move to Trash)
+exports.deletePurchase = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const purchase = await Purchase.findById(id);
+    if (!purchase) {
+      return res.status(404).json({ message: 'Purchase not found' });
+    }
+    purchase.isDeleted = true;
+    await purchase.save();
+    res.status(200).json({ success: true, message: 'Purchase moved to trash (soft deleted)' });
+  } catch (error) {
+    console.error('Soft Delete Purchase Error:', error);
+    res.status(500).json({ success: false, message: 'Failed to soft delete purchase', error: error.message });
+  }
+};
+
+
+
+// exports.createProductReturn = async (req, res) => {
+//   try {
+//     // 1. Auto-generate debitNoteId
+//     if (!req.body.debitNoteId) {
+//       req.body.debitNoteId = await getNextDebitNoteId();
+//     }
+
+//     // 2. Clean up fields
+//     const cleanBody = { ...req.body };
+//     ['billFrom', 'billTo', 'purchase'].forEach(field => {
+//       if (cleanBody[field] === '') delete cleanBody[field];
+//     });
+
+//     // 3. Prepare product & item arrays
+//     const finalProducts = [];
+//     cleanBody.items = [];
+
+//     if (Array.isArray(cleanBody.products)) {
+//       cleanBody.products.forEach(p => {
+//         const returnQty = Number(p.returnQty) || 0;
+//         const price = Number(p.purchasePrice) || 0;
+//         const discount = Number(p.discount) || 0;
+//         const tax = Number(p.tax) || 0;
+
+//         const baseAmount = returnQty * price - discount;
+//         const taxAmount = (baseAmount * tax) / 100;
+//         const total = baseAmount + taxAmount;
+
+//         finalProducts.push({
+//           product: p.productId,
+//           quantity: Number(p.quantity) - returnQty,
+//           returnQty,
+//           unit: p.unit || '',
+//           purchasePrice: price,
+//           discount,
+//           tax,
+//           taxAmount,
+//           unitCost: price,
+//           totalCost: total,
+//         });
+
+//         cleanBody.items.push({
+//           product: p.productId,
+//           quantity: returnQty,
+//           unit: p.unit || '',
+//           purchasePrice: price,
+//           discount,
+//           tax,
+//           taxAmount,
+//           unitCost: price,
+//           totalCost: total,
+//           quantityReturned: returnQty,
+//         });
+//       });
+
+//       cleanBody.products = finalProducts;
+//     }
+
+//     // 4. Create debit note
+//     const debitNote = new DebitNote({
+//       debitNoteId: cleanBody.debitNoteId,
+//       referenceNumber: cleanBody.referenceNumber,
+//       debitNoteDate: cleanBody.debitNoteDate || new Date(),
+//       dueDate: cleanBody.dueDate,
+//       status: cleanBody.status || 'Pending',
+//       currency: cleanBody.currency || 'USD',
+//       enableTax: cleanBody.enableTax || false,
+//       billFrom: cleanBody.billFrom,
+//       billTo: cleanBody.billTo,
+//       products: cleanBody.products,
+//       extraInfo: cleanBody.extraInfo || {},
+//       amount: cleanBody.amount || 0,
+//       cgst: cleanBody.cgst || 0,
+//       sgst: cleanBody.sgst || 0,
+//       discount: cleanBody.discount || '0',
+//       roundOff: cleanBody.roundOff || false,
+//       total: cleanBody.total || 0,
+//       totalInWords: cleanBody.totalInWords || '',
+//       signature: cleanBody.signature || '',
+//       signatureName: cleanBody.signatureName || '',
+//       signatureImage: cleanBody.signatureImage || '',
+//       purchase: cleanBody.purchase || null,
+//       items: cleanBody.items,
+//     });
+
+//     await debitNote.save();
+
+//     // 5. If linked to a purchase, update products & stock history
+//     if (Array.isArray(cleanBody.products) && cleanBody.purchase) {
+//       const relatedPurchase = await Purchase.findById(cleanBody.purchase);
+//       if (relatedPurchase) {
+//         for (const item of cleanBody.products) {
+//           const { product: productId, returnQty = 0, purchasePrice } = item;
+//           const qty = parseFloat(returnQty);
+//           if (!productId || qty <= 0) continue;
+
+//           // a. Update Product stock
+//           await Product.findByIdAndUpdate(productId, {
+//             $inc: { quantity: -qty },
+//             $push: {
+//               newPurchasePrice: purchasePrice,
+//               newQuantity: -qty,
+//             },
+//           });
+
+//           // b. Update Purchase.product returnQty
+//           const purchaseItem = relatedPurchase.products.find(p =>
+//             p.product.toString() === productId.toString()
+//           );
+//           if (purchaseItem) {
+//             purchaseItem.quantity = Math.max(0, purchaseItem.quantity - qty);
+//             purchaseItem.returnQty = (Number(purchaseItem.returnQty) || 0) + qty;
+//           }
+
+//           // c. Create StockHistory
+//           await StockHistory.create({
+//             product: productId,
+//             date: new Date(),
+//             quantityChanged: -qty,
+//             quantityReturned: qty,
+//             priceChanged: purchasePrice,
+//             type: 'return',
+//             notes: `Debit Note for purchase ref: ${relatedPurchase.referenceNumber}`,
+//           });
+//         }
+
+//         await relatedPurchase.save();
+//       }
+//     }
+
+//     // 6. Response
+//     return res.status(201).json({
+//       message: 'Debit Note created successfully',
+//       data: debitNote,
+//       finalProducts,
+//     });
+
+//   } catch (error) {
+//     console.error('Error creating debit note:', error);
+//     return res.status(500).json({
+//       message: 'Failed to create debit note',
+//       error: error.message,
+//     });
+//   }
+// };
 
 
 
@@ -1255,206 +1608,4 @@ exports.createProductReturn = async (req, res) => {
 //     res.status(500).json({ message: 'Failed to fetch debit notes', error });
 //   }
 // };
-
-// GET /api/purchases/debit-notes
-exports.getAllDebitNotes = async (req, res) => {
-  try {
-    const { page = 1, limit = 10, search = "", startDate, endDate } = req.query;
-
-    const filter = {};
-
-    if (search) {
-      filter.$or = [
-        { referenceNumber: { $regex: search, $options: "i" } },
-        { debitNoteId: { $regex: search, $options: "i" } },
-        { "purchase.supplier": { $regex: search, $options: "i" } },
-      ];
-    }
-
-    if (startDate && endDate) {
-      filter.returnDate = {
-        $gte: new Date(startDate),
-        $lte: new Date(endDate),
-      };
-    }
-
-    const skip = (page - 1) * limit;
-
-    const total = await DebitNote.countDocuments(filter);
-
-    const debitNotes = await DebitNote.find(filter)
-      .populate({
-        path: "purchase",
-        select: "referenceNumber supplier status purchaseDate",
-      })
-      .populate({
-        path: "products.product",
-        select: "name sku stock quantity image",
-      })
-      .sort({ createdAt: -1 })
-      .skip(skip)
-      .limit(Number(limit));
-
-    res.status(200).json({
-      total,
-      totalPages: Math.ceil(total / limit),
-      currentPage: Number(page),
-      debitNotes,
-    });
-  } catch (error) {
-    console.error("Error fetching debit notes:", error);
-    res.status(500).json({ message: "Failed to fetch debit notes", error });
-  }
-};
-
-
- 
-exports.getAllReturns = async (req, res) => {
-    try {
-        const returns = await ProductReturn.find()
-            .populate('originalPurchase', 'referenceNumber')
-            .populate('supplier', 'firstName lastName')
-            .populate('returnedProducts.product', 'productName');
-
-        res.status(200).json({ success: true, returns });
-    } catch (error) {
-        console.error("Fetch Returns Error:", error);
-        res.status(500).json({ success: false, message: 'Server error' });
-    }
-};
-
-
-exports.updatePurchaseOnReturn = async (req, res) => {
-  try {
-    const { id } = req.params;
-    const { returnedProducts, returnAmount, referenceNumber } = req.body;
-
-    const purchase = await Purchase.findById(id);
-    if (!purchase) {
-      return res.status(404).json({ message: "Purchase not found" });
-    }
-
-    // Update product quantities and returnQty, match by product (ObjectId)
-    returnedProducts.forEach((returnedItem) => {
-      const product = purchase.products.find(p => {
-        // Support both product and productId keys
-        const prodId = p.product? p.product.toString() : (p.product ? p.product.toString() : '');
-        return prodId === (returnedItem.product?.toString() || returnedItem.productId?.toString());
-      });
-      if (product) {
-        product.quantity = Math.max(0, (Number(product.quantity) || 0) - (Number(returnedItem.returnQty) || 0));
-        product.returnQty = (Number(product.returnQty) || 0) + (Number(returnedItem.returnQty) || 0);
-      }
-    });
-
-    // Optionally track returns history with normalized returnedProducts
-    purchase.returns = purchase.returns || [];
-    purchase.returns.push({
-      referenceNumber,
-      returnedProducts: returnedProducts.map(rp => ({
-        product: rp.product || rp.productId,
-        returnQty: Number(rp.returnQty) || 0,
-        unit: rp.unit || '',
-        purchasePrice: Number(rp.purchasePrice) || 0,
-        discount: Number(rp.discount) || 0,
-        tax: Number(rp.tax) || 0,
-        taxAmount: Number(rp.taxAmount) || 0,
-        unitCost: Number(rp.unitCost) || 0,
-        totalCost: Number(rp.totalCost) || 0,
-      })),
-      returnAmount,
-      returnDate: new Date()
-    });
-
-    await purchase.save();
-
-    res.status(200).json({ message: "Purchase updated with return info" });
-  } catch (err) {
-    console.error("Error updating purchase on return:", err);
-    res.status(500).json({ message: "Internal Server Error" });
-  }
-};
-
-
-// Purchase Report API
-exports.getPurchaseReport = async (req, res) => {
-  try {
-    const { search = "", fromDate, toDate, page = 1, limit = 10 } = req.query;
-    const query = { $and: [] };
-
-    // Search by reference, supplier name, or product name
-    if (search) {
-      const matchingProductIds = await Product.find({
-        productName: { $regex: search, $options: "i" }
-      }).select("_id");
-      const matchingSupplierIds = await Supplier.find({
-        $or: [
-          { firstName: { $regex: search, $options: "i" } },
-          { lastName: { $regex: search, $options: "i" } },
-        ]
-      }).select("_id");
-      query.$and.push({
-        $or: [
-          { referenceNumber: { $regex: search, $options: "i" } },
-          { supplier: { $in: matchingSupplierIds.map(s => s._id) } },
-          { "products.product": { $in: matchingProductIds.map(p => p._id) } }
-        ]
-      });
-    }
-
-    // Date filter
-    if (fromDate || toDate) {
-      const dateQuery = {};
-      if (fromDate) dateQuery.$gte = new Date(fromDate);
-      if (toDate) dateQuery.$lte = new Date(toDate);
-      query.$and.push({ purchaseDate: dateQuery });
-    }
-    if (query.$and.length === 0) delete query.$and;
-
-    const pageNum = parseInt(page);
-    const limitNum = parseInt(limit);
-
-    const totalRecords = await Purchase.countDocuments(query);
-
-    const purchases = await Purchase.find(query)
-      .populate("supplier", "firstName lastName")
-      .populate("products.product", "productName")
-      .sort({ createdAt: -1 })
-      .skip((pageNum - 1) * limitNum)
-      .limit(limitNum);
-
-    // Totals
-    let totalPurchase = totalRecords;
-    let totalQuantity = 0;
-    let totalReturn = 0;
-    purchases.forEach(p => {
-      p.products.forEach(pr => {
-        totalQuantity += pr.quantity || 0;
-        totalReturn += pr.returnQty || 0;
-      });
-    });
-
-    res.status(200).json({
-      data: purchases,
-      totals: {
-        purchase: totalPurchase,
-        quantity: totalQuantity,
-        return: totalReturn,
-      },
-      pagination: {
-        totalRecords,
-        currentPage: pageNum,
-        totalPages: Math.ceil(totalRecords / limitNum),
-        pageSize: limitNum,
-      },
-    });
-  } catch (error) {
-    console.error("Purchase Report Error:", error);
-    res.status(500).json({ message: "Failed to fetch report", error: error.message });
-  }
-};
-
-
-
-
 

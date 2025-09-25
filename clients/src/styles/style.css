@@ -13256,6 +13256,7 @@ th .checkboxs .checkmarks::after, td .checkboxs .checkmarks::after {
 .table-top-head li {
   margin-right: 8px;
   flex-shrink: 0;
+  list-style: none;
 }
 .table-top-head li:last-child {
   margin-right: 0;

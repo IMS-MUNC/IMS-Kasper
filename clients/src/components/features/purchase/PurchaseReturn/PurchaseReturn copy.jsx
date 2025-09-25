@@ -1319,3 +1319,242 @@ export default DebitNoteList;
 
 // export default ProductSearch;
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+// ...existing imports...
+import * as XLSX from "xlsx";
+import jsPDF from "jspdf";
+import "jspdf-autotable";
+// ...existing code...
+
+const Purchase = () => {
+  // ...existing state...
+  const [selectedRows, setSelectedRows] = useState([]);
+  const [supplierFilter, setSupplierFilter] = useState("");
+  const [dateFilter, setDateFilter] = useState("");
+  const [productFilter, setProductFilter] = useState("");
+
+  // ...existing code...
+
+  // Filtered purchases based on filters
+  const filteredPurchases = purchases.filter((purchase) => {
+    let supplierMatch = true;
+    let dateMatch = true;
+    let productMatch = true;
+
+    if (supplierFilter) {
+      supplierMatch =
+        purchase.supplier &&
+        `${purchase.supplier.firstName} ${purchase.supplier.lastName}`
+          .toLowerCase()
+          .includes(supplierFilter.toLowerCase());
+    }
+    if (dateFilter) {
+      const purchaseDate = new Date(purchase.purchaseDate)
+        .toISOString()
+        .slice(0, 10);
+      dateMatch = purchaseDate === dateFilter;
+    }
+    if (productFilter) {
+      productMatch = purchase.products.some((p) =>
+        (p.product?.productName || "")
+          .toLowerCase()
+          .includes(productFilter.toLowerCase())
+      );
+    }
+    return supplierMatch && dateMatch && productMatch;
+  });
+
+  // Export only selected and filtered rows to Excel
+  const handleExportExcel = () => {
+    const exportPurchases = selectedRows.length
+      ? filteredPurchases.filter((purchase) =>
+          selectedRows.includes(purchase._id)
+        )
+      : filteredPurchases;
+    if (!exportPurchases.length) return;
+    const rows = [];
+    exportPurchases.forEach((purchase) => {
+      purchase.products.forEach((p) => {
+        rows.push({
+          Supplier: purchase.supplier
+            ? `${purchase.supplier.firstName} ${purchase.supplier.lastName}`
+            : "N/A",
+          Reference: purchase.referenceNumber,
+          Date: new Date(purchase.purchaseDate).toLocaleDateString(),
+          Product: p.product?.productName || "",
+          Quantity: p.quantity,
+          Unit: p.unit,
+          PurchasePrice: p.purchasePrice,
+          Discount: p.discount,
+          Tax: p.tax,
+          TaxAmount: p.taxAmount || ((p.afterDiscount * p.tax) / 100 || 0),
+          ShippingCost: purchase.shippingCost,
+          ExtraExpense: purchase.orderTax,
+          UnitCost: p.unitCost,
+          TotalCost: p.totalCost,
+          Status: purchase.status,
+        });
+      });
+    });
+    if (!rows.length) return;
+    const ws = XLSX.utils.json_to_sheet(rows);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Purchases");
+    XLSX.writeFile(wb, "filtered_purchases.xlsx");
+  };
+
+  // Export only selected and filtered rows to PDF
+  const handleExportPDF = () => {
+    const exportPurchases = selectedRows.length
+      ? filteredPurchases.filter((purchase) =>
+          selectedRows.includes(purchase._id)
+        )
+      : filteredPurchases;
+    if (!exportPurchases.length) return;
+    const doc = new jsPDF("l", "pt", "a4");
+    const columns = [
+      "Supplier",
+      "Reference",
+      "Date",
+      "Product",
+      "Quantity",
+      "Unit",
+      "PurchasePrice",
+      "Discount",
+      "Tax",
+      "TaxAmount",
+      "ShippingCost",
+      "ExtraExpense",
+      "UnitCost",
+      "TotalCost",
+      "Status",
+    ];
+    const rows = [];
+    exportPurchases.forEach((purchase) => {
+      purchase.products.forEach((p) => {
+        rows.push([
+          purchase.supplier
+            ? `${purchase.supplier.firstName} ${purchase.supplier.lastName}`
+            : "N/A",
+          purchase.referenceNumber,
+          new Date(purchase.purchaseDate).toLocaleDateString(),
+          p.product?.productName || "",
+          p.quantity,
+          p.unit,
+          p.purchasePrice,
+          p.discount,
+          p.tax,
+          p.taxAmount || ((p.afterDiscount * p.tax) / 100 || 0),
+          purchase.shippingCost,
+          purchase.orderTax,
+          p.unitCost,
+          p.totalCost,
+          purchase.status,
+        ]);
+      });
+    });
+    if (!rows.length) return;
+    doc.text("Purchases", 40, 30);
+    doc.autoTable({
+      head: [columns],
+      body: rows,
+      startY: 40,
+      styles: { fontSize: 7 },
+      margin: { left: 20, right: 20 },
+    });
+    doc.save("filtered_purchases.pdf");
+  };
+
+  // ...existing code...
+
+  return (
+    <div className="page-wrapper">
+      <div className="content">
+        {/* ...existing code... */}
+        {/* Filter UI */}
+        <div className="row mb-3">
+          <div className="col-md-3">
+            <input
+              type="text"
+              className="form-control"
+              placeholder="Filter by Supplier"
+              value={supplierFilter}
+              onChange={(e) => setSupplierFilter(e.target.value)}
+            />
+          </div>
+          <div className="col-md-3">
+            <input
+              type="date"
+              className="form-control"
+              value={dateFilter}
+              onChange={(e) => setDateFilter(e.target.value)}
+            />
+          </div>
+          <div className="col-md-3">
+            <input
+              type="text"
+              className="form-control"
+              placeholder="Filter by Product Name"
+              value={productFilter}
+              onChange={(e) => setProductFilter(e.target.value)}
+            />
+          </div>
+        </div>
+        {/* ...existing code... */}
+        <div className="table-top-head me-2">
+          <li>
+            <button
+              type="button"
+              className="icon-btn"
+              title="Pdf"
+              onClick={handleExportPDF}
+            >
+              <FaFilePdf />
+            </button>
+          </li>
+          <li>
+            <button
+              type="button"
+              className="icon-btn"
+              title="Export Excel"
+              onClick={handleExportExcel}
+            >
+              <FaFileExcel style={{ color: "green" }} />
+            </button>
+          </li>
+        </div>
+        {/* ...existing code... */}
+        {/* Use filteredPurchases for rendering table rows */}
+        <tbody>
+          {filteredPurchases.length === 0 ? (
+            <tr>
+              <td colSpan="16" className="text-center">
+                No purchases found.
+              </td>
+            </tr>
+          ) : (
+            filteredPurchases.map((purchase) => (
+              // ...existing row rendering...
+            ))
+          )}
+        </tbody>
+        {/* ...existing code... */}
+      </div>
+    </div>
+  );
+};
+
+export default Purchase;
+

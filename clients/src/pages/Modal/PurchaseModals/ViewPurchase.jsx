@@ -10,6 +10,8 @@ const ViewPurchase = ({ purchaseId }) => {
 const token = localStorage.getItem("token");
     // console.log("ViewPurchase component rendered with purchaseId:", purchaseId);
 
+    
+
     useEffect(() => {
         const fetchAllPurchases = async () => {
             try {
@@ -60,6 +62,7 @@ const token = localStorage.getItem("token");
 
     return (
         <div className="container py-3">
+            
             {/* All Purchases Summary */}
             <div className="alert alert-info mb-4">
                 <strong>All Purchases Summary:</strong>
@@ -67,6 +70,7 @@ const token = localStorage.getItem("token");
                 <div>Total Due Amount: <b>₹{totalAllDueAmount}</b></div>
                 <div>Total Products: <b>{totalAllProducts}</b></div>
             </div>
+           
             <h4>Purchase Details</h4>
             <div className="row mb-2">
                 <div className="col-md-6">
@@ -82,6 +86,8 @@ const token = localStorage.getItem("token");
                     <strong>Status:</strong> {purchase.status}
                 </div>
             </div>
+
+            {/* last order */}
             <div className="row mb-2">
                 <div className="col-md-4"><strong>Total Quantity:</strong> {totalQty}</div>
                 <div className="col-md-4"><strong>Total Refund Quantity:</strong> {totalRefundQty}</div>
@@ -98,6 +104,7 @@ const token = localStorage.getItem("token");
                 </div>
             </div>
             <hr />
+             {/* supplier based */}
             <h5>Purchase History (Supplier)</h5>
             <ul>
                 {history.map(h => (
@@ -107,6 +114,7 @@ const token = localStorage.getItem("token");
                 ))}
             </ul>
             <hr />
+            
             <h5>Products</h5>
             <table className="table table-bordered">
                 <thead>

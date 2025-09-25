@@ -8,8 +8,10 @@ import { toast } from "react-toastify";
 
 
 
+// ✅ Keep your modules in sync with sidebar
 const modules = {
-  Dashboard: ["Dashboard", "Application"],
+  Dashboard: ["Dashboard"],
+  Connect: [ "Chat", "Mail"],
   Inventory: [
     "Product",
     "Category",
@@ -18,22 +20,26 @@ const modules = {
     "Unit",
     "HSN",
     "VariantAttributes",
-    "Warranty",
-    "Barcode",
-    "DebitNote",
-    "CreditNote",
+    "Warranties",
+    "PrintBarcode",
   ],
-  Peoples: ["Customers", "Suppliers", "Warehouse"],
-  Purchases: ["Purchases", "PurchaseOrder", "PurchaseReturn"],
-  Stocks: ["Stocks", "StockAdjustment", "StockTransfer"],
-  Sales: ["Sales", "Invoices", "POS"],
+  Peoples: ["Customer", "Supplier"],
+   Warehouse : ["Warehouse","Stock Movement Log"],
+  Purchases: ["Purchase",  "DebitNote"],
+  Stocks: ["Stock", "StockAdjustment"],
+  Sales: ["Sales", "Invoices", "POS", "CreditNote"],
   Promo: ["Coupons", "GiftCards"],
-  Locations: ["Location", "Countries", "States", "Cities"],
-  "User Management": ["Users", "RolesPermissions"],
-  Settings: ["Settings", "WebsiteSettings"],
-  Reports: ["Reports", "SalesReport", "PurchaseReport"],
+  Locations: [ "Country", "State", "City"],
+  "User Management": ["Users", "Roles"],
+  Settings: [
+    "Profile Settings",
+    "Security",
+    "Website",
+    "CompanySettings",
+    "Localization",
+  ],
+  Reports: [ "PurchaseReport"],
   "Finance & Accounts": [
-    "Finance",
     "BalanceSheet",
     "ProfitLoss",
     "OverdueReport",
@@ -233,9 +239,12 @@ const Permission = () => {
           }
         },
       );
-      toast.success("Permissions updated successfully.", {
+      fetchRolePermissions();
+      toast.success("Permissions updated successfully.",
+         {
         position: 'top-center'
-      });
+      }
+    );
     } catch (err) {
       console.error("Error updating permissions", err);
       toast.error("Failed to update permissions.", {

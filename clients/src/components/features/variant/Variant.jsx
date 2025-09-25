@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState, useEffect } from "react";
+import React, { useMemo, useRef, useState, useEffect } from "react";
 import { FaFileExcel, FaFilePdf } from "react-icons/fa";
 import { TbEdit, TbRefresh, TbTrash } from "react-icons/tb";
 import { GrFormPrevious } from "react-icons/gr";
@@ -28,6 +28,10 @@ const Variant = ({ show, handleClose }) => {
   const [rowsPerPage, setRowsPerPage] = useState(10);
   const [selectedVariants, setSelectedVariants] = useState([]);
   const [selectAll, setSelectAll] = useState(false);
+  const [variantDropdown, setVariantDropdown] = useState([]);
+  const [selectedVariant, setSelectedVariant] = useState("");
+  const [valueDropdown, setValueDropdown] = useState([]);
+  const [selectedValue, setSelectedValue] = useState("");
 
   const fetchVariants = async () => {
     try {
@@ -339,6 +343,42 @@ const Variant = ({ show, handleClose }) => {
   const handleCloses = () => setShowModal(false);
   const handleShow = () => setShowModal(true);
 
+  // Fetch all variants for dropdown (status true only)
+  useEffect(() => {
+    const token = localStorage.getItem("token");
+    fetch(`${BASE_URL}/api/variant-attributes/active-variants`, {
+      headers: { Authorization: `Bearer ${token}` },
+    })
+      .then(res => res.json())
+      .then(data => setVariantDropdown(data))
+      .catch(err => console.error("Error fetching variant dropdown:", err));
+  }, []);
+
+  // Fetch values for selected variant and split comma-separated values
+  useEffect(() => {
+    if (selectedVariant) {
+      const token = localStorage.getItem("token");
+      fetch(`${BASE_URL}/api/variant-attributes/values/${encodeURIComponent(selectedVariant)}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      })
+        .then(res => res.json())
+        .then(data => {
+          // If backend returns array of comma-separated strings, flatten them
+          let values = [];
+          data.forEach(val => {
+            if (typeof val === 'string') {
+              values.push(...val.split(',').map(v => v.trim()).filter(Boolean));
+            }
+          });
+          setValueDropdown(values);
+        })
+        .catch(err => console.error("Error fetching value dropdown:", err));
+    } else {
+      setValueDropdown([]);
+      setSelectedValue("");
+    }
+  }, [selectedVariant]);
+
   return (
     <div className="page-wrapper">
       <div className="content">
@@ -605,6 +645,41 @@ const Variant = ({ show, handleClose }) => {
                   <MdNavigateNext />
                 </button>
               </span>
+            </div>
+          </div>
+        </div>
+
+        {/* DROPDOWN UI BELOW TABLE */}
+        <div className="card mt-4">
+          <div className="card-body">
+            <div className="row">
+              <div className="col-md-6">
+                <label className="form-label">Variant</label>
+                <select
+                  className="form-select"
+                  value={selectedVariant}
+                  onChange={e => setSelectedVariant(e.target.value)}
+                >
+                  <option value="">Select Variant</option>
+                  {variantDropdown.map((variant, idx) => (
+                    <option key={idx} value={variant}>{variant}</option>
+                  ))}
+                </select>
+              </div>
+              <div className="col-md-6">
+                <label className="form-label">Value</label>
+                <select
+                  className="form-select"
+                  value={selectedValue}
+                  onChange={e => setSelectedValue(e.target.value)}
+                  disabled={!selectedVariant}
+                >
+                  <option value="">Select Value</option>
+                  {valueDropdown.map((value, idx) => (
+                    <option key={idx} value={value}>{value}</option>
+                  ))}
+                </select>
+              </div>
             </div>
           </div>
         </div>

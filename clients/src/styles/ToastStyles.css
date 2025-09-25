@@ -21,4 +21,8 @@
     background-color: #0dcaf0; /* Cyan Blue */
     color: #000;
   }
-  
+
+  /* Make toast icon white */
+.Toastify__toast-icon {
+  color: #fff !important;
+}

@@ -19,8 +19,9 @@
 // module.exports = authMiddleware;
 
 const jwt = require("jsonwebtoken");
+const User = require("../models/usersModels");
 
-exports.authMiddleware = (req, res, next) => {
+exports.authMiddleware = async (req, res, next) => {
   try {
     const token = req.header("Authorization")?.split(" ")[1]; // Expect "Bearer <token>"
 
@@ -29,7 +30,12 @@ exports.authMiddleware = (req, res, next) => {
     }
 
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    req.user = decoded; // store user info for later use
+    // Fetch full user from DB to get firstName, lastName, email
+    const user = await User.findById(decoded.id).select("firstName lastName email");
+    if (!user) {
+      return res.status(401).json({ message: "User not found" });
+    }
+    req.user = user;
     next();
   } catch (error) {
     return res.status(401).json({ message: "Invalid token" });

@@ -138,6 +138,7 @@ import PosHeader from "../pages/pos/posHead/PosHeader.jsx";
 import OtpVerification from "../components/auth/TwoStepOtpVerification.jsx";
 import Quotation from "../components/features/quotation/Quotation.jsx";
 import NewPos from "../pages/pos/NewPos.jsx";
+import Trash from "../pages/Delete/Trash.jsx";
 // import {Pos} from "../pages/pos/Pos.jsx";
 
 
@@ -310,6 +311,7 @@ const AppRoutes = () => {
  <Route path="/Godown/:id" element={<Godown />} />
  <Route path="/selectpage" element={<SelectPage />} />
  <Route path="/stock-movement-log" element={<StockMovementLog />} />
+ <Route path="/delete" element={<Trash />} />
 
  {/* customer */}
  <Route path="/customers" element={<AllCustomer />} />

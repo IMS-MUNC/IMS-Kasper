@@ -63,7 +63,8 @@ const Units = () => {
           Authorization: `Bearer ${token}`,
         },
       });
-      toast.success("Unit created successfully!");
+      // toast.success("Unit created successfully!");
+        toast.success("Unit created  successfully!");
       setUnitsName("");
       setShortName("");
       setStatus(true);

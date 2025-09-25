@@ -72,6 +72,7 @@ const purchaseProductSchema = new mongoose.Schema({
     discount: { type: Number, default: 0 },
     tax: { type: Number, default: 0 },
     taxAmount: { type: Number, default: 0 },
+    discountAmount: { type: Number, default: 0 },
     unitCost: { type: Number, default: 0 },
     totalCost: { type: Number, default: 0 },
 }, { _id: false });
@@ -117,21 +118,31 @@ const imageSchema = new mongoose.Schema({
 }, { _id: false });
 
 const purchaseSchema = new mongoose.Schema({
-    supplier: { type: mongoose.Schema.Types.ObjectId, ref: 'Supplier', required: true },
-    purchaseDate: { type: Date, required: true },
-    referenceNumber: { type: String, required: true },
-    products: [purchaseProductSchema],
-    orderTax: { type: Number, default: 0 },
-    orderDiscount: { type: Number, default: 0 },
-    shippingCost: { type: Number, default: 0 },
-    grandTotal: { type: Number, default: 0 },
-    status: { type: String, required: true },
-    description: { type: String },
-    image: [imageSchema],
-    payment: paymentSchema,
-    returns: [purchaseReturnSchema],
-    isDeleted: { type: Boolean, default: false },
-    createdAt: { type: Date, default: Date.now },
+        supplier: { type: mongoose.Schema.Types.ObjectId, ref: 'Supplier', required: true },
+        purchaseDate: { type: Date, required: true },
+        referenceNumber: { type: String, required: true },
+        products: [purchaseProductSchema],
+        orderTax: { type: Number, default: 0 },
+        orderDiscount: { type: Number, default: 0 },
+        shippingCost: { type: Number, default: 0 },
+        grandTotal: { type: Number, default: 0 },
+        status: { type: String, required: true },
+        description: { type: String },
+        image: [imageSchema],
+        payment: paymentSchema,
+        returns: [purchaseReturnSchema],
+        discountType: { type: String, default: 'Fixed' },
+        discountAmount: { type: Number, default: 0 },
+        isDeleted: { type: Boolean, default: false },
+        createdBy: {
+            name: { type: String },
+            email: { type: String }
+        },
+        updatedBy: {
+            name: { type: String },
+            email: { type: String }
+        },
+        createdAt: { type: Date, default: Date.now },
 }, { timestamps: true });
 
 module.exports = mongoose.model('Purchase', purchaseSchema);

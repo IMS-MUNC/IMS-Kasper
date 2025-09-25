@@ -1,6 +1,6 @@
 // final
 import axios from "axios";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import Select from "react-select";
 import BASE_URL from "../../config/config";
 import "../../../styles/purchase/purchase.css";
@@ -10,15 +10,17 @@ import { TbTrash } from "react-icons/tb";
 import DeleteAlert from "../../../utils/sweetAlert/DeleteAlert";
 import Swal from "sweetalert2";
 import { useNavigate } from "react-router-dom";
+import { toast } from "react-toastify";
 
 
-const AddPurchaseModal = () => {
+const AddPurchaseModal = ({ onSuccess }) => {
   const navigate = useNavigate();
   const [options, setOptions] = useState([]);
   const [selectedUser, setSelectedUser] = useState(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [products, setProducts] = useState([]);
   const [selectedProducts, setSelectedProducts] = useState([]);
+    const [loading, setLoading] = useState(false);
 
   const [orderTax, setOrderTax] = useState(0);
   const [orderDiscount, setOrderDiscount] = useState(0);
@@ -104,27 +106,49 @@ const token = localStorage.getItem("token");
   const handleSelectProduct = (product) => {
     const alreadyExists = selectedProducts.some((p) => p._id === product._id);
     if (!alreadyExists) {
-      const taxMatch = product.tax?.match(/\((\d+)%\)/);
-      const taxPercent = taxMatch ? parseFloat(taxMatch[1]) : 0;
-
+      let taxValue = 0;
+      if (typeof product.tax === 'number') {
+        taxValue = product.tax;
+      } else if (typeof product.tax === 'string') {
+        const match = product.tax.match(/(\d+(?:\.\d+)?)%?/);
+        taxValue = match ? parseFloat(match[1]) : 0;
+      }
+      // Discount logic
+      let discountValue = 0;
+      let discountType = 'Fixed';
+      if (product.discountType === 'Percentage') {
+        discountType = 'Percentage';
+        if (typeof product.discountValue === 'number') {
+          discountValue = product.discountValue;
+        } else if (typeof product.discountValue === 'string') {
+          const percentMatch = product.discountValue.match(/(\d+(?:\.\d+)?)/);
+          discountValue = percentMatch ? parseFloat(percentMatch[1]) : 0;
+        }
+      } else {
+        discountType = 'Fixed';
+        if (typeof product.discountValue === 'number') {
+          discountValue = product.discountValue;
+        } else if (typeof product.discountValue === 'string') {
+          const flatMatch = product.discountValue.match(/(\d+(?:\.\d+)?)/);
+          discountValue = flatMatch ? parseFloat(flatMatch[1]) : 0;
+        }
+      }
       setSelectedProducts([
         ...selectedProducts,
         {
           ...product,
-          productName: product.productName || product.name || "",   // yaha safe karo
-
-          quantity: 1, // start with 1
+          productName: product.productName || product.name || "",
+          quantity: 1,
           availableQty: product.quantity || 0,
-          discount: product.discountValue || 0,
-          tax: taxPercent,
-          unitName: product.unit || "", // ✅ ensure this is pres
+          discount: discountValue,
+          discountType: discountType,
+          tax: taxValue,
+          unitName: product.unit || "",
           purchasePrice: product.purchasePrice || product.price || 0,
-          // availableQty: product.quantity || 0,
           images: product.images || []
         },
       ]);
     }
-
     setProducts([]);
     setSearchTerm("");
   };
@@ -205,8 +229,7 @@ const token = localStorage.getItem("token");
       setOnlineMod(""),
       setTransactionDate(""),
       setPaymentStatus("");
-       fetchPurchases();
-     
+  if (onSuccess) onSuccess();     
   };
 
 
@@ -217,7 +240,7 @@ const token = localStorage.getItem("token");
       alert("Please fill all required fields.");
       return;
     }
-
+     setLoading(true);
     const formData = new FormData();
     // formData.append("supplier", selectedUser.value);
     formData.append("supplier", selectedSupplier.value);
@@ -251,8 +274,6 @@ const token = localStorage.getItem("token");
       formData.append(`products[${index}][unit]`, p.unit); // ✅ Send unit to backend
 
     });
-
-
     // Append multiple images
     selectedImages.forEach((file) => {
       formData.append("images", file); // must match your backend field name
@@ -262,15 +283,38 @@ const token = localStorage.getItem("token");
       const res = await axios.post(`${BASE_URL}/api/purchases/create`, formData, {
         headers: {
           "Content-Type": "multipart/form-data",
-                  Authorization: `Bearer ${token}`,
-
+           Authorization: `Bearer ${token}`,
         },
       });
-      console.log("Purchase created:", res.data);
-      resetForm();
+   
+      // console.log("Purchase created:", res.data);
+         toast.success('Purchase created successfull!');
+    resetForm();
+      setLoading(false);
+      if (onSuccess) onSuccess();
+      // navigate("/purchase-list");
+      setTimeout(() => {
+        if (window.$) {
+          window.$('#add-purchase').modal('hide');
+          // Remove leftover backdrop and modal-open class
+          setTimeout(() => {
+            document.body.classList.remove('modal-open');
+            const backdrops = document.querySelectorAll('.modal-backdrop');
+            backdrops.forEach(b => b.remove());
+          }, 200);
+        } else {
+          const modal = document.getElementById('add-purchase');
+          if (modal && modal.classList.contains('show')) {
+            modal.classList.remove('show');
+            modal.style.display = 'none';
+          }
+          document.body.classList.remove('modal-open');
+          const backdrops = document.querySelectorAll('.modal-backdrop');
+          backdrops.forEach(b => b.remove());
+        }
+      }, 300);
 
-      // window.$(`#add-purchase`).modal("hide");
-      navigate("/purchase-list");
+      Swal.fire("Success", "Purchase created successfully", "success");
 
     } catch (error) {
       console.error("Failed to create purchase:", error);
@@ -311,10 +355,16 @@ const token = localStorage.getItem("token");
   const updatedProducts = selectedProducts.map((product) => {
     const qty = product.quantity;
     const price = product.purchasePrice || 0;
-    const discount = product.discount || 0;
+    let discount = product.discount || 0;
+    let discountAmount = 0;
+    if (product.discountType === 'Percentage') {
+      discountAmount = ((qty * price) * discount) / 100;
+    } else {
+      discountAmount = discount;
+    }
     const tax = product.tax || 0;
     const subTotal = qty * price;
-    const afterDiscount = subTotal - discount;
+    const afterDiscount = subTotal - discountAmount;
     const taxAmount = (afterDiscount * tax) / 100;
     const lineTotal = afterDiscount + taxAmount;
 
@@ -328,6 +378,7 @@ const token = localStorage.getItem("token");
 
     return {
       ...product,
+      discountAmount,
       taxAmount,
       unitCost,
       totalCost: finalTotal,
@@ -345,10 +396,35 @@ const token = localStorage.getItem("token");
   }, [paymentType, paidAmount, grandTotal]);
 
 
+  const fileInputRef = useRef();
+
+  // ✅ Trigger hidden file input when clicking the icon
+  const handleIconClick = () => {
+    fileInputRef.current.click();
+  };
+  
   return (
     <div className="modal fade" id="add-purchase">
       <div className="modal-dialog purchase modal-dialog-centered">
         <div className="modal-content">
+             {loading && (
+            <div style={{
+              position: "absolute",
+              top: 0,
+              left: 0,
+              width: "100%",
+              height: "100%",
+              background: "rgba(255,255,255,0.7)",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              zIndex: 9999
+            }}>
+              <div className="spinner-border text-primary" style={{ width: 60, height: 60 }} role="status">
+                <span className="visually-hidden">Loading...</span>
+              </div>
+            </div>
+          )}
           <div className="modal-header">
             <div className="page-title">
               <h4>Add Purchase</h4>
@@ -377,13 +453,13 @@ const token = localStorage.getItem("token");
                           isClearable
                         />
                       </div>
-                      <div className="col-lg-2 col-sm-2 col-2 ps-0">
+                      {/* <div className="col-lg-2 col-sm-2 col-2 ps-0">
                         <div className="add-icon tab">
                           <a href="javascript:void(0);" data-bs-toggle="modal" data-bs-target="#add_customer">
                             <i data-feather="plus-circle" className="feather-plus-circles" />
                           </a>
                         </div>
-                      </div>
+                      </div> */}
 
                     </div>
 
@@ -479,6 +555,9 @@ const token = localStorage.getItem("token");
                               Discount
                             </th>
                             <th className="bg-secondary-transparent p-3">
+                               Discount Amount
+                            </th>
+                            <th className="bg-secondary-transparent p-3">
                               Tax(%)
                             </th>
                             <th className="bg-secondary-transparent p-3">
@@ -500,10 +579,19 @@ const token = localStorage.getItem("token");
                             selectedProducts.map((product, index) => {
                               const qty = product.quantity;
                               const price = product.purchasePrice || 0;
-                              const discount = product.discount || 0;
+                              let discount = product.discount || 0;
+                              let discountAmount = 0;
+                              let discountDisplay = '';
+                              if (product.discountType === 'Percentage') {
+                                discountDisplay = discount + '%';
+                                discountAmount = ((qty * price) * discount) / 100;
+                              } else {
+                                discountDisplay = '₹' + discount;
+                                discountAmount = discount;
+                              }
                               const tax = product.tax || 0;
                               const subTotal = qty * price;
-                              const afterDiscount = subTotal - discount;
+                              const afterDiscount = subTotal - discountAmount;
                               const taxAmount = (afterDiscount * tax) / 100;
                               const lineTotal = afterDiscount + taxAmount;
 
@@ -583,21 +671,30 @@ const token = localStorage.getItem("token");
                                   </td>
 
                                   <td>
-                                    <input type="number" className="form-control form-control-sm" style={{ width: "80px" }}
-                                      value={discount} onChange={(e) => {
-                                        const val = parseFloat(e.target.value);
-                                        setSelectedProducts((prev) =>
-                                          prev.map((item, i) =>
-                                            i === index
-                                              ? {
-                                                ...item,
-                                                discount: isNaN(val) ? 0 : val,
-                                              }
-                                              : item
-                                          )
-                                        );
-                                      }}
-                                    />
+                                    <div style={{ display: 'flex', alignItems: 'center' }}>
+                                      <input type="number" className="form-control form-control-sm" style={{ width: "80px" }}
+                                        value={product.discount}
+                                        onChange={(e) => {
+                                          const val = parseFloat(e.target.value);
+                                          setSelectedProducts((prev) =>
+                                            prev.map((item, i) =>
+                                              i === index
+                                                ? {
+                                                  ...item,
+                                                  discount: isNaN(val) ? 0 : val,
+                                                }
+                                                : item
+                                            )
+                                          );
+                                        }}
+                                      />
+                                      <span className="ms-1">{product.discountType === 'Percentage' ? '%' : '₹'}</span>
+                                    </div>
+                                   
+                                  </td>
+                                  <td>
+                                    ₹{discountAmount.toFixed(2)}
+                                  
                                   </td>
                                   <td>
                                     <input type="number" className="form-control form-control-sm" style={{ width: "60px" }}
@@ -639,7 +736,7 @@ const token = localStorage.getItem("token");
                             })
                           ) : (
                             <tr>
-                              <td colSpan="8" className="text-center text-muted">
+                              <td colSpan="9" className="text-center text-muted">
                                 No products selected.
                               </td>
                             </tr>
@@ -681,7 +778,7 @@ const token = localStorage.getItem("token");
                   <div className="col-lg-3 col-md-6 col-sm-12">
                     <div className="mb-3">
                       <label className="form-label">
-                        Order Tax
+                        Labour Cost
                       </label>
                       <input type="text" className="form-control" value={orderTax} onChange={(e) =>
                         setOrderTax(parseFloat(e.target.value) || 0)} />
@@ -719,7 +816,7 @@ const token = localStorage.getItem("token");
                     </div>
                   </div>
 
-                  <div className="profile-pic-upload mb-3">
+                  {/* <div className="profile-pic-upload mb-3">
                     <div className="d-flex gap-2 flex-wrap">
                       {imagePreviews.length > 0 ? (
                         imagePreviews.map((preview, index) => (
@@ -736,14 +833,123 @@ const token = localStorage.getItem("token");
 
                     <div>
                       <div className="image-upload mb-0">
-                        <input type="file" multiple accept="image/png, image/jpeg" onChange={handleImageChange} />
-                        <div className="image-uploads">
-                          <h4>Upload Images</h4>
-                        </div>
+                        <input
+                                            type="file"
+                                            id="ImageInput"
+                                            accept="image/png, image/jpeg"
+                                            onChange={handleImageChange}
+                                            style={{ display: "none" }}
+                                          />
+
+                       
+
                       </div>
-                      <p className="mt-2">JPEG, PNG up to 2 MB</p>
                     </div>
-                  </div>
+
+                  </div> */}
+                   <div className="profile-pic-upload mb-3">
+      <div className="d-flex gap-2 flex-wrap">
+        {imagePreviews.length > 0 ? (
+          imagePreviews.map((preview, index) => (
+            <div key={index} style={{ position: 'relative', display: 'inline-block' }}>
+              <img
+                src={preview}
+                alt={`Preview ${index}`}
+                height="60"
+                width="120"
+                style={{ borderRadius: "4px", objectFit: "cover" }}
+              />
+              <button
+                type="button"
+                onClick={() => {
+                  setImagePreviews((prev) => prev.filter((_, i) => i !== index));
+                  setSelectedImages((prev) => prev.filter((_, i) => i !== index));
+                }}
+                style={{
+                  position: 'absolute',
+                  top: 2,
+                  right: 2,
+                  background: 'rgba(255,255,255,0.8)',
+                  border: 'none',
+                  borderRadius: '50%',
+                  width: 22,
+                  height: 22,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  cursor: 'pointer',
+                  padding: 0
+                }}
+                aria-label="Remove image"
+              >
+                <span style={{ color: '#d33', fontWeight: 'bold', fontSize: 16 }}>&times;</span>
+              </button>
+            </div>
+          ))
+        ) : (
+          <div
+            className="profile-pic brand-pic"
+            onClick={handleIconClick}
+            style={{ cursor: "pointer" }}
+          >
+            <span>
+              <CiCirclePlus className="plus-down-add" /> Add Image
+            </span>
+          </div>
+        )}
+      </div>
+
+      <div className="image-upload mb-0">
+        {/* ✅ Hidden file input */}
+        <input
+          type="file"
+          id="ImageInput"
+          accept="image/png, image/jpeg"
+          onChange={handleImageChange}
+          ref={fileInputRef}
+          style={{ display: "none" }}
+        />
+      </div>
+    </div>
+
+                    {/* <div className="profile-pic-upload mb-3">
+                                        <div className="profile-pic brand-pic">
+                                          <span>
+                                            {imagePreviews.length > 0 ? (
+                                              <img
+                                                src={URL.createObjectURL(preview[0])}
+                                                alt="Preview"
+                                                height="60"
+                                              />
+                                            ) : (
+                                              <>
+                                                <CiCirclePlus className="plus-down-add" /> Add
+                                                Image
+                                              </>
+                                            )}{" "}
+                                          </span>
+                                        </div>
+                                        <div className=" mb-0">
+                                          <input
+                                            type="file"
+                                            id="brandImageInput"
+                                            accept="image/png, image/jpeg"
+                                            onChange={handleFileChange}
+                                            style={{ display: "none" }}
+                                          />
+                                          <button
+                                            style={{}}
+                                            type="button"
+                                            onClick={() =>
+                                              document.getElementById("brandImageInput").click()
+                                            }
+                                            className="btn btn-outline-primary"
+                                          >
+                                            Upload Image
+                                          </button>
+                                          <p className="mt-2">JPEG, PNG up to 2 MB</p>
+                                        </div>
+                                      </div> */}
 
                 </div>
               </div>
@@ -1542,4 +1748,3 @@ export default AddPurchaseModal;
 // };
 
 // export default AddPurchaseModal;
-
