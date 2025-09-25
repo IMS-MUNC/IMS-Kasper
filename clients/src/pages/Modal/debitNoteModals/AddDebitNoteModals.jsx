@@ -504,19 +504,6 @@ const totalGST = totalValue ;
 
 // ...existing code...
 
-const handleFileChange = (e) => {
-    const files = Array.from(e.target.files);
-    const validFiles = files.filter(
-      (file) =>
-        ["image/jpeg", "image/png"].includes(file.type) &&
-        file.size <= 2 * 1024 * 1024
-    );
-    if (validFiles.length !== files.length) {
-      toast.error("Only JPG/PNG up to 2MB allowed");
-    }
-    setSelectedImages(validFiles);
-  };
-
     return (
         <div className="modal fade" id="add-return-debit-note">
             <div className="modal-dialog purchase modal-dialog-centered">
