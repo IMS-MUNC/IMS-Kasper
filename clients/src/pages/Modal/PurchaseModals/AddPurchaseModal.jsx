@@ -270,8 +270,7 @@ const token = localStorage.getItem("token");
       resetForm();
 
       // window.$(`#add-purchase`).modal("hide");
-      navigate("/purchase-list");
-
+ window.$(`#add-purchase`).modal("hide");
     } catch (error) {
       console.error("Failed to create purchase:", error);
     }
@@ -343,6 +342,21 @@ const token = localStorage.getItem("token");
       setDueAmount(0);
     }
   }, [paymentType, paidAmount, grandTotal]);
+
+
+  const handleFileChange = (e) => {
+      const files = Array.from(e.target.files);
+      const validFiles = files.filter(
+        (file) =>
+          ["image/jpeg", "image/png"].includes(file.type) &&
+          file.size <= 2 * 1024 * 1024
+      );
+      if (validFiles.length !== files.length) {
+        toast.error("Only JPG/PNG up to 2MB allowed");
+      }
+      setSelectedImages(validFiles);
+    };
+
 
 
   return (
@@ -719,7 +733,7 @@ const token = localStorage.getItem("token");
                     </div>
                   </div>
 
-                  <div className="profile-pic-upload mb-3">
+                  {/* <div className="profile-pic-upload mb-3">
                     <div className="d-flex gap-2 flex-wrap">
                       {imagePreviews.length > 0 ? (
                         imagePreviews.map((preview, index) => (
@@ -743,7 +757,46 @@ const token = localStorage.getItem("token");
                       </div>
                       <p className="mt-2">JPEG, PNG up to 2 MB</p>
                     </div>
-                  </div>
+                  </div> */}
+
+                     <div className="profile-pic-upload mb-3">
+                                        <div className="profile-pic brand-pic">
+                                          <span>
+                                            {selectedImages.length > 0 ? (
+                                              <img
+                                                src={URL.createObjectURL(selectedImages[0])}
+                                                alt="Preview"
+                                                height="60"
+                                              />
+                                            ) : (
+                                              <>
+                                                <CiCirclePlus className="plus-down-add" /> Add
+                                                Image
+                                              </>
+                                            )}{" "}
+                                          </span>
+                                        </div>
+                                        <div className=" mb-0">
+                                          <input
+                                            type="file"
+                                            id="brandImageInput"
+                                            accept="image/png, image/jpeg"
+                                            onChange={handleFileChange}
+                                            style={{ display: "none" }}
+                                          />
+                                          <button
+                                            style={{}}
+                                            type="button"
+                                            onClick={() =>
+                                              document.getElementById("brandImageInput").click()
+                                            }
+                                            className="btn btn-outline-primary"
+                                          >
+                                            Upload Image
+                                          </button>
+                                          <p className="mt-2">JPEG, PNG up to 2 MB</p>
+                                        </div>
+                                      </div>
 
                 </div>
               </div>
