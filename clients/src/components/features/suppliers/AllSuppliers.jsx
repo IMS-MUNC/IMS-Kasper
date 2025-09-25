@@ -3,39 +3,34 @@ import "./AllSupplier.css";
 
 import AddSupplierModals from "../../../pages/Modal/suppliers/AddSupplierModals";
 import BASE_URL from "../../../pages/config/config";
-import { TbCirclePlus, TbEdit, TbEye, TbRefresh, TbTrash } from 'react-icons/tb'
+import { TbCirclePlus, TbEdit, TbEye, TbTrash } from 'react-icons/tb'
 import ViewSupplierModal from "../../../pages/Modal/suppliers/ViewSupplierModal";
 import { Link } from "react-router-dom";
-import { FaFileExcel, FaFilePdf, FaPencilAlt } from "react-icons/fa";
 
-import jsPDF from "jspdf";
-import autoTable from "jspdf-autotable";
-import * as XLSX from "xlsx";
-
-// function formatAddress(billing) {
-//   if (!billing) return '';
-//   let parts = [];
-//   if (billing.address1) parts.push(billing.address1);
-//   if (billing.address2) parts.push(billing.address2);
-//   if (billing.city?.cityName) parts.push(billing.city.cityName);
-//   if (billing.state?.stateName) parts.push(billing.state.stateName);
-//   if (billing.country?.name) parts.push(billing.country.name);
-//   if (billing.pincode) parts.push(billing.pincode);
-//   return parts.join(', ');
-// }
+function formatAddress(billing) {
+  if (!billing) return '';
+  let parts = [];
+  if (billing.address1) parts.push(billing.address1);
+  if (billing.address2) parts.push(billing.address2);
+  if (billing.city?.cityName) parts.push(billing.city.cityName);
+  if (billing.state?.stateName) parts.push(billing.state.stateName);
+  if (billing.country?.name) parts.push(billing.country.name);
+  if (billing.pincode) parts.push(billing.pincode);
+  return parts.join(', ');
+}
 
 
-// function formatShipping(shipping) {
-//   if (!shipping) return '';
-//   let parts = [];
-//   if (shipping.address1) parts.push(shipping.address1);
-//   if (shipping.address2) parts.push(shipping.address2);
-//   if (shipping.city?.cityName) parts.push(shipping.city.cityName);
-//   if (shipping.state?.stateName) parts.push(shipping.state.stateName);
-//   if (shipping.country?.name) parts.push(shipping.country.name);
-//   if (shipping.pincode) parts.push(shipping.pincode);
-//   return parts.join(', ');
-// }
+function formatShipping(shipping) {
+  if (!shipping) return '';
+  let parts = [];
+  if (shipping.address1) parts.push(shipping.address1);
+  if (shipping.address2) parts.push(shipping.address2);
+  if (shipping.city?.cityName) parts.push(shipping.city.cityName);
+  if (shipping.state?.stateName) parts.push(shipping.state.stateName);
+  if (shipping.country?.name) parts.push(shipping.country.name);
+  if (shipping.pincode) parts.push(shipping.pincode);
+  return parts.join(', ');
+}
 
 function AllSuppliers() {
   const [currentPage, setCurrentPage] = useState(1);
@@ -46,9 +41,7 @@ function AllSuppliers() {
   const [suppliers, setSuppliers] = useState([]);
   const [loading, setLoading] = useState(false);
   const [editSupplier, setEditSupplier] = useState(null);
-
   const [selectedIds, setSelectedIds] = useState([]);
-  const [selectedStatus, setSelectedStatus] = useState("");
 
 
   useEffect(() => {
@@ -65,8 +58,6 @@ function AllSuppliers() {
           Authorization: `Bearer ${token}`,
         },
       });
-
-
       const data = await res.json();
       setSuppliers(data);
     } catch (err) {
@@ -92,118 +83,46 @@ function AllSuppliers() {
     }
   };
 
-// <<<<<<< akashDev
-
-//   const filteredSuppliers = suppliers.filter((supplier) => {
-//     const fullName = `${supplier.firstName} ${supplier.lastName}`.toLowerCase();
-//     const matchSearch = supplier.supplierCode?.toLowerCase().includes(searchTerm.toLowerCase()) || fullName.includes(searchTerm.toLowerCase());
-//     const matchesStatus = selectedStatus === "" || (selectedStatus === "active" && supplier.status) || (selectedStatus === "inactive" && !supplier.status);
-//     return matchSearch && matchesStatus;
-//   })
-// =======
-  // Filtered suppliers based on status
-  const filteredSuppliers = suppliers.filter((s) => {
-    const matchesStatus = selectedStatus
-      ? (s.status ? "Active" : "Inactive") === selectedStatus
-      : true;
-    return matchesStatus;
-  });
-// >>>>>>> main
-
   // Pagination logic
-  const totalItems = filteredSuppliers.length;
+  const totalItems = suppliers.length;
   const totalPages = Math.ceil(totalItems / itemsPerPage);
   const startIndex = (currentPage - 1) * itemsPerPage;
   const endIndex = startIndex + itemsPerPage;
-  const paginatedData = filteredSuppliers.slice(startIndex, endIndex);
+  const paginatedData = suppliers.slice(startIndex, endIndex);
 
-  // console.log(paginatedData[6]?.shipping.country.name);
+  console.log(paginatedData);
 
 
   // const [showViewModal, setShowViewModal] = useState(false);
   const [viewSupplierId, setViewSupplierId] = useState(null);
 
-// <<<<<<< akashDev
-// =======
-//   const handleBulkDelete = async () => {
-//     if (selectedIds.length === 0) {
-//       alert("Please select at least one supplier.");
-//       return;
-//     }
-//     if (!window.confirm(`Delete ${selectedIds.length} selected suppliers?`)) return;
+  const handleBulkDelete = async () => {
+    if (selectedIds.length === 0) {
+      alert("Please select at least one supplier.");
+      return;
+    }
+    if (!window.confirm(`Delete ${selectedIds.length} selected suppliers?`)) return;
 
-//     try {
-//       const token = localStorage.getItem("token");
-//       await Promise.all(
-//         selectedIds.map(id =>
-//           fetch(`${BASE_URL}/api/suppliers/${id}`, {
-//             method: "DELETE",
-//             headers: { Authorization: `Bearer ${token}` },
-//           })
-//         )
-//       );
-//       setSelectedIds([]);
-//       fetchSuppliers();
-//     } catch (err) {
-//       console.error("Bulk delete failed", err);
-//     }
-//   };
+    try {
+      const token = localStorage.getItem("token");
+      await Promise.all(
+        selectedIds.map(id =>
+          fetch(`${BASE_URL}/api/suppliers/${id}`, {
+            method: "DELETE",
+            headers: { Authorization: `Bearer ${token}` },
+          })
+        )
+      );
+      setSelectedIds([]);
+      fetchSuppliers();
+    } catch (err) {
+      console.error("Bulk delete failed", err);
+    }
+  };
 
-//   const handlePdf = () => {
-//     const doc = new jsPDF();
-//     doc.text("Category", 14, 15);
-//     const tableColumns = ["Code", "Supplier", "Email", "Phone", "Country", "Status"];
 
-//     const tableRows = paginatedData.map((e) => [
-//       e.supplierCode,
-//       e.firstName + " " + e.lastName,
-//       e.email,
-//       e.phone,
-//       e?.shipping?.country?.name || '-',
-//       e.status,
-//     ]);
 
-//     autoTable(doc, {
-//       head: [tableColumns],
-//       body: tableRows,
-//       startY: 20,
-//       styles: {
-//         fontSize: 8,
-//       },
-//       headStyles: {
-//         fillColor: [155, 155, 155],
-//         textColor: "white",
-//       },
-//       theme: "striped",
-//     });
 
-//     doc.save("Suppliers.pdf");
-//   };
-
-//   const handleExcel = () => {
-
-//     const tableColumns = ["Code", "Supplier", "Email", "Phone", "Country", "Status"];
-
-//     const tableRows = paginatedData.map((e) => [
-//       e.supplierCode,
-//       e.firstName + " " + e.lastName,
-//       e.email,
-//       e.phone,
-//       e?.shipping?.country?.name || '-',
-//       e.status,
-//     ]);
-
-//     const data = [tableColumns, ...tableRows];
-
-//     const worksheet = XLSX.utils.aoa_to_sheet(data);
-
-//     const workbook = XLSX.utils.book_new();
-//     XLSX.utils.book_append_sheet(workbook, worksheet, "Products");
-
-//     XLSX.writeFile(workbook, "Suppliers.xlsx");
-//   };
-
-// >>>>>>> main
   return (
 
     <div className="page-wrapper">
@@ -215,18 +134,8 @@ function AllSuppliers() {
               <h6>Manage your suppliers</h6>
             </div>
           </div>
-          <div className="table-top-head me-2">
+          <ul className="table-top-head">
             <li>
-// <<<<<<< akashDev
-//               <button type="button" className="icon-btn" title="Pdf">
-//                 <FaFilePdf />
-//               </button>
-//             </li>
-//             <li>
-//               <button type="button" className="icon-btn" title="Export Excel">
-//                 <FaFileExcel />
-//               </button>
-// =======
               {/* <button
                 className="btn btn-danger me-2"
                 onClick={handleBulkDelete}
@@ -250,51 +159,17 @@ function AllSuppliers() {
 
             </li>
             <li className="me-2">
-              <li style={{ display: "flex", alignItems: "center", gap: '5px' }} className="icon-btn">
-                {/* <label className="" title="">Export : </label> */}
-                <button
-                  type="button"
-                  title="Pdf"
-                  style={{
-                    backgroundColor: "white",
-                    display: "flex",
-                    alignItems: "center",
-                    border: "none",
-                  }}
-                  onClick={handlePdf}
-                >
-                  <FaFilePdf style={{ color: "red" }} />
-                </button>
-
-              </li>
+              <a data-bs-toggle="tooltip" data-bs-placement="top" title="Pdf"><img src="assets/img/icons/pdf.svg" alt="img" /></a>
             </li>
             <li className="me-2">
-              <li style={{ display: "flex", alignItems: "center", gap: '5px' }} className="icon-btn">
-                {/* <a data-bs-toggle="tooltip" data-bs-placement="top" title="Excel"><img src="assets/img/icons/excel.svg" alt="img" /></a> */}
-                <button
-                  type="button"
-                  title="Export Excel"
-                  style={{
-                    backgroundColor: "white",
-                    display: "flex",
-                    alignItems: "center",
-                    border: "none",
-                  }}
-                  onClick={handleExcel}
-                >
-                  <FaFileExcel style={{ color: "green" }} />
-                </button>
-              </li>
+              <a data-bs-toggle="tooltip" data-bs-placement="top" title="Excel"><img src="assets/img/icons/excel.svg" alt="img" /></a>
             </li>
             <li className="me-2">
-              <li>
-                <button data-bs-toggle="tooltip" data-bs-placement="top" title="Refresh" onClick={() => location.reload()} className="fs-20" style={{ backgroundColor: 'white', color: '', padding: '5px 5px', display: 'flex', alignItems: 'center', border: '1px solid #e8eaebff', cursor: 'pointer', borderRadius: '4px' }}><TbRefresh className="ti ti-refresh" /></button>
-              </li>
-// >>>>>>> main
+              <a data-bs-toggle="tooltip" data-bs-placement="top" title="Refresh"><i className="ti ti-refresh" /></a>
             </li>
-            {/* <li className="me-2">
+            <li className="me-2">
               <a data-bs-toggle="tooltip" data-bs-placement="top" title="Collapse" id="collapse-header"><i className="ti ti-chevron-up" /></a>
-            </li> */}
+            </li>
           </ul>
           <div className="page-btn">
             <button onClick={() => { setShowAddModal(true); }} className="add-btn">
@@ -311,39 +186,15 @@ function AllSuppliers() {
             </div>
             <div className="d-flex table-dropdown my-xl-auto right-content align-items-center flex-wrap row-gap-3">
               <div className="dropdown">
-                <a
-                  className="dropdown-toggle btn btn-white btn-md d-inline-flex align-items-center"
-                  data-bs-toggle="dropdown"
-                >
-                  {selectedStatus || "Status"}
+                <a href="javascript:void(0);" className="dropdown-toggle btn btn-white btn-md d-inline-flex align-items-center" data-bs-toggle="dropdown">
+                  Status
                 </a>
                 <ul className="dropdown-menu  dropdown-menu-end p-3">
                   <li>
-                    <button
-
-                      className="dropdown-item rounded-1"
-                      onClick={() => setSelectedStatus("")}
-                    >
-                      All
-                    </button>
+                    <a href="javascript:void(0);" className="dropdown-item rounded-1">Active</a>
                   </li>
                   <li>
-                    <button
-
-                      className="dropdown-item rounded-1"
-                      onClick={() => setSelectedStatus("Active")}
-                    >
-                      Active
-                    </button>
-                  </li>
-                  <li>
-                    <button
-
-                      className="dropdown-item rounded-1"
-                      onClick={() => setSelectedStatus("Inactive")}
-                    >
-                      Inactive
-                    </button>
+                    <a href="javascript:void(0);" className="dropdown-item rounded-1">Inactive</a>
                   </li>
                 </ul>
               </div>
@@ -353,10 +204,21 @@ function AllSuppliers() {
             <div className="table-responsive">
               <table className="table datatable">
                 <thead className="thead-light">
-                  <tr style={{ borderTop: "1px solid #e4e0e0ff", textAlign: "center" }}>
+                  <tr>
                     <th className="no-sort">
                       <label className="checkboxs">
-                        <input type="checkbox" id="select-all" />
+                        {/* <input type="checkbox" id="select-all" /> */}
+                        <input
+                          type="checkbox"
+                          checked={selectedIds.length === paginatedData.length && paginatedData.length > 0}
+                          onChange={(e) => {
+                            if (e.target.checked) {
+                              setSelectedIds(paginatedData.map(s => s._id));
+                            } else {
+                              setSelectedIds([]);
+                            }
+                          }}
+                        />
                         <span className="checkmarks" />
                       </label>
                     </th>
@@ -366,16 +228,26 @@ function AllSuppliers() {
                     <th>Phone</th>
                     <th>Country</th>
                     <th>Status</th>
-                    <th>Action</th>
+                    <th className="no-sort" />
                   </tr>
                 </thead>
                 <tbody>
-                  {console.log("paginatedData", paginatedData)}
                   {paginatedData.map((supplier) => (
-                    <tr key={supplier._id} style={{ textAlign: "center" }}>
+                    <tr key={supplier._id}>
                       <td>
                         <label className="checkboxs">
-                          <input type="checkbox" />
+                          {/* <input type="checkbox" /> */}
+                          <input
+                            type="checkbox"
+                            checked={selectedIds.includes(supplier._id)}
+                            onChange={(e) => {
+                              if (e.target.checked) {
+                                setSelectedIds([...selectedIds, supplier._id]);
+                              } else {
+                                setSelectedIds(selectedIds.filter(id => id !== supplier._id));
+                              }
+                            }}
+                          />
                           <span className="checkmarks" />
                         </label>
                       </td>
@@ -403,13 +275,7 @@ function AllSuppliers() {
                       </td>
                       <td>{supplier.email}</td>
                       <td>{supplier.phone}</td>
-
-//                       <td>{supplier.billing?.country?.name}</td>
-
-
-                      {/* <td>{supplier?.country}</td> */}
-                      <td>{supplier?.billing?.country?.name || supplier?.shipping?.country?.name || '-'}</td>
-
+                      <td>{supplier.country?.name}</td>
                       <td>
                         <span className={`badge ${supplier.status ? 'badge-success' : 'badge-danger'} d-inline-flex align-items-center badge-xs`}>
                           <i className="ti ti-point-filled me-1" />{supplier.status ? 'Active' : 'Inactive'}

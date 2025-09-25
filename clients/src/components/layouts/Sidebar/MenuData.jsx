@@ -228,6 +228,17 @@ export const getMenuData = () => {
           path: "/manage-stocks",
           icon: <TbShoppingBag className="icons" />,
         },
+
+        canAccess("StockAdjustment", "read") && {
+          label: t("Stock Adjustment"),
+          path: "/stock-adjustment",
+          icon: <TbFileUnknown className="icons" />,
+        },
+      ].filter(Boolean),
+    },
+
+    // SALES
+
         // {
         //   label: t("Stock Adjustment"),
         //   path: "/stock-adjustment",
@@ -251,19 +262,24 @@ export const getMenuData = () => {
           path: "/online-orders",
           icon: <TbShoppingBag className="icons" />,
         },
-        { label: "Credit Note", path: "/credit-note", icon: <MdQrCode className="icons" /> },
-        {
+
+        canAccess("CreditNote", "read") && {
+          label: "Credit Note",
+          path: "/credit-note",
+          icon: <MdQrCode className="icons" />,
+        },
+        canAccess("POS", "read") && {
           label: t("pos"),
           path: "/pos",
           icon: <MdOutlinePointOfSale className="icons" />,
         },
-        // {
-        //   label: t("Invoice"),
-        //   path: "/invoice",
-        //   icon: <TbFileInvoice className="icons" />,
-        // },
+          {
+          label: t("invoices"),
+          path: "/invoice",
+          icon: <TbFileInvoice className="icons" />,
+        },
+      ].filter(Boolean),
 
-      ],
     },
 
     // {
@@ -454,6 +470,26 @@ export const getMenuData = () => {
           icon: <MdOutlineSpeakerNotes className="icons" />,
         },
 
+
+  //  {
+  //     section: t("Purchasesettings"),
+  //     items: [
+  //       {
+  //         title: t("PurchaseSettings"),
+  //         // title: "General Settings",
+  //         icon: <TbSettings className="icons" />,
+  //         key: "PurchaseSettings",
+  //         subItems: [
+  //           { label: "Purchase", path: "/Purchase-settings" },
+  //           // { label: "Warehouse", path: "/warehouse-settings" },
+           
+  //         ],
+  //       },
+       
+       
+  //     ],
+  //   },
+
         {
           label: "Logout",
           icon: <TbLogout className="icons" />,
@@ -462,6 +498,7 @@ export const getMenuData = () => {
 
       ],
     },
+
 
 
   ];
