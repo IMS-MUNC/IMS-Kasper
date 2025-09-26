@@ -391,6 +391,13 @@ const Brand = () => {
   const allSelectedOnPage =
     pageIds.length > 0 && pageIds.every((id) => selectedBrands.includes(id));
 
+    const handleClose = () => {
+      setBrandName("");
+      setStatus(true);
+      setSelectedImages([]);
+      setErrors({});
+    }
+    
   return (
     <div className="page-wrapper">
       <div className="content">
@@ -477,7 +484,7 @@ const Brand = () => {
                   className="dropdown-toggle btn btn-white btn-md d-inline-flex align-items-center"
                   data-bs-toggle="dropdown"
                 >
-                  Status
+                  Status : {statusFilter || "All"}
                 </a>
                 <ul className="dropdown-menu  dropdown-menu-end p-3">
                   <li>
@@ -512,7 +519,7 @@ const Brand = () => {
                   className="dropdown-toggle btn btn-white btn-md d-inline-flex align-items-center"
                   data-bs-toggle="dropdown"
                 >
-                  Sort By : Latest
+                  Sort By : {sortOrder || "Latest"}
                 </a>
                 <ul className="dropdown-menu  dropdown-menu-end p-3">
                   <li>
@@ -802,6 +809,7 @@ const Brand = () => {
                       type="button"
                       className="btn me-2 btn-secondary"
                       data-bs-dismiss="modal"
+                      onClick={handleClose}
                     >
                       Cancel
                     </button>

@@ -614,17 +614,16 @@ const SubCategory = () => {
 
                         <td>
                           {subcat.images?.map((img, i) => (
-                            <img
+                            <>
+                            <div style={{width:'25px', height:'25px', overflow:'hidden',borderRadius:'4px', display:'inline-block', justifyContent:'center', alignItems:'center', }}>
+                              <img
                               key={i}
                               src={img}
                               alt="subcat-img"
-
-                              height="30"
-                              width="30"
-
-                              className="me-1"
-                              style={{ borderRadius: '50%' }}
+                              style={{ width: '100%', height: '100%', objectFit: 'cover' }}
                             />
+                            </div>
+                            </>
                           ))}
                         </td>
 
