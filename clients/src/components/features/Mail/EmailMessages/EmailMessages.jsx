@@ -166,11 +166,11 @@ const EmailMessages = ({
   const handleDeleteSelected = async () => {
     if (isDraftPage) {
       let drafts = JSON.parse(localStorage.getItem("emailDrafts")) || [];
-      drafts = drafts.filter((d) => !selectedEmails.includes(d._id));
+      drafts = drafts.filter((d) => d.timestamp !== id);
       localStorage.setItem("emailDrafts", JSON.stringify(drafts));
       // Update parent state so UI re-renders automatically
       if (onDraftsChange) onDraftsChange(drafts);
-      setEmailsState(prev => prev.filter(email => !selectedEmails.includes(email._id)));
+      setEmailsState(prev => prev.filter(email => email.timestamp !== id));
       setSelectedEmails([]);
     } else {
       try {
@@ -710,7 +710,7 @@ const EmailMessages = ({
                     <span
                       className="delete-icon"
                       style={{ cursor: "pointer", fontSize: "14px" }}
-                      onClick={() => handleDelete(email._id)}
+                      onClick={() => handleDelete(isDraftPage ? email.timestamp : email._id)}
                     >
                       <RiDeleteBinLine />
                     </span>

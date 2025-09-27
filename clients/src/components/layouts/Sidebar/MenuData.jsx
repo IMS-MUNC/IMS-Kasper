@@ -70,16 +70,15 @@ const id = user?._id;
 const permissions = user?.role?.modulePermissions || {};
 
 const canAccess = (module, action = "read") => {
-  // ✅ SuperAdmin bypass: full access to everything
-  if (user?.role?.name === "SuperAdmin") return true;
+  // ✅ SuperAdmin bypass: full access (case-insensitive)
+  if (user?.role?.name?.toLowerCase() === "superadmin") return true;
 
   // If no permissions or module not defined → deny
   if (!permissions || !permissions[module]) return false;
 
   // ✅ Allow only if all:true or specific action:true
-  return permissions[module]?.all === true || permissions[module]?.[action] === true;
+   return permissions[module]?.all === true || permissions[module]?.[action] === true;
 };
-
 
   const menu = [
     // MAIN
@@ -108,7 +107,7 @@ const canAccess = (module, action = "read") => {
       icon: <TbBrandAppleArcade className="icons" />,
       subItems: [
         canAccess("Chat", "read") && { label: t("chat"), path: "/chat" },
-        canAccess("Mail", "read") && { label: t("mail"), path: "/mail" },
+        canAccess("Mail", "read") && { label: t("mail"), path: "/mail/inbox" },
       ].filter(Boolean),
     },
   ].filter(

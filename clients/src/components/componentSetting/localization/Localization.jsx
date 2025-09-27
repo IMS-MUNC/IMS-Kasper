@@ -633,7 +633,7 @@ const Localization = () => {
                 padding: "20px",
               }}
             >
-              <button
+              {/* <button
                 type="submit"
                 onClick={() => window.location.reload()}
                 style={{
@@ -646,7 +646,7 @@ const Localization = () => {
                 }}
               >
                 Cancel
-              </button>
+              </button> */}
               <button
                 type="submit"
                 style={{
@@ -658,7 +658,7 @@ const Localization = () => {
                   borderRadius: "5px",
                 }}
               >
-                Save
+                Save Changes
               </button>
             </div>
           </form>

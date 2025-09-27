@@ -27,6 +27,11 @@ const UserProfile = () => {
   const handleFileChange = async (event) => {
     const file = event.target.files[0];
     if (file) {
+      const fileSizeMB = file.size / 1024 /1024;
+      if(fileSizeMB > 1) {
+        toast.error("Upload image size exceeded 1MB. Please upload an image 1MB or less.");
+        return;
+      }
       try {
         const compressedFile = await imageCompression(file, {
           maxSizeMB: 1, // Try to keep under 1MB
@@ -226,7 +231,7 @@ const UserProfile = () => {
                       </span>
                     </div>
                     <p style={{ color: '#888888', fontFamily: '"Roboto", sans-serif', fontWeight: 400, fontSize: '12px', marginTop: '10px' }}>
-                      Upload an image below 2MB, Accepted File format JPG, PNG
+                      Upload an image below 1MB, Accepted File format JPG, PNG
                     </p>
                   </div>
                   <div className="invisible">
@@ -458,7 +463,7 @@ const UserProfile = () => {
                     lineHeight: '14px',
                   }}
                 >
-                  <button
+                  {/* <button
                     // className="settingbtn"
                     style={{
                       border: "1px solid #E6E6E6",
@@ -470,7 +475,7 @@ const UserProfile = () => {
                     }}
                   >
                     Cancel
-                  </button>
+                  </button> */}
                   <button
                     // className="settingbtn"
                     style={{
@@ -482,7 +487,7 @@ const UserProfile = () => {
                       borderRadius: "5px",
                     }}
                   >
-                    Save
+                    Save changes
                   </button>
                 </div>
               </div>
