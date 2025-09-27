@@ -19,6 +19,7 @@ import { MdBlockFlipped } from "react-icons/md";
 import EmojiPicker from 'emoji-picker-react';
 import { LuRefreshCcw, LuChevronUp, LuMic, LuSend } from "react-icons/lu";
 import { TbFolderUp } from "react-icons/tb";
+import { HiMenu, HiX } from "react-icons/hi";
 
 import { useSocket } from '../../../Context/SocketContext';
 import ChatIcon from '../../../assets/img/icons/chat.png';
@@ -40,7 +41,7 @@ const Chat = () => {
   const [message, setMessage] = useState('');
   const [readStatus, setReadStatus] = useState({});
   const [unreadCounts, setUnreadCounts] = useState({}); // Track unread counts per user
-  
+
   // Debug unreadCounts changes
   useEffect(() => {
     // console.log('🔍 unreadCounts state changed:', unreadCounts);
@@ -55,7 +56,7 @@ const Chat = () => {
   const navigate = useNavigate();
   const messagesEndRef = useRef(null);
   const messageContainerRef = useRef(null);
-  
+
   // const backendurl = import.meta.env.BACKEND_URL || 'http://localhost:5000';
   const backendurl = BASE_URL;
 
@@ -70,6 +71,7 @@ const Chat = () => {
   const [contextMenu, setContextMenu] = useState(null); // { idx, x, y }
   const [replyTo, setReplyTo] = useState(null); // message object
   const [popup, setPopup] = useState({ show: false, message: '' });
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false); // Mobile menu state
 
   // Get the current user ID - handle both id and _id fields
   const currentUserId = user?.id || user?._id;
@@ -705,7 +707,7 @@ const Chat = () => {
         setMessages((prev) => {
           const userId = data.from === currentUserId ? data.to : data.from;
           const userMessages = prev[userId] || [];
-          
+
           // Check for duplicate messages to prevent multiple additions
           const newMessage = {
             from: data.from,
@@ -717,19 +719,19 @@ const Chat = () => {
             timestamp: data.timestamp || new Date(),
             replyTo: data.replyTo
           };
-          
+
           // Create a unique key for the message to check for duplicates (same format as mergeMessages)
           const messageKey = `${data.timestamp || new Date()}-${data.message || ''}-${data.from}-${data.fileUrl || ''}-${data.fileType || ''}`;
           const isDuplicate = userMessages.some(msg => {
             const existingKey = `${msg.timestamp}-${msg.message || ''}-${msg.from}-${msg.fileUrl || ''}-${msg.fileType || ''}`;
             return existingKey === messageKey;
           });
-          
+
           // Only add the message if it's not a duplicate
           if (isDuplicate) {
             return prev;
           }
-          
+
           return {
             ...prev,
             [userId]: [...userMessages, newMessage]
@@ -820,23 +822,23 @@ const Chat = () => {
         // Helper function to merge messages and avoid duplicates
         const mergeMessages = (existingMessages, newMessages) => {
           const messageMap = new Map();
-          
+
           // Add existing messages to map
           existingMessages.forEach(msg => {
             // Create a more comprehensive key that includes file info for better deduplication
             const key = `${msg.timestamp}-${msg.message || ''}-${msg.from}-${msg.fileUrl || ''}-${msg.fileType || ''}`;
             messageMap.set(key, msg);
           });
-          
+
           // Add new messages, overwriting duplicates
           newMessages.forEach(msg => {
             // Create a more comprehensive key that includes file info for better deduplication
             const key = `${msg.timestamp}-${msg.message || ''}-${msg.from}-${msg.fileUrl || ''}-${msg.fileType || ''}`;
             messageMap.set(key, msg);
           });
-          
+
           // Convert back to array and sort by timestamp
-          return Array.from(messageMap.values()).sort((a, b) => 
+          return Array.from(messageMap.values()).sort((a, b) =>
             new Date(a.timestamp) - new Date(b.timestamp)
           );
         };
@@ -853,7 +855,7 @@ const Chat = () => {
             fileName: msg.fileName,
             replyTo: msg.replyTo
           }));
-          
+
           return {
             ...prev,
             [selectedUser._id]: newMessages
@@ -862,7 +864,7 @@ const Chat = () => {
 
         // Check if there are any unread messages from the selected user
         const unreadMessages = data.filter(msg => msg.from === selectedUser._id && !msg.read);
-        
+
         // Only mark messages as read if there are actually unread messages
         if (unreadMessages.length > 0) {
           await fetch(`${BASE_URL}/api/messages/read`, {
@@ -1283,10 +1285,10 @@ const Chat = () => {
 
   return (
     <>
-      <div className='page-wrapper' style={{ display: 'flex', flexDirection: 'column', height: '88vh', marginTop: '60px', padding: '10px' }}>
-
-        {/* header */}
-        {/* <div style={{display:'flex', justifyContent:'space-between', marginBottom:'20px'}}>
+      <div className='page-wrapper' style={{ display: 'flex', flexDirection: 'column', }}>
+        <div className='content'>
+          {/* header */}
+          {/* <div style={{display:'flex', justifyContent:'space-between', marginBottom:'20px'}}>
 
       <div>
       <span style={{fontWeight:'bold', fontSize:'25px'}}>Chat</span>
@@ -1301,237 +1303,398 @@ const Chat = () => {
 
       </div> */}
 
-        {/* Main content */}
-        <div className="content" style={{ display: 'flex', flex: 1, height: '100vh', gap: '15px' }}>
+          {/* Main content */}
+          <div className="container-fluid">
+            <div className="row g-3" style={{ height: 'calc(100vh - 200px)' }}>
 
-          {/* Left panel: User list */}
-          <div style={{
-            width: '25%',
-            border: '1px solid #E6E6E6',
-            padding: '15px',
-            height: 'calc(100vh - 140px)',
-            display: 'flex',
-            flexDirection: 'column',
-            backgroundColor: '#FFFFFF',
-            boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
-            borderRadius: '10px'
-          }}>
+              {/* Left panel: User list */}
+              <div className={`col-lg-3 ${isMobileMenuOpen ? 'd-block' : 'd-none d-lg-block'}`}>
+                <div className="h-100 border rounded p-3 bg-white shadow-sm d-flex flex-column mobile-panel-height">
 
-            <div style={{ flexShrink: 0 }}>
+                  <div style={{ flexShrink: 0 }}>
 
-              <span style={{ fontWeight: '500', fontSize: '20px' }}>Chats</span>
+                    <span style={{ fontWeight: '500', fontSize: '20px' }}>Chats</span>
 
-              {/* Search Box */}
-              <div style={{ marginBottom: '15px', padding: '0px 10px', position: 'relative' }} className="chat-list-search-box" >
+                    {/* Search Box */}
+                    <div style={{ marginBottom: '15px', padding: '0px 10px', position: 'relative' }} className="chat-list-search-box" >
 
-                <div style={{
-                  display: 'flex', alignItems: 'center', gap: '6px',
-                }}>
+                      <div style={{
+                        display: 'flex', alignItems: 'center', gap: '6px',
+                      }}>
 
-                  <CiSearch style={{ fontSize: '20px' }} />
+                        <CiSearch style={{ fontSize: '20px' }} />
 
-                  <input
-                    type="text"
-                    placeholder="Search"
-                    className="chat-list-search-input"
-                    value={searchQuery}
-                    onChange={handleSearchChange}
-                    style={{
-                      width: '100%',
-                    }}
-                  />
+                        <input
+                          type="text"
+                          placeholder="Search"
+                          className="chat-list-search-input"
+                          value={searchQuery}
+                          onChange={handleSearchChange}
+                          style={{
+                            width: '100%',
+                          }}
+                        />
 
-                </div>
+                      </div>
 
-                {/* Search Suggestions Dropdown */}
-                {showSearchDropdown && searchSuggestions.length > 0 && (
-                  <div style={{
-                    position: 'absolute',
-                    top: '100%',
-                    left: '10px',
-                    right: '10px',
-                    backgroundColor: 'white',
-                    border: '1px solid #ddd',
-                    borderRadius: '8px',
-                    boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
-                    zIndex: 1000,
-                    maxHeight: '200px',
-                    overflowY: 'auto'
-                  }}>
-                    {searchSuggestions.map((userItem) => (
-                      <div
-                        key={userItem._id}
-                        style={{
-                          display: 'flex',
-                          justifyContent: 'space-between',
-                          alignItems: 'center',
-                          padding: '12px 15px',
-                          cursor: 'pointer',
-                          borderBottom: '1px solid #f0f0f0',
-                          gap: '10px'
-                        }}
-                        onMouseEnter={(e) => e.target.style.backgroundColor = '#f5f5f5'}
-                        onMouseLeave={(e) => e.target.style.backgroundColor = 'transparent'}
-                        onClick={() => selectUserFromSearch(userItem)}
-                      >
+                      {/* Search Suggestions Dropdown */}
+                      {showSearchDropdown && searchSuggestions.length > 0 && (
+                        <div style={{
+                          position: 'absolute',
+                          top: '100%',
+                          left: '10px',
+                          right: '10px',
+                          backgroundColor: 'white',
+                          border: '1px solid #ddd',
+                          borderRadius: '8px',
+                          boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
+                          zIndex: 1000,
+                          maxHeight: '200px',
+                          overflowY: 'auto'
+                        }}>
+                          {searchSuggestions.map((userItem) => (
+                            <div
+                              key={userItem._id}
+                              style={{
+                                display: 'flex',
+                                justifyContent: 'space-between',
+                                alignItems: 'center',
+                                padding: '12px 15px',
+                                cursor: 'pointer',
+                                borderBottom: '1px solid #f0f0f0',
+                                gap: '10px'
+                              }}
+                              onMouseEnter={(e) => e.target.style.backgroundColor = '#f5f5f5'}
+                              onMouseLeave={(e) => e.target.style.backgroundColor = 'transparent'}
+                              onClick={() => selectUserFromSearch(userItem)}
+                            >
 
-                        <div style={{display:'flex',gap:'5px'}}>
-                        {/* User Avatar */}
-                        {userItem.profileImage ? (
-                          <img
-                            src={userItem.profileImage}
-                            alt={userItem.firstName}
+                              <div style={{ display: 'flex', gap: '5px' }}>
+                                {/* User Avatar */}
+                                {userItem.profileImage ? (
+                                  <img
+                                    src={userItem.profileImage}
+                                    alt={userItem.firstName}
+                                    style={{
+                                      width: '40px',
+                                      height: '40px',
+                                      borderRadius: '50%',
+                                      objectFit: 'cover',
+                                      border: '2px solid #ddd'
+                                    }}
+                                    onError={(e) => {
+                                      e.target.style.display = 'none';
+                                      e.target.nextSibling.style.display = 'flex';
+                                    }}
+                                  />
+                                ) : (
+                                  <div
+                                    style={{
+                                      width: '40px',
+                                      height: '40px',
+                                      borderRadius: '50%',
+                                      backgroundColor: '#007AFF',
+                                      color: 'white',
+                                      display: 'flex',
+                                      alignItems: 'center',
+                                      justifyContent: 'center',
+                                      fontSize: '12px',
+                                      fontWeight: 'bold',
+                                      border: '2px solid #ddd'
+                                    }}
+                                  >
+                                    {(userItem.firstName || userItem.email || 'U').slice(0, 2).toUpperCase()}
+                                  </div>
+                                )}
+
+                                {/* User Info */}
+                                <div style={{}}>
+                                  <span style={{ fontWeight: 'bold', fontSize: '14px' }}>
+                                    {userItem.firstName} {userItem.lastName}
+                                    <br />
+                                    <span style={{ fontSize: '12px', color: '#666' }}>
+                                      {userItem.email}
+                                    </span>
+                                  </span>
+
+                                </div>
+
+                              </div>
+
+                              {/* Start Conversation Button */}
+                              <div style={{
+                                fontSize: '12px',
+                                color: '#007AFF',
+                                fontWeight: 'bold'
+                              }}>
+                                Start Chat
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+
+                    {error && <div style={{ color: 'red' }}>{error}</div>}
+
+                  </div>
+
+                  <ul style={{ listStyle: 'none', padding: 0, overflowY: 'auto', flex: 1, marginTop: '1px' }} className="chat-list-usersection">
+                    {getFilteredUsers().length > 0 ? (
+                      getFilteredUsers()
+                        .sort((a, b) => {
+                          const aTimestamp = getLastMessageTimestamp(a._id);
+                          const bTimestamp = getLastMessageTimestamp(b._id);
+                          return bTimestamp - aTimestamp; // Sort by most recent first
+                        })
+                        .map((userItem) => (
+                          <li
+                            key={userItem._id}
+                            className="chat-list-user"
                             style={{
-                              width: '40px',
-                              height: '40px',
-                              borderRadius: '50%',
-                              objectFit: 'cover',
-                              border: '2px solid #ddd'
-                            }}
-                            onError={(e) => {
-                              e.target.style.display = 'none';
-                              e.target.nextSibling.style.display = 'flex';
-                            }}
-                          />
-                        ) : (
-                          <div
-                            style={{
-                              width: '40px',
-                              height: '40px',
-                              borderRadius: '50%',
-                              backgroundColor: '#007AFF',
-                              color: 'white',
+                              padding: '12px 15px',
+                              cursor: 'pointer',
+                              background: selectedUser && selectedUser._id === userItem._id ? '#E3F3FF' : 'transparent',
                               display: 'flex',
                               alignItems: 'center',
-                              justifyContent: 'center',
-                              fontSize: '12px',
-                              fontWeight: 'bold',
-                              border: '2px solid #ddd'
+                              justifyContent: 'space-between',
+                              margin: '12px',
+                              borderRadius: '5px',
+                              borderBottom: '1px solid #f0f0f0',
+                            }}
+                            onClick={() => {
+                              setSelectedUser(userItem);
+                              // Immediately clear unread count for this user
+                              setUnreadCounts((prev) => ({
+                                ...prev,
+                                [userItem._id]: 0
+                              }));
+                              // Close mobile menu when user is selected
+                              setIsMobileMenuOpen(false);
+                              // console.log("Selected user:", userItem._id, "Clearing unread count");
                             }}
                           >
-                            {(userItem.firstName || userItem.email || 'U').slice(0, 2).toUpperCase()}
-                          </div>
-                        )}
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                              {userItem.profileImage ? (
+                                <>
+                                  <div>
+                                    <div style={{
+                                      width: '40px',
+                                      height: '40px',
+                                      borderRadius: '50%',
+                                      backgroundColor: '#007AFF',
+                                      color: 'white',
+                                      alignItems: 'center',
+                                      justifyContent: 'center',
+                                      fontSize: '16px',
+                                      fontWeight: 'bold',
+                                      border: '2px solid #ddd',
+                                      display: 'flex',
+                                      position: 'relative',
+                                      textAlign: 'center',
+                                    }}>
+                                      <img
+                                        src={userItem.profileImage}
+                                        alt={userItem.firstName}
+                                        style={{
+                                          width: '40px',
+                                          height: '40px',
+                                          borderRadius: '50%',
+                                          objectFit: 'cover',
+                                        }}
+                                        onError={(e) => {
+                                          e.target.style.display = 'none';
+                                          e.target.nextSibling.style.display = 'flex';
+                                        }}
+                                      />
 
-                        {/* User Info */}
-                        <div style={{}}>
-                          <span style={{ fontWeight: 'bold', fontSize: '14px' }}>
-                            {userItem.firstName} {userItem.lastName}
-                            <br/>
-                            <span style={{ fontSize: '12px', color: '#666' }}>
-                            {userItem.email}
-                            </span>
-                          </span>
-                          
-                        </div>
-                        
-                      </div>
+                                      {onlineUsers.includes(normalizeUserId(userItem._id)) ? (
+                                        <div style={{ position: 'absolute', top: '-10px', right: '-5px' }}>
+                                          <span style={{ color: 'rgb(43, 216, 66)', fontSize: 21, }}>●</span>
+                                        </div>
+                                      ) : (
+                                        <div style={{ position: 'absolute', top: '-10px', right: '-5px' }}>
+                                          <span style={{ color: 'gray', fontSize: 1 }}>●</span>
+                                        </div>
+                                      )}
 
-                        {/* Start Conversation Button */}
-                        <div style={{
-                          fontSize: '12px',
-                          color: '#007AFF',
-                          fontWeight: 'bold'
-                        }}>
-                          Start Chat
-                        </div>
+                                    </div>
+
+                                    {/* {console.log(`User ${userItem._id} online status:`, onlineUsers.includes(normalizeUserId(userItem._id)), 'Online users:', onlineUsers)} */}
+                                    {/* {console.log(`User ID type:`, typeof userItem._id, 'Online users types:', onlineUsers.map(id => typeof id))} */}
+
+                                  </div>
+                                </>
+                              ) : (
+                                <>
+                                  <div>
+                                    <div
+                                      style={{
+                                        width: '40px',
+                                        height: '40px',
+                                        borderRadius: '50%',
+                                        backgroundColor: '#007AFF',
+                                        color: 'white',
+                                        alignItems: 'center',
+                                        justifyContent: 'center',
+                                        fontSize: '16px',
+                                        fontWeight: 'bold',
+                                        border: '2px solid #ddd',
+                                        display: 'flex',
+                                        position: 'relative',
+                                        textAlign: 'center',
+                                      }}
+                                    >
+                                      {(userItem.firstName || userItem.email || 'U').slice(0, 2).toUpperCase()}
+
+                                      {onlineUsers.includes(normalizeUserId(userItem._id)) ? (
+                                        <div style={{ position: 'absolute', top: '-10px', right: '-5px' }}>
+                                          <span style={{ color: 'rgb(43, 216, 66)', fontSize: 21, }}>●</span>
+                                        </div>
+                                      ) : (
+                                        <div style={{ position: 'absolute', top: '-10px', right: '-5px' }}>
+                                          <span style={{ color: 'gray', fontSize: 1 }}>●</span>
+                                        </div>
+                                      )}
+                                    </div>
+
+
+                                    {/* {console.log(`User ${userItem._id} online status:`, onlineUsers.includes(normalizeUserId(userItem._id)), 'Online users:', onlineUsers)} */}
+                                    {/* {console.log(`User ID type:`, typeof userItem._id, 'Online users types:', onlineUsers.map(id => typeof id))} */}
+
+                                  </div>
+                                </>
+                              )}
+
+                              {/* name and message */}
+                              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', flex: 1 }}>
+                                <div style={{ display: 'flex', alignItems: 'center' }}>
+                                  <span style={{ fontWeight: 'bold' }}>
+                                    {(userItem.firstName || userItem.email || 'User')} {userItem.lastName || ''}
+                                  </span>
+                                </div>
+                                <span style={{
+                                  fontSize: '12px',
+                                  color: '#666',
+                                  marginTop: '2px',
+                                  overflow: 'hidden',
+                                  textOverflow: 'ellipsis',
+                                  whiteSpace: 'nowrap',
+                                  maxWidth: '150px'
+                                }}>
+                                  {getLastMessage(userItem._id)}
+                                </span>
+                              </div>
+
+                            </div>
+
+                            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '4px' }}>
+                              <span style={{
+                                fontSize: '10px',
+                                color: '#999',
+                                whiteSpace: 'nowrap'
+                              }}>
+                                {getLastMessageTime(userItem._id)}
+                              </span>
+                              <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                                {getLastMessageStatus(userItem._id) && (
+                                  <span style={{
+                                    fontSize: '10px',
+                                    color: getLastMessageStatus(userItem._id) === '✓✓' ? 'rgb(43, 216, 66)' : '#999'
+                                  }}>
+                                    {getLastMessageStatus(userItem._id)}
+                                  </span>
+                                )}
+                                {(() => {
+                                  const count = unreadCounts[userItem._id] || 0;
+                                  // console.log(`Badge check for user ${userItem._id} (${userItem.firstName}): count=${count}, show=${count > 0}`);
+                                  return count > 0 ? (
+                                    <span style={{
+                                      backgroundColor: 'orange',
+                                      color: 'white',
+                                      borderRadius: '50%',
+                                      width: '20px',
+                                      height: '20px',
+                                      display: 'flex',
+                                      alignItems: 'center',
+                                      justifyContent: 'center',
+                                      fontSize: '12px',
+                                      fontWeight: 'bold',
+                                      minWidth: '20px'
+                                    }}>
+                                      {count}
+                                    </span>
+                                  ) : null;
+                                })()}
+                              </div>
+                            </div>
+
+                          </li>
+                        ))
+                    ) : (
+                      <div style={{
+                        textAlign: 'center',
+                        padding: '20px',
+                        color: '#666',
+                        fontSize: '14px'
+                      }}>
+                        {searchQuery ? 'No users found matching your search' : 'No chat history yet. Start a conversation to see users here.'}
                       </div>
-                    ))}
-                  </div>
-                )}
+                    )}
+                  </ul>
+                </div>
               </div>
 
-              {error && <div style={{ color: 'red' }}>{error}</div>}
+              {/* Right panel: Chat area */}
+              <div className={`col-lg-9 ${isMobileMenuOpen ? 'd-none' : 'd-block'}`}>
+                <div className="h-100 d-flex flex-column bg-white border rounded shadow-sm mobile-panel-height">
 
-            </div>
+                  {selectedUser ? (
+                    <>
+                      {/* friend header */}
+                      <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid rgb(231, 230, 230)', padding: '10px 15px' }}>
 
-            <ul style={{ listStyle: 'none', padding: 0, overflowY: 'auto', flex: 1, marginTop: '1px' }} className="chat-list-usersection">
-              {getFilteredUsers().length > 0 ? (
-                getFilteredUsers()
-                  .sort((a, b) => {
-                    const aTimestamp = getLastMessageTimestamp(a._id);
-                    const bTimestamp = getLastMessageTimestamp(b._id);
-                    return bTimestamp - aTimestamp; // Sort by most recent first
-                  })
-                  .map((userItem) => (
-                    <li
-                      key={userItem._id}
-                      className="chat-list-user"
-                      style={{
-                        padding: '12px 15px',
-                        cursor: 'pointer',
-                        background: selectedUser && selectedUser._id === userItem._id ? '#E3F3FF' : 'transparent',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'space-between',
-                        margin: '12px',
-                        borderRadius: '5px',
-                        borderBottom: '1px solid #f0f0f0',
-                      }}
-                      onClick={() => {
-                        setSelectedUser(userItem);
-                        // Immediately clear unread count for this user
-                        setUnreadCounts((prev) => ({
-                          ...prev,
-                          [userItem._id]: 0
-                        }));
-                        // console.log("Selected user:", userItem._id, "Clearing unread count");
-                      }}
-                    >
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                        {userItem.profileImage ? (
-                          <>
-                            <div>
+                        <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
+
+
+                          <div className="d-lg-none bg-white">
+                            <div className="d-flex justify-content-between align-items-center">
+                              <button
+                                className="btn"
+                                onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+                                style={{ border: 'none', background: 'transparent' }}
+                              >
+                                {isMobileMenuOpen ? <HiX size={24} /> : <HiMenu size={24} />}
+                              </button>
+                            </div>
+                          </div>
+
+                          {selectedUser.profileImage ? (
+                            <>
                               <div style={{
-                                width: '40px',
-                                height: '40px',
                                 borderRadius: '50%',
-                                backgroundColor: '#007AFF',
                                 color: 'white',
-                                alignItems: 'center',
-                                justifyContent: 'center',
-                                fontSize: '16px',
-                                fontWeight: 'bold',
-                                border: '2px solid #ddd',
-                                display: 'flex',
-                                position: 'relative',
-                                textAlign: 'center',
                               }}>
                                 <img
-                                  src={userItem.profileImage}
-                                  alt={userItem.firstName}
+                                  src={selectedUser.profileImage}
+                                  alt={selectedUser.firstName}
                                   style={{
                                     width: '40px',
                                     height: '40px',
                                     borderRadius: '50%',
                                     objectFit: 'cover',
+                                    border: '2px solid #ddd'
                                   }}
                                   onError={(e) => {
                                     e.target.style.display = 'none';
                                     e.target.nextSibling.style.display = 'flex';
                                   }}
                                 />
-
-                                {onlineUsers.includes(normalizeUserId(userItem._id)) ? (
-                                  <div style={{ position: 'absolute', top: '-10px', right: '-5px' }}>
-                                    <span style={{ color: 'rgb(43, 216, 66)', fontSize: 21, }}>●</span>
-                                  </div>
-                                ) : (
-                                  <div style={{ position: 'absolute', top: '-10px', right: '-5px' }}>
-                                    <span style={{ color: 'gray', fontSize: 1 }}>●</span>
-                                  </div>
-                                )}
-
                               </div>
+                            </>
+                          ) : (
+                            <>
 
-                              {/* {console.log(`User ${userItem._id} online status:`, onlineUsers.includes(normalizeUserId(userItem._id)), 'Online users:', onlineUsers)} */}
-                              {/* {console.log(`User ID type:`, typeof userItem._id, 'Online users types:', onlineUsers.map(id => typeof id))} */}
-
-                            </div>
-                          </>
-                        ) : (
-                          <>
-                            <div>
                               <div
                                 style={{
                                   width: '40px',
@@ -1544,269 +1707,107 @@ const Chat = () => {
                                   fontSize: '16px',
                                   fontWeight: 'bold',
                                   border: '2px solid #ddd',
-                                  display: 'flex',
-                                  position: 'relative',
-                                  textAlign: 'center',
+                                  display: 'flex'
                                 }}
                               >
-                                {(userItem.firstName || userItem.email || 'U').slice(0, 2).toUpperCase()}
 
-                                {onlineUsers.includes(normalizeUserId(userItem._id)) ? (
-                                  <div style={{ position: 'absolute', top: '-10px', right: '-5px' }}>
-                                    <span style={{ color: 'rgb(43, 216, 66)', fontSize: 21, }}>●</span>
-                                  </div>
-                                ) : (
-                                  <div style={{ position: 'absolute', top: '-10px', right: '-5px' }}>
-                                    <span style={{ color: 'gray', fontSize: 1 }}>●</span>
-                                  </div>
-                                )}
+                                {(selectedUser.firstName || selectedUser.email || 'U').slice(0, 2).toUpperCase()}
+
                               </div>
 
+                            </>
+                          )}
 
-                              {/* {console.log(`User ${userItem._id} online status:`, onlineUsers.includes(normalizeUserId(userItem._id)), 'Online users:', onlineUsers)} */}
-                              {/* {console.log(`User ID type:`, typeof userItem._id, 'Online users types:', onlineUsers.map(id => typeof id))} */}
 
+
+                          <div>
+                            <span><b>{selectedUser.firstName} {selectedUser.lastName}</b></span>
+
+                            <div style={{ display: 'flex', gap: '5px', alignItems: 'center' }}>
+                              {onlineUsers.includes(normalizeUserId(selectedUser._id)) && (
+                                <span style={{ color: 'rgb(43, 216, 66)', fontSize: 15 }}>●</span>
+                              )}
+                              <span style={{ color: 'rgb(182, 180, 180)' }}>{onlineUsers.includes(normalizeUserId(selectedUser._id)) ? 'online' : 'offline'}</span>
+                            </div>
+                          </div>
+                        </div>
+
+                        {isSelectionMode ? (
+                          <div style={{ display: 'flex', gap: '10px', alignItems: 'center', marginTop: '20px' }}>
+                            <span style={{ fontSize: '14px', color: '#666' }}>
+                              {selectedMessages.size} selected
+                            </span>
+                            <button
+                              onClick={handleDeleteSelectedMessages}
+                              disabled={selectedMessages.size === 0}
+                              style={{
+                                padding: '5px 10px',
+                                backgroundColor: selectedMessages.size === 0 ? '#ccc' : '#ff4757',
+                                color: 'white',
+                                border: 'none',
+                                borderRadius: '4px',
+                                cursor: selectedMessages.size === 0 ? 'not-allowed' : 'pointer',
+                                fontSize: '12px'
+                              }}
+                            >
+                              Delete ({selectedMessages.size})
+                            </button>
+                            <button
+                              onClick={() => {
+                                setIsSelectionMode(false);
+                                setSelectedMessages(new Set());
+                              }}
+                              style={{
+                                padding: '5px 10px',
+                                backgroundColor: '#6c757d',
+                                color: 'white',
+                                border: 'none',
+                                borderRadius: '4px',
+                                cursor: 'pointer',
+                                fontSize: '12px'
+                              }}
+                            >
+                              Cancel
+                            </button>
+                          </div>
+                        ) : (
+                          <>
+                            <div style={{ color: "grey", position: "relative", marginTop: '8px', marginRight: '10px' }}>
+                              <div style={{ display: 'flex', gap: '20px', fontSize: '20px' }}>
+                                {/* <span><CiSearch /></span> */}
+                                <span onClick={() => setClickDropdown(!clickDropdown)} style={{ transform: 'rotate(90deg)', cursor: 'pointer' }}>
+                                  <HiOutlineDotsVertical className="threedot-setting" />
+                                </span>
+                              </div>
                             </div>
                           </>
                         )}
 
-                        {/* name and message */}
-                        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', flex: 1 }}>
-                          <div style={{ display: 'flex', alignItems: 'center' }}>
-                            <span style={{ fontWeight: 'bold' }}>
-                              {(userItem.firstName || userItem.email || 'User')} {userItem.lastName || ''}
-                            </span>
-                          </div>
-                          <span style={{
-                            fontSize: '12px',
-                            color: '#666',
-                            marginTop: '2px',
-                            overflow: 'hidden',
-                            textOverflow: 'ellipsis',
-                            whiteSpace: 'nowrap',
-                            maxWidth: '150px'
-                          }}>
-                            {getLastMessage(userItem._id)}
-                          </span>
-                        </div>
-
-                      </div>
-
-                      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '4px' }}>
-                        <span style={{
-                          fontSize: '10px',
-                          color: '#999',
-                          whiteSpace: 'nowrap'
-                        }}>
-                          {getLastMessageTime(userItem._id)}
-                        </span>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-                          {getLastMessageStatus(userItem._id) && (
-                            <span style={{
-                              fontSize: '10px',
-                              color: getLastMessageStatus(userItem._id) === '✓✓' ? 'rgb(43, 216, 66)' : '#999'
-                            }}>
-                              {getLastMessageStatus(userItem._id)}
-                            </span>
-                          )}
-                          {(() => {
-                            const count = unreadCounts[userItem._id] || 0;
-                            // console.log(`Badge check for user ${userItem._id} (${userItem.firstName}): count=${count}, show=${count > 0}`);
-                            return count > 0 ? (
-                              <span style={{
-                                backgroundColor: 'orange',
-                                color: 'white',
-                                borderRadius: '50%',
-                                width: '20px',
-                                height: '20px',
-                                display: 'flex',
-                                alignItems: 'center',
-                                justifyContent: 'center',
-                                fontSize: '12px',
-                                fontWeight: 'bold',
-                                minWidth: '20px'
-                              }}>
-                                {count}
-                              </span>
-                            ) : null;
-                          })()}
-                        </div>
-                      </div>
-
-                    </li>
-                  ))
-              ) : (
-                <div style={{
-                  textAlign: 'center',
-                  padding: '20px',
-                  color: '#666',
-                  fontSize: '14px'
-                }}>
-                  {searchQuery ? 'No users found matching your search' : 'No chat history yet. Start a conversation to see users here.'}
-                </div>
-              )}
-            </ul>
-          </div>
-
-          {/* Right panel: Chat area */}
-          <div style={{
-            width: '75%',
-            display: 'flex',
-            flexDirection: 'column',
-            height: 'calc(100vh - 140px)',
-            overflow: 'hidden',
-            backgroundColor: '#FFFFFF',
-            border: '1px solid #E6E6E6',
-            borderRadius: '10px',
-            boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
-          }}>
-
-            {selectedUser ? (
-              <>
-                {/* friend header */}
-                <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid rgb(231, 230, 230)', padding: '10px 15px' }}>
-
-                  <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
-
-                    {selectedUser.profileImage ? (
-                      <>
-                        <div style={{
-                          borderRadius: '50%',
-                          color: 'white',
-                        }}>
-                          <img
-                            src={selectedUser.profileImage}
-                            alt={selectedUser.firstName}
+                        {clickDropdown && (
+                          <div
+                            className="settings-dropdown-container"
                             style={{
-                              width: '40px',
-                              height: '40px',
-                              borderRadius: '50%',
-                              objectFit: 'cover',
-                              border: '2px solid #ddd'
+                              position: "absolute",
+                              top: "100px",
+                              right: "55px",
+                              zIndex: "100",
                             }}
-                            onError={(e) => {
-                              e.target.style.display = 'none';
-                              e.target.nextSibling.style.display = 'flex';
-                            }}
-                          />
-                        </div>
-                      </>
-                    ) : (
-                      <>
-
-                        <div
-                          style={{
-                            width: '40px',
-                            height: '40px',
-                            borderRadius: '50%',
-                            backgroundColor: '#007AFF',
-                            color: 'white',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            fontSize: '16px',
-                            fontWeight: 'bold',
-                            border: '2px solid #ddd',
-                            display: 'flex'
-                          }}
-                        >
-
-                          {(selectedUser.firstName || selectedUser.email || 'U').slice(0, 2).toUpperCase()}
-
-                        </div>
-
-                      </>
-                    )}
-
-
-
-                    <div>
-                      <span><b>{selectedUser.firstName} {selectedUser.lastName}</b></span>
-
-                      <div style={{ display: 'flex', gap: '5px', alignItems: 'center' }}>
-                        {onlineUsers.includes(normalizeUserId(selectedUser._id)) && (
-                          <span style={{ color: 'rgb(43, 216, 66)', fontSize: 15 }}>●</span>
-                        )}
-                        <span style={{ color: 'rgb(182, 180, 180)' }}>{onlineUsers.includes(normalizeUserId(selectedUser._id)) ? 'online' : 'offline'}</span>
-                      </div>
-                    </div>
-                  </div>
-
-                  {isSelectionMode ? (
-                    <div style={{ display: 'flex', gap: '10px', alignItems: 'center', marginTop: '20px' }}>
-                      <span style={{ fontSize: '14px', color: '#666' }}>
-                        {selectedMessages.size} selected
-                      </span>
-                      <button
-                        onClick={handleDeleteSelectedMessages}
-                        disabled={selectedMessages.size === 0}
-                        style={{
-                          padding: '5px 10px',
-                          backgroundColor: selectedMessages.size === 0 ? '#ccc' : '#ff4757',
-                          color: 'white',
-                          border: 'none',
-                          borderRadius: '4px',
-                          cursor: selectedMessages.size === 0 ? 'not-allowed' : 'pointer',
-                          fontSize: '12px'
-                        }}
-                      >
-                        Delete ({selectedMessages.size})
-                      </button>
-                      <button
-                        onClick={() => {
-                          setIsSelectionMode(false);
-                          setSelectedMessages(new Set());
-                        }}
-                        style={{
-                          padding: '5px 10px',
-                          backgroundColor: '#6c757d',
-                          color: 'white',
-                          border: 'none',
-                          borderRadius: '4px',
-                          cursor: 'pointer',
-                          fontSize: '12px'
-                        }}
-                      >
-                        Cancel
-                      </button>
-                    </div>
-                  ) : (
-                    <>
-                      <div style={{ color: "grey", position: "relative", marginTop: '8px', marginRight: '10px' }}>
-                        <div style={{ display: 'flex', gap: '20px', fontSize: '20px' }}>
-                          {/* <span><CiSearch /></span> */}
-                          <span onClick={() => setClickDropdown(!clickDropdown)} style={{ transform: 'rotate(90deg)', cursor: 'pointer' }}>
-                            <HiOutlineDotsVertical className="threedot-setting" />
-                          </span>
-                        </div>
-                      </div>
-                    </>
-                  )}
-
-                  {clickDropdown && (
-                    <div
-                      className="settings-dropdown-container"
-                      style={{
-                        position: "absolute",
-                        top: "50px",
-                        right: "100px",
-                        zIndex: "100",
-                      }}
-                    >
-                      <div>
-                        <div
-                          className="setting-notification-container"
-                          style={{
-                            backgroundColor: "white",
-                            width: "200px",
-                            height: "auto",
-                            border: "1px solid #dfd8d8",
-                            padding: "10px 15px",
-                            display: "flex",
-                            flexDirection: "column",
-                            borderRadius: '10px'
-                          }}
-                        >
-                          {/* <div style={{ display: "flex", gap: "10px", alignItems: "center" }}>
+                          >
+                            <div>
+                              <div
+                                className="setting-notification-container"
+                                style={{
+                                  backgroundColor: "white",
+                                  width: "200px",
+                                  height: "auto",
+                                  border: "1px solid #dfd8d8",
+                                  padding: "10px 15px",
+                                  display: "flex",
+                                  flexDirection: "column",
+                                  borderRadius: '10px'
+                                }}
+                              >
+                                {/* <div style={{ display: "flex", gap: "10px", alignItems: "center" }}>
                             <IoVolumeMuteOutline style={{ color: "#4a4848" }} />
                             <span style={{ color: "#4a4848" }}>Mute Notification</span>
                           </div>
@@ -1816,144 +1817,144 @@ const Chat = () => {
                             <span style={{ color: "#4a4848" }}>Disappearing</span>
                           </div>
                           <br /> */}
-                          <div
-                            style={{ display: "flex", gap: "10px", alignItems: "center", cursor: "pointer" }}
-                            onClick={async () => {
-                              if (window.confirm('Are you sure you want to clear all messages in this conversation?')) {
-                                try {
-                                  const token = localStorage.getItem('token');
-                                  await fetch(`${BASE_URL}/api/messages/clear`, {
-                                    method: 'DELETE',
-                                    headers: {
-                                      'Content-Type': 'application/json',
-                                      Authorization: `Bearer ${token}`,
-                                    },
-                                    body: JSON.stringify({
-                                      from: currentUserId,
-                                      to: selectedUser._id
-                                    }),
-                                  });
+                                <div
+                                  style={{ display: "flex", gap: "10px", alignItems: "center", cursor: "pointer" }}
+                                  onClick={async () => {
+                                    if (window.confirm('Are you sure you want to clear all messages in this conversation?')) {
+                                      try {
+                                        const token = localStorage.getItem('token');
+                                        await fetch(`${BASE_URL}/api/messages/clear`, {
+                                          method: 'DELETE',
+                                          headers: {
+                                            'Content-Type': 'application/json',
+                                            Authorization: `Bearer ${token}`,
+                                          },
+                                          body: JSON.stringify({
+                                            from: currentUserId,
+                                            to: selectedUser._id
+                                          }),
+                                        });
 
-                                  // Clear messages from local state
-                                  setMessages(prev => ({
-                                    ...prev,
-                                    [selectedUser._id]: []
-                                  }));
+                                        // Clear messages from local state
+                                        setMessages(prev => ({
+                                          ...prev,
+                                          [selectedUser._id]: []
+                                        }));
 
-                                  // Emit socket event for real-time chat clear
-                                  socket.current.emit('clear-chat', {
-                                    from: currentUserId,
-                                    to: selectedUser._id
-                                  });
+                                        // Emit socket event for real-time chat clear
+                                        socket.current.emit('clear-chat', {
+                                          from: currentUserId,
+                                          to: selectedUser._id
+                                        });
 
-                                  // Close the dropdown
-                                  setClickDropdown(false);
-                                } catch (error) {
-                                  console.error('Error clearing messages:', error);
-                                  alert('Failed to clear messages. Please try again.');
-                                }
-                              }
-                            }}
-                          >
-                            <TbClearAll style={{ color: "#4a4848" }} />
-                            <span style={{ color: "#4a4848" }}>Clear Message</span>
-                          </div>
-                          <br />
-                          <div
-                            style={{ display: "flex", gap: "10px", alignItems: "center", cursor: "pointer" }}
-                            onClick={() => {
-                              setIsSelectionMode(true);
-                              setSelectedMessages(new Set());
-                              setClickDropdown(false);
-                            }}
-                          >
-                            <RiDeleteBinLine style={{ color: "#4a4848" }} />
-                            <span style={{ color: "#4a4848" }}>Delete Chat</span>
-                          </div>
-                          {/* <br />
+                                        // Close the dropdown
+                                        setClickDropdown(false);
+                                      } catch (error) {
+                                        console.error('Error clearing messages:', error);
+                                        alert('Failed to clear messages. Please try again.');
+                                      }
+                                    }
+                                  }}
+                                >
+                                  <TbClearAll style={{ color: "#4a4848" }} />
+                                  <span style={{ color: "#4a4848" }}>Clear Message</span>
+                                </div>
+                                <br />
+                                <div
+                                  style={{ display: "flex", gap: "10px", alignItems: "center", cursor: "pointer" }}
+                                  onClick={() => {
+                                    setIsSelectionMode(true);
+                                    setSelectedMessages(new Set());
+                                    setClickDropdown(false);
+                                  }}
+                                >
+                                  <RiDeleteBinLine style={{ color: "#4a4848" }} />
+                                  <span style={{ color: "#4a4848" }}>Delete Chat</span>
+                                </div>
+                                {/* <br />
                           <div style={{ display: "flex", gap: "10px", alignItems: "center" }}>
                             <MdBlockFlipped style={{ color: "#4a4848" }} />
                             <span style={{ color: "#4a4848" }}>Block</span>
                           </div> */}
-                        </div>
+                              </div>
+                            </div>
+                          </div>
+                        )}
                       </div>
-                    </div>
-                  )}
-                </div>
 
-                {/* message box */}
-                <div
-                  ref={messageContainerRef}
-                  style={{
-                    height: 'calc(100vh - 200px)',
-                    marginTop: 12,
-                    marginBottom: 12,
-                    padding: '32px',
-                    minHeight: '300px',
-                    maxHeight: 'calc(100vh - 200px)',
-                    overflowY: 'auto',
-                  }}
-                  onClick={() => setContextMenu(null)}
-                >
-                  {(messages[selectedUser._id] || []).map((msg, idx) => (
-                    <div
-                      key={idx}
-                      style={{
-                        marginBottom: '18px',
-                        display: 'flex',
-                        flexDirection: 'column',
-                        alignItems: normalizeUserId(msg.from) === normalizedCurrentUserId ? 'flex-end' : 'flex-start',
-                        position: 'relative',
-                        width: '100%'
-                      }}
-                      onClick={() => handleMessageSelection(idx)}
-                    >
-                      {/* Checkbox for selection mode */}
-                      {isSelectionMode && normalizeUserId(msg.from) === normalizedCurrentUserId && (
-                        <input
-                          type="checkbox"
-                          checked={selectedMessages.has(idx)}
-                          onChange={() => handleMessageSelection(idx)}
-                          style={{ position: 'absolute', top: 0, right: -30, zIndex: 2 }}
-                          onClick={e => e.stopPropagation()}
-                        />
-                      )}
-                      {/* Reply preview above message row */}
-                      {msg.replyTo && (
-                        <div style={{
-                          background: '#f1f1f1',
-                          borderLeft: '3px solid #007AFF',
-                          padding: '6px 10px',
-                          marginBottom: 4,
-                          borderRadius: 6,
-                          maxWidth: 260,
-                          fontSize: 12,
-                          color: '#555',
-                          textAlign: 'left',
-                          alignSelf: normalizeUserId(msg.from) === normalizedCurrentUserId ? 'flex-end' : 'flex-start',
-                          marginRight: normalizeUserId(msg.from) === normalizedCurrentUserId ? 0 : undefined,
-                          marginLeft: normalizeUserId(msg.from) !== normalizedCurrentUserId ? 0 : undefined
-                        }}>
-                          <span style={{ fontWeight: 500, color: '#007AFF' }}>
-                            {msg.replyTo.username ? msg.replyTo.username : (msg.replyTo.from === currentUserId ? 'You' : 'Friend')}
-                          </span>
-                          <br />
-                          <span style={{ color: '#333' }}>{msg.replyTo.message}</span>
-                        </div>
-                      )}
-                      {/* Message row: avatar + message bubble + menu */}
+                      {/* message box */}
                       <div
+                        ref={messageContainerRef}
                         style={{
-                          display: 'flex',
-                          flexDirection: normalizeUserId(msg.from) === normalizedCurrentUserId ? 'row-reverse' : 'row',
-                          alignItems: 'flex-end',
-                          gap: '8px',
-                          width: '100%'
+                          height: 'calc(100vh - 200px)',
+                          marginTop: 12,
+                          marginBottom: 12,
+                          padding: '32px',
+                          minHeight: 'auto',
+                          maxHeight: 'calc(100vh - 270px)',
+                          overflowY: 'auto',
                         }}
+                        onClick={() => setContextMenu(null)}
                       >
+                        {(messages[selectedUser._id] || []).map((msg, idx) => (
+                          <div
+                            key={idx}
+                            style={{
+                              marginBottom: '18px',
+                              display: 'flex',
+                              flexDirection: 'column',
+                              alignItems: normalizeUserId(msg.from) === normalizedCurrentUserId ? 'flex-end' : 'flex-start',
+                              position: 'relative',
+                              width: '100%'
+                            }}
+                            onClick={() => handleMessageSelection(idx)}
+                          >
+                            {/* Checkbox for selection mode */}
+                            {isSelectionMode && normalizeUserId(msg.from) === normalizedCurrentUserId && (
+                              <input
+                                type="checkbox"
+                                checked={selectedMessages.has(idx)}
+                                onChange={() => handleMessageSelection(idx)}
+                                style={{ position: 'absolute', top: 0, right: -30, zIndex: 2 }}
+                                onClick={e => e.stopPropagation()}
+                              />
+                            )}
+                            {/* Reply preview above message row */}
+                            {msg.replyTo && (
+                              <div style={{
+                                background: '#f1f1f1',
+                                borderLeft: '3px solid #007AFF',
+                                padding: '6px 10px',
+                                marginBottom: 4,
+                                borderRadius: 6,
+                                maxWidth: 260,
+                                fontSize: 12,
+                                color: '#555',
+                                textAlign: 'left',
+                                alignSelf: normalizeUserId(msg.from) === normalizedCurrentUserId ? 'flex-end' : 'flex-start',
+                                marginRight: normalizeUserId(msg.from) === normalizedCurrentUserId ? 0 : undefined,
+                                marginLeft: normalizeUserId(msg.from) !== normalizedCurrentUserId ? 0 : undefined
+                              }}>
+                                <span style={{ fontWeight: 500, color: '#007AFF' }}>
+                                  {msg.replyTo.username ? msg.replyTo.username : (msg.replyTo.from === currentUserId ? 'You' : 'Friend')}
+                                </span>
+                                <br />
+                                <span style={{ color: '#333' }}>{msg.replyTo.message}</span>
+                              </div>
+                            )}
+                            {/* Message row: avatar + message bubble + menu */}
+                            <div
+                              style={{
+                                display: 'flex',
+                                flexDirection: normalizeUserId(msg.from) === normalizedCurrentUserId ? 'row-reverse' : 'row',
+                                alignItems: 'flex-end',
+                                gap: '8px',
+                                width: '100%'
+                              }}
+                            >
 
-                        {/* Profile Picture */}
-                        {/* <div style={{ flexShrink: 0 }}>
+                              {/* Profile Picture */}
+                              {/* <div style={{ flexShrink: 0 }}>
                       {normalizeUserId(msg.from) === normalizedCurrentUserId ? (
                         // Current user's profile picture
                         user?.profileImage ? (
@@ -2033,309 +2034,309 @@ const Chat = () => {
                         )
                       } */}
 
-                        {/* Message Content */}
-                        <div style={{
-                          display: 'flex', flexDirection: 'column', alignItems: normalizeUserId(msg.from) === normalizedCurrentUserId ? 'flex-end' : 'flex-start', maxWidth: '70%',
-                          background: normalizeUserId(msg.from) === normalizedCurrentUserId ? '#EBF7FF' : '#F9F9F9',
-                          border: normalizeUserId(msg.from) === normalizedCurrentUserId ? '1px solid #BBE1FF' : '1px solid #E6E6E6',
-                          padding: '6px 12px',
-                          borderTopLeftRadius: normalizeUserId(msg.from) === normalizedCurrentUserId ? '12px' : '0px',
-                          borderTopRightRadius: normalizeUserId(msg.from) === normalizedCurrentUserId ? '0px' : '12px',
-                          borderBottomLeftRadius: '12px 12px',
-                          borderBottomRightRadius: '12px 12px',
-                          wordWrap: 'break-word',
-                        }}>
-                          <div
-                            style={{
-                              display: 'inline-block',
-                              margin: '2px 0',
-                              cursor: msg.fileUrl ? 'pointer' : 'default'
-                            }}
-                            onClick={msg.fileUrl ? () => window.open(msg.fileUrl, '_blank') : undefined}
-                          >
-                            {msg.message}
-                            {msg.fileUrl && (
-                              <div style={{ marginTop: '8px' }}>
-                                {msg.fileType?.startsWith('image/') && (
-                                  <img
-                                    src={msg.fileUrl}
-                                    alt={msg.fileName || 'Image'}
-                                    style={{
-                                      maxWidth: '200px',
-                                      maxHeight: '200px',
-                                      borderRadius: '4px',
-                                      cursor: 'pointer'
-                                    }}
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      window.open(msg.fileUrl, '_blank');
-                                    }}
-                                  />
-                                )}
-                                {msg.fileType?.startsWith('video/') && (
-                                  <video
-                                    src={msg.fileUrl}
-                                    controls
-                                    style={{
-                                      maxWidth: '200px',
-                                      maxHeight: '200px',
-                                      borderRadius: '4px',
-                                      cursor: 'pointer'
-                                    }}
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      window.open(msg.fileUrl, '_blank');
-                                    }}
-                                  />
-                                )}
-                                {msg.fileType === 'application/pdf' && (
-                                  <div
-                                    style={{
-                                      padding: '8px',
-                                      backgroundColor: '#f0f0f0',
-                                      borderRadius: '4px',
-                                      cursor: 'pointer',
-                                      display: 'flex',
-                                      alignItems: 'center',
-                                      gap: '8px'
-                                    }}
-                                    onClick={(e) => {
+                              {/* Message Content */}
+                              <div style={{
+                                display: 'flex', flexDirection: 'column', alignItems: normalizeUserId(msg.from) === normalizedCurrentUserId ? 'flex-end' : 'flex-start', maxWidth: '70%',
+                                background: normalizeUserId(msg.from) === normalizedCurrentUserId ? '#EBF7FF' : '#F9F9F9',
+                                border: normalizeUserId(msg.from) === normalizedCurrentUserId ? '1px solid #BBE1FF' : '1px solid #E6E6E6',
+                                padding: '6px 12px',
+                                borderTopLeftRadius: normalizeUserId(msg.from) === normalizedCurrentUserId ? '12px' : '0px',
+                                borderTopRightRadius: normalizeUserId(msg.from) === normalizedCurrentUserId ? '0px' : '12px',
+                                borderBottomLeftRadius: '12px 12px',
+                                borderBottomRightRadius: '12px 12px',
+                                wordWrap: 'break-word',
+                              }}>
+                                <div
+                                  style={{
+                                    display: 'inline-block',
+                                    margin: '2px 0',
+                                    cursor: msg.fileUrl ? 'pointer' : 'default'
+                                  }}
+                                  onClick={msg.fileUrl ? () => window.open(msg.fileUrl, '_blank') : undefined}
+                                >
+                                  {msg.message}
+                                  {msg.fileUrl && (
+                                    <div style={{ marginTop: '8px' }}>
+                                      {msg.fileType?.startsWith('image/') && (
+                                        <img
+                                          src={msg.fileUrl}
+                                          alt={msg.fileName || 'Image'}
+                                          style={{
+                                            maxWidth: '200px',
+                                            maxHeight: '200px',
+                                            borderRadius: '4px',
+                                            cursor: 'pointer'
+                                          }}
+                                          onClick={(e) => {
+                                            e.stopPropagation();
+                                            window.open(msg.fileUrl, '_blank');
+                                          }}
+                                        />
+                                      )}
+                                      {msg.fileType?.startsWith('video/') && (
+                                        <video
+                                          src={msg.fileUrl}
+                                          controls
+                                          style={{
+                                            maxWidth: '200px',
+                                            maxHeight: '200px',
+                                            borderRadius: '4px',
+                                            cursor: 'pointer'
+                                          }}
+                                          onClick={(e) => {
+                                            e.stopPropagation();
+                                            window.open(msg.fileUrl, '_blank');
+                                          }}
+                                        />
+                                      )}
+                                      {msg.fileType === 'application/pdf' && (
+                                        <div
+                                          style={{
+                                            padding: '8px',
+                                            backgroundColor: '#f0f0f0',
+                                            borderRadius: '4px',
+                                            cursor: 'pointer',
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            gap: '8px'
+                                          }}
+                                          onClick={(e) => {
 
-                                      e.stopPropagation();
-                                      window.open(msg.fileUrl, '_blank');
-                                    }}
-                                  >
-                                    <span role="img" aria-label="PDF">📄</span> {msg.fileName || 'PDF File'}
-                                  </div>
-                                )}
-                                {/* For other file types, show a generic link */}
-                                {!msg.fileType?.startsWith('image/') && !msg.fileType?.startsWith('video/') && msg.fileType !== 'application/pdf' && (
-                                  <a href={msg.fileUrl} target="_blank" rel="noopener noreferrer" style={{ color: '#007AFF', textDecoration: 'underline' }}>
-                                    {msg.fileName || 'Download file'}
-                                  </a>
-                                )}
+                                            e.stopPropagation();
+                                            window.open(msg.fileUrl, '_blank');
+                                          }}
+                                        >
+                                          <span role="img" aria-label="PDF">📄</span> {msg.fileName || 'PDF File'}
+                                        </div>
+                                      )}
+                                      {/* For other file types, show a generic link */}
+                                      {!msg.fileType?.startsWith('image/') && !msg.fileType?.startsWith('video/') && msg.fileType !== 'application/pdf' && (
+                                        <a href={msg.fileUrl} target="_blank" rel="noopener noreferrer" style={{ color: '#007AFF', textDecoration: 'underline' }}>
+                                          {msg.fileName || 'Download file'}
+                                        </a>
+                                      )}
+                                    </div>
+                                  )}
+
+                                </div>
+
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '4px', marginTop: '2px' }}>
+                                  <span style={{ fontSize: '10px', color: '#666' }}>
+                                    {msg.timestamp ? formatTime(msg.timestamp) : ''}
+                                  </span>
+                                  {normalizeUserId(msg.from) === normalizedCurrentUserId && (
+                                    <span style={{ fontSize: 10, color: msg.read ? 'rgb(43, 216, 66)' : '#999' }}>
+                                      {msg.read ? '✓✓' : '✓'}
+                                    </span>
+                                  )}
+                                </div>
+
                               </div>
-                            )}
-
-                          </div>
-
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '4px', marginTop: '2px' }}>
-                            <span style={{ fontSize: '10px', color: '#666' }}>
-                              {msg.timestamp ? formatTime(msg.timestamp) : ''}
-                            </span>
-                            {normalizeUserId(msg.from) === normalizedCurrentUserId && (
-                              <span style={{ fontSize: 10, color: msg.read ? 'rgb(43, 216, 66)' : '#999' }}>
-                                {msg.read ? '✓✓' : '✓'}
-                              </span>
-                            )}
-                          </div>
-
-                        </div>
-                        {/* Show three-dots icon for all messages (not in selection mode) */}
-                        {!isSelectionMode && (
-                          <button
-                            style={{
-                              background: 'none',
-                              border: 'none',
-                              cursor: 'pointer',
-                              position: 'absolute',
-                              top: 0,
-                              right: normalizeUserId(msg.from) === normalizedCurrentUserId ? '-30px' : 'auto',
-                              left: normalizeUserId(msg.from) !== normalizedCurrentUserId ? '-30px' : 'auto',
-                              zIndex: 10,
-                              padding: 2
-                            }}
-                            onClick={e => {
-                              e.stopPropagation();
-                              // Menu size (should match the rendered menu)
-                              const menuWidth = 70;
-                              const menuHeight = 40;
-                              let x = e.clientX;
-                              let y = e.clientY;
-                              // For your own messages, if menu would overflow right, show to the left
-                              if (normalizeUserId(msg.from) === normalizedCurrentUserId) {
-                                // Find the chat area right edge
-                                const chatArea = e.target.closest('[style*="background-color:white"][style*="border-radius:10px"]');
-                                const chatAreaRect = chatArea ? chatArea.getBoundingClientRect() : null;
-                                const chatAreaRight = chatAreaRect ? chatAreaRect.right : window.innerWidth;
-                                if (x + menuWidth > chatAreaRight) {
-                                  x = x - menuWidth;
-                                }
-                              } else {
-                                if (x + menuWidth > window.innerWidth) {
-                                  x = window.innerWidth - menuWidth - 8;
-                                }
-                              }
-                              if (y + menuHeight > window.innerHeight) {
-                                y = window.innerHeight - menuHeight - 8;
-                              }
-                              setContextMenu({ idx, x, y });
-                            }}
-                            title="Message options"
-                          >
-                            <HiOutlineDotsVertical style={{ fontSize: 18, color: '#888' }} />
-                          </button>
-                        )}
-                        {/* Context menu for message */}
-                        {contextMenu && contextMenu.idx === idx && (
-                          <div
-                            style={{
-                              position: 'fixed',
-                              top: contextMenu.y,
-                              left: contextMenu.x,
-                              background: 'white',
-                              border: '1px solid #ccc',
-                              borderRadius: 6,
-                              boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
-                              zIndex: 2000,
-                              minWidth: 70,
-                              minHeight: 40,
-                              width: 70
-                            }}
-                          >
-                            {normalizeUserId(msg.from) === normalizedCurrentUserId ? (
-                              <div
-                                style={{ padding: '8px', cursor: 'pointer', textAlign: 'left' }}
-                                onClick={() => handleDeleteSingleMessage(idx)}
-                              >
-                                Delete
-                              </div>
-                            ) : (
-                              <div
-                                style={{ padding: '8px', cursor: 'pointer', textAlign: 'left' }}
-                                onClick={() => handleReplyToMessage({
-                                  ...msg,
-                                  username: selectedUser && selectedUser._id === msg.from ? selectedUser.firstName : undefined
-                                })}
-                              >
-                                Reply
-                              </div>
-                            )}
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  ))}
-                  <div ref={messagesEndRef} />
-                </div>
-
-                {/* text message box */}
-                <div style={{ padding: '8px 16px', borderTop: '1px solid rgb(231, 230, 230)', backgroundColor: 'white' }}>
-
-                  {/* Reply preview */}
-                  {replyTo && (
-                    <div style={{
-                      background: '#f1f1f1',
-                      borderLeft: '4px solid #007AFF',
-                      padding: '8px 12px',
-                      marginBottom: 6,
-                      borderRadius: 6,
-                      maxWidth: 400
-                    }}>
-                      <span style={{ fontWeight: 'bold', color: '#007AFF' }}>Replying to:</span>
-                      <br />
-                      <span style={{ color: '#333' }}>{replyTo.message}</span>
-                      <button
-                        style={{ marginLeft: 10, background: 'none', border: 'none', color: '#888', cursor: 'pointer' }}
-                        onClick={() => setReplyTo(null)}
-                      >✕</button>
-                    </div>
-                  )}
-                  <form onSubmit={handleSend} style={{
-                    display: 'flex',
-                    marginTop: 'auto',
-                    position: 'sticky',
-                    bottom: 0,
-                    backgroundColor: 'white',
-                    padding: '5px 15px',
-                    alignItems: 'center',
-                    border: '1px solid rgb(212, 212, 212)',
-                    borderRadius: '10px',
-                    gap: '12px'
-                  }}>
-
-                    {/* <LuMic /> */}
-
-                    <input
-                      type="text"
-                      value={message}
-                      onChange={(e) => setMessage(e.target.value)}
-                      placeholder="Type your message..."
-                      style={{ flex: 1, padding: 8, border: 'none', outline: 'none', backgroundColor: 'white' }}
-                    />
-
-                    <GrEmoji
-                      style={{ fontSize: "20px", cursor: "pointer", color: 'gray' }}
-                      onClick={toggleEmojiPicker}
-                    />
-                    {showEmojiPicker && (
-                      <div
-                        className="emoji-picker-container"
-                        style={{
-                          position: "absolute",
-                          bottom: "70px",
-                          right: "5px",
-                          zIndex: "1000"
-                        }}
-                      >
-                        <EmojiPicker onEmojiClick={onEmojiClick} />
-                      </div>
-                    )}
-
-
-                    <span
-                      onClick={() => setClickDropdownTwo(!clickDropdowntwo)}
-                      style={{ color: "grey", position: "relative" }}
-                    >
-                      <HiOutlineDotsVertical style={{ fontSize: "25px", color: 'gray' }} />
-                    </span>
-                    {clickDropdowntwo && (
-                      <div
-                        className="file-dropdown-container"
-                        style={{
-                          position: "absolute",
-                          top: "-50px", //178
-                          right: "130px",
-                          zIndex: "100",
-                        }}
-                      >
-
-                        {/* files options */}
-                        <div>
-                          <div
-                            className="send-file-container"
-                            style={{
-                              backgroundColor: "white",
-                              width: "150px",
-                              height: "auto",
-                              border: "1px solid #dfd8d8",
-                              padding: "10px 15px",
-                              display: "flex",
-                              flexDirection: "column",
-                              borderRadius: '10px'
-                            }}
-                          >
-                            <div style={{ display: "flex", gap: "10px", alignItems: "center" }}>
-                              <label htmlFor="file-upload2" className="custom-file-upload2" style={{ color: "gray" }}>
-                                <CiCamera />
-                                <span>Camera</span>
-                              </label>
-                              <input
-                                id="file-upload2"
-                                type="file"
-                                accept="image/*"
-                                capture="environment"
-                                style={{ color: "#4a4848" }}
-                                onChange={handleFileSelect}
-                              />
+                              {/* Show three-dots icon for all messages (not in selection mode) */}
+                              {!isSelectionMode && (
+                                <button
+                                  style={{
+                                    background: 'none',
+                                    border: 'none',
+                                    cursor: 'pointer',
+                                    position: 'absolute',
+                                    top: 0,
+                                    right: normalizeUserId(msg.from) === normalizedCurrentUserId ? '-30px' : 'auto',
+                                    left: normalizeUserId(msg.from) !== normalizedCurrentUserId ? '-30px' : 'auto',
+                                    zIndex: 10,
+                                    padding: 2
+                                  }}
+                                  onClick={e => {
+                                    e.stopPropagation();
+                                    // Menu size (should match the rendered menu)
+                                    const menuWidth = 70;
+                                    const menuHeight = 40;
+                                    let x = e.clientX;
+                                    let y = e.clientY;
+                                    // For your own messages, if menu would overflow right, show to the left
+                                    if (normalizeUserId(msg.from) === normalizedCurrentUserId) {
+                                      // Find the chat area right edge
+                                      const chatArea = e.target.closest('[style*="background-color:white"][style*="border-radius:10px"]');
+                                      const chatAreaRect = chatArea ? chatArea.getBoundingClientRect() : null;
+                                      const chatAreaRight = chatAreaRect ? chatAreaRect.right : window.innerWidth;
+                                      if (x + menuWidth > chatAreaRight) {
+                                        x = x - menuWidth;
+                                      }
+                                    } else {
+                                      if (x + menuWidth > window.innerWidth) {
+                                        x = window.innerWidth - menuWidth - 8;
+                                      }
+                                    }
+                                    if (y + menuHeight > window.innerHeight) {
+                                      y = window.innerHeight - menuHeight - 8;
+                                    }
+                                    setContextMenu({ idx, x, y });
+                                  }}
+                                  title="Message options"
+                                >
+                                  <HiOutlineDotsVertical style={{ fontSize: 18, color: '#888' }} />
+                                </button>
+                              )}
+                              {/* Context menu for message */}
+                              {contextMenu && contextMenu.idx === idx && (
+                                <div
+                                  style={{
+                                    position: 'fixed',
+                                    top: contextMenu.y,
+                                    left: contextMenu.x,
+                                    background: 'white',
+                                    border: '1px solid #ccc',
+                                    borderRadius: 6,
+                                    boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
+                                    zIndex: 2000,
+                                    minWidth: 70,
+                                    minHeight: 40,
+                                    width: 70
+                                  }}
+                                >
+                                  {normalizeUserId(msg.from) === normalizedCurrentUserId ? (
+                                    <div
+                                      style={{ padding: '8px', cursor: 'pointer', textAlign: 'left' }}
+                                      onClick={() => handleDeleteSingleMessage(idx)}
+                                    >
+                                      Delete
+                                    </div>
+                                  ) : (
+                                    <div
+                                      style={{ padding: '8px', cursor: 'pointer', textAlign: 'left' }}
+                                      onClick={() => handleReplyToMessage({
+                                        ...msg,
+                                        username: selectedUser && selectedUser._id === msg.from ? selectedUser.firstName : undefined
+                                      })}
+                                    >
+                                      Reply
+                                    </div>
+                                  )}
+                                </div>
+                              )}
                             </div>
+                          </div>
+                        ))}
+                        <div ref={messagesEndRef} />
+                      </div>
+
+                      {/* text message box */}
+                      <div style={{ padding: '8px 16px', borderTop: '1px solid rgb(231, 230, 230)', backgroundColor: 'white' }}>
+
+                        {/* Reply preview */}
+                        {replyTo && (
+                          <div style={{
+                            background: '#f1f1f1',
+                            borderLeft: '4px solid #007AFF',
+                            padding: '8px 12px',
+                            marginBottom: 6,
+                            borderRadius: 6,
+                            maxWidth: 400
+                          }}>
+                            <span style={{ fontWeight: 'bold', color: '#007AFF' }}>Replying to:</span>
                             <br />
-                            <div style={{ display: "flex", gap: "10px", alignItems: "center" }}>
-                              <label for="file-upload3" className="custom-file-upload3" style={{ color: "gray" }}><GrGallery /> Gallery</label>
-                              <input id="file-upload3" type="file" accept=".jpg,.jpeg,.pdf" style={{ color: "#4a4848" }}
-                                onChange={handleFileSelect} />
+                            <span style={{ color: '#333' }}>{replyTo.message}</span>
+                            <button
+                              style={{ marginLeft: 10, background: 'none', border: 'none', color: '#888', cursor: 'pointer' }}
+                              onClick={() => setReplyTo(null)}
+                            >✕</button>
+                          </div>
+                        )}
+                        <form onSubmit={handleSend} style={{
+                          display: 'flex',
+                          marginTop: 'auto',
+                          position: 'sticky',
+                          bottom: 0,
+                          backgroundColor: 'white',
+                          padding: '5px 15px',
+                          alignItems: 'center',
+                          border: '1px solid rgb(212, 212, 212)',
+                          borderRadius: '10px',
+                          gap: '12px'
+                        }}>
+
+                          {/* <LuMic /> */}
+
+                          <input
+                            type="text"
+                            value={message}
+                            onChange={(e) => setMessage(e.target.value)}
+                            placeholder="Type your message..."
+                            style={{ flex: 1, padding: 8, border: 'none', outline: 'none', backgroundColor: 'white' }}
+                          />
+
+                          <GrEmoji
+                            style={{ fontSize: "20px", cursor: "pointer", color: 'gray' }}
+                            onClick={toggleEmojiPicker}
+                          />
+                          {showEmojiPicker && (
+                            <div
+                              className="emoji-picker-container"
+                              style={{
+                                position: "absolute",
+                                bottom: "70px",
+                                right: "5px",
+                                zIndex: "1000"
+                              }}
+                            >
+                              <EmojiPicker onEmojiClick={onEmojiClick} />
                             </div>
-                            {/* <br />
+                          )}
+
+
+                          <span
+                            onClick={() => setClickDropdownTwo(!clickDropdowntwo)}
+                            style={{ color: "grey", position: "relative" }}
+                          >
+                            <HiOutlineDotsVertical style={{ fontSize: "25px", color: 'gray' }} />
+                          </span>
+                          {clickDropdowntwo && (
+                            <div
+                              className="file-dropdown-container"
+                              style={{
+                                position: "absolute",
+                                top: "-50px", //178
+                                right: "100px",
+                                zIndex: "100",
+                              }}
+                            >
+
+                              {/* files options */}
+                              <div>
+                                <div
+                                  className="send-file-container"
+                                  style={{
+                                    backgroundColor: "white",
+                                    width: "150px",
+                                    height: "auto",
+                                    border: "1px solid #dfd8d8",
+                                    padding: "10px 15px",
+                                    display: "flex",
+                                    flexDirection: "column",
+                                    borderRadius: '10px'
+                                  }}
+                                >
+                                  <div style={{ display: "flex", gap: "10px", alignItems: "center" }}>
+                                    <label htmlFor="file-upload2" className="custom-file-upload2" style={{ color: "gray" }}>
+                                      <CiCamera />
+                                      <span>Camera</span>
+                                    </label>
+                                    <input
+                                      id="file-upload2"
+                                      type="file"
+                                      accept="image/*"
+                                      capture="environment"
+                                      style={{ color: "#4a4848" }}
+                                      onChange={handleFileSelect}
+                                    />
+                                  </div>
+                                  <br />
+                                  <div style={{ display: "flex", gap: "10px", alignItems: "center" }}>
+                                    <label for="file-upload3" className="custom-file-upload3" style={{ color: "gray" }}><GrGallery /> Gallery</label>
+                                    <input id="file-upload3" type="file" accept=".jpg,.jpeg,.pdf" style={{ color: "#4a4848" }}
+                                      onChange={handleFileSelect} />
+                                  </div>
+                                  {/* <br />
                             <div style={{ display: "flex", gap: "10px", alignItems: "center", color: "gray" }}>
                               <MdOutlineAudiotrack />
                               <span>Audio</span>
@@ -2351,114 +2352,128 @@ const Chat = () => {
                               <span>Contact</span>
                             </div> */}
 
-                          </div>
-                        </div>
-                      </div>
-                    )}
+                                </div>
+                              </div>
+                            </div>
+                          )}
 
-                    {/* send files */}
-                    <label
-                      htmlFor="file-upload1"
-                      className="custom-file-upload1"
-                      style={{ cursor: "pointer" }}
-                    >
-                      <TbFolderUp style={{ fontSize: "25px", color: 'gray' }} />
-                    </label>
-                    <input
-                      id="file-upload1"
-                      type="file"
-                      multiple
-                      accept=".jpg,.jpeg,.png,.gif,.webp,.mp4,.avi,.mov,.wmv,.pdf"
-                      onChange={handleFileSelect}
-                      style={{ display: "none" }}
-                    />
-
-                    {/* File preview and upload button */}
-                    {selectedFiles.length > 0 && (
-                      <div style={{
-                        position: "absolute",
-                        bottom: "60px",
-                        left: "10px",
-                        backgroundColor: "white",
-                        border: "1px solid #ddd",
-                        borderRadius: "8px",
-                        padding: "12px",
-                        boxShadow: "0 2px 10px rgba(0,0,0,0.1)",
-                        zIndex: "1000",
-                        minWidth: "250px"
-                      }}>
-                        <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "8px" }}>
-                          <span style={{ fontSize: "14px", fontWeight: "bold" }}>📎 {selectedFiles.length} files selected</span>
-                          <button
-                            onClick={() => setSelectedFiles([])}
-                            style={{
-                              background: "none",
-                              border: "none",
-                              cursor: "pointer",
-                              fontSize: "16px",
-                              color: "#666"
-                            }}
+                          {/* send files */}
+                          <label
+                            htmlFor="file-upload1"
+                            className="custom-file-upload1"
+                            style={{ cursor: "pointer" }}
                           >
-                            ✕
+                            <TbFolderUp style={{ fontSize: "25px", color: 'gray' }} />
+                          </label>
+                          <input
+                            id="file-upload1"
+                            type="file"
+                            multiple
+                            accept=".jpg,.jpeg,.png,.gif,.webp,.mp4,.avi,.mov,.wmv,.pdf"
+                            onChange={handleFileSelect}
+                            style={{ display: "none" }}
+                          />
+
+                          {/* File preview and upload button */}
+                          {selectedFiles.length > 0 && (
+                            <div style={{
+                              position: "absolute",
+                              bottom: "60px",
+                              left: "10px",
+                              backgroundColor: "white",
+                              border: "1px solid #ddd",
+                              borderRadius: "8px",
+                              padding: "12px",
+                              boxShadow: "0 2px 10px rgba(0,0,0,0.1)",
+                              zIndex: "1000",
+                              minWidth: "250px"
+                            }}>
+                              <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "8px" }}>
+                                <span style={{ fontSize: "14px", fontWeight: "bold" }}>📎 {selectedFiles.length} files selected</span>
+                                <button
+                                  onClick={() => setSelectedFiles([])}
+                                  style={{
+                                    background: "none",
+                                    border: "none",
+                                    cursor: "pointer",
+                                    fontSize: "16px",
+                                    color: "#666"
+                                  }}
+                                >
+                                  ✕
+                                </button>
+                              </div>
+                              <div style={{ fontSize: "12px", color: "#666", marginBottom: "8px" }}>
+                                Total Size: {formatFileSize(selectedFiles.reduce((sum, file) => sum + file.size, 0))}
+                              </div>
+                              {selectedFiles.map((file, index) => (
+                                <div key={index} style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
+                                  <span style={{ fontSize: '12px', color: '#666' }}>{file.name}</span>
+                                  <button
+                                    onClick={() => setSelectedFiles(selectedFiles.filter((_, i) => i !== index))}
+                                    style={{
+                                      background: "none",
+                                      border: "none",
+                                      cursor: "pointer",
+                                      fontSize: "16px",
+                                      color: "#666"
+                                    }}
+                                  >
+                                    ✕
+                                  </button>
+                                </div>
+                              ))}
+                              <div style={{ display: 'flex', gap: '8px', marginTop: '8px' }}>
+                                <button
+                                  onClick={handleFileUpload}
+                                  disabled={isUploading}
+                                  style={{
+                                    flex: 1,
+                                    padding: "8px",
+                                    backgroundColor: isUploading ? "#ccc" : "#007bff",
+                                    color: "white",
+                                    border: "none",
+                                    borderRadius: "4px",
+                                    cursor: isUploading ? "not-allowed" : "pointer"
+                                  }}
+                                >
+                                  {isUploading ? "Uploading..." : "Send Files"}
+                                </button>
+                              </div>
+                            </div>
+                          )}
+
+                          <button type="submit" style={{ border: 'none', backgroundColor: '#007AFF', color: 'white', display: 'flex', justifyContent: 'center', borderRadius: '8px', padding: '8px 10px' }}>
+                            <LuSend />
+                          </button>
+                        </form>
+                      </div>
+
+                    </>
+                  ) : (
+                    <>
+                      <div className="d-lg-none bg-white">
+                        <div className="d-flex justify-content-between align-items-center">
+                          <button
+                            className="btn"
+                            onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+                            style={{ border: 'none', background: 'transparent' }}
+                          >
+                            {isMobileMenuOpen ? <HiX size={24} /> : <HiMenu size={24} />}
                           </button>
                         </div>
-                        <div style={{ fontSize: "12px", color: "#666", marginBottom: "8px" }}>
-                          Total Size: {formatFileSize(selectedFiles.reduce((sum, file) => sum + file.size, 0))}
-                        </div>
-                        {selectedFiles.map((file, index) => (
-                          <div key={index} style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
-                            <span style={{ fontSize: '12px', color: '#666' }}>{file.name}</span>
-                            <button
-                              onClick={() => setSelectedFiles(selectedFiles.filter((_, i) => i !== index))}
-                              style={{
-                                background: "none",
-                                border: "none",
-                                cursor: "pointer",
-                                fontSize: "16px",
-                                color: "#666"
-                              }}
-                            >
-                              ✕
-                            </button>
-                          </div>
-                        ))}
-                        <div style={{ display: 'flex', gap: '8px', marginTop: '8px' }}>
-                          <button
-                            onClick={handleFileUpload}
-                            disabled={isUploading}
-                            style={{
-                              flex: 1,
-                              padding: "8px",
-                              backgroundColor: isUploading ? "#ccc" : "#007bff",
-                              color: "white",
-                              border: "none",
-                              borderRadius: "4px",
-                              cursor: isUploading ? "not-allowed" : "pointer"
-                            }}
-                          >
-                            {isUploading ? "Uploading..." : "Send Files"}
-                          </button>
-                        </div>
                       </div>
-                    )}
 
-                    <button type="submit" style={{ border: 'none', backgroundColor: '#007AFF', color: 'white', display: 'flex', justifyContent: 'center', borderRadius: '8px', padding: '8px 10px' }}>
-                      <LuSend />
-                    </button>
-                  </form>
-                </div>
+                      <div style={{ padding: 60, textAlign: 'center', display: 'flex', alignItems: 'center', justifyContent: 'center', alignContent: 'center' }}>
 
-              </>
-            ) : (
-              <div style={{ padding: 60, textAlign: 'center', display: 'flex', alignItems: 'center', justifyContent: 'center', alignContent: 'center' }}>
-                <div style={{ marginTop: '150px', textAlign: 'center' }}>
-                  <img src={ChatIcon} style={{ width: '172px', marginBottom: '50px' }} />
-                  <h2 style={{ margin: 0, color: '#495057' }}>Welcome, {user?.firstName || 'User'} !</h2>
+                        <div style={{ marginTop: '150px', textAlign: 'center' }}>
+                          <img src={ChatIcon} style={{ width: '172px', marginBottom: '50px' }} />
+                          <h2 style={{ margin: 0, color: '#495057' }}>Welcome, {user?.firstName || 'User'} !</h2>
 
-                  Select a user to start chatting.
+                          Select a user to start chatting.
 
-                  <br /><br />
-                  {/* 
+                          <br /><br />
+                          {/* 
             <button 
             onClick={handleLogout}
             style={{
@@ -2476,41 +2491,44 @@ const Chat = () => {
             >
               Logout
             </button> */}
+                        </div>
+
+                      </div>
+                    </>
+                  )}
+
                 </div>
-
               </div>
-            )}
-
+              
+            </div>
           </div>
 
-        </div>
+          {popup.show && (
+            <div style={{
+              position: 'fixed',
+              top: 0, left: 0, right: 0, bottom: 0,
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              zIndex: 9999, background: 'rgba(0,0,0,0.2)'
+            }}>
+              <div style={{
+                background: 'white',
+                padding: '32px 40px',
+                borderRadius: 12,
+                boxShadow: '0 2px 16px rgba(0,0,0,0.2)',
+                fontSize: 18,
+                color: '#333',
+                textAlign: 'center',
+                minWidth: 300
+              }}>
+                {popup.message}
+                <br />
+                <button style={{ marginTop: 20, padding: '8px 24px', borderRadius: 6, background: '#007AFF', color: 'white', border: 'none', fontSize: 16, cursor: 'pointer' }} onClick={() => setPopup({ show: false, message: '' })}>OK</button>
+              </div>
+            </div>
+          )}
 
+        </div>
       </div>
-
-      {popup.show && (
-        <div style={{
-          position: 'fixed',
-          top: 0, left: 0, right: 0, bottom: 0,
-          display: 'flex', alignItems: 'center', justifyContent: 'center',
-          zIndex: 9999, background: 'rgba(0,0,0,0.2)'
-        }}>
-          <div style={{
-            background: 'white',
-            padding: '32px 40px',
-            borderRadius: 12,
-            boxShadow: '0 2px 16px rgba(0,0,0,0.2)',
-            fontSize: 18,
-            color: '#333',
-            textAlign: 'center',
-            minWidth: 300
-          }}>
-            {popup.message}
-            <br />
-            <button style={{ marginTop: 20, padding: '8px 24px', borderRadius: 6, background: '#007AFF', color: 'white', border: 'none', fontSize: 16, cursor: 'pointer' }} onClick={() => setPopup({ show: false, message: '' })}>OK</button>
-          </div>
-        </div>
-      )}
-
     </>
   );
 };
