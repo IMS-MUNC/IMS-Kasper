@@ -3,17 +3,28 @@ import "./AllSupplier.css";
 
 import AddSupplierModals from "../../../pages/Modal/suppliers/AddSupplierModals";
 import BASE_URL from "../../../pages/config/config";
-import { TbCirclePlus, TbEdit, TbEye, TbRefresh, TbTrash } from 'react-icons/tb'
+import {
+  TbCirclePlus,
+  TbEdit,
+  TbEye,
+  TbRefresh,
+  TbTrash,
+} from "react-icons/tb";
 import ViewSupplierModal from "../../../pages/Modal/suppliers/ViewSupplierModal";
 import { Link } from "react-router-dom";
 import { FaFileExcel, FaFilePdf, FaPencilAlt } from "react-icons/fa";
+import { GrFormPrevious } from "react-icons/gr";
+import { MdNavigateNext } from "react-icons/md";
 
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import * as XLSX from "xlsx";
+import DeleteAlert from "../../../utils/sweetAlert/DeleteAlert";
+import { toast } from "react-toastify";
+import Swal from "sweetalert2";
 
 function formatAddress(billing) {
-  if (!billing) return '';
+  if (!billing) return "";
   let parts = [];
   if (billing.address1) parts.push(billing.address1);
   if (billing.address2) parts.push(billing.address2);
@@ -21,12 +32,11 @@ function formatAddress(billing) {
   if (billing.state?.stateName) parts.push(billing.state.stateName);
   if (billing.country?.name) parts.push(billing.country.name);
   if (billing.pincode) parts.push(billing.pincode);
-  return parts.join(', ');
+  return parts.join(", ");
 }
 
-
 function formatShipping(shipping) {
-  if (!shipping) return '';
+  if (!shipping) return "";
   let parts = [];
   if (shipping.address1) parts.push(shipping.address1);
   if (shipping.address2) parts.push(shipping.address2);
@@ -34,12 +44,12 @@ function formatShipping(shipping) {
   if (shipping.state?.stateName) parts.push(shipping.state.stateName);
   if (shipping.country?.name) parts.push(shipping.country.name);
   if (shipping.pincode) parts.push(shipping.pincode);
-  return parts.join(', ');
+  return parts.join(", ");
 }
 
 function AllSuppliers() {
   const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 10;
+  const [itemsPerPage, setItemsPerPage] = useState(10);
   const [showModal, setShowModal] = useState(false);
   const [showAddModal, setShowAddModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
@@ -49,10 +59,15 @@ function AllSuppliers() {
   const [selectedIds, setSelectedIds] = useState([]);
   const [selectedStatus, setSelectedStatus] = useState("");
 
+  const [searchTerm, setSearchTerm] = useState("");
 
   useEffect(() => {
     fetchSuppliers();
   }, []);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm, selectedStatus]);
 
   const fetchSuppliers = async () => {
     setLoading(true);
@@ -65,7 +80,6 @@ function AllSuppliers() {
         },
       });
 
-
       const data = await res.json();
       setSuppliers(data);
     } catch (err) {
@@ -75,28 +89,38 @@ function AllSuppliers() {
     }
   };
 
-  const handleDeleteSupplier = async (id) => {
-    if (!window.confirm('Are you sure you want to delete this supplier?')) return;
+  const handleDeleteSupplier = async (id,firstName) => {
+    const confirmed = await DeleteAlert({});
+    if (!confirmed) return;
+   
     try {
       const token = localStorage.getItem("token");
 
       await fetch(`${BASE_URL}/api/suppliers/${id}`, {
-        method: 'DELETE', headers: {
+        method: "DELETE",
+        headers: {
           Authorization: `Bearer ${token}`,
         },
       });
+       toast.success("Supplier deleted successfully");
       fetchSuppliers();
+     Swal.fire("Deleted!", `Supplier "${firstName}" has been deleted.`, "success");
     } catch (err) {
       // handle error
+       console.error("Delete error:", err);
+            toast.error("Failed to delete Supplier");
     }
   };
 
   // Filtered suppliers based on status
   const filteredSuppliers = suppliers.filter((s) => {
+    const matchesSearch =
+      s.firstName?.toLowerCase().includes(searchTerm.toLowerCase().trim()) +
+      s.lastName?.toLowerCase().includes(searchTerm.toLowerCase().trim());
     const matchesStatus = selectedStatus
       ? (s.status ? "Active" : "Inactive") === selectedStatus
       : true;
-    return matchesStatus;
+    return matchesStatus && matchesSearch;
   });
 
   // Pagination logic
@@ -108,27 +132,31 @@ function AllSuppliers() {
 
   // console.log(paginatedData[6]?.shipping.country.name);
 
-
   // const [showViewModal, setShowViewModal] = useState(false);
   const [viewSupplierId, setViewSupplierId] = useState(null);
 
   const handleBulkDelete = async () => {
+     const confirmed = await DeleteAlert({});
+    if (!confirmed) return;
     if (selectedIds.length === 0) {
       alert("Please select at least one supplier.");
       return;
     }
-    if (!window.confirm(`Delete ${selectedIds.length} selected suppliers?`)) return;
+    // if (!window.confirm(`Delete ${selectedIds.length} selected suppliers?`))
+    //   return;
 
     try {
       const token = localStorage.getItem("token");
       await Promise.all(
-        selectedIds.map(id =>
+        selectedIds.map((id) =>
           fetch(`${BASE_URL}/api/suppliers/${id}`, {
             method: "DELETE",
             headers: { Authorization: `Bearer ${token}` },
           })
         )
       );
+      Swal.fire("Deleted!", `${selectedIds.length} Supplier has been deleted.`, "success");
+      toast.success("Selected categories deleted");
       setSelectedIds([]);
       fetchSuppliers();
     } catch (err) {
@@ -139,15 +167,22 @@ function AllSuppliers() {
   const handlePdf = () => {
     const doc = new jsPDF();
     doc.text("Category", 14, 15);
-    const tableColumns = ["Code", "Supplier", "Email", "Phone", "Country", "Status"];
+    const tableColumns = [
+      "Code",
+      "Supplier",
+      "Email",
+      "Phone",
+      "Country",
+      "Status",
+    ];
 
     const tableRows = paginatedData.map((e) => [
       e.supplierCode,
       e.firstName + " " + e.lastName,
       e.email,
       e.phone,
-      e?.shipping?.country?.name || '-',
-      e.status,
+      e.billing?.country?.name || e.shipping?.country?.name || "-",
+      e.status == true ? "Active" : "Inactive",
     ]);
 
     autoTable(doc, {
@@ -168,16 +203,23 @@ function AllSuppliers() {
   };
 
   const handleExcel = () => {
-
-    const tableColumns = ["Code", "Supplier", "Email", "Phone", "Country", "Status"];
+    const tableColumns = [
+      "Code",
+      "Supplier",
+      "Email",
+      "Phone",
+      "Country",
+      "Status",
+    ];
 
     const tableRows = paginatedData.map((e) => [
       e.supplierCode,
       e.firstName + " " + e.lastName,
       e.email,
       e.phone,
-      e?.shipping?.country?.name || '-',
-      e.status,
+      e.billing?.country?.name || e.shipping?.country?.name || "-",
+      // e.billing?.country?.name ||e?.shipping?.country?.name || '-',
+      e.status == true ? "Active" : "Inactive",
     ]);
 
     const data = [tableColumns, ...tableRows];
@@ -191,7 +233,6 @@ function AllSuppliers() {
   };
 
   return (
-
     <div className="page-wrapper">
       <div className="content">
         <div className="page-header">
@@ -218,15 +259,17 @@ function AllSuppliers() {
                   className="btn btn-danger ms-3"
                   onClick={handleBulkDelete}
                 >
-                  <TbTrash className="me-1" /> Delete ({selectedIds.length}) Selected
+                  <TbTrash className="me-1" /> Delete ({selectedIds.length})
+                  Selected
                 </button>
                 // </div>
               )}
-
-
             </li>
             <li className="me-2">
-              <li style={{ display: "flex", alignItems: "center", gap: '5px' }} className="icon-btn">
+              <li
+                style={{ display: "flex", alignItems: "center", gap: "5px" }}
+                className="icon-btn"
+              >
                 {/* <label className="" title="">Export : </label> */}
                 <button
                   type="button"
@@ -241,11 +284,13 @@ function AllSuppliers() {
                 >
                   <FaFilePdf style={{ color: "red" }} />
                 </button>
-
               </li>
             </li>
             <li className="me-2">
-              <li style={{ display: "flex", alignItems: "center", gap: '5px' }} className="icon-btn">
+              <li
+                style={{ display: "flex", alignItems: "center", gap: "5px" }}
+                className="icon-btn"
+              >
                 {/* <a data-bs-toggle="tooltip" data-bs-placement="top" title="Excel"><img src="assets/img/icons/excel.svg" alt="img" /></a> */}
                 <button
                   type="button"
@@ -264,7 +309,25 @@ function AllSuppliers() {
             </li>
             <li className="me-2">
               <li>
-                <button data-bs-toggle="tooltip" data-bs-placement="top" title="Refresh" onClick={() => location.reload()} className="fs-20" style={{ backgroundColor: 'white', color: '', padding: '5px 5px', display: 'flex', alignItems: 'center', border: '1px solid #e8eaebff', cursor: 'pointer', borderRadius: '4px' }}><TbRefresh className="ti ti-refresh" /></button>
+                <button
+                  data-bs-toggle="tooltip"
+                  data-bs-placement="top"
+                  title="Refresh"
+                  onClick={() => location.reload()}
+                  className="fs-20"
+                  style={{
+                    backgroundColor: "white",
+                    color: "",
+                    padding: "5px 5px",
+                    display: "flex",
+                    alignItems: "center",
+                    border: "1px solid #e8eaebff",
+                    cursor: "pointer",
+                    borderRadius: "4px",
+                  }}
+                >
+                  <TbRefresh className="ti ti-refresh" />
+                </button>
               </li>
             </li>
             {/* <li className="me-2">
@@ -272,8 +335,14 @@ function AllSuppliers() {
             </li> */}
           </ul>
           <div className="page-btn">
-            <button onClick={() => { setShowAddModal(true); }} className="add-btn">
-              <TbCirclePlus />Add Supplier
+            <button
+              onClick={() => {
+                setShowAddModal(true);
+              }}
+              className="add-btn"
+            >
+              <TbCirclePlus />
+              Add Supplier
             </button>
           </div>
         </div>
@@ -281,47 +350,52 @@ function AllSuppliers() {
           <div className="card-header d-flex align-items-center justify-content-between flex-wrap row-gap-3">
             <div className="search-set">
               <div className="search-input">
-                <span className="btn-searchset"><i className="ti ti-search fs-14 feather-search" /></span>
+                <input
+                  type="text"
+                  placeholder="Search Suppliers ..."
+                  className="form-control"
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                />
+                <span className="btn-searchset">
+                  <i className="ti ti-search fs-14 feather-search" />
+                </span>
               </div>
             </div>
-            <div className="d-flex table-dropdown my-xl-auto right-content align-items-center flex-wrap row-gap-3">
-              <div className="dropdown">
-                <a
-                  className="dropdown-toggle btn btn-white btn-md d-inline-flex align-items-center"
-                  data-bs-toggle="dropdown"
-                >
-                  {selectedStatus || "Status"}
-                </a>
-                <ul className="dropdown-menu  dropdown-menu-end p-3">
-                  <li>
-                    <button
 
-                      className="dropdown-item rounded-1"
-                      onClick={() => setSelectedStatus("")}
-                    >
-                      All
-                    </button>
-                  </li>
-                  <li>
-                    <button
-
-                      className="dropdown-item rounded-1"
-                      onClick={() => setSelectedStatus("Active")}
-                    >
-                      Active
-                    </button>
-                  </li>
-                  <li>
-                    <button
-
-                      className="dropdown-item rounded-1"
-                      onClick={() => setSelectedStatus("Inactive")}
-                    >
-                      Inactive
-                    </button>
-                  </li>
-                </ul>
-              </div>
+            <div className="dropdown">
+              <a
+                className="dropdown-toggle btn btn-white btn-md d-inline-flex align-items-center"
+                data-bs-toggle="dropdown"
+              >
+                {selectedStatus || "Status"}
+              </a>
+              <ul className="dropdown-menu  dropdown-menu-end p-3">
+                <li>
+                  <button
+                    className="dropdown-item rounded-1"
+                    onClick={() => setSelectedStatus("")}
+                  >
+                    All
+                  </button>
+                </li>
+                <li>
+                  <button
+                    className="dropdown-item rounded-1"
+                    onClick={() => setSelectedStatus("Active")}
+                  >
+                    Active
+                  </button>
+                </li>
+                <li>
+                  <button
+                    className="dropdown-item rounded-1"
+                    onClick={() => setSelectedStatus("Inactive")}
+                  >
+                    Inactive
+                  </button>
+                </li>
+              </ul>
             </div>
           </div>
           <div className="card-body p-0">
@@ -334,10 +408,13 @@ function AllSuppliers() {
                         {/* <input type="checkbox" id="select-all" /> */}
                         <input
                           type="checkbox"
-                          checked={selectedIds.length === paginatedData.length && paginatedData.length > 0}
+                          checked={
+                            selectedIds.length === paginatedData.length &&
+                            paginatedData.length > 0
+                          }
                           onChange={(e) => {
                             if (e.target.checked) {
-                              setSelectedIds(paginatedData.map(s => s._id));
+                              setSelectedIds(paginatedData.map((s) => s._id));
                             } else {
                               setSelectedIds([]);
                             }
@@ -352,7 +429,7 @@ function AllSuppliers() {
                     <th>Phone</th>
                     <th>Country</th>
                     <th>Status</th>
-                    <th className="no-sort" />
+                    <th className="no-sort text-center" > Action </th>
                   </tr>
                 </thead>
                 <tbody>
@@ -368,7 +445,11 @@ function AllSuppliers() {
                               if (e.target.checked) {
                                 setSelectedIds([...selectedIds, supplier._id]);
                               } else {
-                                setSelectedIds(selectedIds.filter(id => id !== supplier._id));
+                                setSelectedIds(
+                                  selectedIds.filter(
+                                    (id) => id !== supplier._id
+                                  )
+                                );
                               }
                             }}
                           />
@@ -389,24 +470,38 @@ function AllSuppliers() {
                                   : "assets/img/supplier/supplier-01.png"
                               }
                               className="img-fluid rounded-2"
-                              alt={`${supplier.firstName?.charAt(0) || ""}${supplier.lastName?.charAt(0) || ""}`}
+                              alt={`${supplier.firstName?.charAt(0) || ""}${
+                                supplier.lastName?.charAt(0) || ""
+                              }`}
                             />
                           </a>
                           <div className="ms-2">
-                            <p className="text-gray-9 mb-0"><a href="#">{supplier.firstName} {supplier.lastName}</a></p>
+                            <p className="text-gray-9 mb-0">
+                              <a href="#">
+                                {supplier.firstName} {supplier.lastName}
+                              </a>
+                            </p>
                           </div>
                         </div>
                       </td>
                       <td>{supplier.email}</td>
                       <td>{supplier.phone}</td>
 
-
                       {/* <td>{supplier?.country}</td> */}
-                      <td>{supplier?.billing?.country?.name || supplier?.shipping?.country?.name || '-'}</td>
+                      <td>
+                        {supplier?.billing?.country?.name ||
+                          supplier?.shipping?.country?.name ||
+                          "-"}
+                      </td>
 
                       <td>
-                        <span className={`badge ${supplier.status ? 'badge-success' : 'badge-danger'} d-inline-flex align-items-center badge-xs`}>
-                          <i className="ti ti-point-filled me-1" />{supplier.status ? 'Active' : 'Inactive'}
+                        <span
+                          className={`badge ${
+                            supplier.status ? "badge-success" : "badge-danger"
+                          } d-inline-flex align-items-center badge-xs`}
+                        >
+                          <i className="ti ti-point-filled me-1" />
+                          {supplier.status ? "Active" : "Inactive"}
                         </span>
                       </td>
                       <td className="action-table-data">
@@ -416,30 +511,97 @@ function AllSuppliers() {
                   }}>
                         <TbEye  className="feather-view" />
                       </a> */}
-                          <Link className="me-2 p-2"
+                          {/* <Link
+                            className="me-2 p-2"
                             to={`/viewsupplier/${supplier._id}`}
                             title="View"
                             style={{ color: "inherit", padding: "8px" }}
                           >
                             <TbEye className="feather-view" />
-                          </Link>
+                          </Link> */}
 
-
-
-
-                          <a className="me-2 p-2" href="#" title="Edit" onClick={() => { setEditSupplier(supplier); setShowEditModal(true); }}>
+                          <a
+                            className="me-2 p-2"
+                            href="#"
+                            title="Edit"
+                            onClick={() => {
+                              setEditSupplier(supplier);
+                              setShowEditModal(true);
+                            }}
+                          >
                             <TbEdit className="feather-edit" />
                           </a>
-                          <a className="p-2" href="#" title="Delete" onClick={() => handleDeleteSupplier(supplier._id)}>
+                          <a
+                            className="p-2"
+                            href="#"
+                            title="Delete"
+                            onClick={() => handleDeleteSupplier(supplier._id, supplier.firstName)}
+                          >
                             <TbTrash className="feather-trash-2" />
                           </a>
                         </div>
                       </td>
                     </tr>
                   ))}
-
                 </tbody>
               </table>
+            </div>
+            <div
+              className="d-flex justify-content-end gap-3"
+              style={{ padding: "10px 20px" }}
+            >
+              <select
+                value={itemsPerPage}
+                onChange={(e) => {
+                  setItemsPerPage(Number(e.target.value));
+                  setCurrentPage(1);
+                }}
+                className="form-select w-auto"
+              >
+                <option value={10}>10 Per Page</option>
+                <option value={25}>25 Per Page</option>
+                <option value={50}>50 Per Page</option>
+                <option value={100}>100 Per Page</option>
+              </select>
+              <span
+                style={{
+                  backgroundColor: "white",
+                  boxShadow: "rgb(0 0 0 / 4%) 0px 3px 8px",
+                  padding: "7px",
+                  borderRadius: "5px",
+                  border: "1px solid #e4e0e0ff",
+                  color: "gray",
+                }}
+              >
+                {filteredSuppliers.length === 0
+                  ? "0 of 0"
+                  : `${(currentPage - 1) * itemsPerPage + 1}-${Math.min(
+                      currentPage * itemsPerPage,
+                      filteredSuppliers.length
+                    )} of ${filteredSuppliers.length}`}
+                <button
+                  style={{
+                    border: "none",
+                    color: "grey",
+                    backgroundColor: "white",
+                  }}
+                  onClick={() =>
+                    setCurrentPage((prev) => Math.max(prev - 1, 1))
+                  }
+                  disabled={currentPage === 1}
+                >
+                  <GrFormPrevious />
+                </button>{" "}
+                <button
+                  style={{ border: "none", backgroundColor: "white" }}
+                  onClick={() =>
+                    setCurrentPage((prev) => Math.min(prev + 1, totalPages))
+                  }
+                  disabled={currentPage === totalPages}
+                >
+                  <MdNavigateNext />
+                </button>
+              </span>
             </div>
           </div>
         </div>
@@ -447,13 +609,23 @@ function AllSuppliers() {
         {showAddModal && !showEditModal && (
           <AddSupplierModals
             onClose={() => setShowAddModal(false)}
-            onSuccess={() => { setShowAddModal(false); fetchSuppliers(); }}
+            onSuccess={() => {
+              setShowAddModal(false);
+              fetchSuppliers();
+            }}
           />
         )}
         {showEditModal && (
           <AddSupplierModals
-            onClose={() => { setShowEditModal(false); setEditSupplier(null); }}
-            onSuccess={() => { setShowEditModal(false); setEditSupplier(null); fetchSuppliers(); }}
+            onClose={() => {
+              setShowEditModal(false);
+              setEditSupplier(null);
+            }}
+            onSuccess={() => {
+              setShowEditModal(false);
+              setEditSupplier(null);
+              fetchSuppliers();
+            }}
             editSupplier={editSupplier}
           />
         )}
@@ -467,7 +639,6 @@ function AllSuppliers() {
           />
         )}
       </div>
-
     </div>
 
     // <div className="all-supplier-container">
@@ -758,7 +929,6 @@ function AllSuppliers() {
 
 export default AllSuppliers;
 
-
 // old code
 // import React, { useEffect, useState } from "react";
 // import "./AllSupplier.css";
@@ -780,7 +950,6 @@ export default AllSuppliers;
 //   if (billing.pincode) parts.push(billing.pincode);
 //   return parts.join(', ');
 // }
-
 
 // function formatShipping(shipping) {
 //   if (!shipping) return '';
@@ -804,7 +973,6 @@ export default AllSuppliers;
 //   const [loading, setLoading] = useState(false);
 //   const [editSupplier, setEditSupplier] = useState(null);
 //   const [selectedIds, setSelectedIds] = useState([]);
-
 
 //   useEffect(() => {
 //     fetchSuppliers();
@@ -854,7 +1022,6 @@ export default AllSuppliers;
 
 //   console.log(paginatedData);
 
-
 //   // const [showViewModal, setShowViewModal] = useState(false);
 //   const [viewSupplierId, setViewSupplierId] = useState(null);
 
@@ -881,9 +1048,6 @@ export default AllSuppliers;
 //       console.error("Bulk delete failed", err);
 //     }
 //   };
-
-
-
 
 //   return (
 
@@ -917,7 +1081,6 @@ export default AllSuppliers;
 //                 </button>
 //                 // </div>
 //               )}
-
 
 //             </li>
 //             <li className="me-2">
@@ -1057,9 +1220,6 @@ export default AllSuppliers;
 //                           >
 //                             <TbEye className="feather-view" />
 //                           </Link>
-
-
-
 
 //                           <a className="me-2 p-2" href="#" title="Edit" onClick={() => { setEditSupplier(supplier); setShowEditModal(true); }}>
 //                             <TbEdit className="feather-edit" />

@@ -253,13 +253,33 @@ const AddSupplierModals = ({ onClose, onSuccess, editSupplier }) => {
     fileInputRef.current.click();
   };
 
+    // const handleFileChange = (e) => {
+    //   const files = Array.from(e.target.files);
+    //   // check if any file exceeds 1MB
+    //   const oversizedFile = files.find((file) => file.size > 1 * 1024 * 1024);
+    //   if (oversizedFile) {
+    //     toast.error(`File ${oversizedFile.name} exceeds 1MB size limit.`);
+    //     e.target.value = null; // reset input
+    //     return;
+    //   }
+    //   setSelectedImages(files);
+    // }
+
   const handleFileChange = (event) => {
     const files = Array.from(event.target.files);
+     const oversizedFile = files.find((file) => file.size > 1 * 1024 * 1024);
     const imagePreviews = files.map(file => ({
       file,
       preview: URL.createObjectURL(file)
     }));
-    setSelectedImages(imagePreviews);
+  
+     if (oversizedFile) {
+        toast.error(`File ${oversizedFile.name} exceeds 1MB size limit.`);
+        e.target.value = null; // reset input
+        return;
+      }
+      setSelectedImages(files);
+      setSelectedImages(imagePreviews);
   };
 
   const removeImage = (indexToRemove) => {
@@ -509,7 +529,7 @@ if (selectedImages.length > 0 && selectedImages.some(img => img.file)) {
                        <h4>Upload Image</h4>
                      </div>
                    </div>
-                   <p>JPEG, PNG up to 2 MB</p>
+                   <p>JPEG, PNG up to 1 MB</p>
                  </div>
                </div>
              </div>
@@ -517,28 +537,28 @@ if (selectedImages.length > 0 && selectedImages.some(img => img.file)) {
 
            <div className="row">
              <div className="col-md-6 mb-3">
-               <label>First Name</label>
+               <label>First Name</label><span className="text-danger ms-1">*</span>
                <input type="text" name="firstName" className="form-control" value={form.firstName}
                  onChange={handleInputChange} />
              </div>
              <div className="col-md-6 mb-3">
-               <label>Last Name</label>
+               <label>Last Name</label> <span className="text-danger ms-1">*</span>
                <input type="text" name="lastName" className="form-control" value={form.lastName}
                  onChange={handleInputChange} />
              </div>
              <div className="col-md-6 mb-3">
-               <label>Company Name</label>
+               <label>Company Name</label>  <span className="text-danger ms-1">*</span>
                <input type="text" name="companyName" className="form-control" value={form.companyName}
                  onChange={handleInputChange} />
              </div>
              <div className="col-md-6 mb-3">
-               <label>Company Website</label>
+               <label>Company Website</label>  <span className="text-danger ms-1">*</span>
                <input type="text" name="companyWebsite" className="form-control" value={form.companyWebsite}
                  onChange={handleInputChange} />
              </div>
 
              <div className="col-md-6 mb-3">
-               <label>Business Type</label>
+               <label>Business Type</label>  <span className="text-danger ms-1">*</span>
                <Select options={businessTypeOptions} value={businessTypeOptions.find(opt=> opt.value ===
                  form.businessType)}
                  onChange={option => handleInputChange({ target: { name: 'businessType', value: option.value } })}
@@ -546,7 +566,7 @@ if (selectedImages.length > 0 && selectedImages.some(img => img.file)) {
                  />
              </div>
              <div className="col-md-6 mb-3">
-               <label>GSTIN</label>
+               <label>GSTIN</label>  <span className="text-danger ms-1">*</span>
                <div className="d-flex gap-2">
                  <input type="text" name="gstin" className="form-control" value={form.gstin}
                    onChange={handleInputChange} />
@@ -566,13 +586,13 @@ if (selectedImages.length > 0 && selectedImages.some(img => img.file)) {
                )}
              </div>
              <div className="col-md-6 mb-3">
-               <label>Email</label>
+               <label>Email</label>  <span className="text-danger ms-1">*</span>
                <input type="email" name="email" className="form-control" value={form.email}
                  onChange={handleInputChange} />
              </div>
              <div className="col-md-6 mb-3">
-               <label>Phone</label>
-               <input type="text" name="phone" className="form-control" value={form.phone}
+               <label>Phone</label>  <span className="text-danger ms-1">*</span>
+               <input type="number" name="phone" className="form-control" value={form.phone}
                  onChange={handleInputChange} />
              </div>
              {/* Billing Address */}
@@ -727,10 +747,13 @@ if (selectedImages.length > 0 && selectedImages.some(img => img.file)) {
                  onChange={handleBankChange} />
              </div>
            </div>
-           <div className="form-check form-switch mb-3">
-             <input className="form-check-input" type="checkbox" checked={form.status} onChange={()=> setForm((prev) =>
-             ({ ...prev, status: !prev.status }))} />
-             <label className="form-check-label">Status</label>
+           <div></div>
+           <div className="d-flex justify-content-start align-items-start mb-3 ">
+             <span>Status</span>
+             <div className="form-check form-switch ms-1">
+               <input className="form-check-input" type="checkbox" checked={form.status} onChange={()=> setForm((prev) =>
+               ({ ...prev, status: !prev.status }))} />
+             </div>
            </div>
          </div>
          <div className="modal-footer" style={{display:'flex', gap:'5px'}}>

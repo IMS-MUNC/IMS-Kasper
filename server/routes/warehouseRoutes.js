@@ -14,6 +14,8 @@ router.get("/active", authMiddleware,ctrl.getActiveWarehouses);     // <- /api/w
 router.patch("/:id/merge-racks", authMiddleware,ctrl.mergeRacks);
 router.put("/:id/update-rack",authMiddleware, ctrl.updateRack);
 
+router.patch("/:id/toggle-favorite", authMiddleware, ctrl.toggleFavoriteWarehouse);
+
 
 // === CRUD ===
 router.post("/",authMiddleware, ctrl.createWarehouse);
