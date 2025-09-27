@@ -152,23 +152,23 @@ const EmailDetail = ({ email, onBack, handleToggleStar }) => {
     if (typeof recipients === "string") return recipients;
     if (Array.isArray(recipients)) {
       return recipients
-    //     .map((r) => (typeof r === "object" ? r.email : r))
-    //     .join(", ");
-    // }
-     .map((r) => {
-        if (!r) return ""; // skip nulls
-        if (typeof r === "string") return r;
-       if (typeof r === "object") {
-          // use firstName + lastName if available, else email
-          return r.firstName || r.lastName
-            ? `${r.firstName || ""} ${r.lastName || ""}`.trim()
-            : r.email || "";
-        }
-        return "";
-      })
-      .filter(Boolean) // remove empty strings
-      .join(", ");
-  }
+        //     .map((r) => (typeof r === "object" ? r.email : r))
+        //     .join(", ");
+        // }
+        .map((r) => {
+          if (!r) return ""; // skip nulls
+          if (typeof r === "string") return r;
+          if (typeof r === "object") {
+            // use firstName + lastName if available, else email
+            return r.firstName || r.lastName
+              ? `${r.firstName || ""} ${r.lastName || ""}`.trim()
+              : r.email || "";
+          }
+          return "";
+        })
+        .filter(Boolean) // remove empty strings
+        .join(", ");
+    }
     if (typeof recipients === "object") return recipients.email || "";
     return "";
   };
@@ -464,123 +464,126 @@ const EmailDetail = ({ email, onBack, handleToggleStar }) => {
       />
 
       {/* image and attachment */}
-      <div style={{ marginTop: "20px" }}>
-        <h4
-          style={{
-            fontSize: '14px', fontWeight: 400, lineHeight: '14px', color: '#262626'
-          }}
-        >Attachments</h4>
-        <div style={{ display: "flex", flexWrap: "wrap", gap: "20px" }}>
-          {/* Images */}
-          {email.image?.map((imgUrl, index) => {
-            // const imgUrl = `http://localhost:5000/${imgPath.replace(
-            //   /\\/g,
-            //   "/"
-            // )}`;
-            return (
-              <div className="attachment-box" key={index}>
-                <img
-                  src={imgUrl}
-                  alt={`attachment-${index}`}
-                  className="attachment-img"
-                />
-                <div className="hover-download-btn">
-                  <a
-                    className="acker"
-                    onClick={() =>
-                      handleDownload(imgUrl, `attachment-${index}.jpeg`)
-                    }
-                    href="#"
-                  >
-                    <MdFileDownload />
-                  </a>
-                  <a
-                    className="acker"
-                    href={imgUrl}
-                    target="_blank"
-                    rel="noreferrer"
-                  >
-                    <BsEyeFill />
-                  </a>
+      {(email.image?.length > 0 || email.attachments?.length > 0) && (
+        <div style={{ marginTop: "20px" }}>
+          <h4
+            style={{
+              fontSize: '14px', fontWeight: 400, lineHeight: '14px', color: '#262626'
+            }}
+          >Attachments</h4>
+          <div style={{ display: "flex", flexWrap: "wrap", gap: "20px" }}>
+            {/* Images */}
+            {email.image?.map((imgUrl, index) => {
+              // const imgUrl = `http://localhost:5000/${imgPath.replace(
+              //   /\\/g,
+              //   "/"
+              // )}`;
+              return (
+                <div className="attachment-box" key={index}>
+                  <img
+                    src={imgUrl}
+                    alt={`attachment-${index}`}
+                    className="attachment-img"
+                  />
+                  <div className="hover-download-btn">
+                    <a
+                      className="acker"
+                      onClick={() =>
+                        handleDownload(imgUrl, `attachment-${index}.jpeg`)
+                      }
+                      href="#"
+                    >
+                      <MdFileDownload />
+                    </a>
+                    <a
+                      className="acker"
+                      href={imgUrl}
+                      target="_blank"
+                      rel="noreferrer"
+                    >
+                      <BsEyeFill />
+                    </a>
+                  </div>
                 </div>
-              </div>
-            );
-          })}
+              );
+            })}
 
-          {/* PDFs and Others */}
-          {email.attachments?.map((fileUrl, index) => {
-            const fileName = fileUrl.split("/").pop();
-            const extension = fileUrl.split(".").pop().toLowerCase();
-            const isImage = /\.(jpeg|jpg|png|gif)$/i.test(fileUrl);
-            if (isImage) return null;
+            {/* PDFs and Others */}
+            {email.attachments?.map((fileUrl, index) => {
+              const fileName = fileUrl.split("/").pop();
+              const extension = fileUrl.split(".").pop().toLowerCase();
+              const isImage = /\.(jpeg|jpg|png|gif)$/i.test(fileUrl);
+              if (isImage) return null;
 
-            const isPdf = extension === "pdf";
-            // const iconPreview = isPdf
-            //   ? fileUrl.replace("/upload/", "/upload/pg_1,w_120,h_120,c_thumb/")
-            //   : "/file-icon.png";
-            const iconPreview = isPdf ? "/pdf.png" : "/file-icon.png";
+              const isPdf = extension === "pdf";
+              // const iconPreview = isPdf
+              //   ? fileUrl.replace("/upload/", "/upload/pg_1,w_120,h_120,c_thumb/")
+              //   : "/file-icon.png";
+              const iconPreview = isPdf ? "/pdf.png" : "/file-icon.png";
 
-            return (
-              <div className="attachment-box" key={index}>
-                <img
-                  src={iconPreview}
-                  // alt={fileName}
-                  className="attachment-img"
-                />
-                <div className="hover-download-btn">
-                  <a
-                    className="acker"
-                    onClick={() => handleDownload(fileUrl, fileName)}
-                    href="#"
-                  >
-                    <MdFileDownload />
-                  </a>
+              return (
+                <div className="attachment-box" key={index}>
+                  <img
+                    src={iconPreview}
+                    // alt={fileName}
+                    className="attachment-img"
+                  />
+                  <div className="hover-download-btn">
+                    <a
+                      className="acker"
+                      onClick={() => handleDownload(fileUrl, fileName)}
+                      href="#"
+                    >
+                      <MdFileDownload />
+                    </a>
+                    <a
+                      className="acker"
+                      href={fileUrl}
+                      target="_blank"
+                      rel="noreferrer"
+                    >
+                      <BsEyeFill />
+                    </a>
+                  </div>
                   <a
                     className="acker"
                     href={fileUrl}
                     target="_blank"
                     rel="noreferrer"
+                    download
+                    style={{
+                      display: "block",
+                      marginTop: "10px",
+                      color: "#333",
+                      fontSize: "14px",
+                      overflow: "hidden",
+                      textOverflow: "ellipsis",
+                      whiteSpace: "nowrap",
+                      textDecoration: "none",
+                    }}
+                    title={fileName}
                   >
-                    <BsEyeFill />
+                    {fileName}
                   </a>
                 </div>
-                <a
-                  className="acker"
-                  href={fileUrl}
-                  target="_blank"
-                  rel="noreferrer"
-                  download
-                  style={{
-                    display: "block",
-                    marginTop: "10px",
-                    color: "#333",
-                    fontSize: "14px",
-                    overflow: "hidden",
-                    textOverflow: "ellipsis",
-                    whiteSpace: "nowrap",
-                    textDecoration: "none",
-                  }}
-                  title={fileName}
-                >
-                  {fileName}
-                </a>
-              </div>
-            );
-          })}
-        </div>
-        {emojiList.length > 0 && (
-          <div
-            className="emoji-preview"
-            style={{ marginTop: "10px", fontSize: "22px" }}
-          >
-            {emojiList.map((emoji, index) => (
-              <span key={index} style={{ marginRight: "10px" }}>
-                {emoji}
-              </span>
-            ))}
+              );
+            })}
           </div>
-        )}
-      </div>
+
+          {emojiList.length > 0 && (
+            <div
+              className="emoji-preview"
+              style={{ marginTop: "10px", fontSize: "22px" }}
+            >
+              {emojiList.map((emoji, index) => (
+                <span key={index} style={{ marginRight: "10px" }}>
+                  {emoji}
+                </span>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
 
       <div
         style={{
