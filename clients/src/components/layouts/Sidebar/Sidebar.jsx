@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { setThemeColor, restoreThemeColor } from '../../../utils/setThemeColor';
 import PerfectScrollbar from 'react-perfect-scrollbar';
 import 'react-perfect-scrollbar/dist/css/styles.css';
@@ -14,6 +14,8 @@ import { TbBell, TbCirclePlus, TbCommand, TbDeviceLaptop, TbDotsVertical, TbFile
 import { AiOutlineMenuFold, AiOutlineDown, AiOutlineLeft, AiOutlineRight, AiOutlineUp } from 'react-icons/ai';
 import { NavLink, useLocation } from "react-router-dom";
 import { IoIosArrowForward } from 'react-icons/io';
+import { useAuth } from '../../auth/AuthContext.jsx';
+import { useTranslation } from "react-i18next";
 
 
 // Main Sidebar Menu Data
@@ -114,12 +116,14 @@ const twoColSidebarTabs = [
 
 
 const Sidebar = () => {
+	const { user, setUser} = useAuth();
+	 const { t } = useTranslation();
 //   const [sidebarOpen, setSidebarOpen] = useState(false); // For mobile sidebar
 //   const [miniSidebar, setMiniSidebar] = useState(false); // For mini sidebar
 //   const [hovered, setHovered] = useState(false); // For mini sidebar hover
   const [themeColor, setThemeColor] = useState(localStorage.getItem('color') || 'info');
   const sidebarRef = useRef(null);
-  const menuData = getMenuData();
+  const menuData = useMemo(() => getMenuData(user, t), [user, t]);
 	// const { openMenus, toggleMenu, mobileOpen, handleMobileToggle, handleLinkClick } = useSidebar();
 	const {
   openMenus,
@@ -228,7 +232,7 @@ const isPathActive = (path) => {
 	// Optionally, sticky sidebar logic can be added here with useEffect
 
 	// user profile
-	const [user, setUser] = useState(null);
+	// const [user, setUser] = useState(null);
 	const userObj = JSON.parse(localStorage.getItem("user"));
 	const userId = userObj?.id; // or userObj?._id based on your schema
 	const token = localStorage.getItem("token");

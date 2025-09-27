@@ -482,7 +482,7 @@ const UserProfile = () => {
                       border: "1px solid #676767",
                       borderRadius: '4px',
                       padding: "8px",
-                      backgroundColor: "#262626",
+                      backgroundColor: "#007cff",
                       color: "#FFFFFF",
                       borderRadius: "5px",
                     }}

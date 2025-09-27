@@ -1,6 +1,7 @@
 // components/auth/AuthContext.jsx
 import React, { createContext, useContext, useState, useEffect } from "react";
-
+import axios from "axios"
+import BASE_URL from "../../pages/config/config";
 const AuthContext = createContext();
 
 export const AuthProvider = ({ children }) => {
@@ -18,8 +19,27 @@ export const AuthProvider = ({ children }) => {
         }
     }, []);
 
+    //refresh user from backend
+    const refreshUser = async () => {
+        const storedUser = localStorage.getItem("user");
+        if (!storedUser || storedUser === "undefined") return;
+        try {
+            const token = localStorage.getItem("token");
+            if (!token) return;
+            const response = await axios.get(`${BASE_URL}/api/user/userdata/${parsedUser._id}`, {
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                },
+            });
+            setUser(response.data);
+            localStorage.setItem("user", JSON.stringify(response.data));
+        } catch (error) {
+            console.error("Failed to refresh user data", error);
+        }
+    }
+
     return (
-        <AuthContext.Provider value={{ user, setUser }}>
+        <AuthContext.Provider value={{ user, setUser, refreshUser }}>
             {children}
         </AuthContext.Provider>
     );
