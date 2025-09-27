@@ -124,12 +124,12 @@ const AddCustomerModal = ({ onClose, onSuccess }) => {
   // Validation function with updated regex patterns
   const validateField = (name, value) => {
     const regexPatterns = {
-      name: /^[a-zA-Z\s.,'-]{2,100}$/,
+      name: /^[a-zA-Z\s.,'-]{1,100}$/,
       email: /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/,
       phone: /^\+?[0-9\s()-]{7,15}$/, // Updated: Allows +,-,(),spaces, 7-15 digits
       website: /^(https?:\/\/)?[\w.-]+\.[a-zA-Z]{2,}(\/.*)?$/, // Updated: Optional protocol, flexible
-      postalCode: /^\d{5,10}$/,
-      pincode: /^\d{5,10}$/,
+      postalCode: /^\d{6}$/,
+      pincode: /^\d{6}$/,
       bankName: /^[a-zA-Z0-9\s.,'-]{2,100}$/,
       branch: /^[a-zA-Z0-9\s.,'-]{2,100}$/,
       accountHolder: /^[a-zA-Z0-9\s.,'-]{2,100}$/,
@@ -162,9 +162,9 @@ const AddCustomerModal = ({ onClose, onSuccess }) => {
         case "website":
           return "Please enter a valid URL (e.g., example.com or https://example.com).";
         case "postalCode":
-          return "Please enter a valid postal code (5-10 digits).";
+          return "Please enter a valid postal code.";
         case "pincode":
-          return "Please enter a valid pincode (5-10 digits).";
+          return "Please enter a valid pincode.";
         case "bankName":
           return "Please enter a valid bank name.";
         case "branch":
@@ -178,7 +178,7 @@ const AddCustomerModal = ({ onClose, onSuccess }) => {
         case "notes":
           return "Notes can only contain letters, numbers, spaces, and common punctuation (max 500 characters).";
         case "name":
-          return "Please enter a valid name (2-100 characters, letters and common punctuation only).";
+          return "Please enter a valid name (1-100 characters, letters and common punctuation only).";
         case "address1":
           return "Please enter a valid address (1-100 characters, alphanumeric and common punctuation).";
         case "address2":
@@ -198,9 +198,9 @@ const AddCustomerModal = ({ onClose, onSuccess }) => {
 
     setErrors((prev) => ({ ...prev, [name]: error }));
     setForm((prev) => ({ ...prev, [name]: sanitizedValue }));
-    if (error) {
-      toast.error(error);
-    }
+    // if (error) {
+    //   toast.error(error);
+    // }
   };
 
   const handleBillingChange = (e) => {
@@ -216,9 +216,10 @@ const AddCustomerModal = ({ onClose, onSuccess }) => {
       ...prev,
       billing: { ...prev.billing, [name]: sanitizedValue },
     }));
-    if (error) {
-      toast.error(error);
-    }
+    // if (error) {
+    //   toast.error(error);
+
+    // }
   };
 
   const handleShippingChange = (e) => {
@@ -234,9 +235,9 @@ const AddCustomerModal = ({ onClose, onSuccess }) => {
       ...prev,
       shipping: { ...prev.shipping, [name]: sanitizedValue },
     }));
-    if (error) {
-      toast.error(error);
-    }
+    // if (error) {
+    //   toast.error(error);
+    // }
   };
 
   const handleBankChange = (e) => {
@@ -382,14 +383,14 @@ const AddCustomerModal = ({ onClose, onSuccess }) => {
     if (file) {
       // Validate image type and size
       const validTypes = ["image/jpeg", "image/png"];
-      const maxSize = 5 * 1024 * 1024; // 5MB
+      const maxSize = 1 * 1024 * 1024; // 5MB
       if (!validTypes.includes(file.type)) {
         toast.error("Please upload a JPEG or PNG image.");
         setErrors((prev) => ({ ...prev, image: "Invalid image type" }));
         return;
       }
       if (file.size > maxSize) {
-        toast.error("Image size must not exceed 5MB.");
+        toast.error("Image size must not exceed 1MB.");
         setErrors((prev) => ({ ...prev, image: "Image too large" }));
         return;
       }
@@ -613,7 +614,7 @@ const AddCustomerModal = ({ onClose, onSuccess }) => {
                         {errors.image && (
                           <span className="text-danger fs-12">{errors.image}</span>
                         )}
-                        <span className="text-gray-9">JPG or PNG format, not exceeding 5MB.</span>
+                        <span className="text-gray-9">JPG or PNG format, not exceeding 1MB.</span>
                       </div>
                     </div>
                   </div>
@@ -822,6 +823,7 @@ const AddCustomerModal = ({ onClose, onSuccess }) => {
                                   className="form-control"
                                   name="postalCode"
                                   value={form.billing.postalCode}
+                                  maxLength={6}
                                   onChange={handleBillingChange}
                                 />
                                 {errors["billing.postalCode"] && (
@@ -930,12 +932,13 @@ const AddCustomerModal = ({ onClose, onSuccess }) => {
                           </div>
                           <div className="col-md-6">
                             <div className="mb-3">
-                              <label className="form-label">Pincode</label>
+                              <label className="form-label">Postal code</label>
                               <input
                                 type="text"
                                 className="form-control"
                                 name="pincode"
                                 value={form.shipping.pincode}
+                                maxLength={6}
                                 onChange={handleShippingChange}
                               />
                               {errors["shipping.pincode"] && (
@@ -1024,6 +1027,18 @@ const AddCustomerModal = ({ onClose, onSuccess }) => {
                             <span className="text-danger fs-12">{errors["bank.ifsc"]}</span>
                           )}
                         </div>
+                      </div>
+                      <div className="col-lg-4 col-md-6" style={{display:'flex', gap:'5px',marginTop:'35px'}}>
+                        
+                        <label className="">Status</label>
+                        <div className="form-check form-switch mb-3">
+                          <input
+                            className="form-check-input"
+                            type="checkbox"
+                            checked={form.status}
+                            onChange={handleStatusChange}
+                          />
+                        </div> 
                       </div>
                     </div>
                   </div>
