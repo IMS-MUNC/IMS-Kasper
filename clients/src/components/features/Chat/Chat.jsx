@@ -2045,12 +2045,20 @@ const Chat = () => {
                                 borderBottomLeftRadius: '12px 12px',
                                 borderBottomRightRadius: '12px 12px',
                                 wordWrap: 'break-word',
+                                wordBreak: 'break-word',
+                                overflowWrap: 'anywhere',
+                                hyphens: 'auto',
+                                minWidth: 0,
                               }}>
                                 <div
                                   style={{
                                     display: 'inline-block',
                                     margin: '2px 0',
-                                    cursor: msg.fileUrl ? 'pointer' : 'default'
+                                    cursor: msg.fileUrl ? 'pointer' : 'default',
+                                    wordBreak: 'break-word',
+                                    overflowWrap: 'anywhere',
+                                    maxWidth: '100%',
+                                    minWidth: 0,
                                   }}
                                   onClick={msg.fileUrl ? () => window.open(msg.fileUrl, '_blank') : undefined}
                                 >
