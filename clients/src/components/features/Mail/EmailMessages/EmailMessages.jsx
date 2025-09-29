@@ -27,7 +27,8 @@ const EmailMessages = ({
   isDraftPage,
   onDraftClick,
   isDeletedPage,
-  starredEmails
+  starredEmails,
+
 
 }) => {
 
@@ -47,6 +48,7 @@ const EmailMessages = ({
   const [users, setUsers] = useState([]);
   const [inboxEmails, setInboxEmails] = useState([]);
   const [sentEmails, setSentEmails] = useState([]);
+  const getEmailId = (email) => email._id || email.timestamp;
 
 
 
@@ -166,11 +168,11 @@ const EmailMessages = ({
   const handleDeleteSelected = async () => {
     if (isDraftPage) {
       let drafts = JSON.parse(localStorage.getItem("emailDrafts")) || [];
-      drafts = drafts.filter((d) => d.timestamp !== id);
+      drafts = drafts.filter((d) => !selectedEmails.includes(getEmailId(d)));
       localStorage.setItem("emailDrafts", JSON.stringify(drafts));
       // Update parent state so UI re-renders automatically
       if (onDraftsChange) onDraftsChange(drafts);
-      setEmailsState(prev => prev.filter(email => email.timestamp !== id));
+      setEmailsState(prev => prev.filter(email => !selectedEmails.includes(getEmailId(email))));
       setSelectedEmails([]);
     } else {
       try {
@@ -183,7 +185,7 @@ const EmailMessages = ({
             },
           });
         setEmailsState((prev) =>
-          prev.filter((email) => !selectedEmails.includes(email._id))
+          prev.filter((email) => !selectedEmails.includes(getEmailId(email)))
         );
         setSelectedEmails([]);
       } catch (error) {
@@ -195,11 +197,11 @@ const EmailMessages = ({
   const handleDelete = async (id) => {
     if (isDraftPage) {
       let drafts = JSON.parse(localStorage.getItem("emailDrafts")) || [];
-      drafts = drafts.filter(d => d._id !== id);
+      drafts = drafts.filter(d => getEmailId(d) !== id);
       localStorage.setItem("emailDrafts", JSON.stringify(drafts));
       // Update parent state so UI re-renders automatically
       if (onDraftsChange) onDraftsChange(drafts);
-      setEmailsState(prev => prev.filter(email => email._id !== id));
+      setEmailsState(prev => prev.filter(email => getEmailId(email) !== id));
       setMenuOpenId(null);
     } else {
       try {
@@ -211,7 +213,7 @@ const EmailMessages = ({
               Authorization: `Bearer ${token}`,
             },
           });
-        setEmailsState((prev) => prev.filter((email) => email._id !== id));
+        setEmailsState((prev) => prev.filter((email) => getEmailId(email) !== id));
         setMenuOpenId(null);
       } catch (error) {
         console.error("Failed to delete email", error);
@@ -234,6 +236,14 @@ const EmailMessages = ({
   };
 
   const handleToggleStar = async (id, currentStarred) => {
+    if (isDraftPage) {
+      let drafts = JSON.parse(localStorage.getItem("emailDrafts")) || [];
+      drafts = drafts.map(d => getEmailId(d) === id ? { ...d, starred: !currentStarred } : d);
+      localStorage.setItem("emailDrafts", JSON.stringify(drafts));
+      //save updated drafts
+      if (typeof onDraftsChange === 'function') onDraftsChange(drafts);
+      return;
+    }
     try {
       const token = localStorage.getItem("token");
       const updated = await axios.put(
@@ -280,7 +290,7 @@ const EmailMessages = ({
           },
         });
       setEmailsState((prev) =>
-        prev.filter((email) => !selectedEmails.includes(email._id))
+        prev.filter((email) => !selectedEmails.includes(getEmailId(email)))
       );
       setSelectedEmails([]);
     } catch (error) {
@@ -395,21 +405,25 @@ const EmailMessages = ({
             email={selectedEmail}
             onBack={handleBackToInbox}
             handleToggleStar={handleToggleStar}
+            onDelete={(id) => {
+              setEmails((prev) => prev.filter((email) => getEmailId(email) !== id));
+              setSelectedEmail(null);
+            }}
           />
         ) : (
 
           emailsToShow
             .filter(
               (email) =>
-                email.sender.name.toLowerCase().includes(search.toLowerCase()) ||
-                email.subject.toLowerCase().includes(search.toLowerCase()) ||
-                email.messagePreview.toLowerCase().includes(search.toLowerCase())
+                email.sender?.name.toLowerCase().includes(search.toLowerCase()) ||
+                email?.subject.toLowerCase().includes(search.toLowerCase()) ||
+                email?.messagePreview.toLowerCase().includes(search.toLowerCase())
             )
             .map((email) => (
               <div
-                className={`justinmaindiv ${selectedEmails.includes(email._id) ? "selected-email" : ""
+                className={`justinmaindiv ${selectedEmails.includes(getEmailId(email)) ? "selected-email" : ""
                   }`}
-                key={email._id}
+                key={getEmailId(email)}
               >
                 <div
                   className="justinleftrightmaindiv"
@@ -428,14 +442,16 @@ const EmailMessages = ({
                       <input
                         className="checkmarkinput"
                         type="checkbox"
-                        checked={selectedEmails.includes(email._id)}
+                        // checked={selectedEmails.includes(email._id)}
+                        checked={selectedEmails.includes(getEmailId(email))}
                         onChange={() => {
-                          if (selectedEmails.includes(email._id)) {
+                          const id = getEmailId(email);
+                          if (selectedEmails.includes(id)) {
                             setSelectedEmails(
-                              selectedEmails.filter((id) => id !== email._id)
+                              selectedEmails.filter((item) => item !== id)
                             );
                           } else {
-                            setSelectedEmails([...selectedEmails, email._id]);
+                            setSelectedEmails([...selectedEmails, id]);
                           }
                         }}
                         style={{
@@ -446,22 +462,24 @@ const EmailMessages = ({
                       />
                       <span className="checkmark"></span>
                     </label>
-                    <span
-                      onClick={() =>
-                        toggleStar(email._id, email.tags.starred)
-                      }
-                      style={{ cursor: "pointer" }}
-                    >
-                      <AiFillStar
-                        style={{
-                          fontSize: "18px",
-                          color: email.tags.starred ? "#fba64b" : "#ccc",
-                        }}
-                      />
-                    </span>
+                    {!isDraftPage && (
+                      <span
+                        onClick={() =>
+                          toggleStar(getEmailId(email), email.tags?.starred)
+                        }
+                        style={{ cursor: "pointer" }}
+                      >
+                        <AiFillStar
+                          style={{
+                            fontSize: "18px",
+                            color: email.tags?.starred ? "#fba64b" : "#ccc",
+                          }}
+                        />
+                      </span>
+                    )}
                     <span>
-                      {email.sender.profileImage ? (
-                        <img src={email.sender.profileImage} alt="alk" style={{ width: '25px', height: '25px', borderRadius: '50%', objectFit: 'cover' }} />
+                      {email.sender?.profileImage ? (
+                        <img src={email.sender?.profileImage} alt={email.sender?.initials} style={{ width: '25px', height: '25px', borderRadius: '50%', objectFit: 'cover' }} />
                       ) : (
                         <div style={{
                           backgroundColor: '#ccc',
@@ -474,7 +492,8 @@ const EmailMessages = ({
                           fontSize: '12px',
                           color: '#fff'
                         }}>
-                          {email.sender.name?.[0]?.toUpperCase()}
+                          {/* {email.sender?.name?.[0]?.toUpperCase()} */}
+                          {email.sender?.initials || email.sender?.name?.split(' ').map(n => n[0]).join('').toUpperCase()}
                         </div>
                       )
                       }
@@ -516,7 +535,7 @@ const EmailMessages = ({
                           marginRight: "22px",
                         }}
                       >
-                        <span>{email.sender.name}</span>
+                        <span>{email.sender?.name}</span>
 
                       </span>
                       <span
@@ -710,7 +729,7 @@ const EmailMessages = ({
                     <span
                       className="delete-icon"
                       style={{ cursor: "pointer", fontSize: "14px" }}
-                      onClick={() => handleDelete(isDraftPage ? email.timestamp : email._id)}
+                      onClick={() => handleDelete(getEmailId(email))}
                     >
                       <RiDeleteBinLine />
                     </span>

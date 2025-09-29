@@ -17,7 +17,7 @@ import { MdFileDownload } from "react-icons/md";
 import { BiSolidFilePdf } from "react-icons/bi";
 import BASE_URL from "../../../../pages/config/config.js";
 
-const EmailDetail = ({ email, onBack, handleToggleStar }) => {
+const EmailDetail = ({ email, onBack, handleToggleStar, onDelete }) => {
   const [showDetails, setShowDetails] = useState(false);
   // const [emailshow, setEmailShow] = useState(false);
   const [menuOpenId, setMenuOpenId] = useState(null);
@@ -65,12 +65,18 @@ const EmailDetail = ({ email, onBack, handleToggleStar }) => {
       const token = localStorage.getItem("token");
       await axios.post(`${BASE_URL}/api/email/mail/delete`, {
         ids: [id],
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
-      setEmails((prev) => prev.filter((email) => email._id !== id));
+      },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+      if (onDelete) onDelete(id);
+      // setEmails((prev) => prev.filter((email) => email._id !== id));
+        // setEmailsState((prev) => prev.filter((email) => getEmailId(email) !== id));
       setMenuOpenId(null);
+      // navigate back after delete
+      if(onBack) onBack();
     } catch (error) {
       console.error("Failed to delete email", error);
     }
@@ -456,7 +462,7 @@ const EmailDetail = ({ email, onBack, handleToggleStar }) => {
       )}
       <hr style={{ color: '#b8b8b8ff', height: '1px', fontWeight: 400 }} />
       <div
-        style={{ border: "none", fontSize: '14px', fontWeight: 400, lineHeight: '14px', color: '#262626' }}
+        style={{ border: "none", fontSize: '14px', fontWeight: 400, lineHeight: '14px', color: '#262626', whiteSpace: 'pre-wrap', wordBreak: 'break-word', overflowWrap: 'anywhere' }}
         className="email-body"
         dangerouslySetInnerHTML={{
           __html: email.body.replace(/\n/g, "<br/>"),
