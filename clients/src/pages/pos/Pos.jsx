@@ -50,12 +50,29 @@ const Pos=() => {
 
     const [categoryValue, setCategoryValue] = useState('');
     const handleCategoryChange = (e) => {
+        console.log('📂 handleCategoryChange called with:', e.target.value);
         setCategoryValue(e.target.value);
+        // Capitalize the status value to match database enum
+        const capitalizedValue = e.target.value ? e.target.value.charAt(0).toUpperCase() + e.target.value.slice(1) : '';
+        const statusFilter = activeQuickFilter === 'all' ? capitalizedValue : (activeQuickFilter.charAt(0).toUpperCase() + activeQuickFilter.slice(1));
+        console.log('📊 Category status filter:', statusFilter);
+        fetchPosSales(1, transactionSearchQuery, statusFilter, socketValue);
     };
 
     const [socketValue, setSocketValue] = useState('');
     const handleSocketChange = (e) => {
+        console.log('🔌 handleSocketChange called with:', e.target.value);
         setSocketValue(e.target.value);
+        // Capitalize the status filter to match database enum
+        const statusFilter = activeQuickFilter === 'all' ? 
+            (categoryValue ? categoryValue.charAt(0).toUpperCase() + categoryValue.slice(1) : '') : 
+            (activeQuickFilter.charAt(0).toUpperCase() + activeQuickFilter.slice(1));
+        // Capitalize payment method value to match database enum (special case for UPI)
+        const capitalizedPaymentMethod = e.target.value ? 
+            (e.target.value.toLowerCase() === 'upi' ? 'UPI' : e.target.value.charAt(0).toUpperCase() + e.target.value.slice(1)) : '';
+        console.log('📊 Socket status filter:', statusFilter);
+        console.log('💳 Payment method filter:', capitalizedPaymentMethod);
+        fetchPosSales(1, transactionSearchQuery, statusFilter, capitalizedPaymentMethod);
     };
 
     const [warehouseValue, setWarehouseValue] = useState('');
@@ -68,12 +85,28 @@ const Pos=() => {
         setExprationValue(e.target.value);
     };
 
+    // Quick filter state
+    const [activeQuickFilter, setActiveQuickFilter] = useState('all');
+
     const handleClear = () => {
         setSearchDrop(false);
         setCategoryValue('');
         setSocketValue('');
         setWarehouseValue('');
         setExprationValue('');
+        setActiveQuickFilter('all');
+        fetchPosSales(1, transactionSearchQuery, '', '');
+    };
+
+    // Quick filter handlers
+    const handleQuickFilter = (filterType) => {
+        console.log('🎯 handleQuickFilter called with:', filterType);
+        setActiveQuickFilter(filterType);
+        // Capitalize the first letter to match database enum values
+        const statusFilter = filterType === 'all' ? '' : filterType.charAt(0).toUpperCase() + filterType.slice(1);
+        console.log('📊 Status filter set to:', statusFilter);
+        console.log('🔌 Socket value:', socketValue);
+        fetchPosSales(1, transactionSearchQuery, statusFilter, socketValue);
     };
 
   //customer popup-------------------------------------------------------------------------------------------------------------
@@ -478,13 +511,14 @@ const [selectedPaymentMethod, setSelectedPaymentMethod] = useState(null);
     const filteredProducts = allProducts.filter(product => {
       return (
         product.productName?.toLowerCase().includes(searchTerm) ||
-        (product.brand && typeof product.brand === 'object' && product.brand.name?.toLowerCase().includes(searchTerm)) ||
+        product.description?.toLowerCase().includes(searchTerm) ||
+        (product.brand && typeof product.brand === 'object' && product.brand.brandName?.toLowerCase().includes(searchTerm)) ||
         (product.brand && typeof product.brand === 'string' && product.brand.toLowerCase().includes(searchTerm)) ||
         product.seoTitle?.toLowerCase().includes(searchTerm) ||
         product.seoDescription?.toLowerCase().includes(searchTerm) ||
-        (product.category && typeof product.category === 'object' && product.category.name?.toLowerCase().includes(searchTerm)) ||
+        (product.category && typeof product.category === 'object' && product.category.categoryName?.toLowerCase().includes(searchTerm)) ||
         (product.category && typeof product.category === 'string' && product.category.toLowerCase().includes(searchTerm)) ||
-        (product.subcategory && typeof product.subcategory === 'object' && product.subcategory.name?.toLowerCase().includes(searchTerm)) ||
+        (product.subcategory && typeof product.subcategory === 'object' && product.subcategory.subCategoryName?.toLowerCase().includes(searchTerm)) ||
         (product.subcategory && typeof product.subcategory === 'string' && product.subcategory.toLowerCase().includes(searchTerm))
       );
     });
@@ -649,16 +683,23 @@ const [selectedPaymentMethod, setSelectedPaymentMethod] = useState(null);
   };
 
   const removeItem = (itemId) => {
+    // Check if the item being removed is a bag
+    const itemToRemove = selectedItems.find(item => item._id === itemId);
+    if (itemToRemove && itemToRemove.isBag) {
+      setBagCharge(0); // Reset bag charge when bag is removed
+    }
     setSelectedItems(selectedItems.filter(item => item._id !== itemId));
   };
 
   // Calculate totals whenever selectedItems changes
   useEffect(() => {
-    const subtotal = selectedItems.reduce((sum, item) => sum + item.totalPrice, 0);
-    const discount = selectedItems.reduce((sum, item) => sum + item.totalDiscount, 0);
-    const tax = selectedItems.reduce((sum, item) => sum + calculateDiscountedTax(item), 0);
-    const items = selectedItems.length;
-    const quantity = selectedItems.reduce((sum, item) => sum + item.quantity, 0);
+    // Exclude bag items from calculations since bagCharge is added separately
+    const nonBagItems = selectedItems.filter(item => !item.isBag);
+    const subtotal = nonBagItems.reduce((sum, item) => sum + item.totalPrice, 0);
+    const discount = nonBagItems.reduce((sum, item) => sum + item.totalDiscount, 0);
+    const tax = nonBagItems.reduce((sum, item) => sum + calculateDiscountedTax(item), 0);
+    const items = nonBagItems.length;
+    const quantity = nonBagItems.reduce((sum, item) => sum + item.quantity, 0);
     
     setSubTotal(subtotal)
     setDiscount(discount)
@@ -771,9 +812,11 @@ const fetchCustomers = async () => {
   };
 
 // Fetch sales transactions-------------------------------------------------------------------------------------------------
-  const fetchPosSales = async (page = 1, searchQuery = '') => {
+  const fetchPosSales = async (page = 1, searchQuery = '', statusFilter = '', paymentMethodFilter = '') => {
     try {
       setLoading(true);
+      console.log('🔍 fetchPosSales called with:', { page, searchQuery, statusFilter, paymentMethodFilter });
+      
       const token = localStorage.getItem("token");
       const params = new URLSearchParams({
         page: page,
@@ -784,9 +827,23 @@ const fetchCustomers = async () => {
         params.append('search', searchQuery);
       }
       
-      const response = await axios.get(`${BASE_URL}/api/pos-sales/transactions?${params}`, {
+      if (statusFilter.trim()) {
+        params.append('status', statusFilter);
+      }
+      
+      if (paymentMethodFilter.trim()) {
+        params.append('paymentMethod', paymentMethodFilter);
+      }
+      
+      const apiUrl = `${BASE_URL}/api/pos-sales/transactions?${params}`;
+      console.log('🌐 API URL:', apiUrl);
+      console.log('📋 URL Params:', params.toString());
+      
+      const response = await axios.get(apiUrl, {
         headers: { Authorization: `Bearer ${token}` }
       });
+      
+      console.log('✅ API Response:', response.data);
       setPosSales(response.data.data);
       setTotalPages(response.data.pagination.totalPages);
       setTotalSales(response.data.pagination.totalSales);
@@ -801,7 +858,9 @@ const fetchCustomers = async () => {
 // Transaction search functionality
   const handleTransactionSearch = (query) => {
     setTransactionSearchQuery(query);
-    fetchPosSales(1, query);
+    const statusFilter = activeQuickFilter === 'all' ? categoryValue : activeQuickFilter;
+    const paymentMethodFilter = socketValue;
+    fetchPosSales(1, query, statusFilter, paymentMethodFilter);
   };
 
 // Create POS sale---------------------------------------------------------------------------------------------------------------------
@@ -882,7 +941,8 @@ const fetchCustomers = async () => {
 // Handle pagination
   const handlePageChange = (newPage) => {
     if (newPage >= 1 && newPage <= totalPages) {
-      fetchPosSales(newPage, transactionSearchQuery);
+      const statusFilter = activeQuickFilter === 'all' ? categoryValue : activeQuickFilter;
+      fetchPosSales(newPage, transactionSearchQuery, statusFilter, socketValue);
     }
   };
 
@@ -2705,10 +2765,42 @@ const handleSubmit = async (e) => {
                     ) : (
                       <>
                         <div style={{ display: 'flex', gap: '15px', alignItems: 'center' }}>
-                          <div style={{ backgroundColor: '#ccc', color: 'black', padding: '5px 8px', borderRadius: '6px' }}>All</div>
-                          <div style={{ color: 'black', padding: '5px 8px', }}>Recents</div>
-                          <div style={{ color: 'black', padding: '5px 8px', }}>Paid</div>
-                          <div style={{ color: 'black', padding: '5px 8px', }}>Due</div>
+                          <div 
+                            style={{ 
+                              backgroundColor: activeQuickFilter === 'all' ? '#1368EC' : '#ccc', 
+                              color: activeQuickFilter === 'all' ? 'white' : 'black', 
+                              padding: '5px 8px', 
+                              borderRadius: '6px',
+                              cursor: 'pointer'
+                            }}
+                            onClick={() => handleQuickFilter('all')}
+                          >
+                            All
+                          </div>
+                          <div 
+                            style={{ 
+                              backgroundColor: activeQuickFilter === 'paid' ? '#1368EC' : 'transparent', 
+                              color: activeQuickFilter === 'paid' ? 'white' : 'black', 
+                              padding: '5px 8px',
+                              borderRadius: '6px',
+                              cursor: 'pointer'
+                            }}
+                            onClick={() => handleQuickFilter('paid')}
+                          >
+                            Paid
+                          </div>
+                          <div 
+                            style={{ 
+                              backgroundColor: activeQuickFilter === 'due' ? '#1368EC' : 'transparent', 
+                              color: activeQuickFilter === 'due' ? 'white' : 'black', 
+                              padding: '5px 8px',
+                              borderRadius: '6px',
+                              cursor: 'pointer'
+                            }}
+                            onClick={() => handleQuickFilter('due')}
+                          >
+                            Due
+                          </div>
                     <div 
                       style={{ 
                         color: 'black', 
@@ -2717,7 +2809,10 @@ const handleSubmit = async (e) => {
                         backgroundColor: '#f0f0f0',
                         borderRadius: '4px'
                       }}
-                      onClick={() => fetchPosSales(currentPage, transactionSearchQuery)}
+                      onClick={() => {
+                        const statusFilter = activeQuickFilter === 'all' ? categoryValue : activeQuickFilter;
+                        fetchPosSales(currentPage, transactionSearchQuery, statusFilter, socketValue);
+                      }}
                       title="Refresh"
                     >
                       ↻
@@ -2752,27 +2847,35 @@ const handleSubmit = async (e) => {
                         </div>
 
                         <div
-                          style={{ border: categoryValue ? '2px dashed #1368EC' : '2px dashed #ccc', padding: '0px 10px 0px 8px', alignItems: 'center', display: 'flex', borderRadius: '6px' }}
-                          value={categoryValue}
-                          onChange={handleCategoryChange}>
-                          <select className="" style={{ outline: 'none', border: 'none', color: categoryValue ? '#1368EC' : '#555252' }}>
-                            <option value="" style={{ color: '#555252' }}>Category</option>
-                            <option value="c1" style={{ color: '#555252' }}>Category 1</option>
-                            <option value="c2" style={{ color: '#555252' }}>Category 2</option>
+                          style={{ border: categoryValue ? '2px dashed #1368EC' : '2px dashed #ccc', padding: '0px 10px 0px 8px', alignItems: 'center', display: 'flex', borderRadius: '6px' }}>
+                          <select 
+                            className="" 
+                            style={{ outline: 'none', border: 'none', color: categoryValue ? '#1368EC' : '#555252' }}
+                            value={categoryValue}
+                            onChange={handleCategoryChange}
+                          >
+                            <option value="" style={{ color: '#555252' }}>--Status--</option>
+                            <option value="paid" style={{ color: '#555252' }}>Paid</option>
+                            <option value="due" style={{ color: '#555252' }}>Due</option>
                           </select>
                         </div>
 
                         <div
-                          style={{ border: socketValue ? '2px dashed #1368EC' : '2px dashed #ccc', padding: '0px 10px 0px 8px', alignItems: 'center', display: 'flex', borderRadius: '6px' }}
-                          value={socketValue}
-                          onChange={handleSocketChange}>
-                          <select className="" style={{ outline: 'none', border: 'none', color: socketValue ? '#1368EC' : '#555252' }}>
-                            <option value="" style={{ color: '#555252' }}>Socket Level</option>
-                            <option value="sl1" style={{ color: '#555252' }}>Last 7 days</option>
+                          style={{ border: socketValue ? '2px dashed #1368EC' : '2px dashed #ccc', padding: '0px 10px 0px 8px', alignItems: 'center', display: 'flex', borderRadius: '6px' }}>
+                          <select 
+                            className="" 
+                            style={{ outline: 'none', border: 'none', color: socketValue ? '#1368EC' : '#555252' }}
+                            value={socketValue}
+                            onChange={handleSocketChange}
+                          >
+                            <option value="" style={{ color: '#555252' }}>--Payment Method--</option>
+                            <option value="cash" style={{ color: '#555252' }}>Cash</option>
+                            <option value="upi" style={{ color: '#555252' }}>UPI</option>
+                            <option value="card" style={{ color: '#555252' }}>Card</option>
                           </select>
                         </div>
 
-                        <div
+                        {/* <div
                           style={{ border: warehouseValue ? '2px dashed #1368EC' : '2px dashed #ccc', padding: '0px 10px 0px 8px', alignItems: 'center', display: 'flex', borderRadius: '6px' }}
                           value={warehouseValue}
                           onChange={handleWarehouseChange}>
@@ -2780,9 +2883,9 @@ const handleSubmit = async (e) => {
                             <option value="" style={{ color: '#555252' }}>Warehouse</option>
                             <option value="wh1" style={{ color: '#555252' }}>Warehouse 1</option>
                           </select>
-                        </div>
+                        </div> */}
 
-                        <div
+                        {/* <div
                           style={{ border: exprationValue ? '2px dashed #1368EC' : '2px dashed #ccc', padding: '0px 10px 0px 3px', alignItems: 'center', display: 'flex', borderRadius: '6px' }}
                           value={exprationValue}
                           onChange={handleExprationChange}>
@@ -2790,8 +2893,11 @@ const handleSubmit = async (e) => {
                             <option value="" style={{ color: '#555252' }}>Expiration</option>
                             <option value="e1" style={{ color: '#555252' }}>Expiration 1</option>
                           </select>
-                        </div>
-                        <div style={{ color: 'black', padding: '2px 8px', borderRadius: '6px', border: '2px solid #ccc', display: 'flex', alignItems: 'center', cursor:'pointer',backgroundColor:'#f6f6f6' }}>
+                        </div> */}
+                        <div 
+                          style={{ color: 'black', padding: '2px 8px', borderRadius: '6px', border: '2px solid #ccc', display: 'flex', alignItems: 'center', cursor:'pointer',backgroundColor:'#f6f6f6' }}
+                          onClick={handleClear}
+                        >
                           <span>Clear</span>
                         </div>
                       </div>
