@@ -1305,7 +1305,7 @@ const Chat = () => {
 
           {/* Main content */}
           <div className="container-fluid">
-            <div className="row g-3" style={{ height: 'calc(100vh - 200px)' }}>
+            <div className="row g-3" style={{ height: 'calc(100vh - 100px)' }}>
 
               {/* Left panel: User list */}
               <div className={`col-lg-3 ${isMobileMenuOpen ? 'd-block' : 'd-none d-lg-block'}`}>
@@ -1646,7 +1646,7 @@ const Chat = () => {
               </div>
 
               {/* Right panel: Chat area */}
-              <div className={`col-lg-9 ${isMobileMenuOpen ? 'd-none' : 'd-block'}`}>
+              <div className={`col-lg-9 ${isMobileMenuOpen ? 'd-none d-lg-block' : 'd-block'}`}>
                 <div className="h-100 d-flex flex-column bg-white border rounded shadow-sm mobile-panel-height">
 
                   {selectedUser ? (

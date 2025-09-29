@@ -238,6 +238,9 @@ const Pos=() => {
     };
   }, []);
 
+// Selected payment method state for highlighting
+const [selectedPaymentMethod, setSelectedPaymentMethod] = useState(null);
+
 //transaction popup---------------------------------------------------------------------------------------------------------------
   const [transactionpopup, setTransactionPopup] = useState(false);
   const TransactionRef = useRef(null);
@@ -1248,23 +1251,44 @@ const handleSubmit = async (e) => {
 
     if (response.ok) {
       alert("Customer saved successfully ✅");
+      // Clear all form fields
       setForm({
         name: '',
         email: '',
         phone: '',
         status: true,
       });
-  fetchCustomers(); 
+      // Clear location fields
+      setSelectedCountry('');
+      setSelectedState('');
+      setSelectedCity('');
+      setPinCode('');
+      // Close popup
+      setAddCustomerPopup(false);
+      fetchCustomers(); 
     } else {
       alert("Error: " + data.error);
     }
   } catch (err) {
     console.error(err);
-    alert("Something went wrong ❌");
+    alert("Something went wrong");
   } finally {
     setLoading(false);
   }
 };
+
+//date display
+  const [currentDate, setCurrentDate] = useState(new Date());
+
+  useEffect(() => {
+    // Set up a timer to update every second
+    const timer = setInterval(() => {
+      setCurrentDate(new Date());
+    }, 1000);
+
+    // Cleanup the interval on component unmount
+    return () => clearInterval(timer);
+  }, []);
 
   return ( //page code starts from here-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
@@ -1350,18 +1374,18 @@ const handleSubmit = async (e) => {
               <div className="d-flex align-items-center justify-content-between flex-wrap mb-2">
                 <div className="mb-3">
                   <h5 className="mb-1">Welcome,  {userObj?.firstName || 'User'} {userObj?.lastName || ''}</h5>
-                  <p>December 24, 2024</p>
+                  <p>{currentDate.toLocaleString()}</p>
                 </div>
                 <div className="d-flex align-items-center flex-wrap mb-2">
-                  <div className="input-icon-start search-pos position-relative mb-2 me-3">
+                  <div className="input-icon-start search-pos position-relative mb-2">
                     <span className="input-icon-addon">
                       <TbSearch className="ti ti-search" />
                     </span>
                     <input type="text" className="form-control" placeholder="Search Product"  value={productSearchQuery}
             onChange={(e) => handleProductSearch(e.target.value)}/>
                   </div>
-                  <a href="#" className="btn btn-sm btn-dark mb-2 me-2"><i className="ti ti-tag me-1" />View All Brands</a>
-                  <a href="#" className="btn btn-sm btn-primary mb-2"><i className="ti ti-star me-1" />Featured</a>
+                  {/* <a href="#" className="btn btn-sm btn-dark mb-2 me-2"><i className="ti ti-tag me-1" />View All Brands</a>
+                  <a href="#" className="btn btn-sm btn-primary mb-2"><i className="ti ti-star me-1" />Featured</a> */}
                 </div>
               </div>
               <div className="pos-products">
@@ -1590,7 +1614,7 @@ const handleSubmit = async (e) => {
        {/* billing section */}
       <div className="col-md-12 col-lg-5 col-xl-4 ps-0 theiaStickySidebar  position-relative">
 
-          <div style={{width:'100%',display:'flex',justifyContent:'space-between',alignItems:'center',padding:'0px 20px',borderBottom:'1px solid #ccc'}}>
+        <div style={{width:'100%',display:'flex',justifyContent:'space-between',alignItems:'center',padding:'0px 20px',borderBottom:'1px solid #ccc'}}>
           <div style={{fontSize:'20px',fontWeight:'600'}}>
             Cart
           </div>
@@ -1793,7 +1817,7 @@ const handleSubmit = async (e) => {
                 <i>No items selected</i>
               </div>
             ) : (
-              <div style={{display:'flex',flexDirection:'column',gap:'8px',overflowY:'auto',maxHeight:'45vh'}}>
+              <div style={{display:'flex',flexDirection:'column',gap:'8px',overflowY:'auto',height: updown ? 'calc(45vh - 18vh)' : '45vh'}}>
                 {selectedItems.map((item) => (
                   <div 
                     key={item._id}
@@ -1906,7 +1930,7 @@ const handleSubmit = async (e) => {
           </div>
 
           {/* price */}
-          <div style={{backgroundColor:'#F1F1F1',border:'1px solid #E6E6E6',borderTopLeftRadius:'16px',borderTopRightRadius:'16px',position:'absolute',bottom:'0px',width:'100%',padding:'10px'}}>
+          <div style={{backgroundColor:'#F1F1F1',border:'1px solid #E6E6E6',borderTopLeftRadius:'16px',borderTopRightRadius:'16px',position:'absolute',bottom:'0px',width:'100%',padding:'10px',}}>
 
             {/* sales summary */}
             {updown && (
@@ -1978,13 +2002,16 @@ const handleSubmit = async (e) => {
                 display:'flex',
                 justifyContent:'space-between',
                 padding:'10px 15px',
-                backgroundColor: '#1368EC',
+                backgroundColor: selectedPaymentMethod === 'cash' ? '#1368EC' : 'white',
                 borderRadius:'8px',
-                color:'white',
+                color: selectedPaymentMethod === 'cash' ? 'white' : '#1368EC',
                 marginTop:'5px',
                 cursor: 'pointer'
               }} 
-              onClick={handleCashPopupChange}
+              onClick={() => {
+                setSelectedPaymentMethod('cash');
+                handleCashPopupChange();
+              }}
             >
               <span>Cash</span>
               <span>[F1]</span>
@@ -1996,14 +2023,17 @@ const handleSubmit = async (e) => {
                   display:'flex',
                   justifyContent:'space-between',
                   padding:'10px 15px',
-                  backgroundColor:'white',
+                  backgroundColor: selectedPaymentMethod === 'card' ? '#1368EC' : 'white',
                   borderRadius:'10px',
                   border:'1px solid #E6E6E6',
                   width:'100%',
-                  color: '#1368EC',
+                  color: selectedPaymentMethod === 'card' ? 'white' : '#1368EC',
                   cursor: 'pointer',
                 }} 
-                onClick={handleCardPopupChange}
+                onClick={() => {
+                  setSelectedPaymentMethod('card');
+                  handleCardPopupChange();
+                }}
               >
                 <span>Card</span>
                 <span>[F2]</span>
@@ -2013,14 +2043,17 @@ const handleSubmit = async (e) => {
                   display:'flex',
                   justifyContent:'space-between',
                   padding:'10px 15px',
-                  backgroundColor:'white',
+                  backgroundColor: selectedPaymentMethod === 'upi' ? '#1368EC' : 'white',
                   borderRadius:'10px',
                   border:'1px solid #E6E6E6',
                   width:'100%',
-                  color: '#1368EC',
+                  color: selectedPaymentMethod === 'upi' ? 'white' : '#1368EC',
                   cursor: 'pointer',
                 }} 
-                onClick={handleUpiPopupChange}
+                onClick={() => {
+                  setSelectedPaymentMethod('upi');
+                  handleUpiPopupChange();
+                }}
               >
                 <span>UPI</span>
                 <span>[F3]</span>
@@ -2037,10 +2070,120 @@ const handleSubmit = async (e) => {
     <div className="pos-footer bg-white p-3 border-top">
       <div className="d-flex align-items-center justify-content-center flex-wrap gap-2">
         <a href='/pos' target='_blank' className="btn btn-orange d-inline-flex align-items-center justify-content-center" ><i className="ti ti-player-pause me-2" />Hold</a>
-        <a href="" className="btn btn-info d-inline-flex align-items-center justify-content-center"><i className="ti ti-trash me-2" />Void</a>
-        <a href="" className="btn btn-cyan d-flex align-items-center justify-content-center" data-bs-toggle="modal" data-bs-target="#payment-completed"><i className="ti ti-cash-banknote me-2" />Payment</a>
-        <a href="" className="btn btn-secondary d-inline-flex align-items-center justify-content-center" data-bs-toggle="modal" data-bs-target="#orders"><i className="ti ti-shopping-cart me-2" />View Orders</a>
-        <a href="" className="btn btn-indigo d-inline-flex align-items-center justify-content-center" data-bs-toggle="modal" data-bs-target="#reset"><i className="ti ti-reload me-2" />Reset</a>
+        {/* <a href="" className="btn btn-info d-inline-flex align-items-center justify-content-center"><i className="ti ti-trash me-2" />Void</a> */}
+        {/* <a href="" className="btn btn-cyan d-flex align-items-center justify-content-center" data-bs-toggle="modal" data-bs-target="#payment-completed"><i className="ti ti-cash-banknote me-2" />Payment</a> */}
+        {/* <a href="" className="btn btn-secondary d-inline-flex align-items-center justify-content-center" data-bs-toggle="modal" data-bs-target="#orders"><i className="ti ti-shopping-cart me-2" />View Orders</a> */}
+        <a href="" className="btn btn-indigo d-inline-flex align-items-center justify-content-center" data-bs-toggle="modal" data-bs-target="#reset"
+        
+              onClick={() => {
+                setSelectedItems([]);
+                setSelectedCustomer(null);
+                setBagCharge(0);
+                setAmountReceived('');
+                setSearchQuery('');
+                setSearchResults([]);
+                setShowDropdown(false);
+                // Reset totals
+                setSubTotal(0);
+                setTotalAmount(0);
+                setRoundedAmount(0);
+                setTotalTax(0);
+                setTotalItems(0);
+                setTotalQuantity(0);
+                setDiscount(0);
+                                    // Close all popups
+                    setCashPopup(false);
+                    setCardPopup(false);
+                    setUpiPopup(false);
+                    // Refresh transactions
+                    fetchPosSales();
+                    // Reset category filter
+                    setSelectedCategory(null);
+                    setProducts(allProducts);
+                    // Reset updown state
+                    setUpdown(false);
+                    // Reset search drop state
+                    setSearchDrop(false);
+                    // Reset filter values
+                    setCategoryValue('');
+                    setSocketValue('');
+                    setWarehouseValue('');
+                    setExprationValue('');
+                    // Reset OTP state
+                    setOtp(['', '', '', '']);
+                    // Reset address fields
+                    setCountry('');
+                    setState('');
+                    setCity('');
+                    setPinCode('');
+                    setSelectedCountry('');
+                    setSelectedState('');
+                    setSelectedCity('');
+                    // Reset form data
+                    if (formRef.current) {
+                      formRef.current.reset();
+                    }
+                    // Reset active tabs
+                    const initialTabs = allProducts.reduce((acc, product) => {
+                      acc[product._id] = "general";
+                      return acc;
+                    }, {});
+                    setActiveTabs(initialTabs);
+                    // Reset search query
+                    setSearchQuery('');
+                    // Reset search results
+                    setSearchResults([]);
+                    setShowDropdown(false);
+                    // Reset popup states
+                    setPopup(false);
+                    setAddCustomerPopup(false);
+                    setDiscountPopup(false);
+                    // Reset transaction popup
+                    setTransactionPopup(false);
+                    // Reset selected sale
+                    setSelectedSale(null);
+                    // Reset current page
+                    setCurrentPage(1);
+                    // Reset total pages
+                    setTotalPages(1);
+                    // Reset total sales
+                    setTotalSales(0);
+                    // Reset loading state
+                    setLoading(false);
+                    // Reset pos sales
+                    setPosSales([]);
+                    // Reset amount received
+                    setAmountReceived('');
+                    // Reset search query
+                    setSearchQuery('');
+                    // Reset search results
+                    setSearchResults([]);
+                    setShowDropdown(false);
+                    // Reset popup states
+                    setPopup(false);
+                    setAddCustomerPopup(false);
+                    setDiscountPopup(false);
+                    // Reset transaction popup
+                    setTransactionPopup(false);
+                    // Reset selected sale
+                    setSelectedSale(null);
+                    // Reset current page
+                    setCurrentPage(1);
+                    // Reset total pages
+                    setTotalPages(1);
+                    // Reset total sales
+                    setTotalSales(0);
+                    // Reset loading state
+                    setLoading(false);
+                    // Reset pos sales
+                    setPosSales([]);
+                    // Reset amount received
+                    setAmountReceived('');
+                  }}
+        >
+          <i className="ti ti-reload me-2" />
+          Reset
+        </a>
         <a onClick={handleTransactionPopupChange}  className="btn btn-danger d-inline-flex align-items-center justify-content-center" ><i className="ti ti-refresh-dot me-2"/>Transaction</a>
       </div>
     </div>
@@ -2384,6 +2527,10 @@ const handleSubmit = async (e) => {
             
             <div style={{display:'flex',justifyContent:'space-between',padding:'10px 0px'}}>
               <span>Select Bag Type</span>
+              
+                  <div style={{ position: 'relative', top: '0px', right: '5px' }}>
+                    <span style={{ backgroundColor: 'red', color: 'white', padding: '5px 11px', borderRadius: '50%', cursor: 'pointer', fontSize: '15px' }} onClick={closeBag}>x</span>
+                  </div>
             </div>
 
             <div style={{display:'flex',justifyContent:'space-around',alignItems:'center',marginTop:'20px',gap:'10px',marginBottom:'30px'}}>
@@ -3032,7 +3179,8 @@ const handleSubmit = async (e) => {
                     value={pinCode}
                     onChange={(e) => setPinCode(e.target.value)}
                     type="number"
-                    placeholder='123456'
+                    placeholder='Eg: 123456'
+                    maxLength="6"
                     style={{
                       width: "100%",
                       padding: "12px",
@@ -3049,6 +3197,28 @@ const handleSubmit = async (e) => {
 
               {/* buttons */}
               <div style={{display:'flex',justifyContent:'end',padding:'10px 0px',width:'100%',gap:'15px',marginTop:'5px',}}>
+                <button 
+                  type="button" 
+                  onClick={() => {
+                    // Clear all form fields
+                    setForm({
+                      name: '',
+                      email: '',
+                      phone: '',
+                      status: true,
+                    });
+                    // Clear location fields
+                    setSelectedCountry('');
+                    setSelectedState('');
+                    setSelectedCity('');
+                    setPinCode('');
+                    // Close popup
+                    setAddCustomerPopup(false);
+                  }}
+                  style={{padding:'3px 10px',backgroundColor:'#6B7280',border:'2px solid #E6E6E6',borderRadius:'8px',color:'white',cursor:'pointer'}}
+                >
+                  Cancel
+                </button>
                 <button type="submit" disabled={loading} style={{padding:'3px 10px',backgroundColor:'#1368EC',border:'2px solid #E6E6E6',borderRadius:'8px',color:'white',cursor:'pointer'}}>{loading ? 'Saving...' : 'Save'}</button>
               </div>
             </form>
