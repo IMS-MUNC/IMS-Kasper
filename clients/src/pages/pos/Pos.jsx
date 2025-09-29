@@ -207,6 +207,57 @@ const Pos=() => {
   }
   const closeCard = () => {
     setCardPopup(false);
+    // Reset card form when closing
+    setCardNumber('');
+    setCardHolderName('');
+    setValidTill('');
+    setCvv('');
+  };
+
+  // Card form state variables
+  const [cardNumber, setCardNumber] = useState('');
+  const [cardHolderName, setCardHolderName] = useState('');
+  const [validTill, setValidTill] = useState('');
+  const [cvv, setCvv] = useState('');
+
+  // Card validation functions
+  const handleCardNumberChange = (e) => {
+    const value = e.target.value.replace(/\D/g, ''); // Remove non-digits
+    if (value.length <= 16) {
+      setCardNumber(value);
+    }
+  };
+
+  const handleCardHolderNameChange = (e) => {
+    const value = e.target.value.replace(/[^a-zA-Z\s]/g, ''); // Only letters and spaces
+    setCardHolderName(value);
+  };
+
+  const handleValidTillChange = (e) => {
+    let value = e.target.value.replace(/\D/g, ''); // Remove non-digits
+    
+    if (value.length >= 2) {
+      const month = value.substring(0, 2);
+      const year = value.substring(2, 4);
+      
+      // Validate month (01-12)
+      if (parseInt(month) > 12 || parseInt(month) < 1) {
+        return; // Don't update if invalid month
+      }
+      
+      value = month + (year ? '/' + year : '');
+    }
+    
+    if (value.length <= 5) { // MM/YY format
+      setValidTill(value);
+    }
+  };
+
+  const handleCvvChange = (e) => {
+    const value = e.target.value.replace(/\D/g, ''); // Remove non-digits
+    if (value.length <= 3) {
+      setCvv(value);
+    }
   };
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -498,6 +549,35 @@ const [selectedPaymentMethod, setSelectedPaymentMethod] = useState(null);
   const [productSearchQuery, setProductSearchQuery] = useState('')
 
   const [transactionSearchQuery, setTransactionSearchQuery] = useState('');
+  
+  // Helper function to check if a product is expired
+  const isProductExpired = (product) => {
+    const expiryArr = product.variants?.get?.('Expiry') || product.variants?.['Expiry'] || product.variants?.get?.('expiry') || product.variants?.['expiry'];
+    if (!expiryArr || expiryArr.length === 0) return false;
+    
+    return expiryArr.some(dateStr => {
+      // Handle multiple date formats: DD-MM-YYYY, D-M-YYYY, DD/MM/YYYY, etc.
+      if (typeof dateStr === "string") {
+        // Try DD-MM-YYYY or D-M-YYYY format
+        const dateMatch = dateStr.match(/^(\d{1,2})[-/](\d{1,2})[-/](\d{4})$/);
+        if (dateMatch) {
+          const [, day, month, year] = dateMatch.map(Number);
+          if (day && month && year && day <= 31 && month <= 12) {
+            const expDate = new Date(year, month - 1, day);
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+            expDate.setHours(0, 0, 0, 0);
+
+            if (!isNaN(expDate.getTime())) {
+              return expDate < today; // Check if expired
+            }
+          }
+        }
+      }
+      return false;
+    });
+  };
+
       // Product search functionality
   const handleProductSearch = (query) => {
     setProductSearchQuery(query);
@@ -509,6 +589,9 @@ const [selectedPaymentMethod, setSelectedPaymentMethod] = useState(null);
 
     const searchTerm = query.toLowerCase();
     const filteredProducts = allProducts.filter(product => {
+      // First check if product is not expired, then apply search filters
+      if (isProductExpired(product)) return false;
+      
       return (
         product.productName?.toLowerCase().includes(searchTerm) ||
         product.description?.toLowerCase().includes(searchTerm) ||
@@ -534,8 +617,12 @@ const [selectedPaymentMethod, setSelectedPaymentMethod] = useState(null);
           Authorization: `Bearer ${token}`,
         },
         });
-        setProducts(res.data);
-        setAllProducts(res.data); // Store all products
+        
+        // Filter out expired products
+        const nonExpiredProducts = res.data.filter(product => !isProductExpired(product));
+        
+        setProducts(nonExpiredProducts);
+        setAllProducts(nonExpiredProducts); // Store all non-expired products
         // console.log("Products right:", res.data);
         // Log first product to see image structure
         if (res.data.length > 0) {
@@ -584,10 +671,10 @@ const [selectedPaymentMethod, setSelectedPaymentMethod] = useState(null);
       setSelectedCategory(null);
       setProducts(allProducts);
     } else {
-      // Filter products by selected category
+      // Filter products by selected category, excluding expired products
       setSelectedCategory(category);
       const filteredProducts = allProducts.filter(product => 
-        product.category && product.category._id === category._id
+        product.category && product.category._id === category._id && !isProductExpired(product)
       );
       setProducts(filteredProducts);
     }
@@ -739,10 +826,32 @@ const dueAmount = Math.max(roundedAmount - (Number(amountReceived) || 0), 0);
       updatedOtp[index] = value;
       setOtp(updatedOtp);
 
-      if (value && index < 5) {
+      // Move to next input if value is entered and not the last input
+      if (value && index < 3) {
         otpRefs[index + 1].current.focus();
       }
+    }
+  };
 
+  const handleOtpKeyDown = (index, e) => {
+    // Handle backspace navigation
+    if (e.key === 'Backspace') {
+      if (otp[index] === '' && index > 0) {
+        // If current input is empty and backspace is pressed, move to previous input
+        otpRefs[index - 1].current.focus();
+      } else if (otp[index] !== '') {
+        // If current input has value, clear it but stay in same input
+        const updatedOtp = [...otp];
+        updatedOtp[index] = '';
+        setOtp(updatedOtp);
+      }
+    }
+    // Handle arrow key navigation
+    else if (e.key === 'ArrowLeft' && index > 0) {
+      otpRefs[index - 1].current.focus();
+    }
+    else if (e.key === 'ArrowRight' && index < 3) {
+      otpRefs[index + 1].current.focus();
     }
   };
 
@@ -2400,8 +2509,11 @@ const handleSubmit = async (e) => {
           <div ref={CashRef} style={{width:'500px',padding:'10px 16px',overflowY:'auto',backgroundColor:'#fff',border:'1px solid #E1E1E1',borderRadius:'8px'}}>
             
             <div style={{display:'flex',justifyContent:'space-between',borderBottom:'1px solid #E1E1E1',padding:'10px 0px'}}>
-              <span>Cash details</span>
-              <span>₹{roundedAmount}</span>
+              <span>Cash: <span style={{color:'black'}}>₹{roundedAmount}</span></span>
+              
+                  <div style={{ position: 'relative', top: '-5px', right: '-2px' }}>
+                    <span style={{ backgroundColor: 'red', color: 'white', padding: '5px 11px', borderRadius: '50%', cursor: 'pointer', fontSize: '15px' }} onClick={closeCash}>x</span>
+                  </div>
             </div>
 
             <div style={{display:'flex',justifyContent:'space-between',padding:'10px 0px',width:'100%',gap:'15px',marginTop:'5px',}}>
@@ -2480,20 +2592,49 @@ const handleSubmit = async (e) => {
             
             <div style={{display:'flex',justifyContent:'space-between',borderBottom:'1px solid #E1E1E1',padding:'10px 0px'}}>
               <span>Enter Card details</span>
+              
+                  <div style={{ position: 'relative', top: '-5px', right: '-2px' }}>
+                    <span style={{ backgroundColor: 'red', color: 'white', padding: '5px 11px', borderRadius: '50%', cursor: 'pointer', fontSize: '15px' }} onClick={closeCard}>x</span>
+                  </div>
             </div>
 
             <div style={{display:'flex',justifyContent:'space-between',padding:'10px 0px',width:'100%',gap:'15px',marginTop:'5px',}}>
               <div style={{width:'100%'}}>
                 <span>Card Number</span>
                 <div style={{display:'flex',justifyContent:'space-between',padding:'10px 15px',backgroundColor:'#F9FAFB',borderRadius:'10px',border:'1px solid #E6E6E6',width:'100%',marginTop:'5px'}}>
-                  <input type="number" placeholder='1234 5678 9101 1213' style={{border:'none',outline:'none',width:'100%',backgroundColor:'#F9FAFB'}} required />
+                  <input 
+                    type="text" 
+                    placeholder='1234567890123456' 
+                    value={cardNumber}
+                    onChange={handleCardNumberChange}
+                    maxLength={16}
+                    style={{border:'none',outline:'none',width:'100%',backgroundColor:'#F9FAFB'}} 
+                    required 
+                  />
                 </div>
+                {cardNumber && cardNumber.length !== 16 && (
+                  <div style={{fontSize:'12px', color:'red', marginTop:'2px'}}>
+                    Card number must be exactly 16 digits
+                  </div>
+                )}
               </div>
               <div style={{width:'100%'}}>
                 <span>Name on Card</span>
                 <div style={{display:'flex',justifyContent:'space-between',padding:'10px 15px',backgroundColor:'#F9FAFB',borderRadius:'10px',border:'1px solid #E6E6E6',width:'100%',marginTop:'5px'}}>
-                  <input type="text" placeholder='Enter Card Holder Name' style={{border:'none',outline:'none',width:'100%',backgroundColor:'#F9FAFB'}} required />
+                  <input 
+                    type="text" 
+                    placeholder='Enter Card Holder Name' 
+                    value={cardHolderName}
+                    onChange={handleCardHolderNameChange}
+                    style={{border:'none',outline:'none',width:'100%',backgroundColor:'#F9FAFB'}} 
+                    required 
+                  />
                 </div>
+                {cardHolderName && !/^[a-zA-Z\s]+$/.test(cardHolderName) && (
+                  <div style={{fontSize:'12px', color:'red', marginTop:'2px'}}>
+                    Name should contain only letters and spaces
+                  </div>
+                )}
               </div>
             </div>
 
@@ -2501,14 +2642,40 @@ const handleSubmit = async (e) => {
               <div style={{width:'100%'}}>
                 <span>Valid till</span>
                 <div style={{display:'flex',justifyContent:'center',padding:'10px 15px',backgroundColor:'#F9FAFB',borderRadius:'10px',border:'1px solid #E6E6E6',width:'100%',marginTop:'5px'}}>
-                  <input type="number" placeholder='30/12' style={{border:'none',outline:'none',width:'100%',backgroundColor:'#F9FAFB'}} required />
+                  <input 
+                    type="text" 
+                    placeholder='MM/YY' 
+                    value={validTill}
+                    onChange={handleValidTillChange}
+                    maxLength={5}
+                    style={{border:'none',outline:'none',width:'100%',backgroundColor:'#F9FAFB'}} 
+                    required 
+                  />
                 </div>
+                {validTill && validTill.length > 0 && validTill.length < 5 && (
+                  <div style={{fontSize:'12px', color:'red', marginTop:'2px'}}>
+                    Format: MM/YY (e.g., 12/25)
+                  </div>
+                )}
               </div>
               <div style={{width:'100%'}}>
                 <span>CVV</span>
                 <div style={{display:'flex',justifyContent:'center',padding:'10px 15px',backgroundColor:'#F9FAFB',borderRadius:'10px',border:'1px solid #E6E6E6',width:'100%',marginTop:'5px'}}>
-                  <input type="number" placeholder='999' style={{border:'none',outline:'none',width:'100%',backgroundColor:'#F9FAFB'}} required />
+                  <input 
+                    type="text" 
+                    placeholder='123' 
+                    value={cvv}
+                    onChange={handleCvvChange}
+                    maxLength={3}
+                    style={{border:'none',outline:'none',width:'100%',backgroundColor:'#F9FAFB'}} 
+                    required 
+                  />
                 </div>
+                {cvv && cvv.length !== 3 && (
+                  <div style={{fontSize:'12px', color:'red', marginTop:'2px'}}>
+                    CVV must be exactly 3 digits
+                  </div>
+                )}
               </div>
             </div>
 
@@ -2529,6 +2696,7 @@ const handleSubmit = async (e) => {
                   value={digit}
                   ref={otpRefs[idx]}
                   onChange={(e) => handleOtpChange(idx, e.target.value)}
+                  onKeyDown={(e) => handleOtpKeyDown(idx, e)}
                   placeholder='0'
                   style={{color:'#C2C2C2',width:'60px',height:'60px',textAlign:'center',borderRadius:'8px',padding:'8px',backgroundColor:'#F5F5F5',outline:'none',border:'none',fontSize:'50px'}}
                 />
@@ -2588,7 +2756,7 @@ const handleSubmit = async (e) => {
             <div style={{display:'flex',justifyContent:'space-between',padding:'10px 0px'}}>
               <span>Select Bag Type</span>
               
-                  <div style={{ position: 'relative', top: '0px', right: '5px' }}>
+                  <div style={{ position: 'relative', top: '-5px', right: '-2px' }}>
                     <span style={{ backgroundColor: 'red', color: 'white', padding: '5px 11px', borderRadius: '50%', cursor: 'pointer', fontSize: '15px' }} onClick={closeBag}>x</span>
                   </div>
             </div>
@@ -2832,7 +3000,7 @@ const handleSubmit = async (e) => {
                       </>)}
                     <div style={{ color: 'black', padding: '7px 8px', borderRadius: '6px', border: '2px solid #ccc', display: 'flex', gap: '10px', alignItems: 'center', cursor:'pointer' }} onClick={handleClear}><TbArrowsSort /></div>
                     <div style={{}}>
-                      <span style={{backgroundColor:'red',color:'white',padding:'4px 11px',borderRadius:'50%',cursor:'pointer',fontSize:'20px'}} onClick={handlePopupClose}>x</span>
+                      <span style={{backgroundColor:'red',color:'white',padding:'3px 11px',borderRadius:'50%',cursor:'pointer',fontSize:'20px'}} onClick={handlePopupClose}>x</span>
                     </div>
                   </div>
                 </div>
