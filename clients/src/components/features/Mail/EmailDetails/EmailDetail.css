@@ -11,7 +11,7 @@
 
 .email-meta {
   position: absolute;
-  top:5;
+  top: 5;
   background: white;
   padding: 10px;
   border-radius: 6px;
@@ -21,6 +21,7 @@
   width: 350px;
   box-shadow: rgba(0, 0, 0, 0.24) 0px 3px 8px;
   margin-left: 200px;
+  z-index: 999;
 }
 
 .email-detail {
@@ -150,7 +151,6 @@ div:hover .hover-actions {
   opacity: 1;
 }
 
-
 .attachment-card {
   position: relative;
   width: 160px;
@@ -209,7 +209,6 @@ div:hover .hover-actions {
   color: #333;
   font-weight: 500;
 }
-
 
 .attachment-box {
   position: relative;

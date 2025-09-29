@@ -37,7 +37,7 @@ const EmailMessages = ({
   const mailboxName = location.pathname.split("/").pop();
   const displayMailboxName = mailboxName.charAt(0).toUpperCase() + mailboxName.slice(1)
   const [search, setSearch] = useState("");
-  const [emails, setEmails] = useState([]);
+  const [emails, setEmails] = useState(filteredEmails || []);
 
   const [selectedEmails, setSelectedEmails] = useState([]);
   const [menuOpenId, setMenuOpenId] = useState(null);
@@ -234,6 +234,13 @@ const EmailMessages = ({
   const handleBackToInbox = () => {
     setSelectedEmail(null);
   };
+  useEffect(() => {
+  if (filteredEmails && Array.isArray(filteredEmails)) {
+    setEmails(filteredEmails);
+  } else {
+    setEmails([]);
+  }
+}, [filteredEmails]);
 
   const handleToggleStar = async (id, currentStarred) => {
     if (isDraftPage) {
@@ -276,7 +283,22 @@ const EmailMessages = ({
       console.error("Failed to update starred status", error);
     }
   };
-  const toggleStar = externalToggleStar || handleToggleStar;
+  // const toggleStar = externalToggleStar || handleToggleStar;
+  const toggleStar = (id, currentStarred) => {
+    // Optimistic update in EmailMessages state
+    setEmails(prev => {
+      if (!prev || !Array.isArray(prev)) return []; // safety check
+      return prev.map(email =>
+        email._id === id
+          ? { ...email, tags: { ...email.tags, starred: !currentStarred } }
+          : email
+      )
+    });
+
+    // Call parent handler to update backend
+    handleToggleStar(id, currentStarred);
+  };
+
 
   // for delete permanently via delete page code
   const handlePermanentDelete = async () => {
