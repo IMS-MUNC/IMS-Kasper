@@ -75,7 +75,7 @@ const token = localStorage.getItem("token");
         if (Array.isArray(sale.products)) {
           sale.products.forEach((p) => {
             // ✅ Use correct quantity field
-            totalSold += p.saleQty || p.quantity || p.qty || 0;
+            totalSold += p.unitSold || 0;
           });
         }
       }
@@ -97,7 +97,7 @@ const token = localStorage.getItem("token");
       ) {
         if (Array.isArray(purchase.products)) {
           purchase.products.forEach((p) => {
-            totalPurchased += p.purchaseQty || p.quantity || p.qty || 0;
+            totalPurchased += p.initialQuantity || 0;
           });
         }
       }
@@ -305,6 +305,18 @@ const token = localStorage.getItem("token");
     return sum + soldUnits * item.sellingPrice;
   }, 0);
 
+  // ✅ Calculate total stock value based on your formula:
+  //    (initialProduct * mrp) - (soldProduct * mrp)
+  //  => (initialStock - soldUnits) * mrp
+  const totalStockValue = filteredProducts.reduce((sum, item) => {
+    // const initialUnits = Number(item.initialStock) || 0;
+    const itemQuanatity = Number(item.quantity) || 0;
+    const soldUnits = Number(salesMap[item._id] || 0);
+    const mrp = Number(item.mrp ?? item.sellingPrice) || 0;
+    const remainingUnits = itemQuanatity - soldUnits;
+    return sum + remainingUnits * mrp;
+  }, 0);
+
   // total available items
   const totalItems = filteredProducts.reduce((sum, item) => {
     return sum + (item.quantity || 0);
@@ -377,7 +389,7 @@ const token = localStorage.getItem("token");
           </span>
         </div>
         <div>
-          <Link to="/Godown">
+          <Link to={`/Godown/${id}`}>
             <button
               style={{
                 backgroundColor: "#1368EC",
@@ -420,7 +432,7 @@ const token = localStorage.getItem("token");
             </span>
             <br />
             <span style={{ textAlign: "left" }}>
-              <b>₹{totalRevenue.toLocaleString("en-IN")}</b>
+              <b>₹{totalStockValue.toLocaleString("en-IN")}</b>
             </span>
           </div>
         </div>
@@ -852,7 +864,7 @@ const token = localStorage.getItem("token");
                   <input type="checkbox" />Product</th>
                 <th style={{ padding: "12px 24px" }}>SKU</th>
                 <th style={{ padding: "12px 24px" }}>MRP</th>
-                <th style={{ padding: "12px 24px" }}>Available QTY</th>
+                <th style={{ padding: "12px 24px" }}>Available Quantity</th>
                 <th style={{ padding: "12px 24px" }}>Unit Sold</th>
                 <th style={{ padding: "12px 24px" }}>Revenue</th>
               </tr>
@@ -912,7 +924,7 @@ const token = localStorage.getItem("token");
                           borderBottom: "1px solid #e6e6e6",
                         }}
                       >
-                        {item.quantity} {item.unit}
+                        {item.quantity} {item.unit} 
                       </td>
                       <td
                         style={{
@@ -1077,7 +1089,7 @@ const token = localStorage.getItem("token");
             }}
           >
             <span>Stock Movement history</span>
-            <div
+            {/* <div
               style={{
                 borderRadius: "4px",
                 border: "1px solid #e6e6e6",
@@ -1098,7 +1110,7 @@ const token = localStorage.getItem("token");
               >
                 <option value="Warehouse">Select Warehouse</option>
               </select>
-            </div>
+            </div> */}
           </div>
         </div>
 

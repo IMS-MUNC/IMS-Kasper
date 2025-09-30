@@ -1329,6 +1329,20 @@ function AddWarehouse() {
 
   const [loading, setLoading] = useState(false);
 
+  const handleCancel = () => {
+    setWarehouseName("");
+    setPhone("");
+    setWarehouseCode("");
+    setWarehouseOwner("");
+    setAddress("");
+    setAddress("");
+    setCountry("");
+
+    setCountry("");
+    setState("");
+    setPinCode("");
+  }
+
   // Retrieve token
   const token = localStorage.getItem("token");
 
@@ -1710,6 +1724,9 @@ function AddWarehouse() {
   };
 
   return (
+    <div className="page-wrapper">
+      <div className="content">
+        
     <div
       style={{
         fontFamily: "Arial, sans-serif",
@@ -1782,7 +1799,7 @@ function AddWarehouse() {
                   display: "block",
                 }}
               >
-                Warehouse Name <span className="text-danger">*</span>
+                Warehouse Name 
               </label>
               <input
                 type="text"
@@ -1800,12 +1817,7 @@ function AddWarehouse() {
                 }}
                 placeholder="Enter Warehouse Name"
               />
-              {errors.warehouseName && (
-                <div style={{ color: "#EF4444", fontSize: "12px", marginTop: "4px" }}>
-                  {errors.warehouseName}
-                </div>
-              )}
-            </div>
+            </div>                                    
             <div style={{ flex: 1 }}>
               <label
                 style={{
@@ -2279,7 +2291,8 @@ function AddWarehouse() {
                           </label>
                           <input
                             type="number"
-                            min="0"
+                            required
+                            
                             value={zones}
                             onChange={(e) =>
                               setZones(
@@ -2320,7 +2333,7 @@ function AddWarehouse() {
                             </label>
                             <input
                               type="number"
-                              min="1"
+                              required
                               value={rows}
                               onChange={(e) =>
                                 setRows(
@@ -2354,7 +2367,7 @@ function AddWarehouse() {
                             </label>
                             <input
                               type="number"
-                              min="1"
+                              required 
                               value={columns}
                               onChange={(e) =>
                                 setColumns(
@@ -2551,7 +2564,7 @@ function AddWarehouse() {
             <>
               <button
                 type="button"
-                onClick={handleDraft}
+                onClick={handleCancel}
                 style={{
                   backgroundColor: "#6B7280",
                   color: "#FFFFFF",
@@ -2569,7 +2582,7 @@ function AddWarehouse() {
                 }
                 onMouseOut={(e) => (e.target.style.backgroundColor = "#6B7280")}
               >
-                Draft
+                Cancel
               </button>
               <button
                 type="button"
@@ -2618,6 +2631,8 @@ function AddWarehouse() {
           )}
         </div>
       </form>
+    </div>
+      </div>
     </div>
   );
 }
