@@ -16,6 +16,8 @@ import { saveAs } from "file-saver";
 
 import CountryModal from "./CountryEdit";
 import DeleteAlert from "../../../utils/sweetAlert/DeleteAlert";
+import jsPDF from "jspdf";
+import autoTable from "jspdf-autotable";
 
 const Country = () => {
   const [countries, setCountries] = useState([]);
@@ -24,7 +26,8 @@ const Country = () => {
   const [, setEditMode] = useState(false);
   const [editingCountry, setEditingCountry] = useState(null);
   const [searchTerm, setSearchTerm] = useState("");
-const token = localStorage.getItem("token");
+  const token = localStorage.getItem("token");
+  const [sortOption, setSortOption] = useState("recent");
 
   // Fetch countries on mount
   useEffect(() => {
@@ -33,10 +36,10 @@ const token = localStorage.getItem("token");
 
   const fetchCountries = async () => {
     try {
-      const res = await axios.get(`${BASE_URL}/api/countries`,{
-         headers: {
-        Authorization: `Bearer ${token}`,
-      },
+      const res = await axios.get(`${BASE_URL}/api/countries`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
       });
       setCountries(res.data);
     } catch (err) {
@@ -93,58 +96,58 @@ const token = localStorage.getItem("token");
 
 
   const handleAdd = async (e) => {
-  e.preventDefault();
-  try {
-    await axios.post(
-      `${BASE_URL}/api/countries`,
-      {
-        name: newName,
-        code: newCode,
-      },
-      {
-        headers: {
-          Authorization: `Bearer ${token}`,
+    e.preventDefault();
+    try {
+      await axios.post(
+        `${BASE_URL}/api/countries`,
+        {
+          name: newName,
+          code: newCode,
         },
-      }
-    );
-    toast.success("Country added");
-    setNewName("");
-    setNewCode("");
-    fetchCountries();
-    window.$(`#add-country`).modal("hide"); // auto close
-  } catch (err) {
-    console.error(err);
-    toast.error(err.response?.data?.message || "Error adding country");
-  }
-};
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+      toast.success("Country added");
+      setNewName("");
+      setNewCode("");
+      fetchCountries();
+      window.$(`#add-country`).modal("hide"); // auto close
+    } catch (err) {
+      console.error(err);
+      toast.error(err.response?.data?.message || "Error adding country");
+    }
+  };
 
-const handleUpdate = async (e) => {
-  e.preventDefault();
-  try {
-    await axios.put(
-      `${BASE_URL}/api/countries/${editingCountry._id}`,
-      {
-        name: newName,
-        code: newCode,
-      },
-      {
-        headers: {
-          Authorization: `Bearer ${token}`,
+  const handleUpdate = async (e) => {
+    e.preventDefault();
+    try {
+      await axios.put(
+        `${BASE_URL}/api/countries/${editingCountry._id}`,
+        {
+          name: newName,
+          code: newCode,
         },
-      }
-    );
-    toast.success("Country updated");
-    setEditMode(false);
-    setEditingCountry(null);
-    setNewName("");
-    setNewCode("");
-    fetchCountries();
-    window.$(`#add-country`).modal("hide"); // auto close
-  } catch (err) {
-    console.error(err);
-    toast.error("Failed to update");
-  }
-};
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+      toast.success("Country updated");
+      setEditMode(false);
+      setEditingCountry(null);
+      setNewName("");
+      setNewCode("");
+      fetchCountries();
+      window.$(`#add-country`).modal("hide"); // auto close
+    } catch (err) {
+      console.error(err);
+      toast.error("Failed to update");
+    }
+  };
   const handleDelete = async (id) => {
     // if (!window.confirm("Are you sure you want to delete this country?"))
     const confirmed = await DeleteAlert({
@@ -155,10 +158,10 @@ const handleUpdate = async (e) => {
 
     if (!confirmed) return;
     try {
-      await axios.delete(`${BASE_URL}/api/countries/${id}`,{
-         headers: {
-        Authorization: `Bearer ${token}`,
-      },
+      await axios.delete(`${BASE_URL}/api/countries/${id}`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
       });
       toast.success("Deleted");
       fetchCountries();
@@ -175,43 +178,63 @@ const handleUpdate = async (e) => {
       (country?.code || "").toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  const handleImportExcel = async (e) => {
-    const file = e.target.files[0];
-    if (!file) return;
+  // const handleImportExcel = async (e) => {
+  //   const file = e.target.files[0];
+  //   if (!file) return;
 
-    try {
-      const reader = new FileReader();
-      reader.onload = async (event) => {
-        const data = new Uint8Array(event.target.result);
-        const workbook = XLSX.read(data, { type: "array" });
-        const sheetName = workbook.SheetNames[0];
-        const sheet = workbook.Sheets[sheetName];
-        const jsonData = XLSX.utils.sheet_to_json(sheet);
+  //   try {
+  //     const reader = new FileReader();
+  //     reader.onload = async (event) => {
+  //       const data = new Uint8Array(event.target.result);
+  //       const workbook = XLSX.read(data, { type: "array" });
+  //       const sheetName = workbook.SheetNames[0];
+  //       const sheet = workbook.Sheets[sheetName];
+  //       const jsonData = XLSX.utils.sheet_to_json(sheet);
 
-        // Format to match backend model
-        const formattedData = jsonData.map((item) => ({
-          name: item["Country Name"],
-          code: item["Country Code"],
-        }));
+  //       // Format to match backend model
+  //       const formattedData = jsonData.map((item) => ({
+  //         name: item["Country Name"],
+  //         code: item["Country Code"],
+  //       }));
 
-        // ✅ Send all at once
-        const res = await axios.post(`${BASE_URL}/api/countries/import`, {
-          countries: formattedData,
-           headers: {
-        Authorization: `Bearer ${token}`,
-      },
-        });
+  //       // ✅ Send all at once
+  //       const res = await axios.post(`${BASE_URL}/api/countries/import`, {
+  //         countries: formattedData,
+  //          headers: {
+  //       Authorization: `Bearer ${token}`,
+  //     },
+  //       });
 
-        toast.success(res.data.message);
-        fetchCountries();
-      };
+  //       toast.success(res.data.message);
+  //       fetchCountries();
+  //     };
 
-      reader.readAsArrayBuffer(file);
-    } catch (error) {
-      console.error(error);
-      toast.error("Import failed");
-    }
-  };
+  //     reader.readAsArrayBuffer(file);
+  //   } catch (error) {
+  //     console.error(error);
+  //     toast.error("Import failed");
+  //   }
+  // };
+
+  const handleExportPDF = () => {
+    const doc = new jsPDF();
+    doc.text("Country List", 14, 16);
+    const tableColumn = ["Country Name", "Country Code"];
+    const tableRows = [];
+    filteredCountries.forEach((countries) => {
+      const countriesData = [
+        countries.name,
+        countries.code,
+      ];
+      tableRows.push(countriesData);
+    });
+    autoTable(doc, {
+      startY: 20,
+      head: [tableColumn],
+      body: tableRows,
+    });
+    doc.save('country_list.pdf')
+  }
 
   const handleExportExcel = () => {
     const worksheetData = countries.map((country) => ({
@@ -234,6 +257,33 @@ const handleUpdate = async (e) => {
     saveAs(fileData, "Countries.xlsx");
   };
 
+  const sortedCountries = [...filteredCountries].sort((a, b) => {
+    if (sortOption === "asc") {
+      return (a.name || "").localeCompare(b.name || "");
+    }
+    if (sortOption === "desc") {
+      return (b.name || "").localeCompare(a.name || "")
+    }
+    if (sortOption === "recent") {
+      return new Date(b.createdAt || 0) - new Date(a.createdAt || 0);
+    }
+    return 0;
+  });
+
+  // filter by time (if backend returns createdAt field)
+  let finalCountries = sortedCountries;
+  if (sortOption === "last7") {
+    const sevenDaysAgo = new Date();
+    sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+    finalCountries = sortedCountries.filter((c) => new Date(c.createdAt) >= sevenDaysAgo)
+  }
+
+  if (sortOption === "lastMonth") {
+    const oneMonthAgo = new Date();
+    oneMonthAgo.setMonth(oneMonthAgo.getMonth() - 1);
+    finalCountries = sortedCountries.filter((c) => new Date(c.createdAt) >= oneMonthAgo)
+  }
+
   return (
     <div className="page-wrapper">
       <div className="content">
@@ -247,6 +297,7 @@ const handleUpdate = async (e) => {
           <div className="table-top-head me-2">
             <li>
               <button
+                onClick={handleExportPDF}
                 type="button"
                 data-bs-toggle="tooltip"
                 data-bs-placement="top"
@@ -256,7 +307,7 @@ const handleUpdate = async (e) => {
                 <FaFilePdf />
               </button>
             </li>
-            <li>
+            {/* <li>
               <label className="icon-btn m-0" title="Import Excel">
                 <input
                   type="file"
@@ -266,7 +317,7 @@ const handleUpdate = async (e) => {
                 />
                 <FaFileExcel style={{ color: "green" }} />
               </label>
-            </li>
+            </li> */}
             <li>
               <button
                 type="button"
@@ -326,6 +377,7 @@ const handleUpdate = async (e) => {
                     <a
                       href="javascript:void(0);"
                       className="dropdown-item rounded-1"
+                      onClick={() => setSortOption("recent")}
                     >
                       Recently Added
                     </a>
@@ -334,6 +386,7 @@ const handleUpdate = async (e) => {
                     <a
                       href="javascript:void(0);"
                       className="dropdown-item rounded-1"
+                      onClick={() => setSortOption("asc")}
                     >
                       Ascending
                     </a>
@@ -342,6 +395,7 @@ const handleUpdate = async (e) => {
                     <a
                       href="javascript:void(0);"
                       className="dropdown-item rounded-1"
+                      onClick={() => setSortOption("desc")}
                     >
                       Desending
                     </a>
@@ -350,6 +404,7 @@ const handleUpdate = async (e) => {
                     <a
                       href="javascript:void(0);"
                       className="dropdown-item rounded-1"
+                      onClick={() => setSortOption("lastMonth")}
                     >
                       Last Month
                     </a>
@@ -358,6 +413,7 @@ const handleUpdate = async (e) => {
                     <a
                       href="javascript:void(0);"
                       className="dropdown-item rounded-1"
+                      onClick={() => setSortOption("last7")}
                     >
                       Last 7 Days
                     </a>
@@ -384,8 +440,8 @@ const handleUpdate = async (e) => {
                   </tr>
                 </thead>
                 <tbody>
-                  {filteredCountries.length > 0 ? (
-                    filteredCountries.map((country) => (
+                  {finalCountries.length > 0 ? (
+                    finalCountries.map((country) => (
                       <tr key={country._id}>
                         <td>
                           <label className="checkboxs">
@@ -458,70 +514,6 @@ const handleUpdate = async (e) => {
           onSubmit={handleUpdate}
           submitLabel="Update Country"
         />
-
-        {/* ===================== */}
-        {/* <div className="modal fade" id="add-country">
-          <div className="modal-dialog modal-dialog-centered">
-            <div className="modal-content">
-              <div className="modal-header">
-                <div className="page-title">
-                  <h4>Add Country</h4>
-                </div>
-                <button
-                  type="button"
-                  className="close"
-                  data-bs-dismiss="modal"
-                  aria-label="Close"
-                >
-                  <span aria-hidden="true">×</span>
-                </button>
-              </div>
-              <form onSubmit={editMode ? handleUpdate : handleAdd}>
-                <div className="modal-body">
-                  <div className="row">
-                    <div className="mb-3">
-                      <label className="form-label">
-                        Country Name <span className="text-danger">*</span>
-                      </label>
-                      <input
-                        type="text"
-                        className="form-control"
-                        value={newName}
-                        onChange={(e) => setNewName(e.target.value)}
-                      />
-                    </div>
-                    <div className="mb-3">
-                      <label className="form-label">
-                        Country Code <span className="text-danger">*</span>
-                      </label>
-                      <input
-                        type="text"
-                        className="form-control"
-                        value={newCode}
-                        onChange={(e) => setNewCode(e.target.value)}
-                      />
-                    </div>
-                  </div>
-                </div>
-                <div className="modal-footer">
-                  <button
-                    type="button"
-                    className="btn me-2 btn-secondary fs-13 fw-medium p-2 px-3 shadow-none"
-                    data-bs-dismiss="modal"
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    type="submit"
-                    className="btn btn-primary fs-13 fw-medium p-2 px-3"
-                  >
-                    Add Country
-                  </button>
-                </div>
-              </form>
-            </div>
-          </div>
-        </div> */}
         {/* /Add Country */}
       </div>
     </div>
