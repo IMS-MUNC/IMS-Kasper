@@ -177,6 +177,24 @@ exports.createPurchase = async (req, res) => {
 
         await purchase.save();
 
+        // Push purchase info into each product's purchases array
+        for (const item of finalProducts) {
+          await Product.findByIdAndUpdate(
+            item.product,
+            {
+              $push: {
+                purchases: {
+                  referenceNumber,
+                  purchaseId: purchase._id,
+                  quantity: item.quantity,
+                  purchasePrice: item.purchasePrice,
+                  purchaseDate: parsedDate
+                }
+              }
+            }
+          );
+        }
+
         res.status(201).json({ success: true, purchase });
     } catch (error) {
         console.error('Purchase creation failed:', error);
@@ -383,14 +401,29 @@ exports.updatePurchase = async (req, res) => {
 
             // If returnQty is present and > 0, update product stock and log return in stock history
             if (returnQty && Number(returnQty) > 0) {
-                // Subtract returned quantity from product stock
-                await Product.findByIdAndUpdate(productId, {
-                    $inc: { quantity: -Math.abs(returnQty) },
-                    $push: {
-                        newPurchasePrice: purchasePrice,
-                        newQuantity: -Math.abs(returnQty),
-                    },
-                });
+        // Subtract returned quantity from product stock
+        await Product.findByIdAndUpdate(productId, {
+          $inc: { quantity: -Math.abs(returnQty) },
+          $push: {
+            newPurchasePrice: purchasePrice,
+            newQuantity: -Math.abs(returnQty),
+            purchasedetails:[ {
+              referenceNumber,
+              purchaseId: id,
+              quantity: -Math.abs(returnQty),
+              purchasePrice,
+              purchaseDate: parsedDate,
+              discount,
+              discountAmount,
+              tax,
+              taxAmount,
+              unitCost,
+              totalCost,
+              unit,
+              returnQty: Number(returnQty)
+            }]
+          },
+        });
 
                 // Log return in stock history
                 await StockHistory.create({

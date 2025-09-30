@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { toast } from 'react-toastify';
 import { Link, useNavigate } from "react-router-dom";
 import { exportToExcel, exportToPDF } from './exportUtils';
 import BASE_URL from "../../../../pages/config/config";
@@ -145,10 +146,11 @@ const ExpriedProduct = () => {
         const token = localStorage.getItem("token");
         const res = await axios.get(`${BASE_URL}/api/products`, {
           headers: {
-            Authorization: `Bearer ${token}`, // ✅ token sent properly
+            Authorization: `Bearer ${token}`,
           },
         });
-        setProducts(res.data);
+        // If API returns { products: [...] }, use that, else fallback
+        setProducts(Array.isArray(res.data.products) ? res.data.products : Array.isArray(res.data) ? res.data : []);
       } catch (err) {
         setProducts([]);
       } finally {
@@ -474,7 +476,19 @@ const ExpriedProduct = () => {
               <a onClick={handleExcel} title="Download Excel" ><FaFileExcel className="fs-20" style={{ color: "green" }} /></a>
             </li> */}
             <li>
-              <button data-bs-toggle="tooltip" data-bs-placement="top" title="Refresh" onClick={() => location.reload()} className="fs-20" style={{ backgroundColor: 'white', color: '', padding: '5px 5px', display: 'flex', alignItems: 'center', border: '1px solid #e8eaebff', cursor: 'pointer', borderRadius: '4px' }}><TbRefresh className="ti ti-refresh" /></button>
+              <button
+                data-bs-toggle="tooltip"
+                data-bs-placement="top"
+                title="Refresh"
+                onClick={() => {
+                  window.location.reload();
+                  toast.success("Expired products refreshed successfully!");
+                }}
+                className="fs-20"
+                style={{ backgroundColor: 'white', color: '', padding: '5px 5px', display: 'flex', alignItems: 'center', border: '1px solid #e8eaebff', cursor: 'pointer', borderRadius: '4px' }}
+              >
+                <TbRefresh className="ti ti-refresh" />
+              </button>
             </li>
             {/* <li>
           <a data-bs-toggle="tooltip" data-bs-placement="top" title="Collapse" id="collapse-header"><i className="ti ti-chevron-up" /></a>
