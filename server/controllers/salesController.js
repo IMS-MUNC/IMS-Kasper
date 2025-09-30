@@ -278,8 +278,9 @@ exports.createSale = async (req, res) => {
       currency,
       enableTax,
       enableAddCharges,
-      grandTotal,
-      company, // <-- Accept company ObjectId from frontend
+      grandTotals,
+      billSummary,
+      company,
     } = req.body;
 
 
@@ -310,6 +311,13 @@ exports.createSale = async (req, res) => {
         $push: {
           soldPrice: item.sellingPrice,
           soldQuantity: item.saleQty,
+          purchases: {
+            referenceNumber: referenceNumber,
+            purchaseId: null, // Not a purchase, but sale reference
+            quantity: item.saleQty,
+            purchasePrice: item.sellingPrice,
+            purchaseDate: saleDate
+          }
         },
       });
 
@@ -327,30 +335,46 @@ exports.createSale = async (req, res) => {
 
 
 
-    // ✅ Generate next invoiceId
-    let invoiceId = "INV001";
-    // Find last invoice by createdAt, not _id, to avoid duplicate key error
-    const lastInvoice = await Sales.findOne({ invoiceId: { $exists: true, $ne: null } }, { invoiceId: 1 }).sort({ createdAt: -1 });
-    if (lastInvoice && lastInvoice.invoiceId) {
-      const match = lastInvoice.invoiceId.match(/INV(\d+)/);
-      if (match) {
-        let num = parseInt(match[1], 10);
-        // Check for existing invoiceId in DB and increment until unique
-        let nextId;
-        do {
-          num++;
-          nextId = `INV${num.toString().padStart(3, "0")}`;
-        } while (await Sales.exists({ invoiceId: nextId }));
-        invoiceId = nextId;
-      }
-    }
+    // // ✅ Generate next invoiceId
+    // let invoiceId = "INV001";
+    // // Find last invoice by createdAt, not _id, to avoid duplicate key error
+    // const lastInvoice = await Sales.findOne({ invoiceId: { $exists: true, $ne: null } }, { invoiceId: 1 }).sort({ createdAt: -1 });
+    // if (lastInvoice && lastInvoice.invoiceId) {
+    //   const match = lastInvoice.invoiceId.match(/INV(\d+)/);
+    //   if (match) {
+    //     let num = parseInt(match[1], 10);
+    //     // Check for existing invoiceId in DB and increment until unique
+    //     let nextId;
+    //     do {
+    //       num++;
+    //       nextId = `INV${num.toString().padStart(3, "0")}`;
+    //     } while (await Sales.exists({ invoiceId: nextId }));
+    //     invoiceId = nextId;
+    //   }
+    // }
 
     // ✅ Create Sale with invoiceId
     const sale = new Sales({
       customer,
       billing,
       shipping,
-      products,
+      products: products.map(p => ({
+        productId: p.productId,
+        saleQty: p.saleQty,
+        quantity: p.quantity,
+        sellingPrice: p.sellingPrice,
+        discount: p.discount,
+        discountType: p.discountType,
+        tax: p.tax,
+        unit: p.unit,
+        hsnCode: p.hsnCode,
+        subTotal: p.subTotal,
+        discountAmount: p.discountAmount,
+        taxableAmount: p.taxableAmount,
+        taxAmount: p.taxAmount,
+        lineTotal: p.lineTotal,
+        unitCost: p.unitCost,
+      })),
       saleDate,
       status,
       paymentType,
@@ -367,6 +391,8 @@ exports.createSale = async (req, res) => {
       description,
       cgst,
       sgst,
+      cgstValue: billSummary?.cgst || 0,
+      sgstValue: billSummary?.sgst || 0,
       totalAmount,
       labourCost,
       orderTax,
@@ -378,8 +404,18 @@ exports.createSale = async (req, res) => {
       currency,
       enableTax,
       enableAddCharges,
-      grandTotal,
-      invoiceId,
+      grandTotals,
+      billSummary,
+      grandTotal: billSummary?.grandTotal || grandTotals || grandTotal,
+      createdBy: req.user ? {
+        name: req.user.firstName + ' ' + req.user.lastName,
+        email: req.user.email
+      } : undefined,
+
+      updatedBy: req.user ? {
+        name: req.user.firstName + ' ' + req.user.lastName,
+        email: req.user.email
+      } : undefined,
     });
 
     await sale.save();
@@ -399,42 +435,7 @@ exports.createSale = async (req, res) => {
         notes: "Initial payment logged during Sale creation",
       });
     }
-    // ✅ Create Invoice entry
-    try {
-      await Invoice.create({
-        sale: sale._id,
-        customer,
-        company: company || null, // <-- Set company ObjectId if provided
-        products,
-        billing,
-        shipping,
-        invoiceId,
-        saleDate,
-        dueDate,
-        totalAmount,
-        paidAmount,
-        dueAmount,
-        paymentType,
-        paymentStatus,
-        paymentMethod,
-        transactionId,
-        transactionDate,
-        onlineMod,
-        cgst,
-        sgst,
-        orderTax,
-        orderDiscount,
-        roundOff,
-        roundOffValue,
-        shippingCost,
-        notes,
-        description,
-        images,
-        grandTotal,
-      });
-    } catch (err) {
-      console.error("Error creating invoice entry:", err);
-    }
+    // Invoice is NOT created on sale creation. It will be created only when converting sale to invoice.
     // Fetch updated stock for all products in the sale
     const updatedStocks = await Promise.all(
       products.map(async item => {
@@ -442,7 +443,7 @@ exports.createSale = async (req, res) => {
         return product;
       })
     );
-    res.status(201).json({ message: "Sale created successfully", sale, updatedStocks, grandTotal });
+    res.status(201).json({ message: "Sale created successfully", sale, updatedStocks, grandTotals });
   } catch (error) {
     console.error("Error creating sale:", error);
     res.status(500).json({ message: "Internal server error" });
@@ -454,6 +455,155 @@ exports.createSale = async (req, res) => {
 // Get all sales
 
 
+
+// exports.getSales = async (req, res) => {
+//   try {
+//     // Pagination params
+//     const page = parseInt(req.query.page) || 1;
+//     const limit = parseInt(req.query.limit) || 10;
+//     const skip = (page - 1) * limit;
+
+//     // Search params
+//     const search = req.query.search || "";
+//     const status = req.query.status;
+//     const paymentStatus = req.query.paymentStatus;
+//     const customer = req.query.customer;
+//     const startDate = req.query.startDate;
+//     const endDate = req.query.endDate;
+//     const fromDate = req.query.fromDate;
+//     const toDate = req.query.toDate;
+//     const invoiceId = req.query.invoiceId;
+
+//     // Build query
+//     let query = {};
+//     if (invoiceId) {
+//       query.invoiceId = invoiceId;
+//     } else {
+//       if (search) {
+//         query.$or = [
+//           { referenceNumber: { $regex: search, $options: "i" } },
+//           { description: { $regex: search, $options: "i" } },
+//           { notes: { $regex: search, $options: "i" } }
+//         ];
+//       }
+//       if (status) query.status = status;
+//       if (paymentStatus) query.paymentStatus = paymentStatus;
+//       if (customer) query.customer = customer;
+//       if (startDate && endDate) {
+//         query.saleDate = { $gte: new Date(startDate), $lte: new Date(endDate) };
+//       }
+//       // Support for fromDate/toDate filter
+//       if (fromDate && toDate) {
+//         query.saleDate = { $gte: new Date(fromDate), $lte: new Date(toDate) };
+//       } else if (fromDate) {
+//         query.saleDate = { $gte: new Date(fromDate) };
+//       } else if (toDate) {
+//         query.saleDate = { $lte: new Date(toDate) };
+//       }
+//     }
+
+//     // Determine sort order from query
+//     let sortOrder = { createdAt: -1 };
+//     if (req.query.sort === 'asc') {
+//       sortOrder = { createdAt: 1 };
+//     } else if (req.query.sort === 'desc') {
+//       sortOrder = { createdAt: -1 };
+//     }
+
+//     // Fetch sales with pagination and search
+//     const total = await Sales.countDocuments(query);
+//     const salesRaw = await Sales.find(query)
+//       .populate({ path: 'customer', select: '-password -__v' })
+//       .populate({ path: 'products.productId', select: 'productName images' })
+//       .sort(sortOrder)
+//       .skip(skip)
+//       .limit(limit);
+
+//     // Map productName and productImage for each product in each sale, and calculate payment fields
+//     const sales = salesRaw.map(sale => {
+//       const products = sale.products.map(p => ({
+//         ...p.toObject(),
+//         productName: p.productId?.productName || '',
+//         productImage: p.productId?.images?.[0]?.url || ''
+//       }));
+//       // Payment and calculation logic
+//       let subTotal = 0;
+//       let discountTotal = 0;
+//       let taxTotal = 0;
+//       let additionalCharges = (sale.shippingCost || 0) + (sale.labourCost || 0);
+//       let cgstValue = 0;
+//       let sgstValue = 0;
+//       if (products && products.length > 0) {
+//         products.forEach((p) => {
+//           const price = p.sellingPrice || 0;
+//           const qty = p.saleQty || 1;
+//           let discount = 0;
+//           // Check if discount is percent
+//           if (p.isDiscountPercent) {
+//             discount = ((price * qty) * (p.discount || 0)) / 100;
+//           } else {
+//             discount = p.discount || 0;
+//           }
+//           let afterDiscount = (price * qty) - discount;
+//           subTotal += price * qty;
+//           discountTotal += discount;
+//           // Tax calculation (CGST/SGST)
+//           if (sale.cgst && sale.sgst) {
+//             const cgst = parseFloat(sale.cgst) || 0;
+//             const sgst = parseFloat(sale.sgst) || 0;
+//             cgstValue += (afterDiscount * cgst) / 100;
+//             sgstValue += (afterDiscount * sgst) / 100;
+//           } else {
+//             taxTotal += (afterDiscount * (p.tax || 0)) / 100;
+//           }
+//         });
+//       }
+//       // Summary discount calculation
+//       let summaryDiscount = 0;
+//       // Only percent-based summaryDiscount is used now
+//       // Grand total
+//       let grandTotal = subTotal + cgstValue + sgstValue + taxTotal + additionalCharges - summaryDiscount;
+//       if (sale.orderDiscount) {
+//         const percent = parseFloat(sale.orderDiscount);
+//         summaryDiscount = ((subTotal + additionalCharges) * percent) / 100;
+//       }
+//       let roundOffValue = 0;
+//       if (sale.roundOff) {
+//         const rounded = Math.round(grandTotal);
+//         roundOffValue = rounded - grandTotal;
+//         grandTotal = rounded;
+//       }
+//       // Paid and due amount
+//       let paidAmount = sale.paidAmount || 0;
+//       let dueAmount = grandTotal - paidAmount;
+//       return {
+//         ...sale.toObject(),
+//         products,
+//         subTotal,
+//         discountTotal,
+//         summaryDiscount,
+//         cgstValue,
+//         sgstValue,
+//         taxTotal,
+//         additionalCharges,
+//         grandTotal,
+//         roundOffValue,
+//         paidAmount,
+//         dueAmount
+//       };
+//     });
+
+//     res.json({
+//       sales,
+//       total,
+//       page,
+
+//       pages: Math.ceil(total / limit)
+//     });
+//   } catch (err) {
+//     res.status(500).json({ message: err.message });
+//   }
+// };
 
 exports.getSales = async (req, res) => {
   try {
@@ -469,6 +619,8 @@ exports.getSales = async (req, res) => {
     const customer = req.query.customer;
     const startDate = req.query.startDate;
     const endDate = req.query.endDate;
+    const fromDate = req.query.fromDate;
+    const toDate = req.query.toDate;
     const invoiceId = req.query.invoiceId;
 
     // Build query
@@ -480,7 +632,7 @@ exports.getSales = async (req, res) => {
         query.$or = [
           { referenceNumber: { $regex: search, $options: "i" } },
           { description: { $regex: search, $options: "i" } },
-          { notes: { $regex: search, $options: "i" } }
+          { notes: { $regex: search, $options: "i" } },
         ];
       }
       if (status) query.status = status;
@@ -489,88 +641,120 @@ exports.getSales = async (req, res) => {
       if (startDate && endDate) {
         query.saleDate = { $gte: new Date(startDate), $lte: new Date(endDate) };
       }
+      if (fromDate && toDate) {
+        query.saleDate = { $gte: new Date(fromDate), $lte: new Date(toDate) };
+      } else if (fromDate) {
+        query.saleDate = { $gte: new Date(fromDate) };
+      } else if (toDate) {
+        query.saleDate = { $lte: new Date(toDate) };
+      }
     }
 
-    // Fetch sales with pagination and search
+    // Sorting
+    let sortOrder = { createdAt: -1 };
+    if (req.query.sort === "asc") {
+      sortOrder = { createdAt: 1 };
+    } else if (req.query.sort === "desc") {
+      sortOrder = { createdAt: -1 };
+    }
+
+    // Fetch sales
     const total = await Sales.countDocuments(query);
     const salesRaw = await Sales.find(query)
-      .populate({ path: 'customer', select: '-password -__v' })
-      .populate({ path: 'products.productId', select: 'productName images' })
-      .sort({ createdAt: -1 })
+      .populate({ path: "customer", select: "-password -__v" })
+      .populate({ path: "products.productId", select: "productName images" })
+      .sort(sortOrder)
       .skip(skip)
       .limit(limit);
 
-    // Map productName and productImage for each product in each sale, and calculate payment fields
-    const sales = salesRaw.map(sale => {
-      const products = sale.products.map(p => ({
-        ...p.toObject(),
-        productName: p.productId?.productName || '',
-        productImage: p.productId?.images?.[0]?.url || ''
-      }));
-      // Payment and calculation logic
+    // Map calculation
+    const sales = salesRaw.map((sale) => {
       let subTotal = 0;
       let discountTotal = 0;
+      let taxableTotal = 0;
       let taxTotal = 0;
-      let additionalCharges = (sale.shippingCost || 0) + (sale.labourCost || 0);
-      let cgstValue = 0;
-      let sgstValue = 0;
-      if (products && products.length > 0) {
-        products.forEach((p) => {
-          const price = p.sellingPrice || 0;
-          const qty = p.saleQty || 1;
-          let discount = 0;
-          // Check if discount is percent
-          if (p.isDiscountPercent) {
-            discount = ((price * qty) * (p.discount || 0)) / 100;
-          } else {
-            discount = p.discount || 0;
-          }
-          let afterDiscount = (price * qty) - discount;
-          subTotal += price * qty;
-          discountTotal += discount;
-          // Tax calculation (CGST/SGST)
-          if (sale.cgst && sale.sgst) {
-            const cgst = parseFloat(sale.cgst) || 0;
-            const sgst = parseFloat(sale.sgst) || 0;
-            cgstValue += (afterDiscount * cgst) / 100;
-            sgstValue += (afterDiscount * sgst) / 100;
-          } else {
-            taxTotal += (afterDiscount * (p.tax || 0)) / 100;
-          }
-        });
-      }
-      // Summary discount calculation
-      let summaryDiscount = 0;
-      // Only percent-based summaryDiscount is used now
-      // Grand total
-      let grandTotal = subTotal + cgstValue + sgstValue + taxTotal + additionalCharges - summaryDiscount;
+      let grandTotal = 0;
+
+      const products = sale.products.map((item) => {
+        const saleQty = Number(item.saleQty || item.quantity || 1);
+        const price = Number(item.sellingPrice || 0);
+        const discount = Number(item.discount || 0);
+        const tax = Number(item.tax || 0);
+
+        const subTotalLine = saleQty * price;
+
+        // ✅ Discount calculation
+        let discountAmount = 0;
+        if (item.discountType === "Percentage") {
+          discountAmount = (subTotalLine * discount) / 100;
+        } else if (
+          item.discountType === "Rupees" ||
+          item.discountType === "Fixed"
+        ) {
+          discountAmount = saleQty * discount; // per unit ₹ discount
+        }
+
+        const taxableAmount = subTotalLine - discountAmount;
+        const taxAmount = (taxableAmount * tax) / 100;
+        const lineTotal = taxableAmount + taxAmount;
+        const unitCost = saleQty > 0 ? lineTotal / saleQty : 0;
+
+        // 🔗 accumulate totals
+        subTotal += subTotalLine;
+        discountTotal += discountAmount;
+        taxableTotal += taxableAmount;
+        taxTotal += taxAmount;
+        grandTotal += lineTotal;
+
+        return {
+          ...item.toObject(),
+          productName: item.productId?.productName || "",
+          productImage: item.productId?.images?.[0]?.url || "",
+          subTotal: subTotalLine,
+          discountAmount,
+          taxableAmount,
+          taxAmount,
+          lineTotal,
+          unitCost,
+        };
+      });
+
+      // Add shipping & labour
+      const additionalCharges = (sale.shippingCost || 0) + (sale.labourCost || 0);
+      grandTotal += additionalCharges;
+
+      // ✅ Order discount (percentage only)
+      let orderDiscount = 0;
       if (sale.orderDiscount) {
-        const percent = parseFloat(sale.orderDiscount);
-        summaryDiscount = ((subTotal + additionalCharges) * percent) / 100;
+        const percent = parseFloat(sale.orderDiscount) || 0;
+        orderDiscount = ((subTotal + additionalCharges) * percent) / 100;
+        grandTotal -= orderDiscount;
       }
+
+      // ✅ Round off
       let roundOffValue = 0;
       if (sale.roundOff) {
         const rounded = Math.round(grandTotal);
         roundOffValue = rounded - grandTotal;
         grandTotal = rounded;
       }
-      // Paid and due amount
-      let paidAmount = sale.paidAmount || 0;
-      let dueAmount = grandTotal - paidAmount;
+
+      const paidAmount = Number(sale.paidAmount || 0);
+      const dueAmount = grandTotal - paidAmount;
+
       return {
         ...sale.toObject(),
         products,
         subTotal,
         discountTotal,
-        summaryDiscount,
-        cgstValue,
-        sgstValue,
+        taxableTotal,
         taxTotal,
         additionalCharges,
-        grandTotal,
+        orderDiscount,
         roundOffValue,
+        grandTotal,
         paidAmount,
-        dueAmount
+        dueAmount,
       };
     });
 
@@ -578,13 +762,13 @@ exports.getSales = async (req, res) => {
       sales,
       total,
       page,
-
-      pages: Math.ceil(total / limit)
+      pages: Math.ceil(total / limit),
     });
   } catch (err) {
     res.status(500).json({ message: err.message });
   }
 };
+
 
 // Get sale by ID
 exports.getSaleById = async (req, res) => {
@@ -634,7 +818,7 @@ exports.updateSale = async (req, res) => {
       sale.invoiceId = invoiceId;
       await sale.save();
     } else {
-      sale = await Sales.findByIdAndUpdate(id, updateData, { new: true });
+      sale = await Sales.findByIdAndUpdate(id, { ...updateData, updatedBy: req.user?._id }, { new: true });
     }
     res.status(200).json({ message: "Sale updated successfully", sale });
   } catch (err) {

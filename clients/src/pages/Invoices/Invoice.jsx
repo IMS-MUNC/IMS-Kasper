@@ -18,6 +18,7 @@ const Invoice = () => {
       const navigate = useNavigate();
 
 
+
 const token = localStorage.getItem("token");
     // Fetch invoices from backend
     const fetchInvoices = async () => {
@@ -30,21 +31,17 @@ const token = localStorage.getItem("token");
                 customer,
                 invoiceId,
                 startDate,
-                endDate,
-                   headers: {
-        Authorization: `Bearer ${token}`,
-      },
+                endDate
             };
             // Remove empty params
             Object.keys(params).forEach(key => {
                 if (!params[key]) delete params[key];
             });
-            const res = await axios.get('/api/invoice/allinvoice', { params ,  headers: {
-        Authorization: `Bearer ${token}`,
-      },});
-            // console.log('API response:', res.data); // Debug API response
+            const res = await axios.get('/api/invoice/allinvoice', {
+                params,
+                headers: { Authorization: `Bearer ${token}` }
+            });
             if (res.data && Array.isArray(res.data.invoices)) {
-                // If backend returns merged {invoice, sale} objects, flatten to invoice+sale for table
                 setInvoices(res.data.invoices);
                 setTotal(res.data.total || 0);
             } else {
@@ -67,6 +64,97 @@ const token = localStorage.getItem("token");
     // Pagination controls
     const totalPages = Math.ceil(total / limit);
 
+
+    // Calculation helpers (copied from AddSalesModal.jsx for consistency)
+    const [summary, setSummary] = useState({
+        subTotal: 0,
+        discountSum: 0,
+        taxableSum: 0,
+        cgst: 0,
+        sgst: 0,
+        taxSum: 0,
+        shippingCost: 0,
+        labourCost: 0,
+        orderDiscount: 0,
+        roundOff: 0,
+        grandTotal: 0,
+    });
+        const [isUpdating, setIsUpdating] = useState(false);
+        // const [loading, setLoading] = useState(true);
+        const [error, setError] = useState(null);
+    
+    
+    
+    
+        
+    useEffect(() => {
+        if (!invoices || !invoices.products) return;
+        let subTotal = 0;
+        let discountSum = 0;
+        let taxableSum = 0;
+        let taxSum = 0;
+        invoices.products.forEach((item) => {
+            const d = getProductRowCalculation(item);
+            subTotal += d.subTotal;
+            discountSum += d.discountAmount;
+            taxableSum += d.taxableAmount;
+            taxSum += d.taxAmount;
+        });
+    
+          const cgst = taxSum / 2;
+            const sgst = taxSum / 2;
+            const grandTotal =
+                (taxableSum || 0) + (taxSum || 0) ;
+    
+       
+        setSummary({
+            subTotal,
+            discountSum,
+            taxableSum,
+            cgst,
+            sgst,
+            taxSum,
+           
+            grandTotal
+        });
+    }, [invoices]);
+    
+function getProductRowCalculation(row) {
+    const saleQty = Number(row.saleQty || item.quantity || 1);
+    const price = Number(row.sellingPrice || 0);
+    const discount = Number(row.discount || 0);
+    const tax = Number(row.tax || 0);
+    const subTotal = saleQty * price;
+      // 🔧 Fixed discount logic
+  let discountAmount = 0;
+  if (row.discountType === "Percentage") {
+    discountAmount = (subTotal * discount) / 100;
+  } else if (row.discountType === "Rupees" || row.discountType === "Fixed") {
+    discountAmount = saleQty * discount; // ✅ per unit ₹ discount
+  } else {
+    discountAmount = 0;
+  }
+    // const discountAmount = discount;
+    const taxableAmount = subTotal - discountAmount;
+    const taxAmount = (taxableAmount * tax) / 100;
+    const lineTotal = taxableAmount + taxAmount;
+    const unitCost = saleQty > 0 ? lineTotal / saleQty : 0;
+
+
+    
+    return {
+
+        subTotal,
+        discountAmount,
+        taxableAmount,
+        taxAmount,
+        lineTotal,
+        unitCost,
+        tax,
+        saleQty,
+        price
+    };
+}
     return (
         <div className="page-wrapper">
             <div className="content">
@@ -138,6 +226,7 @@ const token = localStorage.getItem("token");
                                             </label>
                                         </th>
                                         <th>Invoice No</th>
+                                        <th>Sale No</th>
                                         <th>Customer</th>
                                         <th>Due Date</th>
                                         <th>Amount</th>
@@ -154,40 +243,61 @@ const token = localStorage.getItem("token");
                                         <tr><td colSpan={9}>No invoices found.</td></tr>
                                     ) : (
                                         invoices.map((row, idx) => {
+                                            
                                             // row: { invoice, sale }
                                             const inv = row.invoice || {};
                                             const sale = row.sale || {};
-                                            return (
-                                                <tr key={inv._id || idx}>
-                                                    <td>
-                                                        <label className="checkboxs">
-                                                            <input type="checkbox" />
-                                                            <span className="checkmarks" />
-                                                        </label>
-                                                    </td>
-                                                    <td><a  onClick={() => navigate(`/invoice/${sale.invoiceId}`)} >{inv.invoiceId || sale.invoiceId}</a></td>
-                                                    <td>
-                                                        <div className="d-flex align-items-center">
-                                                            <span>{(inv.customer?.name || sale.customer?.name || inv.customer?._id || sale.customer?._id || "-")}</span>
-                                                        </div>
-                                                    </td>
-                                                    <td>{inv.dueDate ? new Date(inv.dueDate).toLocaleDateString() : (sale.dueDate ? new Date(sale.dueDate).toLocaleDateString() : "-")}</td>
-                                                    <td>{inv.totalAmount || sale.totalAmount || "-"}</td>
-                                                    <td>{inv.paidAmount || sale.paidAmount || "-"}</td>
-                                                    <td>{inv.dueAmount || sale.dueAmount || "-"}</td>
-                                                    <td><span className={`badge badge-soft-${(inv.paymentStatus || sale.paymentStatus) === "Paid" ? "success" : "danger"} badge-xs shadow-none`}><i className="ti ti-point-filled me-1" />{inv.paymentStatus || sale.paymentStatus || "-"}</span></td>
-                                                    <td className="d-flex">
-                                                        <div className="edit-delete-action d-flex align-items-center justify-content-center">
-                                                            <a className="me-2 p-2 d-flex align-items-center justify-content-between border rounded" onClick={() => navigate(`/invoice/${sale.invoiceId}`)}>
-                                                                <TbEye className="feather-eye" />
-                                                            </a>
-                                                            <a className="p-2 d-flex align-items-center justify-content-between border rounded" data-bs-toggle="modal" data-bs-target="#delete">
-                                                                <TbTrash className="feather-trash-2" />
-                                                            </a>
-                                                        </div>
-                                                    </td>
-                                                </tr>
-                                            );
+                                            // Render one row per product for each invoice
+                                            if (Array.isArray(inv.products) && inv.products.length > 0) {
+                                                return inv.products.map((item, pidx) => {
+                                                    const d = getProductRowCalculation(item);
+                                                    return (
+                                                        <tr key={`${inv._id || idx}-${pidx}`}>
+                                                            <td><label className="checkboxs"><input type="checkbox" /><span className="checkmarks" /></label></td>
+                                                            <td><a onClick={() => navigate(`/invoice/${sale.invoiceId}`)}>{inv.invoiceId || sale.invoiceId}</a></td>
+                                                            <td>{sale.referenceNumber || '-'}</td>
+                                                            <td><div className="d-flex align-items-center"><span>{(inv.customer?.name || sale.customer?.name || inv.customer?._id || sale.customer?._id || "-")}</span></div></td>
+                                                            <td>{inv.dueDate ? new Date(inv.dueDate).toLocaleDateString() : (sale.dueDate ? new Date(sale.dueDate).toLocaleDateString() : "-")}</td>
+                                                            <td className="fw-semibold text-success">₹{d.lineTotal}</td>
+                                                            <td>₹{d.subTotal}</td>
+                                                            <td>{Number(inv.paidAmount ?? sale.paidAmount ?? 0).toFixed(2)}</td>
+                                                            <td>{Number(inv.dueAmount ?? sale.dueAmount ?? 0).toFixed(2)}</td>
+                                                            <td><span className={`badge badge-soft-${(inv.paymentStatus || sale.paymentStatus) === "Paid" ? "success" : "danger"} badge-xs shadow-none`}><i className="ti ti-point-filled me-1" />{inv.paymentStatus || sale.paymentStatus || "-"}</span></td> 
+
+                                                            {/* <td>{item.productId?.productName || '-'}</td> */}
+                                                            {/* <td>{item.hsnCode || '-'}</td> */}
+                                                            {/* <td>{d.saleQty}</td> */}
+                                                            {/* <td>₹{d.price}</td> */}
+                                                            {/* <td><div style={{ display: "flex", alignItems: "center" }}><span>{item.discount}</span><span className="ms-1">{item.discountType === "Percentage" ? "%" : "₹"}</span></div></td> */}
+                                                            {/* <td>₹{d.subTotal}</td>
+                                                            <td>₹{d.discountAmount}</td>
+                                                            <td>{d.tax}%</td>
+                                                            <td>₹{d.taxAmount}</td>
+                                                            <td>₹{d.unitCost}</td> */}
+                                                            {/* <td className="fw-semibold text-success">₹{d.lineTotal}</td>
+                                                            <td>{inv.paidAmount || sale.paidAmount || "-"}</td>
+                                                            <td>{inv.dueAmount || sale.dueAmount || "-"}</td>
+                                                            <td><span className={`badge badge-soft-${(inv.paymentStatus || sale.paymentStatus) === "Paid" ? "success" : "danger"} badge-xs shadow-none`}><i className="ti ti-point-filled me-1" />{inv.paymentStatus || sale.paymentStatus || "-"}</span></td> */}
+                                                            <td className="d-flex"><div className="edit-delete-action d-flex align-items-center justify-content-center"><a className="me-2 p-2 d-flex align-items-center justify-content-between border rounded" onClick={() => navigate(`/invoice/${sale.invoiceId}`)}><TbEye className="feather-eye" /></a><a className="p-2 d-flex align-items-center justify-content-between border rounded" data-bs-toggle="modal" data-bs-target="#delete"><TbTrash className="feather-trash-2" /></a></div></td>
+                                                        </tr>
+                                                    );
+                                                });
+                                            }
+                                            //  else {
+                                            //     return (
+                                            //         <tr key={inv._id || idx}>
+                                            //             <td><label className="checkboxs"><input type="checkbox" /><span className="checkmarks" /></label></td>
+                                            //             <td><a onClick={() => navigate(`/invoice/${sale.invoiceId}`)}>{inv.invoiceId || sale.invoiceId}</a></td>
+                                            //             <td><div className="d-flex align-items-center"><span>{(inv.customer?.name || sale.customer?.name || inv.customer?._id || sale.customer?._id || "-")}</span></div></td>
+                                            //             <td>{inv.dueDate ? new Date(inv.dueDate).toLocaleDateString() : (sale.dueDate ? new Date(sale.dueDate).toLocaleDateString() : "-")}</td>
+                                            //             <td colSpan={11}>No products</td>
+                                            //             <td>{inv.paidAmount || sale.paidAmount || "-"}</td>
+                                            //             <td>{inv.dueAmount || sale.dueAmount || "-"}</td>
+                                            //             <td><span className={`badge badge-soft-${(inv.paymentStatus || sale.paymentStatus) === "Paid" ? "success" : "danger"} badge-xs shadow-none`}><i className="ti ti-point-filled me-1" />{inv.paymentStatus || sale.paymentStatus || "-"}</span></td>
+                                            //             <td className="d-flex"><div className="edit-delete-action d-flex align-items-center justify-content-center"><a className="me-2 p-2 d-flex align-items-center justify-content-between border rounded" onClick={() => navigate(`/invoice/${sale.invoiceId}`)}><TbEye className="feather-eye" /></a><a className="p-2 d-flex align-items-center justify-content-between border rounded" data-bs-toggle="modal" data-bs-target="#delete"><TbTrash className="feather-trash-2" /></a></div></td>
+                                            //         </tr>
+                                            //     );
+                                            // }
                                         })
                                     )}
                                 </tbody>

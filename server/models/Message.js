@@ -12,9 +12,11 @@ const MessageSchema = new mongoose.Schema({
     message: { type: String, required: true },
     timestamp: { type: Date, default: Date.now },
     read: { type: Boolean, default: false },
+    isDeleted: { type: Boolean, default: false },
     fileUrl: { type: String },
     fileType: { type: String },
     fileName: { type: String },
+    clearedBy: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Users' }],
     replyTo: {
       message: { type: String },
       timestamp: { type: Date },
@@ -25,11 +27,12 @@ const MessageSchema = new mongoose.Schema({
   lastMessage: {
     from: { type: mongoose.Schema.Types.ObjectId, ref: 'Users' },
     message: { type: String },
-    timestamp: { type: Date, default: Date.now }
+    timestamp: { type: Date, default: Date.now },
+    clearedBy: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Users' }]
   }
 }, { timestamps: true });
 
 // Create a compound index to ensure only one document per user pair
 // MessageSchema.index({ participants: 1 }, { unique: true });
 
-module.exports = mongoose.model('Message', MessageSchema); 
+module.exports = mongoose.model('Message', MessageSchema);

@@ -20,7 +20,7 @@ const productSchema = new mongoose.Schema(
     },
 
 
-    supplier: { type: mongoose.Schema.Types.ObjectId, ref: "Supplier" },
+    // supplier: { type: mongoose.Schema.Types.ObjectId, ref: "Supplier" },
     // itemBarcode: { type: String },
     store: { type: String },
     warehouse: {
@@ -57,6 +57,7 @@ const productSchema = new mongoose.Schema(
       default: {},
     },
 
+
     // Other
     sellingType: { type: String },
     barcodeSymbology: { type: String },
@@ -83,15 +84,35 @@ const productSchema = new mongoose.Schema(
       default: [],
     },
 
-    // newPurchasePrice: {
-    //   type: Number,
-    //   default: 0,
-    // },
-    // newQuantity: {
-    //   type: Number,
-    //   default: 0,
-    // },
-
+    // Array to store purchase history for this product
+    purchases: [
+      {
+        referenceNumber: String,
+        purchaseId: { type: mongoose.Schema.Types.ObjectId, ref: 'Purchase' },
+        quantity: Number,
+        purchasePrice: Number,
+        purchaseDate: Date
+      }
+    ],
+    // Array to store sale/return details for this product
+    saledetails: [
+      {
+        referenceNumber: String,
+        purchaseId: { type: mongoose.Schema.Types.ObjectId, ref: 'Purchase' },
+        quantity: Number,
+        purchasePrice: Number,
+        purchaseDate: Date,
+        discount: Number,
+        discountType: String,
+        discountAmount: Number,
+        tax: Number,
+        taxAmount: Number,
+        unitCost: Number,
+        totalCost: Number,
+        unit: String,
+        returnQty: Number
+      }
+    ],
 
   },
   { timestamps: true }

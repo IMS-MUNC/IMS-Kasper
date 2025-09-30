@@ -71,17 +71,29 @@ exports.createCustomer = async (req, res) => {
       billing: {
         ...parsedBody.billing,
         country: prepareRef(parsedBody.billing?.country),
-        state: prepareRef(parsedBody.billing?.state),
+        // state: prepareRef(parsedBody.billing?.state),
+         state: parsedBody.gstType === "Unregister" ? "N/A" : prepareRef(parsedBody.billing?.state),
         city: prepareRef(parsedBody.billing?.city),
       },
       shipping: {
         ...parsedBody.shipping,
         country: prepareRef(parsedBody.shipping?.country),
-        state: prepareRef(parsedBody.shipping?.state),
+        // state: prepareRef(parsedBody.shipping?.state),
+        state: parsedBody.gstType === "Unregister" ? "N/A" : prepareRef(parsedBody.shipping?.state),
         city: prepareRef(parsedBody.shipping?.city),
       },
     };
 
+    const emailExists = await Customer.findOne({ email: data.email });
+    if (emailExists) {
+      return res.status(400).json({ error: 'Email already exists' });
+    }
+
+    const phoneExists = await Customer.findOne({ phone: data.phone });
+    if (phoneExists) {
+      return res.status(400).json({ error: 'Phone number already exists' });
+    }
+    
     const customer = new Customer(data);
     await customer.save();
 

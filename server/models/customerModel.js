@@ -31,6 +31,8 @@ const customerSchema = new mongoose.Schema({
   currency: String,
   website: String,
   notes: String,
+  gstType: { type: String, enum: ['Registered', 'Unregister'], default: 'Registered' },
+  gstState: String,
   billing: addressSchema,
   shipping: addressSchema,
   bank: bankSchema,

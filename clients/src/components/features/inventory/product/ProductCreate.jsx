@@ -239,7 +239,7 @@ const ProductForm = () => {
   const [unitsOptions, setUnitsOptions] = useState([]);
   const [options, setOptions] = useState([]);
   const [optionsware, setOptionsWare] = useState([]);
-  const [selectedSupplier, setSelectedSupplier] = useState(null);
+  // const [selectedSupplier, setSelectedSupplier] = useState(null);
   const [selectedWarehouse, setSelectedWarehouse] = useState(null);
 
 
@@ -250,7 +250,7 @@ const ProductForm = () => {
     brand: "",
     category: "",
     subCategory: "",
-    supplier: "",
+    // supplier: "",
     // itemBarcode: "",
     store: "",
     warehouse: "",
@@ -556,9 +556,9 @@ const ProductForm = () => {
     formPayload.append("brand", selectedBrands?.value || "");
     formPayload.append("category", selectedCategory?.value || "");
     formPayload.append("subCategory", selectedsubCategory?.value || "");
-    if (selectedSupplier?.value && typeof selectedSupplier.value === "string" && selectedSupplier.value.trim() !== "") {
-      formPayload.append("supplier", selectedSupplier.value);
-    }
+    // if (selectedSupplier?.value && typeof selectedSupplier.value === "string" && selectedSupplier.value.trim() !== "") {
+    //   formPayload.append("supplier", selectedSupplier.value);
+    // }
     // formPayload.append("itemBarcode", sanitizeInput(formData.itemBarcode));
     formPayload.append("store", sanitizeInput(formData.store));
     formPayload.append("warehouse", selectedWarehouse?.value || "");
@@ -804,40 +804,40 @@ const ProductForm = () => {
   }, [formData.productName, formData.category]);
 
 
+// supplier
+  // useEffect(() => {
+  //   const fetchActiveSuppliers = async () => {
+  //     try {
+  //       const token = localStorage.getItem("token");
+  //       const res = await axios.get(`${BASE_URL}/api/suppliers/active`, {
+  //         headers: {
+  //           Authorization: `Bearer ${token}`, // ✅ token sent properly
+  //         },
+  //       });
+  //       const suppliers = res.data.suppliers;
 
-  useEffect(() => {
-    const fetchActiveSuppliers = async () => {
-      try {
-        const token = localStorage.getItem("token");
-        const res = await axios.get(`${BASE_URL}/api/suppliers/active`, {
-          headers: {
-            Authorization: `Bearer ${token}`, // ✅ token sent properly
-          },
-        });
-        const suppliers = res.data.suppliers;
+  //       // const formattedOptions = suppliers.map((supplier) => ({
+  //       //   value: supplier._id,
+  //       //   label: `${supplier.firstName}${supplier.lastName} (${supplier.supplierCode})`,
+  //       // }));
 
-        // const formattedOptions = suppliers.map((supplier) => ({
-        //   value: supplier._id,
-        //   label: `${supplier.firstName}${supplier.lastName} (${supplier.supplierCode})`,
-        // }));
+  //       // setOptions(formattedOptions);
+  //       const formattedOptions = suppliers.map((supplier) => ({
+  //         value: supplier._id,
+  //         label: sanitizeInput(`${supplier.firstName}${supplier.lastName} (${supplier.supplierCode})`, true),
+  //       }));
+  //       setOptions(formattedOptions);
+  //     } catch (err) {
+  //       console.error("Error fetching active suppliers:", err);
+  //     }
+  //   };
 
-        // setOptions(formattedOptions);
-        const formattedOptions = suppliers.map((supplier) => ({
-          value: supplier._id,
-          label: sanitizeInput(`${supplier.firstName}${supplier.lastName} (${supplier.supplierCode})`, true),
-        }));
-        setOptions(formattedOptions);
-      } catch (err) {
-        console.error("Error fetching active suppliers:", err);
-      }
-    };
+  //   fetchActiveSuppliers();
+  // }, []);
 
-    fetchActiveSuppliers();
-  }, []);
-
-  const handleSupplierChange = (selectedOption) => {
-    setSelectedSupplier(selectedOption);
-  };
+  // const handleSupplierChange = (selectedOption) => {
+  //   setSelectedSupplier(selectedOption);
+  // };
 
 
 
@@ -1258,23 +1258,26 @@ const ProductForm = () => {
                       <div className="modal fade show" style={{ display: 'block', background: 'rgba(0,0,0,0.3)' }} tabIndex="-1">
                         <div className="modal-dialog modal-dialog-centered">
                           <div className="modal-content" style={{ borderRadius: '12px', boxShadow: '0 4px 24px rgba(0,0,0,0.15)' }}>
-                            <div className="modal-header bg-info text-white" style={{ borderTopLeftRadius: '12px', borderTopRightRadius: '12px' }}>
+                            <div className="modal-header mb-0" style={{ borderTopLeftRadius: '12px', borderTopRightRadius: '12px' }}>
                               <h5 className="modal-title">HSN Details</h5>
-                              <button type="button" className="btn-close" onClick={() => setShowHSNModal(false)}></button>
+                              {/* <button type="button" className="btn-close" onClick={() => setShowHSNModal(false)}></button> */}
+                                 <button type="button" className="close" data-bs-dismiss="modal" aria-label="Close" onClick={() => setShowHSNModal(false)}>
+              <span aria-hidden="true">×</span>
+            </button>
                             </div>
                             <div className="modal-body">
                               <div className="mb-3">
                                 <label className="fw-bold">HSN Code:</label>
-                                <div className="fs-5 text-primary">{selectedHSN.label.split(' - ')[0]}</div>
+                                <div className="fs-20 text-primary">{selectedHSN.label.split(' - ')[0]}</div>
                               </div>
-                              <div className="mb-3">
+                              <div className="mb-2">
                                 <label className="fw-bold">Description:</label>
-                                <div className="fs-6 text-secondary">{selectedHSN.label.split(' - ')[1] || 'N/A'}</div>
+                                <div className="fs-12 text-secondary">{selectedHSN.label.split(' - ')[1] || 'N/A'}</div>
                               </div>
                             </div>
-                            <div className="modal-footer">
+                            {/* <div className="modal-footer">
                               <button type="button" className="btn btn-secondary" onClick={() => setShowHSNModal(false)}>Close</button>
-                            </div>
+                            </div> */}
                           </div>
                         </div>
                       </div>
@@ -1380,20 +1383,11 @@ const ProductForm = () => {
                     </div>
 
                     {/* Supplier */}
-                    <div className="col-sm-6 col-12 mb-3">
+                    {/* <div className="col-sm-6 col-12 mb-3">
                       <label className="form-label">
                         {t("supplier")}<span className="text-danger">*</span>
                       </label>
-                      {/* <select
-                        className="form-select"
-                        name="supplier"
-                        value={formData.supplier}
-                        onChange={handleChange}
-                      >
-                        <option value="">{t("select")}</option>
-                        <option value="supplier1">{t("supplier1")}</option>
-                        <option value="supplier2">{t("supplier2")}</option>
-                      </select> */}
+                     
                       <Select
                         options={options}
                         value={selectedSupplier}
@@ -1402,37 +1396,9 @@ const ProductForm = () => {
                         isClearable
                       />
                       {formErrors.supplier && <div className="text-danger">{formErrors.supplier}</div>}
-                    </div>
-
-                    {/* <div className="col-lg-6 col-sm-6 col-12">
-                      <div className="mb-3 list position-relative">
-                        <label className="form-label">
-                          {t("itemBarcode")}
-                          <span className="text-danger ms-1">*</span>
-                        </label>
-                        <input
-                          type="text"
-                          className="form-control"
-                          name="itemBarcode"
-                          value={formData.itemBarcode}
-                          readOnly
-                          placeholder={t("itemBarcodePlaceholder")}
-                        />
-                        <button
-                          type="button"
-                          className="btn btn-primaryadd"
-                          onClick={() =>
-                            setFormData((prev) => ({
-                              ...prev,
-                              itemBarcode: generateBarcode(),
-                            }))
-                          }
-                        >
-                          {t("generate")}
-                        </button>
-                        {formErrors.itemBarcode && <div className="text-danger">{formErrors.itemBarcode}</div>}
-                      </div>
                     </div> */}
+
+                  
 
                     {/* Store */}
                     <div className="col-sm-6 col-12 mb-3">
@@ -1846,12 +1812,14 @@ const ProductForm = () => {
   <div
     {...getRootProps({
       className:
-        "dropzone p-4 text-center border-2 border-dashed rounded-2xl bg-light mb-4",
+                      "dropzone p-4 text-center image-upload image-upload-two mb-3",
     })}
     style={{
       cursor: "pointer",
       transition: "0.3s ease",
+      width: "100%", height: "100%"
     }}
+     
   >
     <input {...getInputProps()} />
     <MdImageSearch style={{ fontSize: "50px", color: "#6c757d" }} />
@@ -1863,11 +1831,10 @@ const ProductForm = () => {
   {images.length > 0 && (
     <div className="row g-3 mb-4">
       {images.map((file, i) => (
-        <div className="col-6 col-sm-4 col-md-3" key={i} style={{ position: 'relative' }}>
+        <div className="col-6 col-sm-2 col-md-2" key={i} style={{ position: 'relative' }}>
           <div
             className="border rounded-3 shadow-sm overflow-hidden"
-            style={{ height: 120, position: 'relative' }}
-          >
+style={{ height: 100, width:100, objectFit: "cover" ,position:"relative"}}          >
             <img
               src={file.preview}
               alt={`preview-${i}`}
@@ -2157,7 +2124,7 @@ const ProductForm = () => {
           </div>
 
           {/* Navigation Buttons */}
-          <div className="mt-4 d-flex justify-content-between">
+          <div className="mb-4 d-flex justify-content-between">
             <button
               type="button"
               className="btn btn-outline-primary"
