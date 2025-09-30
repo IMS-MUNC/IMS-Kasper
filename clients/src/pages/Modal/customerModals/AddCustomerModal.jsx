@@ -26,6 +26,11 @@ const AddCustomerModal = ({ onClose, onSuccess }) => {
   const [selectedShippingState, setSelectedShippingState] = useState(null);
   const [selectedShippingCity, setSelectedShippingCity] = useState(null);
 
+  const [gstType, setGstType] = useState(""); // register/unregister
+  const [gstStates, setGstStates] = useState([]); // states from API
+  const [selectedGstState, setSelectedGstState] = useState(null);
+
+
   const [form, setForm] = useState({
     name: "",
     email: "",
@@ -408,6 +413,12 @@ const AddCustomerModal = ({ onClose, onSuccess }) => {
     newErrors.email = validateField("email", form.email);
     newErrors.phone = validateField("phone", form.phone);
     newErrors.currency = validateField("currency", form.currency);
+    newErrors.gstType = gstType ? "" : "GST Type is required.";
+    if (gstType === "register") {
+      newErrors.gstState = selectedGstState ? "" : "GST State is required.";
+    } else {
+      newErrors.gstState = "";
+    }
     newErrors.website = validateField("website", form.website);
     newErrors.notes = validateField("notes", form.notes);
     newErrors["billing.name"] = validateField("name", form.billing.name);
@@ -458,6 +469,8 @@ const AddCustomerModal = ({ onClose, onSuccess }) => {
         },
         bank: form.bank,
         status: form.status,
+        gstType: gstType === "register" ? "Registered" : "Unregister",
+        gstState: selectedGstState?.value || "N/A",
       };
 
       const formData = new FormData();
@@ -524,6 +537,9 @@ const AddCustomerModal = ({ onClose, onSuccess }) => {
       setSelectedShippingCountry(null);
       setSelectedShippingState(null);
       setSelectedShippingCity(null);
+      setGstType("");
+      setGstStates([]);
+      setSelectedGstState(null);
       setErrors({});
       if (fileInputRef.current) fileInputRef.current.value = "";
       if (onSuccess) onSuccess();
@@ -533,6 +549,36 @@ const AddCustomerModal = ({ onClose, onSuccess }) => {
       toast.error(errorMessage);
     } finally {
       setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (gstType === "register") {
+      axios.get(`${BASE_URL}/api/gst`) // your GST API
+        .then((res) => {
+          // Assuming API returns an array of states like [{name: 'Bihar', gstinCode: '10'}, ...]
+          const stateOptions = res.data.map((s) => ({ value: s.gstinCode, label: s.gstinCode }));
+          setGstStates(stateOptions);
+        })
+        .catch((err) => {
+          console.error("Failed to fetch GST states", err);
+          setGstStates([]);
+        });
+    } else {
+      setGstStates([]);
+      setSelectedGstState(null);
+    }
+  }, [gstType]);
+
+  const handleGstTypeChange = (e) => {
+    const value = e.target.value;
+    setGstType(value);
+
+    // If unregister, save N/A in state
+    if (value === "unregister") {
+      setSelectedGstState({ value: "N/A", label: "N/A" });
+    } else {
+      setSelectedGstState(null);
     }
   };
 
@@ -725,6 +771,39 @@ const AddCustomerModal = ({ onClose, onSuccess }) => {
                         )}
                       </div>
                     </div>
+                    <div className="col-lg-4 col-md-6">
+                      <div className="mb-3">
+                        <label className="form-label">GST Type</label>
+                        <select
+                          className="form-select"
+                          value={gstType}
+                          onChange={handleGstTypeChange}
+                          required
+                        >
+                          <option value="">Select</option>
+                          <option value="register">Register</option>
+                          <option value="unregister">Unregister</option>
+                        </select>
+                      </div>
+                    </div>
+
+                    {gstType === "register" && (
+                      <div className="col-lg-4 col-md-6">
+                        <div className="mb-3">
+                          <label className="form-label">State</label>
+                          <Select
+                            options={gstStates}
+                            value={selectedGstState}
+                            onChange={(option) => setSelectedGstState(option)}
+                            placeholder="Select State"
+                          />
+                          {errors.gstState && (
+                            <span className="text-danger fs-12">{errors.gstState}</span>
+                          )}
+                        </div>
+                      </div>
+                    )}
+
                   </div>
                   <div className="border-top my-2">
                     <div className="row gx-5">
@@ -1028,8 +1107,10 @@ const AddCustomerModal = ({ onClose, onSuccess }) => {
                           )}
                         </div>
                       </div>
-                      <div className="col-lg-4 col-md-6" style={{display:'flex', gap:'5px',marginTop:'35px'}}>
-                        
+
+                      <div className="col-lg-4 col-md-6" style={{ display: 'flex', gap: '5px', marginTop: '35px' }}>
+
+
                         <label className="">Status</label>
                         <div className="form-check form-switch mb-3">
                           <input
@@ -1038,7 +1119,8 @@ const AddCustomerModal = ({ onClose, onSuccess }) => {
                             checked={form.status}
                             onChange={handleStatusChange}
                           />
-                        </div> 
+                        </div>
+
                       </div>
                     </div>
                   </div>

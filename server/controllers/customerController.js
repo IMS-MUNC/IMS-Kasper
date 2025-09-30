@@ -71,13 +71,15 @@ exports.createCustomer = async (req, res) => {
       billing: {
         ...parsedBody.billing,
         country: prepareRef(parsedBody.billing?.country),
-        state: prepareRef(parsedBody.billing?.state),
+        // state: prepareRef(parsedBody.billing?.state),
+         state: parsedBody.gstType === "Unregister" ? "N/A" : prepareRef(parsedBody.billing?.state),
         city: prepareRef(parsedBody.billing?.city),
       },
       shipping: {
         ...parsedBody.shipping,
         country: prepareRef(parsedBody.shipping?.country),
-        state: prepareRef(parsedBody.shipping?.state),
+        // state: prepareRef(parsedBody.shipping?.state),
+        state: parsedBody.gstType === "Unregister" ? "N/A" : prepareRef(parsedBody.shipping?.state),
         city: prepareRef(parsedBody.shipping?.city),
       },
     };

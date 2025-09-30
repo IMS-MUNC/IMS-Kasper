@@ -18,24 +18,24 @@ import Erdit from "../../assets/images/erdit.png";
 import { LiaEditSolid } from "react-icons/lia";
 import { MdNavigateNext } from "react-icons/md";
 import { GrFormPrevious } from "react-icons/gr";
-
-
+import autoTable from "jspdf-autotable";
+import jsPDF from 'jspdf';
 
 
 const Role = () => {
   const navigate = useNavigate();
   const [roles, setRoles] = useState([]);
   const [roleName, setRoleName] = useState("");
-  const [roleStatus, setRoleStatus] = useState(true);
+  // const [roleStatus, setRoleStatus] = useState(true);
   const [editRoleId, setEditRoleId] = useState(null);
   const [editRoleName, setEditRoleName] = useState("");
-  const [editRoleStatus, setEditRoleStatus] = useState(true);
+  // const [editRoleStatus, setEditRoleStatus] = useState(true);
 
 
   const [errors, setErrors] = useState({});
   const nameRegex = /^[A-Za-z]{2,}$/;
 
-  const [statusFilter, setStatusFilter] = useState("Status");
+  // const [statusFilter, setStatusFilter] = useState("Status");
   const [searchTerm, setSearchTerm] = useState("");
   const [sortOrder, setSortOrder] = useState("Latest");
 
@@ -58,7 +58,7 @@ const Role = () => {
 
       setEditRoleId(role._id);
       setEditRoleName(role.roleName);
-      setEditRoleStatus(role.status === "Active");
+      // setEditRoleStatus(role.status === "Active");
       setEditRolePermissions(role.modulePermissions || {});
 
       window.$("#edit-role").modal("show");
@@ -100,7 +100,7 @@ const Role = () => {
     try {
       const updatedRole = {
         roleName: sanitizeInput(editRoleName),
-        status: editRoleStatus ? "Active" : "Inactive",
+        // status: editRoleStatus ? "Active" : "Inactive",
         modulePermissions: editRolePermissions,
       };
 
@@ -149,7 +149,7 @@ const Role = () => {
     try {
       const newRole = {
         roleName,
-        status: roleStatus ? "Active" : "Inactive",
+        // status: roleStatus ? "Active" : "Inactive",
       };
 
       await axios.post(`${BASE_URL}/api/role/create`, newRole, {
@@ -161,7 +161,7 @@ const Role = () => {
       toast.success("Role created");
       fetchRoles();
       setRoleName("");
-      setRoleStatus(true);
+      // setRoleStatus(true);
       window.$("#add-role").modal("hide");
     } catch (err) {
       console.log(err);
@@ -172,7 +172,7 @@ const Role = () => {
   const handleEditClick = (role) => {
     setEditRoleId(role._id);
     setEditRoleName(role.roleName);
-    setEditRoleStatus(role.status === "Active");
+    // setEditRoleStatus(role.status === "Active");
     setEditRolePermissions(role.modulePermissions || {});
   };
 
@@ -197,22 +197,9 @@ const Role = () => {
   };
 
 
-  const exportToExcel = () => {
-    const worksheet = XLSX.utils.json_to_sheet(roles);
-    const workbook = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(workbook, worksheet, "Roles");
-
-    const excelBuffer = XLSX.write(workbook, {
-      bookType: "xlsx",
-      type: "array",
-    });
-    const data = new Blob([excelBuffer], { type: "application/octet-stream" });
-    saveAs(data, "Roles.xlsx");
-  };
-
   // Filtered, searched, sorted roles
   const filteredRoles = roles
-    .filter((role) => statusFilter === "Status" || role.status === statusFilter)
+    // .filter((role) => statusFilter === "Status" || role.status === statusFilter)
     .filter((role) =>
       role.roleName.toLowerCase().includes(searchTerm.toLowerCase())
     )
@@ -247,6 +234,54 @@ const Role = () => {
     navigate("/permissions");
   };
 
+
+  const handleExportExcel = () => {
+    const worksheetData = filteredRoles.map((user) => {
+      const formattedDate = new Date(user.createdAt).toLocaleDateString("en-GB", {
+        day: "2-digit",
+        month: "short",
+        year: "numeric",
+      });
+      return {
+      "Role Name": user.roleName,
+      "Created At":formattedDate
+    };
+  });
+    
+    const worksheet = XLSX.utils.json_to_sheet(worksheetData);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, "Roles");
+    const excelBuffer = XLSX.write(workbook, {bookType:"xlsx", type:"array"});
+    const data  = new Blob([excelBuffer], {type:"application/octet-stream"});
+    saveAs(data, "role_list.xlsx")
+  }
+
+
+  const handleExportPDF = () => {
+    const doc = new jsPDF();
+    doc.text("Role List", 14, 16);
+    const tableColumn = ["Role",  "Created At"];
+    const tableRows = [];
+    filteredRoles.forEach((user) => {
+      const formattedDate = new Date(user.createdAt).toLocaleDateString("en-GB", {
+      day: "2-digit",
+      month: "short",
+      year: "numeric",
+      })
+      const RoleData = [
+        user.roleName,
+       formattedDate
+      ];
+      tableRows.push(RoleData);
+    })
+    autoTable(doc, {
+      startY:20,
+      head:[tableColumn],
+      body:tableRows,
+    })
+    doc.save('role_list.pdf')
+  }
+
   return (
     <div className="page-wrapper">
       <div className="content">
@@ -260,7 +295,7 @@ const Role = () => {
 
           <div className="table-top-head me-2">
             <li>
-              <button type="button" className="icon-btn" title="Pdf">
+              <button type="button" onClick={handleExportPDF} className="icon-btn" title="Pdf">
                 <FaFilePdf />
               </button>
             </li>
@@ -269,7 +304,7 @@ const Role = () => {
                 type="button"
                 className="icon-btn"
                 title="Export Excel"
-                onClick={exportToExcel}
+                onClick={handleExportExcel}
               >
                 <FaFileExcel />
               </button>
@@ -312,7 +347,7 @@ const Role = () => {
             </div>
 
             <div className="d-flex table-dropdown my-xl-auto right-content align-items-center flex-wrap row-gap-3" style={{ gap: '10px' }}>
-              <div className="dropdown" style={{ boxShadow: "rgba(0, 0, 0, 0.25)" }}>
+              {/* <div className="dropdown" style={{ boxShadow: "rgba(0, 0, 0, 0.25)" }}>
                 <button
                   type="button"
                   className="dropdown-toggle btn-md d-inline-flex align-items-center"
@@ -369,7 +404,7 @@ const Role = () => {
                     </button>
                   </li>
                 </ul>
-              </div>
+              </div> */}
 
               <div className="dropdown" style={{ boxShadow: "rgba(0, 0, 0, 0.25)" }}>
                 <button
@@ -437,7 +472,7 @@ const Role = () => {
                   style={{ backgroundColor: "#F1F1F1" }}
                 >
                   <tr style={{ textAlign: "center" }}>
-                    <th className="no-sort">
+                    {/* <th className="no-sort">
                       <div className="form-check form-check-md">
                         <input
                           style={{ border: "1px solid #676767" }}
@@ -446,7 +481,7 @@ const Role = () => {
                           id="select-all"
                         />
                       </div>
-                    </th>
+                    </th> */}
                     <th
                       style={{
                         color: "#676767",
@@ -465,7 +500,7 @@ const Role = () => {
                         fontFamily: 'Roboto", sans-serif',
                       }}
                     >Created Date</th>
-                    <th
+                    {/* <th
                       style={{
                         color: "#676767",
                         fontSize: "16px",
@@ -473,7 +508,7 @@ const Role = () => {
                         lineHeight: "14px",
                         fontFamily: 'Roboto", sans-serif',
                       }}
-                    >Status</th>
+                    >Status</th> */}
                     <th
                       style={{
                         color: "#676767",
@@ -491,7 +526,7 @@ const Role = () => {
                   {paginatedRoles.length > 0 ? (
                     paginatedRoles.map((role) => (
                       <tr key={role._id} style={{ textAlign: "center" }}>
-                        <td
+                        {/* <td
                           style={{
                             color: "#262626",
                             fontSize: "16px",
@@ -507,7 +542,7 @@ const Role = () => {
                               type="checkbox"
                             />
                           </div>
-                        </td>
+                        </td> */}
                         <td
                           style={{
                             color: "#262626",
@@ -534,7 +569,7 @@ const Role = () => {
                           }
                         )}
                         </td>
-                        <td
+                        {/* <td
                           style={{
                             color: "#262626",
                             fontSize: "16px",
@@ -562,7 +597,7 @@ const Role = () => {
                           >
                             {role.status}
                           </span>
-                        </td>
+                        </td> */}
 
                         <td className="action-table-data"
                           style={{
@@ -728,12 +763,13 @@ const Role = () => {
                       className="form-control"
                       value={roleName}
                       onChange={(e) => setRoleName(e.target.value)}
+                      placeholder="Enter user role here"
                       required
                     />
                   </div>
                   <div className="mb-0">
                     {/* i remove this from below div status-toggle modal-status */}
-                    <div className=" d-flex flex-column" style={{ gap: '4px' }}>
+                    {/* <div className=" d-flex flex-column" style={{ gap: '4px' }}>
                       <span>
                         <label
                           className="ffrrstname"
@@ -796,7 +832,7 @@ const Role = () => {
                           </li>
                         </ul>
                       </div>
-                    </div>
+                    </div> */}
                   </div>
                 </div>
                 <div
@@ -898,7 +934,7 @@ const Role = () => {
                   </div>
                   <div className="mb-3">
                     {/* i remove from status-toggle modal-status */}
-                    <div className=" d-flex flex-column" style={{ gap: '4px' }}>
+                    {/* <div className=" d-flex flex-column" style={{ gap: '4px' }}>
                       <span>
                         <label
                           className="ffrrstname"
@@ -960,7 +996,7 @@ const Role = () => {
                           </li>
                         </ul>
                       </div>
-                    </div>
+                    </div> */}
                   </div>
                 </div>
                 <div
