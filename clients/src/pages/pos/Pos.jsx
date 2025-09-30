@@ -50,12 +50,29 @@ const Pos=() => {
 
     const [categoryValue, setCategoryValue] = useState('');
     const handleCategoryChange = (e) => {
+        console.log('📂 handleCategoryChange called with:', e.target.value);
         setCategoryValue(e.target.value);
+        // Capitalize the status value to match database enum
+        const capitalizedValue = e.target.value ? e.target.value.charAt(0).toUpperCase() + e.target.value.slice(1) : '';
+        const statusFilter = activeQuickFilter === 'all' ? capitalizedValue : (activeQuickFilter.charAt(0).toUpperCase() + activeQuickFilter.slice(1));
+        console.log('📊 Category status filter:', statusFilter);
+        fetchPosSales(1, transactionSearchQuery, statusFilter, socketValue);
     };
 
     const [socketValue, setSocketValue] = useState('');
     const handleSocketChange = (e) => {
+        console.log('🔌 handleSocketChange called with:', e.target.value);
         setSocketValue(e.target.value);
+        // Capitalize the status filter to match database enum
+        const statusFilter = activeQuickFilter === 'all' ? 
+            (categoryValue ? categoryValue.charAt(0).toUpperCase() + categoryValue.slice(1) : '') : 
+            (activeQuickFilter.charAt(0).toUpperCase() + activeQuickFilter.slice(1));
+        // Capitalize payment method value to match database enum (special case for UPI)
+        const capitalizedPaymentMethod = e.target.value ? 
+            (e.target.value.toLowerCase() === 'upi' ? 'UPI' : e.target.value.charAt(0).toUpperCase() + e.target.value.slice(1)) : '';
+        console.log('📊 Socket status filter:', statusFilter);
+        console.log('💳 Payment method filter:', capitalizedPaymentMethod);
+        fetchPosSales(1, transactionSearchQuery, statusFilter, capitalizedPaymentMethod);
     };
 
     const [warehouseValue, setWarehouseValue] = useState('');
@@ -68,12 +85,28 @@ const Pos=() => {
         setExprationValue(e.target.value);
     };
 
+    // Quick filter state
+    const [activeQuickFilter, setActiveQuickFilter] = useState('all');
+
     const handleClear = () => {
         setSearchDrop(false);
         setCategoryValue('');
         setSocketValue('');
         setWarehouseValue('');
         setExprationValue('');
+        setActiveQuickFilter('all');
+        fetchPosSales(1, transactionSearchQuery, '', '');
+    };
+
+    // Quick filter handlers
+    const handleQuickFilter = (filterType) => {
+        console.log('🎯 handleQuickFilter called with:', filterType);
+        setActiveQuickFilter(filterType);
+        // Capitalize the first letter to match database enum values
+        const statusFilter = filterType === 'all' ? '' : filterType.charAt(0).toUpperCase() + filterType.slice(1);
+        console.log('📊 Status filter set to:', statusFilter);
+        console.log('🔌 Socket value:', socketValue);
+        fetchPosSales(1, transactionSearchQuery, statusFilter, socketValue);
     };
 
   //customer popup-------------------------------------------------------------------------------------------------------------
@@ -174,6 +207,57 @@ const Pos=() => {
   }
   const closeCard = () => {
     setCardPopup(false);
+    // Reset card form when closing
+    setCardNumber('');
+    setCardHolderName('');
+    setValidTill('');
+    setCvv('');
+  };
+
+  // Card form state variables
+  const [cardNumber, setCardNumber] = useState('');
+  const [cardHolderName, setCardHolderName] = useState('');
+  const [validTill, setValidTill] = useState('');
+  const [cvv, setCvv] = useState('');
+
+  // Card validation functions
+  const handleCardNumberChange = (e) => {
+    const value = e.target.value.replace(/\D/g, ''); // Remove non-digits
+    if (value.length <= 16) {
+      setCardNumber(value);
+    }
+  };
+
+  const handleCardHolderNameChange = (e) => {
+    const value = e.target.value.replace(/[^a-zA-Z\s]/g, ''); // Only letters and spaces
+    setCardHolderName(value);
+  };
+
+  const handleValidTillChange = (e) => {
+    let value = e.target.value.replace(/\D/g, ''); // Remove non-digits
+    
+    if (value.length >= 2) {
+      const month = value.substring(0, 2);
+      const year = value.substring(2, 4);
+      
+      // Validate month (01-12)
+      if (parseInt(month) > 12 || parseInt(month) < 1) {
+        return; // Don't update if invalid month
+      }
+      
+      value = month + (year ? '/' + year : '');
+    }
+    
+    if (value.length <= 5) { // MM/YY format
+      setValidTill(value);
+    }
+  };
+
+  const handleCvvChange = (e) => {
+    const value = e.target.value.replace(/\D/g, ''); // Remove non-digits
+    if (value.length <= 3) {
+      setCvv(value);
+    }
   };
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -237,6 +321,9 @@ const Pos=() => {
     document.removeEventListener("keydown", handleKeyDown);
     };
   }, []);
+
+// Selected payment method state for highlighting
+const [selectedPaymentMethod, setSelectedPaymentMethod] = useState(null);
 
 //transaction popup---------------------------------------------------------------------------------------------------------------
   const [transactionpopup, setTransactionPopup] = useState(false);
@@ -462,6 +549,35 @@ const Pos=() => {
   const [productSearchQuery, setProductSearchQuery] = useState('')
 
   const [transactionSearchQuery, setTransactionSearchQuery] = useState('');
+  
+  // Helper function to check if a product is expired
+  const isProductExpired = (product) => {
+    const expiryArr = product.variants?.get?.('Expiry') || product.variants?.['Expiry'] || product.variants?.get?.('expiry') || product.variants?.['expiry'];
+    if (!expiryArr || expiryArr.length === 0) return false;
+    
+    return expiryArr.some(dateStr => {
+      // Handle multiple date formats: DD-MM-YYYY, D-M-YYYY, DD/MM/YYYY, etc.
+      if (typeof dateStr === "string") {
+        // Try DD-MM-YYYY or D-M-YYYY format
+        const dateMatch = dateStr.match(/^(\d{1,2})[-/](\d{1,2})[-/](\d{4})$/);
+        if (dateMatch) {
+          const [, day, month, year] = dateMatch.map(Number);
+          if (day && month && year && day <= 31 && month <= 12) {
+            const expDate = new Date(year, month - 1, day);
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+            expDate.setHours(0, 0, 0, 0);
+
+            if (!isNaN(expDate.getTime())) {
+              return expDate < today; // Check if expired
+            }
+          }
+        }
+      }
+      return false;
+    });
+  };
+
       // Product search functionality
   const handleProductSearch = (query) => {
     setProductSearchQuery(query);
@@ -473,15 +589,19 @@ const Pos=() => {
 
     const searchTerm = query.toLowerCase();
     const filteredProducts = allProducts.filter(product => {
+      // First check if product is not expired, then apply search filters
+      if (isProductExpired(product)) return false;
+      
       return (
         product.productName?.toLowerCase().includes(searchTerm) ||
-        (product.brand && typeof product.brand === 'object' && product.brand.name?.toLowerCase().includes(searchTerm)) ||
+        product.description?.toLowerCase().includes(searchTerm) ||
+        (product.brand && typeof product.brand === 'object' && product.brand.brandName?.toLowerCase().includes(searchTerm)) ||
         (product.brand && typeof product.brand === 'string' && product.brand.toLowerCase().includes(searchTerm)) ||
         product.seoTitle?.toLowerCase().includes(searchTerm) ||
         product.seoDescription?.toLowerCase().includes(searchTerm) ||
-        (product.category && typeof product.category === 'object' && product.category.name?.toLowerCase().includes(searchTerm)) ||
+        (product.category && typeof product.category === 'object' && product.category.categoryName?.toLowerCase().includes(searchTerm)) ||
         (product.category && typeof product.category === 'string' && product.category.toLowerCase().includes(searchTerm)) ||
-        (product.subcategory && typeof product.subcategory === 'object' && product.subcategory.name?.toLowerCase().includes(searchTerm)) ||
+        (product.subcategory && typeof product.subcategory === 'object' && product.subcategory.subCategoryName?.toLowerCase().includes(searchTerm)) ||
         (product.subcategory && typeof product.subcategory === 'string' && product.subcategory.toLowerCase().includes(searchTerm))
       );
     });
@@ -497,8 +617,12 @@ const Pos=() => {
           Authorization: `Bearer ${token}`,
         },
         });
-        setProducts(res.data);
-        setAllProducts(res.data); // Store all products
+        
+        // Filter out expired products
+        const nonExpiredProducts = res.data.filter(product => !isProductExpired(product));
+        
+        setProducts(nonExpiredProducts);
+        setAllProducts(nonExpiredProducts); // Store all non-expired products
         // console.log("Products right:", res.data);
         // Log first product to see image structure
         if (res.data.length > 0) {
@@ -547,10 +671,10 @@ const Pos=() => {
       setSelectedCategory(null);
       setProducts(allProducts);
     } else {
-      // Filter products by selected category
+      // Filter products by selected category, excluding expired products
       setSelectedCategory(category);
       const filteredProducts = allProducts.filter(product => 
-        product.category && product.category._id === category._id
+        product.category && product.category._id === category._id && !isProductExpired(product)
       );
       setProducts(filteredProducts);
     }
@@ -646,16 +770,23 @@ const Pos=() => {
   };
 
   const removeItem = (itemId) => {
+    // Check if the item being removed is a bag
+    const itemToRemove = selectedItems.find(item => item._id === itemId);
+    if (itemToRemove && itemToRemove.isBag) {
+      setBagCharge(0); // Reset bag charge when bag is removed
+    }
     setSelectedItems(selectedItems.filter(item => item._id !== itemId));
   };
 
   // Calculate totals whenever selectedItems changes
   useEffect(() => {
-    const subtotal = selectedItems.reduce((sum, item) => sum + item.totalPrice, 0);
-    const discount = selectedItems.reduce((sum, item) => sum + item.totalDiscount, 0);
-    const tax = selectedItems.reduce((sum, item) => sum + calculateDiscountedTax(item), 0);
-    const items = selectedItems.length;
-    const quantity = selectedItems.reduce((sum, item) => sum + item.quantity, 0);
+    // Exclude bag items from calculations since bagCharge is added separately
+    const nonBagItems = selectedItems.filter(item => !item.isBag);
+    const subtotal = nonBagItems.reduce((sum, item) => sum + item.totalPrice, 0);
+    const discount = nonBagItems.reduce((sum, item) => sum + item.totalDiscount, 0);
+    const tax = nonBagItems.reduce((sum, item) => sum + calculateDiscountedTax(item), 0);
+    const items = nonBagItems.length;
+    const quantity = nonBagItems.reduce((sum, item) => sum + item.quantity, 0);
     
     setSubTotal(subtotal)
     setDiscount(discount)
@@ -695,10 +826,32 @@ const dueAmount = Math.max(roundedAmount - (Number(amountReceived) || 0), 0);
       updatedOtp[index] = value;
       setOtp(updatedOtp);
 
-      if (value && index < 5) {
+      // Move to next input if value is entered and not the last input
+      if (value && index < 3) {
         otpRefs[index + 1].current.focus();
       }
+    }
+  };
 
+  const handleOtpKeyDown = (index, e) => {
+    // Handle backspace navigation
+    if (e.key === 'Backspace') {
+      if (otp[index] === '' && index > 0) {
+        // If current input is empty and backspace is pressed, move to previous input
+        otpRefs[index - 1].current.focus();
+      } else if (otp[index] !== '') {
+        // If current input has value, clear it but stay in same input
+        const updatedOtp = [...otp];
+        updatedOtp[index] = '';
+        setOtp(updatedOtp);
+      }
+    }
+    // Handle arrow key navigation
+    else if (e.key === 'ArrowLeft' && index > 0) {
+      otpRefs[index - 1].current.focus();
+    }
+    else if (e.key === 'ArrowRight' && index < 3) {
+      otpRefs[index + 1].current.focus();
     }
   };
 
@@ -768,9 +921,11 @@ const fetchCustomers = async () => {
   };
 
 // Fetch sales transactions-------------------------------------------------------------------------------------------------
-  const fetchPosSales = async (page = 1, searchQuery = '') => {
+  const fetchPosSales = async (page = 1, searchQuery = '', statusFilter = '', paymentMethodFilter = '') => {
     try {
       setLoading(true);
+      console.log('🔍 fetchPosSales called with:', { page, searchQuery, statusFilter, paymentMethodFilter });
+      
       const token = localStorage.getItem("token");
       const params = new URLSearchParams({
         page: page,
@@ -781,9 +936,23 @@ const fetchCustomers = async () => {
         params.append('search', searchQuery);
       }
       
-      const response = await axios.get(`${BASE_URL}/api/pos-sales/transactions?${params}`, {
+      if (statusFilter.trim()) {
+        params.append('status', statusFilter);
+      }
+      
+      if (paymentMethodFilter.trim()) {
+        params.append('paymentMethod', paymentMethodFilter);
+      }
+      
+      const apiUrl = `${BASE_URL}/api/pos-sales/transactions?${params}`;
+      console.log('🌐 API URL:', apiUrl);
+      console.log('📋 URL Params:', params.toString());
+      
+      const response = await axios.get(apiUrl, {
         headers: { Authorization: `Bearer ${token}` }
       });
+      
+      console.log('✅ API Response:', response.data);
       setPosSales(response.data.data);
       setTotalPages(response.data.pagination.totalPages);
       setTotalSales(response.data.pagination.totalSales);
@@ -798,7 +967,9 @@ const fetchCustomers = async () => {
 // Transaction search functionality
   const handleTransactionSearch = (query) => {
     setTransactionSearchQuery(query);
-    fetchPosSales(1, query);
+    const statusFilter = activeQuickFilter === 'all' ? categoryValue : activeQuickFilter;
+    const paymentMethodFilter = socketValue;
+    fetchPosSales(1, query, statusFilter, paymentMethodFilter);
   };
 
 // Create POS sale---------------------------------------------------------------------------------------------------------------------
@@ -879,7 +1050,8 @@ const fetchCustomers = async () => {
 // Handle pagination
   const handlePageChange = (newPage) => {
     if (newPage >= 1 && newPage <= totalPages) {
-      fetchPosSales(newPage, transactionSearchQuery);
+      const statusFilter = activeQuickFilter === 'all' ? categoryValue : activeQuickFilter;
+      fetchPosSales(newPage, transactionSearchQuery, statusFilter, socketValue);
     }
   };
 
@@ -1248,23 +1420,44 @@ const handleSubmit = async (e) => {
 
     if (response.ok) {
       alert("Customer saved successfully ✅");
+      // Clear all form fields
       setForm({
         name: '',
         email: '',
         phone: '',
         status: true,
       });
-  fetchCustomers(); 
+      // Clear location fields
+      setSelectedCountry('');
+      setSelectedState('');
+      setSelectedCity('');
+      setPinCode('');
+      // Close popup
+      setAddCustomerPopup(false);
+      fetchCustomers(); 
     } else {
       alert("Error: " + data.error);
     }
   } catch (err) {
     console.error(err);
-    alert("Something went wrong ❌");
+    alert("Something went wrong");
   } finally {
     setLoading(false);
   }
 };
+
+//date display
+  const [currentDate, setCurrentDate] = useState(new Date());
+
+  useEffect(() => {
+    // Set up a timer to update every second
+    const timer = setInterval(() => {
+      setCurrentDate(new Date());
+    }, 1000);
+
+    // Cleanup the interval on component unmount
+    return () => clearInterval(timer);
+  }, []);
 
   return ( //page code starts from here-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
@@ -1350,18 +1543,18 @@ const handleSubmit = async (e) => {
               <div className="d-flex align-items-center justify-content-between flex-wrap mb-2">
                 <div className="mb-3">
                   <h5 className="mb-1">Welcome,  {userObj?.firstName || 'User'} {userObj?.lastName || ''}</h5>
-                  <p>December 24, 2024</p>
+                  <p>{currentDate.toLocaleString()}</p>
                 </div>
                 <div className="d-flex align-items-center flex-wrap mb-2">
-                  <div className="input-icon-start search-pos position-relative mb-2 me-3">
+                  <div className="input-icon-start search-pos position-relative mb-2">
                     <span className="input-icon-addon">
                       <TbSearch className="ti ti-search" />
                     </span>
                     <input type="text" className="form-control" placeholder="Search Product"  value={productSearchQuery}
             onChange={(e) => handleProductSearch(e.target.value)}/>
                   </div>
-                  <a href="#" className="btn btn-sm btn-dark mb-2 me-2"><i className="ti ti-tag me-1" />View All Brands</a>
-                  <a href="#" className="btn btn-sm btn-primary mb-2"><i className="ti ti-star me-1" />Featured</a>
+                  {/* <a href="#" className="btn btn-sm btn-dark mb-2 me-2"><i className="ti ti-tag me-1" />View All Brands</a>
+                  <a href="#" className="btn btn-sm btn-primary mb-2"><i className="ti ti-star me-1" />Featured</a> */}
                 </div>
               </div>
               <div className="pos-products">
@@ -1590,7 +1783,7 @@ const handleSubmit = async (e) => {
        {/* billing section */}
       <div className="col-md-12 col-lg-5 col-xl-4 ps-0 theiaStickySidebar  position-relative">
 
-          <div style={{width:'100%',display:'flex',justifyContent:'space-between',alignItems:'center',padding:'0px 20px',borderBottom:'1px solid #ccc'}}>
+        <div style={{width:'100%',display:'flex',justifyContent:'space-between',alignItems:'center',padding:'0px 20px',borderBottom:'1px solid #ccc'}}>
           <div style={{fontSize:'20px',fontWeight:'600'}}>
             Cart
           </div>
@@ -1793,7 +1986,7 @@ const handleSubmit = async (e) => {
                 <i>No items selected</i>
               </div>
             ) : (
-              <div style={{display:'flex',flexDirection:'column',gap:'8px',overflowY:'auto',maxHeight:'45vh'}}>
+              <div style={{display:'flex',flexDirection:'column',gap:'8px',overflowY:'auto',height: updown ? 'calc(45vh - 18vh)' : '45vh'}}>
                 {selectedItems.map((item) => (
                   <div 
                     key={item._id}
@@ -1906,7 +2099,7 @@ const handleSubmit = async (e) => {
           </div>
 
           {/* price */}
-          <div style={{backgroundColor:'#F1F1F1',border:'1px solid #E6E6E6',borderTopLeftRadius:'16px',borderTopRightRadius:'16px',position:'absolute',bottom:'0px',width:'100%',padding:'10px'}}>
+          <div style={{backgroundColor:'#F1F1F1',border:'1px solid #E6E6E6',borderTopLeftRadius:'16px',borderTopRightRadius:'16px',position:'absolute',bottom:'0px',width:'100%',padding:'10px',}}>
 
             {/* sales summary */}
             {updown && (
@@ -1978,13 +2171,16 @@ const handleSubmit = async (e) => {
                 display:'flex',
                 justifyContent:'space-between',
                 padding:'10px 15px',
-                backgroundColor: '#1368EC',
+                backgroundColor: selectedPaymentMethod === 'cash' ? '#1368EC' : 'white',
                 borderRadius:'8px',
-                color:'white',
+                color: selectedPaymentMethod === 'cash' ? 'white' : '#1368EC',
                 marginTop:'5px',
                 cursor: 'pointer'
               }} 
-              onClick={handleCashPopupChange}
+              onClick={() => {
+                setSelectedPaymentMethod('cash');
+                handleCashPopupChange();
+              }}
             >
               <span>Cash</span>
               <span>[F1]</span>
@@ -1996,14 +2192,17 @@ const handleSubmit = async (e) => {
                   display:'flex',
                   justifyContent:'space-between',
                   padding:'10px 15px',
-                  backgroundColor:'white',
+                  backgroundColor: selectedPaymentMethod === 'card' ? '#1368EC' : 'white',
                   borderRadius:'10px',
                   border:'1px solid #E6E6E6',
                   width:'100%',
-                  color: '#1368EC',
+                  color: selectedPaymentMethod === 'card' ? 'white' : '#1368EC',
                   cursor: 'pointer',
                 }} 
-                onClick={handleCardPopupChange}
+                onClick={() => {
+                  setSelectedPaymentMethod('card');
+                  handleCardPopupChange();
+                }}
               >
                 <span>Card</span>
                 <span>[F2]</span>
@@ -2013,14 +2212,17 @@ const handleSubmit = async (e) => {
                   display:'flex',
                   justifyContent:'space-between',
                   padding:'10px 15px',
-                  backgroundColor:'white',
+                  backgroundColor: selectedPaymentMethod === 'upi' ? '#1368EC' : 'white',
                   borderRadius:'10px',
                   border:'1px solid #E6E6E6',
                   width:'100%',
-                  color: '#1368EC',
+                  color: selectedPaymentMethod === 'upi' ? 'white' : '#1368EC',
                   cursor: 'pointer',
                 }} 
-                onClick={handleUpiPopupChange}
+                onClick={() => {
+                  setSelectedPaymentMethod('upi');
+                  handleUpiPopupChange();
+                }}
               >
                 <span>UPI</span>
                 <span>[F3]</span>
@@ -2037,10 +2239,120 @@ const handleSubmit = async (e) => {
     <div className="pos-footer bg-white p-3 border-top">
       <div className="d-flex align-items-center justify-content-center flex-wrap gap-2">
         <a href='/pos' target='_blank' className="btn btn-orange d-inline-flex align-items-center justify-content-center" ><i className="ti ti-player-pause me-2" />Hold</a>
-        <a href="" className="btn btn-info d-inline-flex align-items-center justify-content-center"><i className="ti ti-trash me-2" />Void</a>
-        <a href="" className="btn btn-cyan d-flex align-items-center justify-content-center" data-bs-toggle="modal" data-bs-target="#payment-completed"><i className="ti ti-cash-banknote me-2" />Payment</a>
-        <a href="" className="btn btn-secondary d-inline-flex align-items-center justify-content-center" data-bs-toggle="modal" data-bs-target="#orders"><i className="ti ti-shopping-cart me-2" />View Orders</a>
-        <a href="" className="btn btn-indigo d-inline-flex align-items-center justify-content-center" data-bs-toggle="modal" data-bs-target="#reset"><i className="ti ti-reload me-2" />Reset</a>
+        {/* <a href="" className="btn btn-info d-inline-flex align-items-center justify-content-center"><i className="ti ti-trash me-2" />Void</a> */}
+        {/* <a href="" className="btn btn-cyan d-flex align-items-center justify-content-center" data-bs-toggle="modal" data-bs-target="#payment-completed"><i className="ti ti-cash-banknote me-2" />Payment</a> */}
+        {/* <a href="" className="btn btn-secondary d-inline-flex align-items-center justify-content-center" data-bs-toggle="modal" data-bs-target="#orders"><i className="ti ti-shopping-cart me-2" />View Orders</a> */}
+        <a href="" className="btn btn-indigo d-inline-flex align-items-center justify-content-center" data-bs-toggle="modal" data-bs-target="#reset"
+        
+              onClick={() => {
+                setSelectedItems([]);
+                setSelectedCustomer(null);
+                setBagCharge(0);
+                setAmountReceived('');
+                setSearchQuery('');
+                setSearchResults([]);
+                setShowDropdown(false);
+                // Reset totals
+                setSubTotal(0);
+                setTotalAmount(0);
+                setRoundedAmount(0);
+                setTotalTax(0);
+                setTotalItems(0);
+                setTotalQuantity(0);
+                setDiscount(0);
+                                    // Close all popups
+                    setCashPopup(false);
+                    setCardPopup(false);
+                    setUpiPopup(false);
+                    // Refresh transactions
+                    fetchPosSales();
+                    // Reset category filter
+                    setSelectedCategory(null);
+                    setProducts(allProducts);
+                    // Reset updown state
+                    setUpdown(false);
+                    // Reset search drop state
+                    setSearchDrop(false);
+                    // Reset filter values
+                    setCategoryValue('');
+                    setSocketValue('');
+                    setWarehouseValue('');
+                    setExprationValue('');
+                    // Reset OTP state
+                    setOtp(['', '', '', '']);
+                    // Reset address fields
+                    setCountry('');
+                    setState('');
+                    setCity('');
+                    setPinCode('');
+                    setSelectedCountry('');
+                    setSelectedState('');
+                    setSelectedCity('');
+                    // Reset form data
+                    if (formRef.current) {
+                      formRef.current.reset();
+                    }
+                    // Reset active tabs
+                    const initialTabs = allProducts.reduce((acc, product) => {
+                      acc[product._id] = "general";
+                      return acc;
+                    }, {});
+                    setActiveTabs(initialTabs);
+                    // Reset search query
+                    setSearchQuery('');
+                    // Reset search results
+                    setSearchResults([]);
+                    setShowDropdown(false);
+                    // Reset popup states
+                    setPopup(false);
+                    setAddCustomerPopup(false);
+                    setDiscountPopup(false);
+                    // Reset transaction popup
+                    setTransactionPopup(false);
+                    // Reset selected sale
+                    setSelectedSale(null);
+                    // Reset current page
+                    setCurrentPage(1);
+                    // Reset total pages
+                    setTotalPages(1);
+                    // Reset total sales
+                    setTotalSales(0);
+                    // Reset loading state
+                    setLoading(false);
+                    // Reset pos sales
+                    setPosSales([]);
+                    // Reset amount received
+                    setAmountReceived('');
+                    // Reset search query
+                    setSearchQuery('');
+                    // Reset search results
+                    setSearchResults([]);
+                    setShowDropdown(false);
+                    // Reset popup states
+                    setPopup(false);
+                    setAddCustomerPopup(false);
+                    setDiscountPopup(false);
+                    // Reset transaction popup
+                    setTransactionPopup(false);
+                    // Reset selected sale
+                    setSelectedSale(null);
+                    // Reset current page
+                    setCurrentPage(1);
+                    // Reset total pages
+                    setTotalPages(1);
+                    // Reset total sales
+                    setTotalSales(0);
+                    // Reset loading state
+                    setLoading(false);
+                    // Reset pos sales
+                    setPosSales([]);
+                    // Reset amount received
+                    setAmountReceived('');
+                  }}
+        >
+          <i className="ti ti-reload me-2" />
+          Reset
+        </a>
         <a onClick={handleTransactionPopupChange}  className="btn btn-danger d-inline-flex align-items-center justify-content-center" ><i className="ti ti-refresh-dot me-2"/>Transaction</a>
       </div>
     </div>
@@ -2197,8 +2509,11 @@ const handleSubmit = async (e) => {
           <div ref={CashRef} style={{width:'500px',padding:'10px 16px',overflowY:'auto',backgroundColor:'#fff',border:'1px solid #E1E1E1',borderRadius:'8px'}}>
             
             <div style={{display:'flex',justifyContent:'space-between',borderBottom:'1px solid #E1E1E1',padding:'10px 0px'}}>
-              <span>Cash details</span>
-              <span>₹{roundedAmount}</span>
+              <span>Cash: <span style={{color:'black'}}>₹{roundedAmount}</span></span>
+              
+                  <div style={{ position: 'relative', top: '-5px', right: '-2px' }}>
+                    <span style={{ backgroundColor: 'red', color: 'white', padding: '5px 11px', borderRadius: '50%', cursor: 'pointer', fontSize: '15px' }} onClick={closeCash}>x</span>
+                  </div>
             </div>
 
             <div style={{display:'flex',justifyContent:'space-between',padding:'10px 0px',width:'100%',gap:'15px',marginTop:'5px',}}>
@@ -2277,20 +2592,49 @@ const handleSubmit = async (e) => {
             
             <div style={{display:'flex',justifyContent:'space-between',borderBottom:'1px solid #E1E1E1',padding:'10px 0px'}}>
               <span>Enter Card details</span>
+              
+                  <div style={{ position: 'relative', top: '-5px', right: '-2px' }}>
+                    <span style={{ backgroundColor: 'red', color: 'white', padding: '5px 11px', borderRadius: '50%', cursor: 'pointer', fontSize: '15px' }} onClick={closeCard}>x</span>
+                  </div>
             </div>
 
             <div style={{display:'flex',justifyContent:'space-between',padding:'10px 0px',width:'100%',gap:'15px',marginTop:'5px',}}>
               <div style={{width:'100%'}}>
                 <span>Card Number</span>
                 <div style={{display:'flex',justifyContent:'space-between',padding:'10px 15px',backgroundColor:'#F9FAFB',borderRadius:'10px',border:'1px solid #E6E6E6',width:'100%',marginTop:'5px'}}>
-                  <input type="number" placeholder='1234 5678 9101 1213' style={{border:'none',outline:'none',width:'100%',backgroundColor:'#F9FAFB'}} required />
+                  <input 
+                    type="text" 
+                    placeholder='1234567890123456' 
+                    value={cardNumber}
+                    onChange={handleCardNumberChange}
+                    maxLength={16}
+                    style={{border:'none',outline:'none',width:'100%',backgroundColor:'#F9FAFB'}} 
+                    required 
+                  />
                 </div>
+                {cardNumber && cardNumber.length !== 16 && (
+                  <div style={{fontSize:'12px', color:'red', marginTop:'2px'}}>
+                    Card number must be exactly 16 digits
+                  </div>
+                )}
               </div>
               <div style={{width:'100%'}}>
                 <span>Name on Card</span>
                 <div style={{display:'flex',justifyContent:'space-between',padding:'10px 15px',backgroundColor:'#F9FAFB',borderRadius:'10px',border:'1px solid #E6E6E6',width:'100%',marginTop:'5px'}}>
-                  <input type="text" placeholder='Enter Card Holder Name' style={{border:'none',outline:'none',width:'100%',backgroundColor:'#F9FAFB'}} required />
+                  <input 
+                    type="text" 
+                    placeholder='Enter Card Holder Name' 
+                    value={cardHolderName}
+                    onChange={handleCardHolderNameChange}
+                    style={{border:'none',outline:'none',width:'100%',backgroundColor:'#F9FAFB'}} 
+                    required 
+                  />
                 </div>
+                {cardHolderName && !/^[a-zA-Z\s]+$/.test(cardHolderName) && (
+                  <div style={{fontSize:'12px', color:'red', marginTop:'2px'}}>
+                    Name should contain only letters and spaces
+                  </div>
+                )}
               </div>
             </div>
 
@@ -2298,14 +2642,40 @@ const handleSubmit = async (e) => {
               <div style={{width:'100%'}}>
                 <span>Valid till</span>
                 <div style={{display:'flex',justifyContent:'center',padding:'10px 15px',backgroundColor:'#F9FAFB',borderRadius:'10px',border:'1px solid #E6E6E6',width:'100%',marginTop:'5px'}}>
-                  <input type="number" placeholder='30/12' style={{border:'none',outline:'none',width:'100%',backgroundColor:'#F9FAFB'}} required />
+                  <input 
+                    type="text" 
+                    placeholder='MM/YY' 
+                    value={validTill}
+                    onChange={handleValidTillChange}
+                    maxLength={5}
+                    style={{border:'none',outline:'none',width:'100%',backgroundColor:'#F9FAFB'}} 
+                    required 
+                  />
                 </div>
+                {validTill && validTill.length > 0 && validTill.length < 5 && (
+                  <div style={{fontSize:'12px', color:'red', marginTop:'2px'}}>
+                    Format: MM/YY (e.g., 12/25)
+                  </div>
+                )}
               </div>
               <div style={{width:'100%'}}>
                 <span>CVV</span>
                 <div style={{display:'flex',justifyContent:'center',padding:'10px 15px',backgroundColor:'#F9FAFB',borderRadius:'10px',border:'1px solid #E6E6E6',width:'100%',marginTop:'5px'}}>
-                  <input type="number" placeholder='999' style={{border:'none',outline:'none',width:'100%',backgroundColor:'#F9FAFB'}} required />
+                  <input 
+                    type="text" 
+                    placeholder='123' 
+                    value={cvv}
+                    onChange={handleCvvChange}
+                    maxLength={3}
+                    style={{border:'none',outline:'none',width:'100%',backgroundColor:'#F9FAFB'}} 
+                    required 
+                  />
                 </div>
+                {cvv && cvv.length !== 3 && (
+                  <div style={{fontSize:'12px', color:'red', marginTop:'2px'}}>
+                    CVV must be exactly 3 digits
+                  </div>
+                )}
               </div>
             </div>
 
@@ -2326,6 +2696,7 @@ const handleSubmit = async (e) => {
                   value={digit}
                   ref={otpRefs[idx]}
                   onChange={(e) => handleOtpChange(idx, e.target.value)}
+                  onKeyDown={(e) => handleOtpKeyDown(idx, e)}
                   placeholder='0'
                   style={{color:'#C2C2C2',width:'60px',height:'60px',textAlign:'center',borderRadius:'8px',padding:'8px',backgroundColor:'#F5F5F5',outline:'none',border:'none',fontSize:'50px'}}
                 />
@@ -2384,6 +2755,10 @@ const handleSubmit = async (e) => {
             
             <div style={{display:'flex',justifyContent:'space-between',padding:'10px 0px'}}>
               <span>Select Bag Type</span>
+              
+                  <div style={{ position: 'relative', top: '-5px', right: '-2px' }}>
+                    <span style={{ backgroundColor: 'red', color: 'white', padding: '5px 11px', borderRadius: '50%', cursor: 'pointer', fontSize: '15px' }} onClick={closeBag}>x</span>
+                  </div>
             </div>
 
             <div style={{display:'flex',justifyContent:'space-around',alignItems:'center',marginTop:'20px',gap:'10px',marginBottom:'30px'}}>
@@ -2558,10 +2933,42 @@ const handleSubmit = async (e) => {
                     ) : (
                       <>
                         <div style={{ display: 'flex', gap: '15px', alignItems: 'center' }}>
-                          <div style={{ backgroundColor: '#ccc', color: 'black', padding: '5px 8px', borderRadius: '6px' }}>All</div>
-                          <div style={{ color: 'black', padding: '5px 8px', }}>Recents</div>
-                          <div style={{ color: 'black', padding: '5px 8px', }}>Paid</div>
-                          <div style={{ color: 'black', padding: '5px 8px', }}>Due</div>
+                          <div 
+                            style={{ 
+                              backgroundColor: activeQuickFilter === 'all' ? '#1368EC' : '#ccc', 
+                              color: activeQuickFilter === 'all' ? 'white' : 'black', 
+                              padding: '5px 8px', 
+                              borderRadius: '6px',
+                              cursor: 'pointer'
+                            }}
+                            onClick={() => handleQuickFilter('all')}
+                          >
+                            All
+                          </div>
+                          <div 
+                            style={{ 
+                              backgroundColor: activeQuickFilter === 'paid' ? '#1368EC' : 'transparent', 
+                              color: activeQuickFilter === 'paid' ? 'white' : 'black', 
+                              padding: '5px 8px',
+                              borderRadius: '6px',
+                              cursor: 'pointer'
+                            }}
+                            onClick={() => handleQuickFilter('paid')}
+                          >
+                            Paid
+                          </div>
+                          <div 
+                            style={{ 
+                              backgroundColor: activeQuickFilter === 'due' ? '#1368EC' : 'transparent', 
+                              color: activeQuickFilter === 'due' ? 'white' : 'black', 
+                              padding: '5px 8px',
+                              borderRadius: '6px',
+                              cursor: 'pointer'
+                            }}
+                            onClick={() => handleQuickFilter('due')}
+                          >
+                            Due
+                          </div>
                     <div 
                       style={{ 
                         color: 'black', 
@@ -2570,7 +2977,10 @@ const handleSubmit = async (e) => {
                         backgroundColor: '#f0f0f0',
                         borderRadius: '4px'
                       }}
-                      onClick={() => fetchPosSales(currentPage, transactionSearchQuery)}
+                      onClick={() => {
+                        const statusFilter = activeQuickFilter === 'all' ? categoryValue : activeQuickFilter;
+                        fetchPosSales(currentPage, transactionSearchQuery, statusFilter, socketValue);
+                      }}
                       title="Refresh"
                     >
                       ↻
@@ -2590,7 +3000,7 @@ const handleSubmit = async (e) => {
                       </>)}
                     <div style={{ color: 'black', padding: '7px 8px', borderRadius: '6px', border: '2px solid #ccc', display: 'flex', gap: '10px', alignItems: 'center', cursor:'pointer' }} onClick={handleClear}><TbArrowsSort /></div>
                     <div style={{}}>
-                      <span style={{backgroundColor:'red',color:'white',padding:'4px 11px',borderRadius:'50%',cursor:'pointer',fontSize:'20px'}} onClick={handlePopupClose}>x</span>
+                      <span style={{backgroundColor:'red',color:'white',padding:'3px 11px',borderRadius:'50%',cursor:'pointer',fontSize:'20px'}} onClick={handlePopupClose}>x</span>
                     </div>
                   </div>
                 </div>
@@ -2605,27 +3015,35 @@ const handleSubmit = async (e) => {
                         </div>
 
                         <div
-                          style={{ border: categoryValue ? '2px dashed #1368EC' : '2px dashed #ccc', padding: '0px 10px 0px 8px', alignItems: 'center', display: 'flex', borderRadius: '6px' }}
-                          value={categoryValue}
-                          onChange={handleCategoryChange}>
-                          <select className="" style={{ outline: 'none', border: 'none', color: categoryValue ? '#1368EC' : '#555252' }}>
-                            <option value="" style={{ color: '#555252' }}>Category</option>
-                            <option value="c1" style={{ color: '#555252' }}>Category 1</option>
-                            <option value="c2" style={{ color: '#555252' }}>Category 2</option>
+                          style={{ border: categoryValue ? '2px dashed #1368EC' : '2px dashed #ccc', padding: '0px 10px 0px 8px', alignItems: 'center', display: 'flex', borderRadius: '6px' }}>
+                          <select 
+                            className="" 
+                            style={{ outline: 'none', border: 'none', color: categoryValue ? '#1368EC' : '#555252' }}
+                            value={categoryValue}
+                            onChange={handleCategoryChange}
+                          >
+                            <option value="" style={{ color: '#555252' }}>--Status--</option>
+                            <option value="paid" style={{ color: '#555252' }}>Paid</option>
+                            <option value="due" style={{ color: '#555252' }}>Due</option>
                           </select>
                         </div>
 
                         <div
-                          style={{ border: socketValue ? '2px dashed #1368EC' : '2px dashed #ccc', padding: '0px 10px 0px 8px', alignItems: 'center', display: 'flex', borderRadius: '6px' }}
-                          value={socketValue}
-                          onChange={handleSocketChange}>
-                          <select className="" style={{ outline: 'none', border: 'none', color: socketValue ? '#1368EC' : '#555252' }}>
-                            <option value="" style={{ color: '#555252' }}>Socket Level</option>
-                            <option value="sl1" style={{ color: '#555252' }}>Last 7 days</option>
+                          style={{ border: socketValue ? '2px dashed #1368EC' : '2px dashed #ccc', padding: '0px 10px 0px 8px', alignItems: 'center', display: 'flex', borderRadius: '6px' }}>
+                          <select 
+                            className="" 
+                            style={{ outline: 'none', border: 'none', color: socketValue ? '#1368EC' : '#555252' }}
+                            value={socketValue}
+                            onChange={handleSocketChange}
+                          >
+                            <option value="" style={{ color: '#555252' }}>--Payment Method--</option>
+                            <option value="cash" style={{ color: '#555252' }}>Cash</option>
+                            <option value="upi" style={{ color: '#555252' }}>UPI</option>
+                            <option value="card" style={{ color: '#555252' }}>Card</option>
                           </select>
                         </div>
 
-                        <div
+                        {/* <div
                           style={{ border: warehouseValue ? '2px dashed #1368EC' : '2px dashed #ccc', padding: '0px 10px 0px 8px', alignItems: 'center', display: 'flex', borderRadius: '6px' }}
                           value={warehouseValue}
                           onChange={handleWarehouseChange}>
@@ -2633,9 +3051,9 @@ const handleSubmit = async (e) => {
                             <option value="" style={{ color: '#555252' }}>Warehouse</option>
                             <option value="wh1" style={{ color: '#555252' }}>Warehouse 1</option>
                           </select>
-                        </div>
+                        </div> */}
 
-                        <div
+                        {/* <div
                           style={{ border: exprationValue ? '2px dashed #1368EC' : '2px dashed #ccc', padding: '0px 10px 0px 3px', alignItems: 'center', display: 'flex', borderRadius: '6px' }}
                           value={exprationValue}
                           onChange={handleExprationChange}>
@@ -2643,8 +3061,11 @@ const handleSubmit = async (e) => {
                             <option value="" style={{ color: '#555252' }}>Expiration</option>
                             <option value="e1" style={{ color: '#555252' }}>Expiration 1</option>
                           </select>
-                        </div>
-                        <div style={{ color: 'black', padding: '2px 8px', borderRadius: '6px', border: '2px solid #ccc', display: 'flex', alignItems: 'center', cursor:'pointer',backgroundColor:'#f6f6f6' }}>
+                        </div> */}
+                        <div 
+                          style={{ color: 'black', padding: '2px 8px', borderRadius: '6px', border: '2px solid #ccc', display: 'flex', alignItems: 'center', cursor:'pointer',backgroundColor:'#f6f6f6' }}
+                          onClick={handleClear}
+                        >
                           <span>Clear</span>
                         </div>
                       </div>
@@ -3032,7 +3453,8 @@ const handleSubmit = async (e) => {
                     value={pinCode}
                     onChange={(e) => setPinCode(e.target.value)}
                     type="number"
-                    placeholder='123456'
+                    placeholder='Eg: 123456'
+                    maxLength="6"
                     style={{
                       width: "100%",
                       padding: "12px",
@@ -3049,6 +3471,28 @@ const handleSubmit = async (e) => {
 
               {/* buttons */}
               <div style={{display:'flex',justifyContent:'end',padding:'10px 0px',width:'100%',gap:'15px',marginTop:'5px',}}>
+                <button 
+                  type="button" 
+                  onClick={() => {
+                    // Clear all form fields
+                    setForm({
+                      name: '',
+                      email: '',
+                      phone: '',
+                      status: true,
+                    });
+                    // Clear location fields
+                    setSelectedCountry('');
+                    setSelectedState('');
+                    setSelectedCity('');
+                    setPinCode('');
+                    // Close popup
+                    setAddCustomerPopup(false);
+                  }}
+                  style={{padding:'3px 10px',backgroundColor:'#6B7280',border:'2px solid #E6E6E6',borderRadius:'8px',color:'white',cursor:'pointer'}}
+                >
+                  Cancel
+                </button>
                 <button type="submit" disabled={loading} style={{padding:'3px 10px',backgroundColor:'#1368EC',border:'2px solid #E6E6E6',borderRadius:'8px',color:'white',cursor:'pointer'}}>{loading ? 'Saving...' : 'Save'}</button>
               </div>
             </form>

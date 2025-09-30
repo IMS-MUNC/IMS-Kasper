@@ -84,7 +84,7 @@ const Drafts = () => {
     }
   }
   return (<>
-    <EmailMessages filteredEmails={drafts} isDraftPage={true} onDraftClick={handleDraftClick} />;
+    <EmailMessages filteredEmails={drafts} isDraftPage={true} onDraftClick={handleDraftClick} onDelete={handleDeleteDraft} onDraftsChange={setDrafts} />;
     {composeData && (
       <EmailModal
         show={true}

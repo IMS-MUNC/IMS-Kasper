@@ -24,6 +24,75 @@ const Companysettings = () => {
   const [cityList, setCityList] = useState([]);
   const token = localStorage.getItem("token")
   const [isUpdating, setIsUpdating] = useState(false);
+    const [companyImages, setCompanyImages] = useState(null)
+
+const textRegex = /^[A-Za-z]+(?: [A-Za-z]+)*$/;
+const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const phoneRegex = /^[0-9]{10}$/;
+const zipRegex = /^[0-9]{5,6}$/;
+const urlRegex = /^(https?:\/\/)?([\w-]+(\.[\w-]+)+)([\w.,@?^=%&:/~+#-]*[\w@?^=%&/~+#-])?$/;
+const faxRegex = /^[0-9]{10}$/;
+const descriptionRegex = /^.{10,500}$/;
+const [errors, setErrors] = useState({});
+const validateField = (name, value) => {
+  let error;
+  switch (name) {
+    case "companyName":
+      if (!textRegex.test(value)) {
+        error = "Company name should contain only letters and spaces.";
+      }
+      break;
+    case "companyemail":
+      if (!emailRegex.test(value)) {
+        error = "Invalid email format.";
+      }
+      break;
+    case "companyphone":
+      if (!phoneRegex.test(value)) {
+        error = "Phone number should be 10 digits.";
+      }
+      break;
+    case "companypostalcode":
+      if (!zipRegex.test(value)) {  
+        error = "Postal code should be 5 or 6 digits.";
+      }   
+      break;
+    case "companywebsite":
+      if (!urlRegex.test(value)) {
+        error = "Invalid URL format.";
+      }
+      break;
+    case "companyfax":
+      if (!faxRegex.test(value)) {
+        error = "Fax number should be 10 digits.";
+      } 
+      break;
+    case "companydescription":
+      if (!descriptionRegex.test(value)) {
+        error = "Description should be between 10 to 500 characters.";
+      }
+      break;
+    default:
+      break;
+  }
+  setErrors((prev) => ({ ...prev, [name]: error }));
+  return error;
+};
+
+const validateForm = () => {
+  const newErrors = {};
+  Object.entries(formData).forEach(([name, value]) => {
+    const error = validateField(name, value);
+    if (error) newErrors[name] = error;
+  });
+  setErrors(newErrors);
+  return Object.keys(newErrors).length === 0; // return true if no errors
+};
+
+
+
+
+
 
   useEffect(() => {
     setCountryList(Country.getAllCountries());
@@ -69,6 +138,7 @@ const Companysettings = () => {
       ...prev,
       [name]: value,
     }));
+    validateField(name, value);
   };
 
   const fetchCompanyProfile = async () => {
@@ -118,6 +188,15 @@ const Companysettings = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
+  const isFormValid = Object.entries(formData).every(
+    ([name, value]) => !validateField(name, value)
+  );
+
+  if (!isFormValid) {
+    toast.error("Please fix validation errors before submitting.");
+    return;
+  }
+
     if (!gstinRegex.test(formData.gstin)) {
       toast.error("Invalid GSTIN format");
       return;
@@ -166,28 +245,52 @@ const Companysettings = () => {
     {
       field: "companyIcon",
       label: "Company Icon",
-      description: "Upload Icon of your Company",
+      description: "Upload an image below or equal to 1MB, Accepted File format JPG, PNG",
+    image: CompyIc,
       image: CompyIc,
     },
     {
       field: "companyFavicon",
       label: "Favicon",
-      description: "Upload Favicon of your Company",
+      description: "Upload an image below or equal to 1MB, Accepted File format JPG, PNG",
       image: CompyLg,
     },
     {
       field: "companyLogo",
       label: "Company Logo",
-      description: "Upload Logo of your Company",
+      description: "Upload an image below or equal to 1MB, Accepted File format JPG, PNG",
       image: CompyLg,
     },
     {
       field: "companyDarkLogo",
       label: "Company Dark Logo",
-      description: "Upload Dark Logo of your Company",
+      description: "Upload an image below or equal to 1MB, Accepted File format JPG, PNG",
       image: CompyLg,
     },
   ];
+
+
+     // fetch company details
+    useEffect(() => {
+      const fetchCompanyDetails = async () => {
+        try {
+          const res = await axios.get(`${BASE_URL}/api/companyprofile/get`,{
+              headers: {
+            Authorization: `Bearer ${token}`,
+          },
+          })
+          if (res.status === 200) {
+            setCompanyImages(res.data.data)
+            console.log("res.data from cmpy details", res.data.data)
+          }
+        } catch (error) {
+          toast.error("Unable to find company details", {
+            position: 'top-center'
+          })
+        }
+      }
+      fetchCompanyDetails();
+    }, []);
 
   return (
     <div>
@@ -218,6 +321,7 @@ const Companysettings = () => {
                       width: "100%",
                     }}
                   >
+                    <span>
                     <label
                       className="cfnnystheadlabel"
                       htmlFor=""
@@ -225,6 +329,8 @@ const Companysettings = () => {
                     >
                       Company Name
                     </label>
+                     <span className="text-danger ms-1">*</span>
+                    </span>
                     <input
                       className="cfnnystheadinput"
                       type="text"
@@ -232,7 +338,11 @@ const Companysettings = () => {
                       name="companyName"
                       value={formData.companyName}
                       onChange={handleChange}
+                       onBlur={(e) => validateField(e.target.name, e.target.value)}
                     />
+                    {errors.companyName && (
+                      <span className="text-danger" style={{ fontSize: '12px' }}>{errors.companyName}</span>
+                    )}
                   </div>
                   <div
                     style={{
@@ -242,6 +352,7 @@ const Companysettings = () => {
                       width: "100%",
                     }}
                   >
+                    <span>
                     <label
                       className="cfnnystheadlabel"
                       htmlFor=""
@@ -249,6 +360,8 @@ const Companysettings = () => {
                     >
                       Company Email{" "}
                     </label>
+                     <span className="text-danger ms-1">*</span>
+                     </span>
                     <input
                       className="cfnnystheadinput"
                       type="email"
@@ -257,6 +370,9 @@ const Companysettings = () => {
                       value={formData.companyemail}
                       onChange={handleChange}
                     />
+                    {errors.companyemail && (
+                      <span className="text-danger" style={{ fontSize: '12px' }}>{errors.companyemail}</span>
+                    )}
                   </div>
                   <div
                     style={{
@@ -266,6 +382,7 @@ const Companysettings = () => {
                       width: "100%",
                     }}
                   >
+                    <span>
                     <label
                       className="cfnnystheadlabel"
                       htmlFor=""
@@ -273,14 +390,19 @@ const Companysettings = () => {
                     >
                       Company Phone
                     </label>
+                     <span className="text-danger ms-1">*</span>
+                    </span>
                     <input
                       className="cfnnystheadinput"
-                      type="text"
+                      type="number"
                       placeholder="Enetr company number"
                       name="companyphone"
                       value={formData.companyphone}
                       onChange={handleChange}
                     />
+                    {errors.companyphone && (
+                      <span className="text-danger" style={{ fontSize: '12px' }}>{errors.companyphone}</span>
+                    )}
                   </div>
                 </div>
                 <div style={{ display: "flex", gap: "20px" }}>
@@ -292,6 +414,7 @@ const Companysettings = () => {
                       width: "100%",
                     }}
                   >
+                    <span>
                     <label
                       className="cfnnystheadlabel"
                       htmlFor=""
@@ -299,6 +422,8 @@ const Companysettings = () => {
                     >
                       Fax
                     </label>
+                     <span className="text-danger ms-1">*</span>
+                    </span>
                     <input
                       className="cfnnystheadinput"
                       type="text"
@@ -309,6 +434,9 @@ const Companysettings = () => {
                       maxLength="10"
                       pattern="\d{10}"
                     />
+                    {errors.companyfax && (
+                      <span className="text-danger" style={{ fontSize: '12px' }}>{errors.companyfax}</span>
+                    )}
                   </div>
                   <div
                     style={{
@@ -318,6 +446,7 @@ const Companysettings = () => {
                       width: "100%",
                     }}
                   >
+                    <span>
                     <label
                       className="cfnnystheadlabel"
                       htmlFor=""
@@ -325,6 +454,8 @@ const Companysettings = () => {
                     >
                       Website
                     </label>
+                     <span className="text-danger ms-1">*</span>
+                    </span>
                     <input
                       className="cfnnystheadinput"
                       type="url"
@@ -333,6 +464,9 @@ const Companysettings = () => {
                       value={formData.companywebsite}
                       onChange={handleChange}
                     />
+                    {errors.companywebsite && (
+                      <span className="text-danger" style={{ fontSize: '12px' }}>{errors.companywebsite}</span>
+                    )}
                   </div>
                   <div
                     style={{
@@ -342,6 +476,7 @@ const Companysettings = () => {
                       width: "100%",
                     }}
                   >
+                    <span>
                     <label
                       className="cfnnystheadlabel"
                       htmlFor=""
@@ -349,6 +484,8 @@ const Companysettings = () => {
                     >
                       GSTIN
                     </label>
+                     <span className="text-danger ms-1">*</span>
+                    </span>
                     <input
                       className="cfnnystheadinput"
                       type="text"
@@ -358,6 +495,9 @@ const Companysettings = () => {
                       onChange={handleChange}
                       maxLength={15}
                     />
+                    {errors.gstin && (
+                      <span className="text-danger" style={{ fontSize: '12px' }}>{errors.gstin}</span>
+                    )}
                   </div>
                   <div
                     style={{
@@ -367,6 +507,7 @@ const Companysettings = () => {
                       width: "100%",
                     }}
                   >
+                    <span>
                     <label
                       className="cfnnystheadlabel"
                       htmlFor=""
@@ -374,6 +515,8 @@ const Companysettings = () => {
                     >
                       CIN
                     </label>
+                     <span className="text-danger ms-1">*</span>
+                    </span>
                     <input
                       className="cfnnystheadinput"
                       type="text"
@@ -383,6 +526,9 @@ const Companysettings = () => {
                       onChange={handleChange}
                       maxLength={21}
                     />
+                    {errors.cin && (
+                      <span className="text-danger" style={{ fontSize: '12px' }}>{errors.cin}</span>
+                    )}
                   </div>
                 </div>
                 <div
@@ -393,6 +539,7 @@ const Companysettings = () => {
                     width: "100%",
                   }}
                 >
+                  <span>
                   <label
                     className="cfnnystheadlabel"
                     htmlFor=""
@@ -400,6 +547,8 @@ const Companysettings = () => {
                   >
                     Company Description
                   </label>
+                   <span className="text-danger ms-1">*</span>
+                  </span>
                   <textarea
                     rows="4"
                     cols="50"
@@ -410,6 +559,9 @@ const Companysettings = () => {
                     value={formData.companydescription}
                     onChange={handleChange}
                   ></textarea>
+                  {errors.companydescription && (
+                      <span className="text-danger" style={{ fontSize: '12px' }}>{errors.companydescription}</span>
+                    )}
                 </div>
               </div>
             </div>
@@ -440,6 +592,8 @@ const Companysettings = () => {
                       width: "100%",
                     }}
                   >
+                    <span>
+
                     <label
                       className="cfnnystheadlabel"
                       htmlFor=""
@@ -447,6 +601,8 @@ const Companysettings = () => {
                     >
                       Address
                     </label>
+                     <span className="text-danger ms-1">*</span>
+                    </span>
                     <textarea
                       className="cfnnystheadinput"
                       rows="4"
@@ -457,6 +613,9 @@ const Companysettings = () => {
                       value={formData.companyaddress}
                       onChange={handleChange}
                     ></textarea>
+                    {errors.companyaddress && (
+                      <span className="text-danger" style={{ fontSize: '12px' }}>{errors.companyaddress}</span>
+                    )}
                   </div>
                 </div>
 
@@ -469,6 +628,7 @@ const Companysettings = () => {
                       width: "100%",
                     }}
                   >
+                    <span>
                     <label
                       className="cfnnystheadlabel"
                       htmlFor=""
@@ -476,6 +636,8 @@ const Companysettings = () => {
                     >
                       Country
                     </label>
+                     <span className="text-danger ms-1">*</span>
+                    </span>
                     <select
                       className="cfnnystheadinput"
                       value={selectedCountry}
@@ -507,6 +669,7 @@ const Companysettings = () => {
                       width: "100%",
                     }}
                   >
+                    <span>
                     <label
                       className="cfnnystheadlabel"
                       htmlFor=""
@@ -514,6 +677,8 @@ const Companysettings = () => {
                     >
                       State
                     </label>
+                     <span className="text-danger ms-1">*</span>
+                    </span>
                     <select
                       className="cfnnystheadinput"
                       value={selectedState}
@@ -545,6 +710,7 @@ const Companysettings = () => {
                       width: "100%",
                     }}
                   >
+                    <span>
                     <label
                       className="cfnnystheadlabel"
                       htmlFor=""
@@ -552,6 +718,8 @@ const Companysettings = () => {
                     >
                       City
                     </label>
+                     <span className="text-danger ms-1">*</span>
+                    </span>
                     <select
                       className="cfnnystheadinput"
                       value={selectedCity}
@@ -581,6 +749,7 @@ const Companysettings = () => {
                       width: "100%",
                     }}
                   >
+                    <span>
                     <label
                       className="cfnnystheadlabel"
                       htmlFor=""
@@ -588,6 +757,8 @@ const Companysettings = () => {
                     >
                       Postal Code
                     </label>
+                     <span className="text-danger ms-1">*</span>
+                    </span>
                     <input
                       type="number"
                       className="cfnnystheadinput"
@@ -671,6 +842,7 @@ const Companysettings = () => {
                         padding: "5px",
                         position: "relative",
                         backgroundColor: "#f1f1f1ff",
+                        overflow: "hidden",
                       }}
                     >
                       {imageFiles[item.field] ? (
@@ -684,9 +856,9 @@ const Companysettings = () => {
                             objectFit: "cover",
                           }}
                         />
-                      ) : formData[item.field] ? (
+                      ) : companyImages?.[item.field] ? (
                         <img
-                          src={`${BASE_URL}/uploads/${formData[item.field]}`}
+                          src={companyImages[item.field]}
                           alt="saved"
                           style={{
                             width: "100%",
@@ -696,7 +868,8 @@ const Companysettings = () => {
                           }}
                         />
                       ) : (
-                        <span
+                        <label
+                        htmlFor={item.field}
                           onClick={() =>
                             setImageFiles((prev) => ({
                               ...prev,
@@ -706,33 +879,8 @@ const Companysettings = () => {
                           style={{ color: "#1368EC" }}
                         >
                           +
-                        </span>
+                        </label>
                       )}
-                      {/* <div
-                      onClick={() =>
-                        setImageFiles((prev) => ({
-                          ...prev,
-                          [item.field]: null
-                        }))
-                      }
-                      style={{
-                        backgroundColor: "red",
-                        color: "white",
-                        padding: "5px",
-                        width: "20px",
-                        height: "20px",
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "center",
-                        borderRadius: "5px",
-                        position: "absolute",
-                        top: "10%",
-                        right: "10%",
-                        cursor: "pointer",
-                      }}
-                    >
-                      <RxCross2 />
-                    </div> */}
                     </div>
                     <div>
                       <label htmlFor={item.field}>
@@ -759,6 +907,10 @@ const Companysettings = () => {
                               toast.error(
                                 "File size must be less than or equal to 1MB"
                               );
+                              setImageFiles((prev) => ({
+                                ...prev, [item.field]: null,
+                              })
+                              )
                               return;
                             }
                             setImageFiles((prev) => ({
@@ -776,7 +928,7 @@ const Companysettings = () => {
             <div
               style={{ display: "flex", justifyContent: "end", gap: "10px" }}
             >
-              <button
+              {/* <button
                 type="submit"
                 style={{
                   border: "1px solid #E6E6E6",
@@ -788,19 +940,19 @@ const Companysettings = () => {
                 }}
               >
                 Cancel
-              </button>
+              </button> */}
               <button
                 type="submit"
                 style={{
                   border: "1px solid #676767",
                   borderRadius: "4px",
                   padding: "8px",
-                  backgroundColor: "#262626",
+                  backgroundColor: "#007cff",
                   color: "#FFFFFF",
                   borderRadius: "5px",
                 }}
               >
-                Save
+                Save Changes
               </button>
             </div>
           </div>

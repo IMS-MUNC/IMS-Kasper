@@ -65,6 +65,7 @@ exports.saveMessage = async (req, res) => {
 exports.getMessages = async (req, res) => {
   try {
     const { from, to } = req.query;
+    const currentUserId = req.user.id; // Get the authenticated user's ID
 
     // Sort participants to ensure consistent ordering
     const participants = [from, to].sort();
@@ -75,7 +76,12 @@ exports.getMessages = async (req, res) => {
       return res.json([]);
     }
 
-    res.json(conversation.messages);
+    // Filter out messages that have been cleared by the current user
+    const filteredMessages = conversation.messages.filter(message => {
+      return !message.clearedBy || !message.clearedBy.includes(currentUserId);
+    });
+
+    res.json(filteredMessages);
   } catch (err) {
     res.status(500).json({ message: 'Server error', error: err.message });
   }
@@ -110,6 +116,7 @@ exports.markAsRead = async (req, res) => {
 exports.clearMessages = async (req, res) => {
   try {
     const { from, to } = req.body;
+    const currentUserId = req.user.id; // Get the authenticated user's ID
 
     // Sort participants to ensure consistent ordering
     const participants = [from, to].sort();
@@ -120,12 +127,30 @@ exports.clearMessages = async (req, res) => {
       return res.json({ success: true, message: 'No conversation found' });
     }
 
-    // Clear all messages but keep the conversation document
-    conversation.messages = [];
-    conversation.lastMessage = null;
+    // Only clear messages for the current user by marking them as cleared
+    // Instead of deleting messages, we'll add a clearedBy field to track who cleared the chat
+    conversation.messages.forEach(message => {
+      if (!message.clearedBy) {
+        message.clearedBy = [];
+      }
+      if (!message.clearedBy.includes(currentUserId)) {
+        message.clearedBy.push(currentUserId);
+      }
+    });
+
+    // Update lastMessage only if it was cleared by the current user
+    if (conversation.lastMessage) {
+      if (!conversation.lastMessage.clearedBy) {
+        conversation.lastMessage.clearedBy = [];
+      }
+      if (!conversation.lastMessage.clearedBy.includes(currentUserId)) {
+        conversation.lastMessage.clearedBy.push(currentUserId);
+      }
+    }
+
     await conversation.save();
 
-    res.json({ success: true, message: 'Messages cleared successfully' });
+    res.json({ success: true, message: 'Messages cleared successfully for current user' });
   } catch (err) {
     res.status(500).json({ message: 'Server error', error: err.message });
   }
@@ -201,36 +226,52 @@ exports.deleteSelectedMessages = async (req, res) => {
 
     // console.log('Messages to delete (identifiers):', Array.from(messagesToDelete));
 
-    // Remove selected messages (only if they belong to the current user)
-    const originalLength = conversation.messages.length;
-    conversation.messages = conversation.messages.filter(msg => {
-      // Keep message if it's not from current user
-      if (msg.from.toString() !== currentUserId) {
-        return true; // Keep other user's messages
+    // Mark selected messages as deleted (only if they belong to the current user)
+    let deletedCount = 0;
+    conversation.messages.forEach(msg => {
+      // Only process messages from current user
+      if (msg.from.toString() === currentUserId) {
+        // For current user's messages, check if they should be deleted
+        const messageIdentifier = `${new Date(msg.timestamp).toISOString()}_${msg.message.substring(0, 50)}`;
+        const shouldDelete = messagesToDelete.has(messageIdentifier);
+
+        if (shouldDelete && !msg.isDeleted) {
+          msg.isDeleted = true;
+          msg.message = "This message was deleted";
+          deletedCount++;
+          // console.log('Marking message as deleted:', messageIdentifier);
+        }
       }
-
-      // For current user's messages, check if they should be deleted
-      const messageIdentifier = `${new Date(msg.timestamp).toISOString()}_${msg.message.substring(0, 50)}`;
-      const shouldDelete = messagesToDelete.has(messageIdentifier);
-
-      if (shouldDelete) {
-        // console.log('Deleting message:', msg.message, 'Identifier:', messageIdentifier);
-      }
-
-      return !shouldDelete;
     });
 
-    // console.log('Messages after deletion:', conversation.messages.length);
-    // console.log('Deleted', originalLength - conversation.messages.length, 'messages');
+    // console.log('Marked', deletedCount, 'messages as deleted');
 
-    // Update lastMessage if it was deleted
+    // Update lastMessage if it was the last message and got deleted
     if (conversation.messages.length > 0) {
-      const lastRemainingMessage = conversation.messages[conversation.messages.length - 1];
-      conversation.lastMessage = {
-        from: lastRemainingMessage.from,
-        message: lastRemainingMessage.message,
-        timestamp: lastRemainingMessage.timestamp
-      };
+      const lastMessage = conversation.messages[conversation.messages.length - 1];
+      if (!lastMessage.isDeleted) {
+        conversation.lastMessage = {
+          from: lastMessage.from,
+          message: lastMessage.message,
+          timestamp: lastMessage.timestamp
+        };
+      } else {
+        // Find the last non-deleted message
+        const lastNonDeletedMessage = conversation.messages
+          .slice()
+          .reverse()
+          .find(msg => !msg.isDeleted);
+        
+        if (lastNonDeletedMessage) {
+          conversation.lastMessage = {
+            from: lastNonDeletedMessage.from,
+            message: lastNonDeletedMessage.message,
+            timestamp: lastNonDeletedMessage.timestamp
+          };
+        } else {
+          conversation.lastMessage = null;
+        }
+      }
     } else {
       conversation.lastMessage = null;
     }
@@ -239,8 +280,8 @@ exports.deleteSelectedMessages = async (req, res) => {
 
     res.json({
       success: true,
-      message: 'Selected messages deleted successfully',
-      deletedCount: originalLength - conversation.messages.length
+      message: 'Selected messages marked as deleted successfully',
+      deletedCount: deletedCount
     });
   } catch (err) {
     console.error('Error in deleteSelectedMessages:', err);
@@ -266,4 +307,4 @@ exports.getConversations = async (req, res) => {
     // console.error("❌ Error fetching conversations:", err.message);
     res.status(500).json({ message: "Failed to fetch conversations" });
   }
-}; 
+};

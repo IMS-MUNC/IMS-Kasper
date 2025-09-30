@@ -1107,7 +1107,9 @@ const AddCustomerModal = ({ onClose, onSuccess }) => {
                           )}
                         </div>
                       </div>
+
                       <div className="col-lg-4 col-md-6" style={{ display: 'flex', gap: '5px', marginTop: '35px' }}>
+
 
                         <label className="">Status</label>
                         <div className="form-check form-switch mb-3">
@@ -1118,6 +1120,7 @@ const AddCustomerModal = ({ onClose, onSuccess }) => {
                             onChange={handleStatusChange}
                           />
                         </div>
+
                       </div>
                     </div>
                   </div>

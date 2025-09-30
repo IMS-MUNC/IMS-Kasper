@@ -359,34 +359,42 @@ const EmailModal = ({
                   width: "100%",
                 }}
               />
-              <span
-                style={{
-                  color: "#676767",
-                  fontWeight: 400,
-                  fontSize: "16px",
-                  lineHeight: "10px",
-                  letterSpacing: "0",
-                  cursor: "pointer",
-                }}
-                className="cc-bcc"
-                onClick={() => setShowCc(!showCc)}
-              >
-                Cc
-              </span>
-              <span
-                style={{
-                  color: "#676767",
-                  fontWeight: 400,
-                  fontSize: "16px",
-                  lineHeight: "10px",
-                  letterSpacing: "0",
-                  cursor: "pointer",
-                }}
-                className=""
-                onClick={() => setShowBcc(!showBcc)}
-              >
-                Bcc
-              </span>
+              {!showCc && (
+                <span
+                  style={{
+                    color: "#676767",
+                    fontWeight: 400,
+                    fontSize: "16px",
+                    lineHeight: "10px",
+                    letterSpacing: "0",
+                    cursor: "pointer",
+                  }}
+                  className="cc-bcc"
+                  onClick={() => {
+                    setShowCc(true);
+                  }}
+                >
+                  Cc
+                </span>
+              )}
+              {!showBcc && (
+                <span
+                  style={{
+                    color: "#676767",
+                    fontWeight: 400,
+                    fontSize: "16px",
+                    lineHeight: "10px",
+                    letterSpacing: "0",
+                    cursor: "pointer",
+                  }}
+                  className=""
+                  onClick={() => {
+                    setShowBcc(true);
+                  }}
+                >
+                  Bcc
+                </span>
+              )}
             </div>
             {/* for cc */}
             {showCc && (
@@ -494,7 +502,7 @@ const EmailModal = ({
               />
             </div>
             <textarea
-              className="mailmdl-email-body"
+              className="mailmdl-email-body" style={{ margin: '0px' }}
               placeholder="Compose Email"
               value={body}
               onChange={(e) => setBody(e.target.value)}
