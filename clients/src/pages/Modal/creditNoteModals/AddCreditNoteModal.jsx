@@ -463,8 +463,9 @@ const AddCreditNoteModal = ({ creditData, onAddCredit, onClose }) => {
         return acc + total;
     }, 0);
     return (
-        <div className="modal show" style={{ display: 'block' }}>
-            <div className="modal-dialog add-centered">
+        // <div className="modal show" id='' style={{ display: 'block' }}>
+        <div className="modal fade" id="add-sales-credit">
+      <div className="modal-dialog add-centered">
                 <div className="modal-content">
                     <div className="modal-header">
                         <div className="page-title">

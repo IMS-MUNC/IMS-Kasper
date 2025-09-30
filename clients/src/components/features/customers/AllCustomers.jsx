@@ -1,14 +1,16 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import axios from "axios";
 import { IoIosArrowForward } from "react-icons/io";
 import { MdKeyboardArrowRight } from "react-icons/md";
 import { MdKeyboardArrowLeft } from "react-icons/md";
 import { FaDownload, FaEdit, FaFilter, FaPlus, FaSearch, FaTrashAlt } from "react-icons/fa";
+import { TbCirclePlus, TbEdit, TbEye, TbRefresh, TbTrash } from 'react-icons/tb'
 import { CiSearch } from "react-icons/ci";
 import { IoFilter } from "react-icons/io5";
 import { LuArrowUpDown } from "react-icons/lu";
 import { FaExclamationTriangle } from "react-icons/fa";
 import { GrFormPrevious } from "react-icons/gr";
+import { FaFileExcel, FaFilePdf, FaPencilAlt } from "react-icons/fa";
 import { MdNavigateNext } from "react-icons/md";
 import "./AllCustomers.css";
 import { Link } from "react-router-dom";
@@ -22,9 +24,6 @@ import jsPDF from "jspdf";
 import "jspdf-autotable";
 import { autoTable } from "jspdf-autotable";
 
-
-
-
 function formatAddress(billing) {
   if (!billing) return '';
   let parts = [];
@@ -36,7 +35,6 @@ function formatAddress(billing) {
   if (billing.postalCode) parts.push(billing.postalCode);
   return parts.join(', ');
 }
-
 
 function formatShipping(shipping) {
   if (!shipping) return '';
@@ -50,7 +48,6 @@ function formatShipping(shipping) {
   return parts.join(', ');
 }
 
-
 function AllCustomers({ onClose }) {
   const [customers, setCustomers] = useState([]);
   const [selectedCustomer, setSelectedCustomer] = useState(null);
@@ -61,13 +58,10 @@ function AllCustomers({ onClose }) {
   const [selectedCustomers, setSelectedCustomers] = useState([]);
   const [sales, setSales] = useState([]);
   const [customerStats, setCustomerStats] = useState({});
-
   const [search, setSearch] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
-
   const [itemsPerPage, setItemsPerPage] = useState(10);
   const [selectAll, setSelectAll] = useState(false);
-
   const [filters, setFilters] = useState({
     category: "",
     stockLevel: "",
@@ -144,7 +138,7 @@ function AllCustomers({ onClose }) {
 
   const calculateCustomerStats = (salesData) => {
     const stats = {};
-    
+
     salesData.forEach(sale => {
       const customerId = sale.customer?._id || sale.customer?.id;
       if (customerId) {
@@ -152,13 +146,15 @@ function AllCustomers({ onClose }) {
           stats[customerId] = {
             orderCount: 0,
             totalAmount: 0,
+            dueAmount: 0,
           };
         }
         stats[customerId].orderCount += 1;
         stats[customerId].totalAmount += parseFloat(sale.grandTotal || 0);
+        stats[customerId].dueAmount += parseFloat(sale.dueAmount || 0);
       }
     });
-    
+
     setCustomerStats(stats);
   };
 
@@ -192,21 +188,6 @@ function AllCustomers({ onClose }) {
     }
   };
 
-  const recentOrders = [
-    { id: 1, product: "Wheel Chair", qty: 10, total: 50000 },
-    { id: 2, product: "Office Chair", qty: 5, total: 25000 },
-    { id: 3, product: "Office Chair", qty: 5, total: 25000 },
-    { id: 4, product: "Office Chair", qty: 5, total: 25000 },
-    { id: 5, product: "Office Chair", qty: 5, total: 25000 },
-    { id: 6, product: "Office Chair", qty: 5, total: 25000 },
-  ];
-
-
-
-
-
-
-
   const handleBulkDelete = async () => {
     if (selectedCustomers.length === 0) return;
 
@@ -236,6 +217,7 @@ function AllCustomers({ onClose }) {
   // const filtered = customers.filter(c =>
   //   c.name?.toLowerCase().includes(search.toLowerCase())
   // );
+
   // Updated filter logic to include filter state
   const filtered = customers.filter((c) => {
     return (
@@ -298,8 +280,6 @@ function AllCustomers({ onClose }) {
     setCurrentPage(1); // Reset to first page when filters change
   };
 
-
-
   const handleDownloadPDF = () => {
     try {
       const doc = new jsPDF();
@@ -307,22 +287,25 @@ function AllCustomers({ onClose }) {
       doc.setFontSize(18);
       doc.text("Customer List with Order Statistics", 14, 20);
 
-      const tableColumn = ["#", "Name", "Email", "Phone", "Country", "State", "Total Orders", "Total Spent"];
+      const tableColumn = ["#", "Name", "Phone", "Email", "Address", "Total Orders", "Total Spent", "Status"];
       const tableRows = customers.map((c, i) => [
         i + 1,
         c.name || "N/A",
-        c.email || "N/A",
         c.phone || "N/A",
-        c.billing?.country?.name || "N/A",
-        c.billing?.state?.stateName || "N/A",
+        // c.billing?.country?.name || "N/A",
+        // c.billing?.state?.stateName || "N/A",
+        c.email || "N/A",
+        formatAddress(c.billing) || "N/A",
         `${customerStats[c._id]?.orderCount || 0} times`,
-        `₹ ${(customerStats[c._id]?.totalAmount || 0).toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
+        `Rs. ${(customerStats[c._id]?.totalAmount || 0).toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
+        c.status == true ? 'Active' : 'Inactive',
       ]);
 
       autoTable(doc, {
         startY: 30,
         head: [tableColumn],
         body: tableRows,
+        styles: { fontSize: 9 },
       });
 
       doc.save("customers-with-order-stats.pdf");
@@ -332,133 +315,161 @@ function AllCustomers({ onClose }) {
     }
   };
 
+  // NEW: Memoized calculation for selected customer's sales data
+  // NEW: Memoized calculation for selected customer's sales data
+  const customerSalesData = useMemo(() => {
+    if (!selectedCustomer || sales.length === 0) {
+      return {
+        lastPurchaseDate: null,
+        recentOrderItems: [],
+      };
+    }
+
+    // 1. Filter sales for the selected customer
+    const customerOrders = sales.filter(
+      (sale) => (sale.customer?._id || sale.customer) === selectedCustomer._id
+    );
+
+    if (customerOrders.length === 0) {
+      return {
+        lastPurchaseDate: null,
+        recentOrderItems: [],
+      };
+    }
+
+    // 2. Sort orders from NEWEST to OLDEST
+    const sortedOrders = [...customerOrders].sort(
+      (a, b) => new Date(b.salesDate) - new Date(a.salesDate)
+    );
+
+    // 3. Get the last purchase date from the newest order
+    const lastPurchaseDate = sortedOrders[0].salesDate;
+
+    // 4. CORRECTED LOGIC: First, extract ALL products from the sorted orders, THEN slice.
+    const recentOrderItems = sortedOrders
+      .slice(0, 5); // NOW, take the first 5 items from that new array
+
+    // This console.log will now show the correct data: an array of product items.
+    console.log("Corrected Recent Order Items for Modal:", recentOrderItems);
+
+    return { lastPurchaseDate, recentOrderItems };
+  }, [selectedCustomer, sales]);
+
   return (
     <div className="page-wrapper">
-  <div className="content">
-      <div className="d-flex justify-content-between align-items-center mb-3">
-        <h5 className="fw-bold">All Customer</h5>
-        <div className="d-flex gap-2">
-          {selectedCustomers.length > 0 && (
-            <div className=" d-flex justify-content-between align-items-center">
-
-              <button className="btn btn-danger" onClick={handleBulkDelete}>
-                <FaTrashAlt className="me-1" /> Delete ({selectedCustomers.length}) Selected
-              </button>
+      <div className="content">
+        <div className="page-header">
+          <div className="add-item d-flex">
+            <div className="page-title">
+              <h4 className="fw-bold">All Customer</h4>
+              <h6>Manage your Customers</h6>
             </div>
-          )}
+          </div>
+          <div className="d-flex gap-2">
+            {selectedCustomers.length > 0 && (
+              <div className=" d-flex justify-content-between align-items-center">
 
-          <button className="btn btn-outline-secondary" onClick={handleDownloadPDF}>
-            <FaDownload className="me-1" /> Export
-          </button>
-
-          <button onClick={() => { setSelectedCustomer(null); setShowAddModal(true); }} className="add-btn">
-            + Add New Customer
-          </button>
-          {/* <button className="btn btn-primary">Create</button> */}
+                <button className="btn btn-danger" onClick={handleBulkDelete}>
+                  <FaTrashAlt className="me-1" /> Delete ({selectedCustomers.length}) Selected
+                </button>
+              </div>
+            )}
+            <ul className="table-top-head">
+              <li>
+                <a data-bs-toggle="tooltip" data-bs-placement="top" title="Pdf" onClick={handleDownloadPDF}><FaFilePdf style={{ color: "red", fontSize: '20px' }} /></a>
+              </li>
+              <li>
+                <button data-bs-toggle="tooltip" data-bs-placement="top" title="Refresh"
+                  onClick={() => location.reload()}
+                  className="fs-20"
+                  style={{ backgroundColor: 'white', color: '', padding: '6px 6px', display: 'flex', alignItems: 'center', border: '1px solid #e8eaebff', cursor: 'pointer', borderRadius: '4px' }}
+                >
+                  <TbRefresh className="ti ti-refresh" />
+                </button>
+              </li>
+            </ul>
+            <button className="btn btn-primary" onClick={() => { setSelectedCustomer(null); setShowAddModal(true); }}>+ Add Customer</button>
+          </div>
         </div>
-      </div>
 
-      <div className="d-flex justify-content-between align-items-center gap-2 mb-3">
-        <div className="input-group" style={{ maxWidth: "300px" }}>
-          <span className="input-group-text">
-            <FaSearch />
-          </span>
-          <input
-            // type="text"
-            className="form-control"
-            value={search}
-            onChange={(e) => { setSearch(e.target.value); setCurrentPage(1); }}
+        <div className="card">
+          <div className="card-header d-flex align-items-center justify-content-between flex-wrap row-gap-3">
+            <div className="search-set">
+              <div className="search-input">
+                <input
+                  // type="text"
+                  className="form-control"
+                  value={search}
+                  onChange={(e) => { setSearch(e.target.value); setCurrentPage(1); }}
 
-            placeholder="Search Here"
-          />
-        </div>
-
-        {/* <button
-          className="btn btn-outline-secondary d-flex align-items-center"
-          onClick={() => setShowFilters(!showFilters)}
-          style={{ marginLeft: "240px" }}
-        >
-          <FaFilter className="me-1" /> Filter
-        </button> */}
-
-        {showFilters && (
-          <>
-            {/* <select
-              className="form-select border-dashed"
-              style={{ maxWidth: "150px" }}
-              value={filters.category}
-              onChange={(e) => handleFilterChange(e, "category")}
-            >
-              <option value="">All Categories</option>
-              <option value="Clothing">Clothing</option>
-              <option value="Electronics">Electronics</option>
-            </select> */}
-            {/* <select className="form-select border-dashed" style={{ maxWidth: "150px" }}>
-              <option>Category</option>
-              <option>Clothing</option>
-              <option>Electronics</option>
-            </select>
-            <select className="form-select border-dashed" style={{ maxWidth: "150px" }}>
-              <option>Stock Level</option>
-              <option>Low</option>
-              <option>Medium</option>
-              <option>High</option>
-            </select>
-            <select className="form-select border-dashed" style={{ maxWidth: "150px" }}>
-              <option>Warehouse</option>
-              <option>NY</option>
-              <option>SF</option>
-              <option>TX</option>
-            </select>
-            <select className="form-select border-dashed" style={{ maxWidth: "150px" }}>
-              <option>Expiration</option>
-              <option>Expiring Soon</option>
-              <option>Expired</option>
-              <option>Valid</option>
-            </select> */}
-          </>
-        )}
-      </div>
-
-      <div className="table-responsive">
-        <table className="table datatable">
-          <thead className="thead-light">
-            <tr>
-              <th className="no-sort">
-                <label className="checkboxs">
-                  <input 
-                    type="checkbox"
-                    id="select-all"
-                    onChange={handleSelectAll}
-                    checked={selectAll} 
-                  />
-                  <span className="checkmarks" />
-                </label>
-              </th>
-              <th>Customer Name</th>
-              <th>Address</th>
-              <th>Contact No.</th>
-              <th>Total Order</th>
-              <th>Total Spent</th>
-              <th className="no-sort">Action</th>
-            </tr>
-          </thead>
-          <tbody>
-            {getCurrentPageCustomers().map((customer, index) => (
-              <tr key={index} style={{ cursor: "pointer" }}>
-                <td>
-                  <label className="checkboxs">
-                    <input 
-                      type="checkbox"
-                      checked={selectedCustomers.includes(customer._id)}
-                      onChange={() => handleCustomerSelect(customer._id)} 
-                    />
-                    <span className="checkmarks" />
-                  </label>
-                </td>
-                <td className="" onClick={() => handleCustomerClick(customer)} style={{}}>
-                  <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-                  {/* <img
+                  placeholder="Search Customer..."
+                />
+              </div>
+            </div>
+            <div className="d-flex table-dropdown my-xl-auto right-content align-items-center flex-wrap row-gap-3">
+              {/* <div className="dropdown me-2">
+            <a className="dropdown-toggle btn btn-white btn-md d-inline-flex align-items-center" data-bs-toggle="dropdown">
+              Product
+            </a>
+            <ul className="dropdown-menu  dropdown-menu-end p-3">
+              <li>
+                <a className="dropdown-item rounded-1">Lenovo IdeaPad 3</a>
+              </li>
+              <li>
+                <a className="dropdown-item rounded-1">Beats Pro </a>
+              </li>
+              <li>
+                <a className="dropdown-item rounded-1">Nike Jordan</a>
+              </li>
+              <li>
+                <a className="dropdown-item rounded-1">Apple Series 5 Watch</a>
+              </li>
+            </ul>
+          </div> */}
+            </div>
+          </div>
+          <div className="card-body p-0">
+            <div className="table-responsive">
+              <table className="table datatable">
+                <thead className="thead-light">
+                  <tr>
+                    <th className="no-sort">
+                      <label className="checkboxs">
+                        <input
+                          type="checkbox"
+                          id="select-all"
+                          onChange={handleSelectAll}
+                          checked={selectAll}
+                        />
+                        <span className="checkmarks" />
+                      </label>
+                    </th>
+                    <th>Customer Name</th>
+                    <th>Contact No.</th>
+                    <th>Email</th>
+                    <th>Address</th>
+                    <th>Total Order</th>
+                    <th>Total Spent</th>
+                    <th>Status</th>
+                    <th className="no-sort" style={{ textAlign: 'center' }}>Action</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {getCurrentPageCustomers().map((customer, index) => (
+                    <tr key={index} style={{ cursor: "pointer" }}>
+                      <td>
+                        <label className="checkboxs">
+                          <input
+                            type="checkbox"
+                            checked={selectedCustomers.includes(customer._id)}
+                            onChange={() => handleCustomerSelect(customer._id)}
+                          />
+                          <span className="checkmarks" />
+                        </label>
+                      </td>
+                      <td className="" onClick={() => handleCustomerClick(customer)} style={{}}>
+                        <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+                          {/* <img
                     src="https://via.placeholder.com/32"
                     alt={customer.name?.charAt(0)}
 
@@ -466,54 +477,63 @@ function AllCustomers({ onClose }) {
                     width="32"
                     height="32"
                   /> */}
-                  {customer.images && customer.images.length > 0 ? (
-                  <img
-                    src={customer.images && customer.images.length > 0 ? customer.images[0] : ""}
-                    className="rounded"
-                    width="32"
-                    height="32"
-                  // onError={(e) => { e.target.src = "https://via.placeholder.com/32"; }} // Fallback on error
-                  />
-                ) : (
-                  <div className="avatar-placeholder rounded d-flex align-items-center justify-content-center" style={{ width: 32, height: 32, backgroundColor: '#6c757d', color: 'white', fontWeight: 'bold' }}>
-                    {customer.name ? customer.name.charAt(0).toUpperCase() : 'N/A'}
-                  </div>
-                )}
-                  {customer.name}
-                  </div>
-                </td>
-                {/* <td>{customer.address}</td> */}
-                <td>{formatAddress(customer.billing)}</td>
-                <td>{customer.phone}</td>
-                {/* <td>{customer.orders}</td> */}
-                <td>{customerStats[customer._id]?.orderCount || 0} times</td>
+                          {customer.images && customer.images.length > 0 ? (
+                            <img
+                              src={customer.images && customer.images.length > 0 ? customer.images[0] : ""}
+                              className="rounded"
+                              width="32"
+                              height="32"
+                            // onError={(e) => { e.target.src = "https://via.placeholder.com/32"; }} // Fallback on error
+                            />
+                          ) : (
+                            <div className="avatar-placeholder rounded d-flex align-items-center justify-content-center" style={{ width: 32, height: 32, backgroundColor: '#6c757d', color: 'white', fontWeight: 'bold' }}>
+                              {customer.name ? customer.name.charAt(0).toUpperCase() : 'N/A'}
+                            </div>
+                          )}
+                          {customer.name}
+                        </div>
+                      </td>
+                      {/* <td>{customer.address}</td> */}
+                      <td>{customer.phone}</td>
+                      <td>{customer.email}</td>
+                      <td>{formatAddress(customer.billing)}</td>
+                      {/* <td>{customer.orders}</td> */}
+                      <td>{customerStats[customer._id]?.orderCount || 0} times</td>
 
-                <td>₹ {(customerStats[customer._id]?.totalAmount || 0)}</td>
-                <td>
-                  <div className="edit-delete-action d-flex gap-2">
-                    <a
-                      className="me-2 p-2"
-                      style={{ cursor: "pointer" }}
-                      onClick={() => handleEditCustomer(customer)}
-                      title="Edit"
-                    >
-                      <FaEdit />
-                    </a>
-                    <a
-                      className="p-2"
-                      style={{ cursor: "pointer" }}
-                      onClick={() => handleDeleteCustomer(customer._id)}
-                      title="Delete"
-                    >
-                      <FaTrashAlt />
-                    </a>
-                  </div>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+                      <td>₹ {(customerStats[customer._id]?.totalAmount || 0)}</td>
+                      <td>
+                        <span
+                          className={`badge table-badge fw-medium fs-10 ${customer.status == true
+                            ? "bg-success"
+                            : "bg-danger"
+                            }`}
+                        >
+                          {customer.status == true ? 'Active' : 'Inactive'}
+                        </span>
+                      </td>
+                      <td className="action-table-data">
+                        <div className="edit-delete-action">
+                          <Link className="me-2 p-2"
+                            onClick={() => handleCustomerClick(customer)}
+                            title="View"
+                            style={{ color: "inherit", padding: "8px" }}
+                          >
+                            <TbEye className="feather-view" />
+                          </Link>
+                          <a data-bs-toggle="modal" data-bs-target="#edit-expired-product" className="me-2 p-2" title="Edit" onClick={() => handleEditCustomer(customer)}>
+                            <TbEdit data-feather="edit" className="feather-edit" />
+                          </a>
+                          <a data-bs-toggle="modal" data-bs-target="#delete-modal" className="p-2" title="Delete" onClick={() => handleDeleteCustomer(customer._id)}>
+                            <TbTrash data-feather="trash-2" className="feather-trash-2" />
+                          </a>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
 
           {/* Pagination */}
           <div
@@ -573,185 +593,208 @@ function AllCustomers({ onClose }) {
               </button>
             </span>
           </div>
-
-
-      {showAddModal && !showEditModal && (
-        <AddCustomerModal
-          onClose={() => setShowAddModal(false)}
-          onSuccess={() => { setShowAddModal(false); fetchCustomers(); }}
-        />
-      )}
-      {showEditModal && selectedCustomer && (
-        <EditCustomerModal
-          customer={selectedCustomer}
-          onClose={() => setShowEditModal(false)}
-          onSuccess={() => { setShowEditModal(false); fetchCustomers(); }}
-        />
-      )}
-
-      {/* Pop Up data */}
-      {showModal && selectedCustomer && (
-        <div
-          className="modal fade show modal-overlay"
-          id="add-customer"
-          tabIndex="-1"
-          style={{ display: "block", backgroundColor: "rgba(0, 0, 0, 0.5)" }}
-          aria-modal="true"
-          role="dialog"
-        >
-          <div className="modal-dialog modal-dialog-centered modal-xl">
-            <div className="modal-content" style={{ maxHeight: "100vh", overflowY: "auto" }}>
-              <div className="modal-header">
-                <div className="page-title">
-                  <span>Customer Details</span> <IoIosArrowForward />{" "}
-                  <strong>{selectedCustomer.name}</strong>
-                </div>
-                <button
-                  type="button"
-                  className="btn-close"
-                  data-bs-dismiss="modal"
-                  aria-label="Close"
-                  // onClick={onClose}
-                  onClick={() => setShowModal(false)}
-                ></button>
-              </div>
-
-              <div className="modal-body">
-                <div className="">
-                  <div className="card-body">
-                    <div className="container-fluid dashboard-page">
-
-                      {/* Top Cards */}
-                      <div className="row g-3 mb-4">
-                        <div className="col-md-3">
-                          <div className="card-box p-3 bg-light d-flex align-items-center gap-3">
-                            <div className="card-icon"><TbMoneybag size={24} /></div>
-                            <div>
-                              <small>Total Spent</small>
-                              <h4 className="mb-0">₹ 175,489</h4>
-                            </div>
-                          </div>
-                        </div>
-                        <div className="col-md-3">
-                          <div className="card-box p-3 bg-light d-flex align-items-center gap-3">
-                            <div className="card-icon">📦</div>
-                            <div>
-                              <small>Order</small>
-                              <h4 className="mb-0">6</h4>
-                            </div>
-                          </div>
-                        </div>
-                        <div className="col-md-3">
-                          <div className="card-box p-3 bg-light d-flex align-items-center gap-3">
-                            <div className="card-icon">📅</div>
-                            <div>
-                              <small>Initial Purchase Date</small>
-                              <h4 className="mb-0">2/09/2023</h4>
-                            </div>
-                          </div>
-                        </div>
-                        <div className="col-md-3">
-                          <div className="card-box p-3 bg-light d-flex align-items-center gap-3">
-                            <div className="card-icon">🚨</div>
-                            <div>
-                              <small>Dues Amount</small>
-                              <h4 className="mb-0">₹ 75,489</h4>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-
-                      {/* Details Section: Profile + Orders */}
-                      <div className="row g-4">
-                        {/* Profile */}
-                        <div className="col-md-4">
-                          <div className="p-3 border rounded bg-white h-100">
-                            <h5 className="mb-3">User Profile</h5>
-                            <div className="d-flex align-items-center gap-2 mb-3">
-                              {/* <div className="avatar bg-secondary rounded-circle" style={{ width: 48, height: 48 }}></div> */}
-                              <img
-                                src={selectedCustomer.images && selectedCustomer.images.length > 0 ? selectedCustomer.images[0] : "https://via.placeholder.com/32"}
-                                alt={selectedCustomer.name?.charAt(0) || "N/A"}
-                                className="avatar bg-secondary rounded-circle"
-                                // width="48"
-                                // height="48"
-                                style={{ width: 48, height: 48 }}
-                              // onError={(e) => { e.target.src = "https://via.placeholder.com/32"; }} // Fallback on error
-                              />
-                              <span className="fw-semibold">{selectedCustomer.name}</span>
-                            </div>
-                            <div className="mb-3">
-                              <small className="text-muted">Billing Address</small>
-                              <p className="mb-2">{formatAddress(selectedCustomer.billing)}</p>
-                            </div>
-                            <div className="mb-3">
-                              <small className="text-muted">Phone No.</small>
-                              <p className="mb-0">{selectedCustomer.phone}</p>
-                            </div>
-                            <div className="mb-3">
-                              <small className="text-muted">Shipping Address</small>
-                              <p className="mb-2">{formatAddress(selectedCustomer.shipping)}</p>
-                            </div>
-                          </div>
-                        </div>
-
-                        {/* Recent Orders */}
-                        <div className="col-md-8">
-                          <div className="p-3 border rounded bg-white">
-                            <div className="d-flex justify-content-between align-items-center mb-3">
-                              <h5 className="mb-0">Recent Orders</h5>
-                              <span className="text-muted small">12/09/2025</span>
-                            </div>
-                            <div className="table-responsive">
-                              <table className="table table-sm table-bordered align-middle mb-0">
-                                <thead className="table-light">
-                                  <tr>
-                                    <th>Product</th>
-                                    <th>Quantity</th>
-                                    <th>Total</th>
-                                  </tr>
-                                </thead>
-                                <tbody>
-                                  {recentOrders.map((order) => (
-                                    <tr key={order.id}>
-                                      <td>
-                                        <input type="checkbox" className="me-2" />
-                                        <img
-                                          src="https://img.icons8.com/ios/50/000000/office-chair.png"
-                                          //  src={customer.images && customer.images.length > 0 ? customer.images[0] : "https://via.placeholder.com/32"}
-                                          alt="product"
-                                          width="24"
-                                          className="me-2"
-                                        />
-                                        {order.product}
-                                      </td>
-                                      <td>{order.qty}</td>
-                                      <td>₹ {order.total.toLocaleString("en-IN")}.00</td>
-                                    </tr>
-                                  ))}
-                                </tbody>
-                              </table>
-                            </div>
-
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-
-
-                  </div>{/* end card body */}
-                </div>
-
-
-              </div> {/* modal-body end */}
-            </div>
-          </div>
         </div>
 
+        {showAddModal && !showEditModal && (
+          <AddCustomerModal
+            onClose={() => setShowAddModal(false)}
+            onSuccess={() => { setShowAddModal(false); fetchCustomers(); }}
+          />
+        )}
+        {showEditModal && selectedCustomer && (
+          <EditCustomerModal
+            customer={selectedCustomer}
+            onClose={() => setShowEditModal(false)}
+            onSuccess={() => { setShowEditModal(false); fetchCustomers(); }}
+          />
+        )}
 
-      )}
+        {/* Pop Up data */}
+        {showModal && selectedCustomer && (
+          <div
+            className="modal fade show modal-overlay"
+            id="add-customer"
+            tabIndex="-1"
+            style={{ display: "block", backgroundColor: "rgba(0, 0, 0, 0.5)" }}
+            aria-modal="true"
+            role="dialog"
+          >
+            <div className="modal-dialog modal-dialog-centered modal-xl">
+              <div className="modal-content" style={{ maxHeight: "100vh", overflowY: "auto" }}>
+                <div className="modal-header">
+                  <div className="page-title">
+                    <span>Customer Details</span> <IoIosArrowForward />{" "}
+                    <strong>{selectedCustomer.name}</strong>
+                  </div>
+                  <button
+                    type="button"
+                    className="btn-close"
+                    data-bs-dismiss="modal"
+                    aria-label="Close"
+                    // onClick={onClose}
+                    onClick={() => setShowModal(false)}
+                  ></button>
+                </div>
+
+                <div className="modal-body">
+                  <div className="">
+                    <div className="card-body">
+                      <div className="container-fluid dashboard-page">
+
+                        {/* Top Cards */}
+                        <div className="row g-3 mb-4">
+                          <div className="col-md-3">
+                            <div className="card-box p-3 bg-light d-flex align-items-center gap-3">
+                              <div className="card-icon"><TbMoneybag size={24} /></div>
+                              <div>
+                                <small>Total Spent</small>
+                                <h4 className="mb-0">₹ {customerStats[selectedCustomer._id]?.totalAmount || 0}</h4>
+                              </div>
+                            </div>
+                          </div>
+                          <div className="col-md-3">
+                            <div className="card-box p-3 bg-light d-flex align-items-center gap-3">
+                              <div className="card-icon">📦</div>
+                              <div>
+                                <small>Order</small>
+                                <h4 className="mb-0">{customerStats[selectedCustomer._id]?.orderCount || 0}</h4>
+                              </div>
+                            </div>
+                          </div>
+                          <div className="col-md-3">
+                            <div className="card-box p-3 bg-light d-flex align-items-center gap-3">
+                              <div className="card-icon">📅</div>
+                              <div>
+                                <small>Initial Purchase Date</small>
+                                <h4 className="mb-0">{customerSalesData.lastPurchaseDate
+                                  ? new Date(customerSalesData.lastPurchaseDate).toLocaleDateString()
+                                  : 'N/A'
+                                }</h4>
+                              </div>
+                            </div>
+                          </div>
+                          <div className="col-md-3">
+                            <div className="card-box p-3 bg-light d-flex align-items-center gap-3">
+                              <div className="card-icon">🚨</div>
+                              <div>
+                                <small>Dues Amount</small>
+                                <h4 className="mb-0">₹ {customerStats[selectedCustomer._id]?.dueAmount}</h4>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Details Section: Profile + Orders */}
+                        <div className="row g-4">
+                          {/* Profile */}
+                          <div className="col-md-4">
+                            <div className="p-3 border rounded bg-white h-100">
+                              <h5 className="mb-3">User Profile</h5>
+                              <div className="d-flex align-items-center gap-2 mb-3">
+                                {/* <div className="avatar bg-secondary rounded-circle" style={{ width: 48, height: 48 }}></div> */}
+                                <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+                                  {/* <img
+                    src="https://via.placeholder.com/32"
+                    alt={customer.name?.charAt(0)}
+
+                    className="rounded-circle"
+                    width="32"
+                    height="32"
+                  /> */}
+                                  {selectedCustomer.images && selectedCustomer.images.length > 0 ? (
+                                    <img
+                                      src={selectedCustomer.images && selectedCustomer.images.length > 0 ? selectedCustomer.images[0] : ""}
+                                      className="rounded"
+                                      width="32"
+                                      height="32"
+                                    // onError={(e) => { e.target.src = "https://via.placeholder.com/32"; }} // Fallback on error
+                                    />
+                                  ) : (
+                                    <div className="avatar-placeholder rounded d-flex align-items-center justify-content-center" style={{ width: 32, height: 32, backgroundColor: '#6c757d', color: 'white', fontWeight: 'bold' }}>
+                                      {selectedCustomer.name ? selectedCustomer.name.charAt(0).toUpperCase() : 'N/A'}
+                                    </div>
+                                  )}
+                                  {selectedCustomer.name}
+                                </div>
+                                <span className="fw-semibold">{selectedCustomer.name}</span>
+                              </div>
+                              <div className="mb-3">
+                                <small className="text-muted">Billing Address</small>
+                                <p className="mb-2">{formatAddress(selectedCustomer.billing)}</p>
+                              </div>
+                              <div className="mb-3">
+                                <small className="text-muted">Phone No.</small>
+                                <p className="mb-0">{selectedCustomer.phone}</p>
+                              </div>
+                              <div className="mb-3">
+                                <small className="text-muted">Shipping Address</small>
+                                <p className="mb-2">{formatAddress(selectedCustomer.shipping)}</p>
+                              </div>
+                            </div>
+                          </div>
+
+                          {/* Recent Orders */}
+                          <div className="col-md-8">
+                            <div className="p-3 border rounded bg-white">
+                              <div className="d-flex justify-content-between align-items-center mb-3">
+                                <h5 className="mb-0">Recent Orders</h5>
+                                <span className="text-muted small">{customerSalesData.lastPurchaseDate
+                                  ? new Date(customerSalesData.lastPurchaseDate).toLocaleDateString()
+                                  : 'N/A'
+                                }</span>
+                              </div>
+                              <div className="table-responsive">
+                                <table className="table table-sm table-bordered align-middle mb-0">
+                                  <thead className="table-light">
+                                    <tr>
+                                      <th>Product</th>
+                                      <th>Quantity</th>
+                                      <th>Total</th>
+                                    </tr>
+                                  </thead>
+                                  <tbody>
+                                    {customerSalesData.recentOrderItems && customerSalesData.recentOrderItems.length > 0 ? (
+                                      customerSalesData.recentOrderItems.map((order, index) => (
+                                        <tr key={order._id || index}>
+                                          <td>{order.products.map(p => p.productName).join(', ')}</td>
+                                          <td>
+                                            {/* List the names of products in the order */}
+                                            {order.products.reduce((sum, p) => sum + (p.quantity || 0), 0)}
+                                          </td>
+                                          <td>
+                                            {/* Now you can use grandTotal because 'order' is the full sale object */}
+                                            ₹ {(order.grandTotal || 0).toLocaleString("en-IN")}
+                                          </td>
+                                        </tr>
+                                      ))
+                                    ) : (
+                                      <tr>
+                                        <td colSpan="3" className="text-center">No recent orders found.</td>
+                                      </tr>
+                                    )}
+                                  </tbody>
+                                </table>
+                              </div>
+
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+
+
+                    </div>{/* end card body */}
+                  </div>
+
+
+                </div> {/* modal-body end */}
+              </div>
+            </div>
+          </div>
+
+
+        )}
+      </div>
     </div>
-</div>
   );
 }
 

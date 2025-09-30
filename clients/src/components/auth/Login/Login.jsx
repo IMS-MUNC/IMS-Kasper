@@ -20,6 +20,7 @@ const Login = () => {
   const [otpStep, setOtpStep] = useState(false)
   const [otp, setOtp] = useState("")
   const [emailForOtp, setEmailForOtp] = useState("")
+  const [loading, setLoading] = useState(false);
 
   const [showPassword, setShowPassword] = useState(false);
 
@@ -32,124 +33,126 @@ const Login = () => {
   };
 
   // handle verify for two factor authentication
-//   const handleVerifyOtp = async (e) => {
-//   e.preventDefault();
-//   try {
-//     const res = await axios.post(`${BASE_URL}/api/auth/verify-otp`, {
-//       email: emailForOtp,
-//       otp: otp,
-//        headers: {
-//         Authorization: `Bearer ${token}`,
-//       },
-//     });
+  //   const handleVerifyOtp = async (e) => {
+  //   e.preventDefault();
+  //   try {
+  //     const res = await axios.post(`${BASE_URL}/api/auth/verify-otp`, {
+  //       email: emailForOtp,
+  //       otp: otp,
+  //        headers: {
+  //         Authorization: `Bearer ${token}`,
+  //       },
+  //     });
 
-//     if (res?.data?.token && res?.data?.user) {
-//       localStorage.setItem("user", JSON.stringify(res.data.user));
-//   localStorage.setItem("token", res.data.token);
-//       toast.success("OTP Verified Successfully", {
-//         position: 'top-center',
-//       });
+  //     if (res?.data?.token && res?.data?.user) {
+  //       localStorage.setItem("user", JSON.stringify(res.data.user));
+  //   localStorage.setItem("token", res.data.token);
+  //       toast.success("OTP Verified Successfully", {
+  //         position: 'top-center',
+  //       });
 
-//       localStorage.setItem("userId", res.data?.user?._id);
-//       await logDeviceSession(res.data?.user?._id);
-//       navigate("/dashboard");
-//     } else {
-//       // fallback if no success key but still error-like
-//       toast.error("Invalid OTP");
-//     }
-//   } catch (error) {
-//     toast.error(error.response?.data?.message || "Invalid OTP");
-//     console.error("OTP verification error:", error);
-//   }
-// }
+  //       localStorage.setItem("userId", res.data?.user?._id);
+  //       await logDeviceSession(res.data?.user?._id);
+  //       navigate("/dashboard");
+  //     } else {
+  //       // fallback if no success key but still error-like
+  //       toast.error("Invalid OTP");
+  //     }
+  //   } catch (error) {
+  //     toast.error(error.response?.data?.message || "Invalid OTP");
+  //     console.error("OTP verification error:", error);
+  //   }
+  // }
 
-//   // for device management
-//   const logDeviceSession = (userId) => {
-//     if (navigator.geolocation) {
-//       navigator.geolocation.getCurrentPosition(
-//         (position) => {
-//           const { latitude, longitude } = position.coords;
-//           axios.post(`${BASE_URL}/api/auth/log-device`, {
-//             userId,
-//             latitude,
-//             longitude,
-//           })
-//             .then((res) => console.log("Device logged:", res.data))
-//             .catch((err) => console.error("Device log failed:", err.response?.data || err.message));
-//         },
-//         (error) => {
-//           console.error("Geolocation error:", error)
-//         }
-//       )
-//     } else {
-//       console.warn("Geolocation not supported")
-//     }
-//   }
+  //   // for device management
+  //   const logDeviceSession = (userId) => {
+  //     if (navigator.geolocation) {
+  //       navigator.geolocation.getCurrentPosition(
+  //         (position) => {
+  //           const { latitude, longitude } = position.coords;
+  //           axios.post(`${BASE_URL}/api/auth/log-device`, {
+  //             userId,
+  //             latitude,
+  //             longitude,
+  //           })
+  //             .then((res) => console.log("Device logged:", res.data))
+  //             .catch((err) => console.error("Device log failed:", err.response?.data || err.message));
+  //         },
+  //         (error) => {
+  //           console.error("Geolocation error:", error)
+  //         }
+  //       )
+  //     } else {
+  //       console.warn("Geolocation not supported")
+  //     }
+  //   }
 
 
-const handleVerifyOtp = async (e) => {
-  e.preventDefault();
-  const token = localStorage.getItem("token"); // <-- Add this line
-  try {
-    const res = await axios.post(`${BASE_URL}/api/auth/verify-otp`, {
-      email: emailForOtp,
-      otp: otp,
-    }, {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    });
-
-    if (res?.data?.token && res?.data?.user) {
-      localStorage.setItem("user", JSON.stringify(res.data.user));
-      localStorage.setItem("token", res.data.token);
-      toast.success("OTP Verified Successfully", {
-        position: 'top-center',
+  const handleVerifyOtp = async (e) => {
+    e.preventDefault();
+    const token = localStorage.getItem("token"); // <-- Add this line
+    try {
+      const res = await axios.post(`${BASE_URL}/api/auth/verify-otp`, {
+        email: emailForOtp,
+        otp: otp,
+      }, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
       });
 
-      localStorage.setItem("userId", res.data?.user?._id);
-      await logDeviceSession(res.data?.user?._id);
-      navigate("/dashboard");
-    } else {
-      toast.error("Invalid OTP");
-    }
-  } catch (error) {
-    toast.error(error.response?.data?.message || "Invalid OTP");
-    console.error("OTP verification error:", error);
-  }
-}
+      if (res?.data?.token && res?.data?.user) {
+        localStorage.setItem("user", JSON.stringify(res.data.user));
+        localStorage.setItem("token", res.data.token);
+        toast.success("OTP Verified Successfully", {
+          position: 'top-center',
+        });
 
-// for device management
-const logDeviceSession = (userId) => {
-  const token = localStorage.getItem("token"); // <-- Add this line
-  if (navigator.geolocation) {
-    navigator.geolocation.getCurrentPosition(
-      (position) => {
-        const { latitude, longitude } = position.coords;
-        axios.post(`${BASE_URL}/api/auth/log-device`, {
-          userId,
-          latitude,
-          longitude,
-        }, {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        })
-          .then((res) => console.log("Device logged:", res.data))
-          .catch((err) => console.error("Device log failed:", err.response?.data || err.message));
-      },
-      (error) => {
-        console.error("Geolocation error:", error)
+        localStorage.setItem("userId", res.data?.user?._id);
+        await logDeviceSession(res.data?.user?._id);
+        navigate("/dashboard");
+      } else {
+        toast.error("Invalid OTP");
       }
-    )
-  } else {
-    console.warn("Geolocation not supported")
+    } catch (error) {
+      toast.error(error.response?.data?.message || "Invalid OTP");
+      console.error("OTP verification error:", error);
+    }
   }
-}
+
+  // for device management
+  const logDeviceSession = (userId) => {
+    const token = localStorage.getItem("token"); // <-- Add this line
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          const { latitude, longitude } = position.coords;
+          axios.post(`${BASE_URL}/api/auth/log-device`, {
+            userId,
+            latitude,
+            longitude,
+          }, {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          })
+            .then((res) => console.log("Device logged:", res.data))
+            .catch((err) => console.error("Device log failed:", err.response?.data || err.message));
+        },
+        (error) => {
+          console.error("Geolocation error:", error)
+        }
+      )
+    } else {
+      console.warn("Geolocation not supported")
+    }
+  }
 
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (loading) return;   // prevent multiple submits
+    setLoading(true);
 
     try {
       const res = await axios.post(`${BASE_URL}/api/auth/login`, {
@@ -158,11 +161,11 @@ const logDeviceSession = (userId) => {
       });
       let normalizedUser = null;
 
-      if(res?.data?.token && res?.data?.user) {
+      if (res?.data?.token && res?.data?.user) {
         const user = res.data.user;
-         normalizedUser = {
+        normalizedUser = {
           ...user,
-          _id:user._id || user.id,
+          _id: user._id || user.id,
         }
         //  Save user and token to localStorage
         localStorage.setItem("token", res.data.token);
@@ -171,13 +174,13 @@ const logDeviceSession = (userId) => {
       // for two factor
       if (res.data.twoFactor === true) {
         toast.info("Otp sent to you email")
-        navigate("/otp", {state: {email: formData.email}})
+        navigate("/otp", { state: { email: formData.email } })
         return;
       }
       // const userId = res.data?.user?._id || res.data?.user?.id;
       localStorage.setItem("userId", normalizedUser._id)
-    
-        await logDeviceSession(normalizedUser._id);
+
+      await logDeviceSession(normalizedUser._id);
 
       toast.success("Login Successful!");
       navigate("/dashboard");
@@ -265,7 +268,7 @@ const logDeviceSession = (userId) => {
                 </div>
 
                 <div className="form-login">
-                  <button type="submit" className="btn btn-primary w-100">Sign In</button>
+                  <button type="submit" className="btn btn-primary w-100" disabled={loading}>{loading ? "Signing..." : "Sign In"}</button>
                 </div>
 
                 {/* <div className="signinform">

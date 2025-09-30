@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import axios from 'axios';
 import { useParams, useNavigate } from 'react-router-dom';
 import BASE_URL from '../../../pages/config/config';
@@ -17,30 +17,131 @@ function formatShipping(shipping) {
 }
 
 const Invoice = () => {
- const token = localStorage.getItem("token");
+    const token = localStorage.getItem("token");
 
     const { invoiceId } = useParams();
     const navigate = useNavigate();
     const [sale, setSale] = useState(null);
-        const [companySetting, setCompanySetting] = useState(null);
-        const [formData, setFormData] = useState({
-            companyName: "",
-            companyemail: "",
-            companyphone: "",
-            companyfax: "",
-            companywebsite: "",
-            companyaddress: "",
-            companycountry: "",
-            companystate: "",
-            companycity: "",
-            companypostalcode: "",
-            gstin: "",
-            cin: "",
-            companydescription: "",
-        });
-        const [isUpdating, setIsUpdating] = useState(false);
-        const [loading, setLoading] = useState(true);
-        const [error, setError] = useState(null);
+    const [companySetting, setCompanySetting] = useState(null);
+    const [formData, setFormData] = useState({
+        companyName: "",
+        companyemail: "",
+        companyphone: "",
+        companyfax: "",
+        companywebsite: "",
+        companyaddress: "",
+        companycountry: "",
+        companystate: "",
+        companycity: "",
+        companypostalcode: "",
+        gstin: "",
+        cin: "",
+        companydescription: "",
+    });
+    
+// Calculation helpers (copied from AddSalesModal.jsx for consistency)
+const [summary, setSummary] = useState({
+    subTotal: 0,
+    discountSum: 0,
+    taxableSum: 0,
+    cgst: 0,
+    sgst: 0,
+    taxSum: 0,
+    shippingCost: 0,
+    labourCost: 0,
+    orderDiscount: 0,
+    roundOff: 0,
+    grandTotal: 0,
+});
+    const [isUpdating, setIsUpdating] = useState(false);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(null);
+
+
+
+
+    
+useEffect(() => {
+    if (!sale || !sale.products) return;
+    let subTotal = 0;
+    let discountSum = 0;
+    let taxableSum = 0;
+    let taxSum = 0;
+    sale.products.forEach((item) => {
+        const d = getProductRowCalculation(item);
+        subTotal += d.subTotal;
+        discountSum += d.discountAmount;
+        taxableSum += d.taxableAmount;
+        taxSum += d.taxAmount;
+    });
+
+      const cgst = taxSum / 2;
+        const sgst = taxSum / 2;
+        const grandTotal =
+            (taxableSum || 0) + (taxSum || 0) ;
+
+   
+    setSummary({
+        subTotal,
+        discountSum,
+        taxableSum,
+        cgst,
+        sgst,
+        taxSum,
+       
+        grandTotal
+    });
+}, [sale]);
+
+const handlePrintInvoice = useCallback(async () => {
+        if (!sale || !sale.invoiceId) {
+            alert("Invoice not loaded.");
+            return;
+        }
+        try {
+            const res = await axios.get(`${BASE_URL}/api/sales/print/${sale.invoiceId}`, {
+                headers: { Authorization: `Bearer ${token}` },
+            });
+
+            const printWindow = window.open("", "_blank");
+            printWindow.document.write("<pre>" + JSON.stringify(res.data.invoice, null, 2) + "</pre>");
+            printWindow.document.close();
+            printWindow.focus();
+            printWindow.print();
+        } catch (err) {
+            alert("Failed to print invoice.");
+        }
+    }, [sale, token]);
+
+  // 🔧 Function: Download Invoice PDF
+  const handleDownloadPDF = useCallback(async () => {
+        if (!sale || !sale.invoiceId) {
+            alert("Invoice not loaded.");
+            return;
+        }
+        try {
+            const res = await axios.get(
+                `${BASE_URL}/api/invoice/pdf/${sale.invoiceId}`,
+                {
+                    headers: { Authorization: `Bearer ${token}` },
+                    responseType: "blob",
+                }
+            );
+
+            const url = window.URL.createObjectURL(new Blob([res.data], { type: "application/pdf" }));
+            const link = document.createElement("a");
+            link.href = url;
+            link.setAttribute("download", `Invoice_${sale.invoiceId}.pdf`);
+            document.body.appendChild(link);
+            link.click();
+            setTimeout(() => {
+                window.URL.revokeObjectURL(url);
+                link.remove();
+            }, 100);
+        } catch (err) {
+            alert("Failed to download PDF.");
+        }
+    }, [sale, token]);
 
     // useEffect(() => {
     //     const fetchInvoice = async () => {
@@ -83,10 +184,10 @@ const Invoice = () => {
     useEffect(() => {
         const fetchInvoice = async () => {
             try {
-                const res = await axios.get(`${BASE_URL}/api/sales?invoiceId=${invoiceId}`,{
-                     headers: {
-          Authorization: `Bearer ${token}`,
-        },
+                const res = await axios.get(`${BASE_URL}/api/sales?invoiceId=${invoiceId}`, {
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                    },
                 });
                 if (res.data.sales && res.data.sales.length > 0) {
                     setSale(res.data.sales[0]);
@@ -102,63 +203,63 @@ const Invoice = () => {
     }, [invoiceId]);
 
     // Calculation fields from getSales response
-            const subTotal = sale?.subTotal || 0;
-            const cgstValue = sale?.cgstValue || 0;
-            const sgstValue = sale?.sgstValue || 0;
-            const shipping = sale?.shippingCost || 0;
-            const labour = sale?.labourCost || 0;
-            // Calculate summaryDiscount as percent of (subTotal + shipping + labour)
-            let summaryDiscount = 0;
-            if (sale?.orderDiscount) {
-                const percent = parseFloat(sale.orderDiscount);
-                summaryDiscount = ((subTotal + shipping + labour+cgstValue+sgstValue) * percent) / 100;
-            }
-            // Calculate totalAmount
-            const totalAmount = subTotal + cgstValue + sgstValue + shipping + labour - summaryDiscount;
+    // const subTotal = sale?.subTotal || 0;
+    // const cgstValue = sale?.cgstValue || 0;
+    // const sgstValue = sale?.sgstValue || 0;
+    // const shipping = sale?.shippingCost || 0;
+    // const labour = sale?.labourCost || 0;
+    // // Calculate summaryDiscount as percent of (subTotal + shipping + labour)
+    // let summaryDiscount = 0;
+    // if (sale?.orderDiscount) {
+    //     const percent = parseFloat(sale.orderDiscount);
+    //     summaryDiscount = ((subTotal + shipping + labour + cgstValue + sgstValue) * percent) / 100;
+    // }
+    // // Calculate totalAmount
+    // const totalAmount = subTotal + cgstValue + sgstValue + shipping + labour - summaryDiscount;
 
 
-     const fetchCompanyProfile = async () => {
+    const fetchCompanyProfile = async () => {
         try {
-          const res = await axios.get(`${BASE_URL}/api/companyprofile/get`,{
-             headers: {
-          Authorization: `Bearer ${token}`,
-        },
-          });
-          let profile = null;
-          // Handle different possible response structures
-          if (res.data && res.data.data) {
-            profile = res.data.data;
-          } else if (Array.isArray(res.data) && res.data.length > 0) {
-            profile = res.data[0];
-          } else if (res.data && typeof res.data === 'object') {
-            profile = res.data;
-          }
-          if (profile) {
-            setFormData({
-              companyName: profile.companyName || "",
-              companyemail: profile.companyemail || "",
-              companyphone: profile.companyphone || "",
-              companyfax: profile.companyfax || "",
-              companywebsite: profile.companywebsite || "",
-              companyaddress: profile.companyaddress || "",
-              companycountry: profile.companycountry || "",
-              companystate: profile.companystate || "",
-              companycity: profile.companycity || "",
-              companypostalcode: profile.companypostalcode || "",
-              gstin: profile.gstin || "",
-              cin: profile.cin || "",
-              companydescription: profile.companydescription || "",
+            const res = await axios.get(`${BASE_URL}/api/companyprofile/get`, {
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                },
             });
-            setCompanySetting(profile);
-            setIsUpdating(true);
-          } else {
-            toast.error("No company profile found.");
-          }
+            let profile = null;
+            // Handle different possible response structures
+            if (res.data && res.data.data) {
+                profile = res.data.data;
+            } else if (Array.isArray(res.data) && res.data.length > 0) {
+                profile = res.data[0];
+            } else if (res.data && typeof res.data === 'object') {
+                profile = res.data;
+            }
+            if (profile) {
+                setFormData({
+                    companyName: profile.companyName || "",
+                    companyemail: profile.companyemail || "",
+                    companyphone: profile.companyphone || "",
+                    companyfax: profile.companyfax || "",
+                    companywebsite: profile.companywebsite || "",
+                    companyaddress: profile.companyaddress || "",
+                    companycountry: profile.companycountry || "",
+                    companystate: profile.companystate || "",
+                    companycity: profile.companycity || "",
+                    companypostalcode: profile.companypostalcode || "",
+                    gstin: profile.gstin || "",
+                    cin: profile.cin || "",
+                    companydescription: profile.companydescription || "",
+                });
+                setCompanySetting(profile);
+                setIsUpdating(true);
+            } else {
+                toast.error("No company profile found.");
+            }
         } catch (error) {
-          toast.error("Error fetching company profile.");
-          console.error(error);
+            toast.error("Error fetching company profile.");
+            console.error(error);
         }
-      };
+    };
     useEffect(() => {
         fetchCompanyProfile();
     }, []);
@@ -167,40 +268,81 @@ const Invoice = () => {
     if (error) return <div>{error}</div>;
     if (!sale) return <div>No invoice found.</div>;
 
-     // Print Invoice API integration
-                    const handlePrintInvoice = async () => {
-                        try {
-                            const res = await axios.get(`${BASE_URL}/api/invoice/print/${sale._id || sale.id}`,{
-                                 headers: {
-          Authorization: `Bearer ${token}`,
-        },
-                            });
-                            const printWindow = window.open('', '_blank');
-                            printWindow.document.write(res.data);
-                            printWindow.document.close();
-                            printWindow.focus();
-                            printWindow.print();
-                        } catch (err) {
-                            alert('Failed to print invoice.');
-                        }
-                    };
+    // Print Invoice API integration
+    // const handlePrintInvoice = async () => {
+    //     try {
+    //         const res = await axios.get(`${BASE_URL}/api/invoice/print/${sale._id || sale.id}`, {
+    //             headers: {
+    //                 Authorization: `Bearer ${token}`,
+    //             },
+    //         });
+    //         const printWindow = window.open('', '_blank');
+    //         printWindow.document.write(res.data);
+    //         printWindow.document.close();
+    //         printWindow.focus();
+    //         printWindow.print();
+    //     } catch (err) {
+    //         alert('Failed to print invoice.');
+    //     }
+    // };
 
-                    // Clone Invoice API integration
-                    const handleCloneInvoice = async () => {
-                        try {
-                            const res = await axios.post(`${BASE_URL}/api/invoice/clone/${sale._id || sale.id}`,{
-                                 headers: {
-          Authorization: `Bearer ${token}`,
-        },
-                            });
-                            toast.success('Invoice cloned successfully!');
-                            // Optionally, redirect to new invoice
-                            // navigate(`/invoice/${res.data.invoice._id}`);
-                        } catch (err) {
-                            toast.error('Failed to clone invoice.');
-                        }
-                    };
+    // Clone Invoice API integration
+    const handleCloneInvoice = async () => {
+        try {
+            const res = await axios.post(`${BASE_URL}/api/invoice/clone/${sale._id || sale.id}`, {
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                },
+            });
+            toast.success('Invoice cloned successfully!');
+            // Optionally, redirect to new invoice
+            // navigate(`/invoice/${res.data.invoice._id}`);
+        } catch (err) {
+            toast.error('Failed to clone invoice.');
+        }
+    };
 
+
+
+function getProductRowCalculation(item) {
+    const saleQty = Number(item.saleQty || item.quantity || 1);
+    const price = Number(item.sellingPrice || 0);
+    const discount = Number(item.discount || 0);
+    const tax = Number(item.tax || 0);
+    const subTotal = saleQty * price;
+      // 🔧 Fixed discount logic
+  let discountAmount = 0;
+  if (item.discountType === "Percentage") {
+    discountAmount = (subTotal * discount) / 100;
+  } else if (item.discountType === "Rupees" || item.discountType === "Fixed") {
+    discountAmount = saleQty * discount; // ✅ per unit ₹ discount
+  } else {
+    discountAmount = 0;
+  }
+    // const discountAmount = discount;
+    const taxableAmount = subTotal - discountAmount;
+    const taxAmount = (taxableAmount * tax) / 100;
+    const lineTotal = taxableAmount + taxAmount;
+    const unitCost = saleQty > 0 ? lineTotal / saleQty : 0;
+
+
+    
+    return {
+
+        subTotal,
+        discountAmount,
+        taxableAmount,
+        taxAmount,
+        lineTotal,
+        unitCost,
+        tax,
+        saleQty,
+        price
+    };
+}
+
+
+ 
     return (
         <div className="page-wrapper">
             <div className="content">
@@ -222,7 +364,7 @@ const Invoice = () => {
                         </li>
                     </ul>
                     <div className="page-btn">
-                        <a  className="btn btn-primary" onClick={() => navigate(-1)}><i data-feather="arrow-left" className="me-2" />Back to Invoices</a>
+                        <a className="btn btn-primary" onClick={() => navigate(-1)}><i data-feather="arrow-left" className="me-2" />Back to Invoices</a>
                     </div>
                 </div>
                 {/* Invoices */}
@@ -258,7 +400,7 @@ const Invoice = () => {
                                 <div>
                                     <h4 className="mb-1">{sale.customer?.name || '-'}</h4>
                                     {/* <p className="mb-1">{sale.customer?.billingAddress || '-'}</p> */}
-                                     <td>{formatShipping(sale.customer?.billing)}</td>
+                                    <td>{formatShipping(sale.customer?.billing)}</td>
                                     <p className="mb-1">Email : <span className="text-dark">{sale.customer?.email || '-'}</span></p>
                                     <p>Phone : <span className="text-dark">{sale.customer?.phone || '-'}</span></p>
                                 </div>
@@ -284,174 +426,280 @@ const Invoice = () => {
                             </div> */}
                         </div>
                         <div>
-                            <p className="fw-medium">Invoice For : <span className="text-dark fw-medium">Design &amp; development of Website</span></p>
+                            {/* <p className="fw-medium">Invoice For : <span className="text-dark fw-medium">Design &amp; development of Website</span></p> */}
                             <div className="table-responsive mb-3">
                                 <table className="table">
                                     <thead className="thead-light">
                                         <tr>
-                                            <th>Products /Services </th>
-                                             <th className="text-end">Hsn Code</th>
-                                            <th className="text-end">Qty</th>
-                                            <th className="text-end">Cost</th>
-                                            <th className="text-end">Total</th>
+                                            <th>Product/Service</th>
+                                            <th>HSN Code</th>
+                                            <th>Qty</th>
+                                            <th>Selling Price</th>
+                                            <th>Discount</th>
+                                            <th>Sub Total</th>
+                                            <th>Discount Amount</th>
+                                            <th>Tax (%)</th>
+                                            <th>Tax Amount</th>
+                                            {/* <th>Unit Cost</th>
+                                            <th>Line Total</th> */}
                                         </tr>
                                     </thead>
                                     <tbody>
-                                     
-                                    {sale.products?.map((item, idx) => (
-                                        <tr key={idx}>
-                                            <td ><h6>{item.productId?.productName || '-'}</h6> </td>
-                                            <td className="text-gray-9 fw-medium text-end">{item.hsnCode}</td>
-                                            <td className="text-gray-9 fw-medium text-end">{item.saleQty}{item.unit}</td>
-                                            <td className="text-gray-9 fw-medium text-end">{item.sellingPrice}</td>
-                                            <td className="text-gray-9 fw-medium text-end">{item.saleQty * item.sellingPrice}</td>
-                                        </tr>
-                                    ))}
-
-                                </tbody>
-                            </table>
+                                        {sale.products?.map((item, idx) => {
+                                            // const saleQty = item.saleQty || item.quantity || 1;
+                                            // const price = item.sellingPrice || 0;
+                                            // const discount = item.discount || 0;
+                                            // const tax = item.tax || 0;
+                                            // const subTotal = saleQty * price;
+                                            // const afterDiscount = subTotal - discount;
+                                            // const taxAmount = (afterDiscount * tax) / 100;
+                                            // const lineTotal = afterDiscount + taxAmount;
+                                            // const unitCost = saleQty > 0 ? lineTotal / saleQty : 0;
+                                             const d = getProductRowCalculation(item);
+                                            return (
+                                                <tr key={idx}>
+                                                    <td><h6>{item.productId?.productName || '-'}</h6></td>
+                                                    <td>{item.hsnCode || '-'}</td>
+                                                    <td>{item.saleQty}</td>
+                                                    <td>₹{item.sellingPrice}</td>
+                                                    {/* <td>₹{item.discount}</td> */}
+                                                    <td>
+                                                        <div style={{ display: "flex", alignItems: "center" }}>
+                                                            <span className="" >
+                                                                {item.discount}
+                                                            </span>
+                                                            <span className="ms-1">
+                                                                {item.discountType === "Percentage" ? "%" : "₹"}
+                                                            </span>
+                                                        </div>
+                                                    </td>
+                                                    <td>₹{item.subTotal}</td>
+                                                    <td>₹{item.discountAmount}</td>
+                                                    <td>{item.tax}%</td>
+                                                    <td>₹{item.taxAmount}</td>
+                                                    {/* <td>₹{item.unitCost}</td>
+                                                    <td className="fw-semibold text-success">₹{item.lineTotal}</td> */}
+                                                </tr>
+                                            );
+                                        })}
+                                    </tbody>
+                                </table>
+                                {/* Calculation summary below table */}
+                                {/* <div className="mt-3">
+                                    <div className="d-flex justify-content-between">
+                                        <span>Sub Total</span>
+                                        <span>₹{sale.products?.reduce((acc, p) => acc + ((p.saleQty || p.quantity || 1) * (p.sellingPrice || 0)), 0).toFixed(2)}</span>
+                                    </div>
+                                    <div className="d-flex justify-content-between">
+                                        <span>Total Discount</span>
+                                        <span>- ₹{sale.products?.reduce((acc, p) => acc + (p.discount || 0), 0).toFixed(2)}</span>
+                                    </div>
+                                    <div className="d-flex justify-content-between">
+                                        <span>Total Tax</span>
+                                        <span>₹{sale.products?.reduce((acc, p) => {
+                                            const saleQty = p.saleQty || p.quantity || 1;
+                                            const price = p.sellingPrice || 0;
+                                            const discount = p.discount || 0;
+                                            const tax = p.tax || 0;
+                                            const subTotal = saleQty * price;
+                                            const afterDiscount = subTotal - discount;
+                                            return acc + ((afterDiscount * tax) / 100);
+                                        }, 0).toFixed(2)}</span>
+                                    </div>
+                                    <div className="d-flex justify-content-between">
+                                        <span>Grand Total</span>
+                                        <span>₹{sale.products?.reduce((acc, p) => {
+                                            const saleQty = p.saleQty || p.quantity || 1;
+                                            const price = p.sellingPrice || 0;
+                                            const discount = p.discount || 0;
+                                            const tax = p.tax || 0;
+                                            const subTotal = saleQty * price;
+                                            const afterDiscount = subTotal - discount;
+                                            const taxAmount = (afterDiscount * tax) / 100;
+                                            return acc + (afterDiscount + taxAmount);
+                                        }, 0).toFixed(2)}</span>
+                                    </div>
+                                </div> */}
+                            </div>
                         </div>
+
+                      
+                    {/* summary calculation*/}
+                    <div className="col-md-5 ms-auto mb-3">
+                      <div className="d-flex justify-content-between border-bottom mb-2 pe-3">
+                        <p>Sub Total</p>
+                        <p>₹ {Number(summary.subTotal || 0).toFixed(2)}</p>
+                      </div>
+
+                      <div className="d-flex justify-content-between mb-2 pe-3">
+                        <p>Discount</p>
+                        <p>- ₹ {Number(summary.discountSum || 0).toFixed(2)}</p>
+                      </div>
+
+                      <div className="d-flex justify-content-between mb-2 pe-3">
+                        <p>Taxable Value</p>
+                        <p>₹ {Number(summary.taxableSum || 0).toFixed(2)}</p>
+                      </div>
+
+                      <div className="d-flex justify-content-between mb-2 pe-3">
+                        <p>CGST</p>
+                        <p>₹ {Number(summary.cgst || 0).toFixed(2)}</p>
+                      </div>
+
+                      <div className="d-flex justify-content-between border-bottom mb-2 pe-3">
+                        <p>SGST</p>
+                        <p>₹ {Number(summary.sgst || 0).toFixed(2)}</p>
+                      </div>
+    
+
+                      <div className="d-flex justify-content-between fw-bold mb-2 pe-3">
+                        <h5>Total Invoice Amount</h5>
+                        <h5>₹ {Number(summary.grandTotal || 0).toFixed(2)}</h5>
+                      </div>
+
+                      {/* <p className="fs-12">
+                        Amount in Words: <strong>Indian Rupees Only</strong>
+                      </p> */}
                     </div>
-                    <div className="row border-bottom mb-3">
-                        <div className="col-md-5 ms-auto mb-3">
-                            <div className="d-flex justify-content-between align-items-center border-bottom mb-2 pe-3">
-  <p className="mb-0">Sub Total</p>
-  <p className="text-dark fw-medium mb-2">₹{subTotal.toFixed(2)}</p>
-</div>
 
-<div className="d-flex justify-content-between align-items-center mb-2 pe-3">
-  <p className="mb-0">CGST ({sale.cgst} %)</p>
-  <p className="text-dark fw-medium mb-2">₹{cgstValue.toFixed(2)}</p>
-</div>
+                        {/* <div className="row border-bottom mb-3">
+                            <div className="col-md-5 ms-auto mb-3">
+                                <div className="d-flex justify-content-between align-items-center border-bottom mb-2 pe-3">
+                                    <p className="mb-0">Sub Total</p>
+                                    <p className="text-dark fw-medium mb-2">₹{subTotal.toFixed(2)}</p>
+                                </div>
 
-<div className="d-flex justify-content-between align-items-center border-bottom mb-2 pe-3">
-  <p className="mb-0">SGST ({sale.sgst} %)</p>
-  <p className="text-dark fw-medium mb-2">₹{sgstValue.toFixed(2)}</p>
-</div>
+                                <div className="d-flex justify-content-between align-items-center mb-2 pe-3">
+                                    <p className="mb-0">CGST ({sale.cgst} %)</p>
+                                    <p className="text-dark fw-medium mb-2">₹{cgstValue.toFixed(2)}</p>
+                                </div>
 
-<div className="d-flex justify-content-between align-items-center mb-2 pe-3">
-  <p className="mb-0">Shipping Price</p>
-  <p className="text-dark fw-medium mb-2">₹{shipping.toFixed(2)}</p>
-</div>
+                                <div className="d-flex justify-content-between align-items-center border-bottom mb-2 pe-3">
+                                    <p className="mb-0">SGST ({sale.sgst} %)</p>
+                                    <p className="text-dark fw-medium mb-2">₹{sgstValue.toFixed(2)}</p>
+                                </div>
 
-<div className="d-flex justify-content-between align-items-center mb-2 pe-3">
-  <p className="mb-0">Labour Cost</p>
-  <p className="text-dark fw-medium mb-2">₹{labour.toFixed(2)}</p>
-</div>
+                                <div className="d-flex justify-content-between align-items-center mb-2 pe-3">
+                                    <p className="mb-0">Shipping Price</p>
+                                    <p className="text-dark fw-medium mb-2">₹{shipping.toFixed(2)}</p>
+                                </div>
 
-<div className="d-flex justify-content-between align-items-center border-bottom mb-2 pe-3">
-        <p className="mb-0">Order Discount {sale?.orderDiscount ? `(${sale.orderDiscount}% )` : ''}</p>
-        <p className="text-dark fw-medium mb-2">₹ {summaryDiscount ? summaryDiscount.toFixed(2) : '0.00'}</p>
-</div>
+                                <div className="d-flex justify-content-between align-items-center mb-2 pe-3">
+                                    <p className="mb-0">Labour Cost</p>
+                                    <p className="text-dark fw-medium mb-2">₹{labour.toFixed(2)}</p>
+                                </div>
+
+                                <div className="d-flex justify-content-between align-items-center border-bottom mb-2 pe-3">
+                                    <p className="mb-0">Order Discount {sale?.orderDiscount ? `(${sale.orderDiscount}% )` : ''}</p>
+                                    <p className="text-dark fw-medium mb-2">₹ {summaryDiscount ? summaryDiscount.toFixed(2) : '0.00'}</p>
+                                </div>
 
 
-<div className="d-flex justify-content-between align-items-center mb-2 pe-3">
-    <h5>Total Amount</h5>
-    <h5>₹{totalAmount.toFixed(2)}</h5>
-</div>
+                                <div className="d-flex justify-content-between align-items-center mb-2 pe-3">
+                                    <h5>Total Amount</h5>
+                                    <h5>₹{totalAmount.toFixed(2)}</h5>
+                                </div>
 
-                        </div>
-                        {/* <div className="col-md-5 ms-auto mb-3">
-                            <div className="d-flex justify-content-between align-items-center border-bottom mb-2 pe-3">
-                                <p className="mb-0">Sub Total</p>
-                                <p className="text-dark fw-medium mb-2">₹{sale.grandTotal}</p>
                             </div>
-                           
-                            <div className="d-flex justify-content-between align-items-center mb-2 pe-3">
-                                <p className="mb-0">CGST ({sale.cgst} %) </p>
-                                <p className="text-dark fw-medium mb-2">₹{cgstValue ? cgstValue.toFixed(2) : '0.00'}</p>
-                            </div>
-                            <div className="d-flex justify-content-between align-items-center border-bottom mb-2 pe-3">
-                                <p className="mb-0">SGST ({sale.sgst} %) </p>
-                                <p className="text-dark fw-medium mb-2">₹ {sgstValue ? sgstValue.toFixed(2) : '0.00'}</p>
-                            </div>
-                            <div className="d-flex justify-content-between align-items-center  mb-2 pe-3">
-                                <p className="mb-0">Shipping Price</p>
-                                <p className="text-dark fw-medium mb-2">₹{sale.shippingCost}</p>
-                            </div>
-                            <div className="d-flex justify-content-between align-items-center  mb-2 pe-3">
-                                <p className="mb-0">Labour Cost</p>
-                                <p className="text-dark fw-medium mb-2">₹{sale.shippingCost}</p>
-                            </div>
-                            <div className="d-flex justify-content-between align-items-center border-bottom mb-2 pe-3">
-                                <p className="mb-0">Discount</p>
-                                <p className="text-dark fw-medium mb-2">₹{sale.orderDiscount}</p>
-                            </div>
-                            <div className="d-flex justify-content-between align-items-center mb-2 pe-3">
-                                <h5>Total Amount</h5>
-                                <h5>₹</h5>
-                            </div>
-                            <p className="fs-12">
-                                Amount in Words : <strong> Indian Rupees {sale.grandTotal} Only</strong>
-                            </p>
+                         
                         </div> */}
-                    </div>
-                    <div className="row align-items-center border-bottom mb-3">
-                        <div className="col-md-7">
-                            <div>
-                                <div className="mb-3">
-                                    <h6 className="mb-1">Terms and Conditions</h6>
-                                    <p>Please pay within 15 days from the date of invoice, overdue interest @ 14% will be charged on delayed payments.</p>
+
+
+
+
+
+                        <div className="row align-items-center border-bottom mb-3">
+                            <div className="col-md-7">
+                                <div>
+                                    <div className="mb-3">
+                                        <h6 className="mb-1">Terms and Conditions</h6>
+                                        <p>Please pay within 15 days from the date of invoice, overdue interest @ 14% will be charged on delayed payments.</p>
+                                    </div>
+                                    <div className="mb-3">
+                                        <h6 className="mb-1">Notes</h6>
+                                        <p>Please quote invoice number when remitting funds.</p>
+                                    </div>
                                 </div>
-                                <div className="mb-3">
-                                    <h6 className="mb-1">Notes</h6>
-                                    <p>Please quote invoice number when remitting funds.</p>
+                            </div>
+                            <div className="col-md-5">
+                                {/* <div className="text-end">
+                                    <img src="assets/img/sign.svg" className="img-fluid" alt="sign" />
+                                </div> */}
+                                <div className="text-end mb-3">
+                                    <h6 className="fs-14 fw-medium pe-3">Afroz Zeelani</h6>
+                                    <p>Biller</p>
                                 </div>
                             </div>
                         </div>
-                        <div className="col-md-5">
-                            <div className="text-end">
-                                <img src="assets/img/sign.svg" className="img-fluid" alt="sign" />
+                        <div className="text-center">
+                            <div className="mb-3">
+                                <img src={Logo} width={130} className="img-fluid" alt="logo" />
                             </div>
-                            <div className="text-end mb-3">
-                                <h6 className="fs-14 fw-medium pe-3">Afroz Zeelani</h6>
-                                <p>Assistant Manager</p>
+                            <p className="text-dark mb-1">Payment Made Via bank transfer / Cheque in the name of Afroz Zeelani</p>
+                            <div className="d-flex justify-content-center align-items-center">
+                                <p className="fs-12 mb-0 me-3">Bank Name : <span className="text-dark">HDFC Bank</span></p>
+                                <p className="fs-12 mb-0 me-3">Account Number : <span className="text-dark">45366287987</span></p>
+                                <p className="fs-12">IFSC : <span className="text-dark">HDFC0018159</span></p>
                             </div>
-                        </div>
-                    </div>
-                    <div className="text-center">
-                        <div className="mb-3">
-                            <img src={Logo} width={130} className="img-fluid" alt="logo" />
-                        </div>
-                        <p className="text-dark mb-1">Payment Made Via bank transfer / Cheque in the name of Thomas Lawler</p>
-                        <div className="d-flex justify-content-center align-items-center">
-                            <p className="fs-12 mb-0 me-3">Bank Name : <span className="text-dark">HDFC Bank</span></p>
-                            <p className="fs-12 mb-0 me-3">Account Number : <span className="text-dark">45366287987</span></p>
-                            <p className="fs-12">IFSC : <span className="text-dark">HDFC0018159</span></p>
                         </div>
                     </div>
                 </div>
+
+                    <div className="d-flex justify-content-center align-items-center mb-4">
+      {/* Print Invoice */}
+      <button
+        className="btn btn-primary d-flex justify-content-center align-items-center me-2"
+        onClick={handlePrintInvoice}
+      >
+        <i className="ti ti-printer me-2" /> Print Invoice
+      </button>
+
+      {/* Download PDF */}
+      <button
+        className="btn btn-secondary d-flex justify-content-center align-items-center border"
+        onClick={handleDownloadPDF}
+      >
+        <i className="ti ti-copy me-2" /> Download PDF
+      </button>
+    </div>
+                {/* /Invoices */}
+                {/* <div className="d-flex justify-content-center align-items-center mb-4">
+                    <button className="btn btn-primary d-flex justify-content-center align-items-center me-2" onClick={async () => {
+                        try {
+                            const res = await axios.get(`${BASE_URL}/api/sales/print/${sale.invoiceId}`,{
+                                 headers: {
+                        Authorization: `Bearer ${token}`,
+                    },
+                            });
+                            const printWindow = window.open('', '_blank');
+                            printWindow.document.write('<pre>' + JSON.stringify(res.data.invoice, null, 2) + '</pre>');
+                            printWindow.document.close();
+                            printWindow.focus();
+                            printWindow.print();
+                        } catch (err) {
+                            alert('Failed to print invoice.');
+                        }
+                    }}><i className="ti ti-printer me-2" />Print Invoice</button>
+                    <button className="btn btn-secondary d-flex justify-content-center align-items-center border" onClick={async () => {
+                        try {
+                            const res = await axios.get(`${BASE_URL}/api/invoice/pdf/${sale.invoiceId}`, { responseType: 'blob' },{
+ headers: {
+                        Authorization: `Bearer ${token}`,
+                    },
+                            });
+                            const url = window.URL.createObjectURL(new Blob([res.data], { type: 'application/pdf' }));
+                            const link = document.createElement('a');
+                            link.href = url;
+                            link.setAttribute('download', `Invoice_${sale.invoiceId}.pdf`);
+                            document.body.appendChild(link);
+                            link.click();
+                            link.parentNode.removeChild(link);
+                        } catch (err) {
+                            alert('Failed to download PDF.');
+                        }
+                    }}><i className="ti ti-copy me-2" />Download PDF</button>
+                </div> */}
             </div>
-            {/* /Invoices */}
-            <div className="d-flex justify-content-center align-items-center mb-4">
-                <button className="btn btn-primary d-flex justify-content-center align-items-center me-2" onClick={async () => {
-                    try {
-                        const res = await axios.get(`${BASE_URL}/api/sales/print/${sale.invoiceId}`);
-                        const printWindow = window.open('', '_blank');
-                        printWindow.document.write('<pre>' + JSON.stringify(res.data.invoice, null, 2) + '</pre>');
-                        printWindow.document.close();
-                        printWindow.focus();
-                        printWindow.print();
-                    } catch (err) {
-                        alert('Failed to print invoice.');
-                    }
-                }}><i className="ti ti-printer me-2" />Print Invoice</button>
-                <button className="btn btn-secondary d-flex justify-content-center align-items-center border" onClick={async () => {
-                    try {
-                        const res = await axios.get(`${BASE_URL}/api/sales/pdf/${sale.invoiceId}`, { responseType: 'blob' });
-                        const url = window.URL.createObjectURL(new Blob([res.data], { type: 'application/pdf' }));
-                        const link = document.createElement('a');
-                        link.href = url;
-                        link.setAttribute('download', `Invoice_${sale.invoiceId}.pdf`);
-                        document.body.appendChild(link);
-                        link.click();
-                        link.parentNode.removeChild(link);
-                    } catch (err) {
-                        alert('Failed to download PDF.');
-                    }
-                }}><i className="ti ti-copy me-2" />Download PDF</button>
-            </div>
-        </div>
 
         </div >
 

@@ -1,388 +1,9 @@
-// // final
-// import { useEffect, useState } from "react";
-// import axios from "axios";
-// import { FaFileExcel, FaFilePdf, FaPencilAlt } from "react-icons/fa";
-// import { useNavigate } from "react-router-dom";
-// import { FaShoppingBag } from "react-icons/fa";
-// import "../../../../styles/product/product-list.css";
-// import BASE_URL from "../../../../pages/config/config";
-// import { CiCirclePlus } from "react-icons/ci";
-
-// function ProductList() {
-//   const [products, setProducts] = useState([]);
-//   console.log("Products:", products);
-//   const [activeTabs, setActiveTabs] = useState({});
-//   const navigate = useNavigate();
-
-//   useEffect(() => {
-//     const fetchProducts = async () => {
-//       const token = localStorage.getItem("token"); // Make sure the token is stored here after login
-
-//       try {
-//         const res = await axios.get(`${BASE_URL}/api/products`,{
-//            headers: {
-//           Authorization: `Bearer ${token}`, // ✅ token sent properly
-//         },
-//         });
-//         setProducts(res.data);
-//         // Initialize all to "general"
-//         const initialTabs = res.data.reduce((acc, product) => {
-//           acc[product._id] = "general";
-//           return acc;
-//         }, {});
-//         setActiveTabs(initialTabs);
-//       } catch (err) {
-//         console.error("Failed to fetch products", err);
-//       }
-//     };
-//     fetchProducts();
-//   }, []);
-
-//   const handleTabClick = (productId, tab) => {
-//     setActiveTabs((prev) => ({ ...prev, [productId]: tab }));
-//   };
-
-//   return (
-//     <div className="page-wrapper ">
-//       <div className="content">
-//         <div className="page-header">
-//           <div className="add-item d-flex">
-//             <div className="page-title">
-//               <h4 className="fw-bold">Products</h4>
-//               <h6>Manage your products</h6>
-//             </div>
-//           </div>
-
-//           <div className="table-top-head me-2">
-//             <li><button type="button" className="icon-btn" title="Pdf"><FaFilePdf /></button></li>
-//             <li><label className="icon-btn m-0" title="Import Excel"><input type="file" accept=".xlsx, .xls" hidden /><FaFileExcel style={{ color: "green" }} /></label></li>
-//             <li><button type="button" className="icon-btn" title="Export Excel"><FaFileExcel /></button></li>
-//           </div>
-//           <div className="d-flex gap-2">
-//             {/* <a className="btn btn-primary" data-bs-toggle="modal" data-bs-target="#add-purchase"><CiCirclePlus className="me-1" />Add Products</a> */}
-//             {/* <a className="btn btn-secondary" data-bs-toggle="modal" data-bs-target="#view-notes"><i data-feather="download" className="me-2" />Import Purchase</a> */}
-//           </div>
-//         </div>
-
-//         {products.length === 0 ? (
-//           <p>Loading products...</p>
-//         ) : (
-//           products.map((product) => (
-//             <div className="">
-//               {/* All Content */}
-//               <div className="contents gap-2">
-//                 {/* Tabs */}
-//                 <div className="button-group">
-//                   {["general", "pricing", "description", "variants"].map(
-//                     (tab) => (
-//                       <div
-//                         key={tab}
-//                         className={`button-${activeTabs[product._id] === tab ? "active" : "inactive"
-//                           } button-${tab}`}
-//                         onClick={() => handleTabClick(product._id, tab)}
-//                       >
-//                         <p>
-//                           {tab === "general"
-//                             ? "General Information"
-//                             : tab === "pricing"
-//                               ? "Pricing & Tax"
-//                               : tab === "description"
-//                                 ? "Description & Media"
-//                                 : "Variants"}
-//                         </p>
-//                       </div>
-//                     )
-//                   )}
-//                 </div>
-
-//                 {/* Toggle Sections */}
-//                 <div className="toggle-section mb-3">
-//                   {activeTabs[product._id] === "general" && (
-//                     <div className="section-container">
-//                       {/* Heading */}
-//                       <div className="section-header">
-//                         <div className="section-title">
-//                           <div className="icon-container">
-//                             <FaShoppingBag />
-//                           </div>
-//                           <div>
-//                             <h1 className="section-title-text">
-//                               {product.productName}
-//                             </h1>
-//                             <p className="section-subtitle">
-//                               {/* SKU-KAPL-021 • Goods • Available Qty - 76kg */}
-//                               SKU-{product.sku} • Available Qty -{" "}
-//                               {product.quantity} {product.unit}
-//                             </p>
-//                           </div>
-//                         </div>
-//                         <div className="edit-icon" style={{ cursor: "pointer" }} onClick={() => navigate(`/product/edit/${product._id}`)}>
-//                           <FaPencilAlt />
-//                         </div>
-//                       </div>
-
-//                       {/* All Categories */}
-//                       <div className="categories">
-//                         {/* Category */}
-//                         <div className="category">
-//                           <div className="category-item">
-//                             <p className="label">Category</p>
-//                             <p className="value">
-//                               {product.category?.categoryName}
-//                             </p>
-//                           </div>
-//                           <div className="category-item">
-//                             <p className="label">Supplier SKU</p>
-//                             <p className="value">KAPL-011</p>
-//                           </div>
-//                           <div className="category-item">
-//                             <p className="label">Reorder Level</p>
-//                             <p className="value">{product.reorderLevel}</p>
-//                           </div>
-//                         </div>
-
-//                         {/* Brands */}
-//                         <div className="category">
-//                           <div className="category-item">
-//                             <p className="label">Brands/Manufacturer</p>
-//                             <p className="value">{product.brand?.brandName}</p>
-//                           </div>
-//                           <div className="category-item">
-//                             <p className="label">Barcode</p>
-//                             <p className="value">{product.itemBarcode}</p>
-//                             {/* <p className="value">EAN - 1234 5678 9090</p> */}
-//                           </div>
-//                           <div className="category-item">
-//                             <p className="label">Initial Stock Quantity</p>
-//                             <p className="value">{product.initialStock}</p>
-//                           </div>
-//                         </div>
-
-//                         {/* Product Type */}
-//                         <div className="category">
-//                           <div className="category-item">
-//                             <p className="label">Product Type</p>
-//                             <p className="value">{product.itemType}</p>
-//                           </div>
-//                           <div className="category-item">
-//                             <p className="label">Warehouse Location</p>
-//                             <p className="value">{product.warehouse}</p>
-//                           </div>
-//                           <div className="category-item">
-//                             <p className="label">Track by</p>
-//                             <p className="value">Serial No.</p>
-//                           </div>
-//                         </div>
-
-//                         {/* Supplier & Warehouse */}
-//                         <div className="category">
-//                           <div className="category-item">
-//                             <p className="label">Supplier</p>
-//                             <p className="value">{product.supplierName || '-'}</p>
-//                           </div>
-//                           <div className="category-item">
-//                             <p className="label">Warehouse</p>
-//                             <p className="value">{product.warehouseName || '-'}</p>
-//                           </div>
-//                           <div className="category-item">
-//                             <p className="label">Lead Time</p>
-//                             <p className="value">{product.leadTime}</p>
-//                           </div>
-//                           <div className="category-item">
-//                             <p className="label">Status</p>
-//                             <p className="value">{product.trackType}</p>
-//                           </div>
-//                         </div>
-//                       </div>
-//                     </div>
-//                   )}
-
-//                   {activeTabs[product._id] === "pricing" && (
-//                     <div className="section-container">
-//                       {/* Heading */}
-//                       <div className="section-header">
-//                         <div className="section-title">
-//                           <div className="icon-container">
-//                             <FaShoppingBag />
-//                           </div>
-//                           <div>
-//                             <p className="section-title-text">{product.productName}</p>
-//                             <p className="section-subtitle">
-//                               SKU-{product.sku} • Available Qty -{" "}
-//                               {product.quantity} {product.unit}
-//                             </p>
-//                           </div>
-//                         </div>
-//                         <div className="edit-icon">
-//                           <FaPencilAlt />
-//                         </div>
-//                       </div>
-
-//                       {/* All Categories */}
-//                       <div className="categories">
-//                         {/* Category */}
-//                         <div className="category">
-//                           <div className="category-item">
-//                             <p className="label">Purchase Price</p>
-//                             <p className="value">{product.purchasePrice}</p>
-//                           </div>
-//                           <div className="category-item">
-//                             <p className="label">Unit</p>
-//                             <p className="value">{product.unit}</p>
-//                           </div>
-//                           <div className="category-item">
-//                             <p className="label">HSN / SAC</p>
-//                             <p className="value">{product.hsnCode || '-'}</p>
-//                           </div>
-//                         </div>
-
-//                         {/* Brands */}
-//                         <div className="category">
-//                           <div className="category-item">
-//                             <p className="label">Selling price</p>
-//                             <p className="value">{product.sellingPrice}</p>
-//                           </div>
-//                           <div className="category-item">
-//                             <p className="label">Discount</p>
-//                             <p className="value">{product.discountValue}</p>
-//                             {/* <p className="value">EAN - 1234 5678 9090</p> */}
-//                           </div>
-//                           <div className="category-item">
-//                             <p className="label">GST Rate</p>
-//                             <p className="value">{product.tax}</p>
-//                           </div>
-//                         </div>
-
-//                         {/* Product Type */}
-//                         <div className="category">
-//                           <div className="category-item">
-//                             <p className="label">Wholesale Price / Bulk Price</p>
-//                             <p className="value">{product.wholesalePrice}</p>
-//                           </div>
-//                           <div className="category-item">
-//                             <p className="label">Discount Period</p>
-//                             {/* <p className="value">{product.purchasePrice}</p> */}
-//                           </div>
-//                         </div>
-
-//                         {/* Supplier */}
-//                         <div className="category">
-//                           <div className="category-item">
-//                             <p className="label">Quantity</p>
-//                             <p className="value"> {product.quantity}</p>
-//                           </div>
-
-//                         </div>
-//                       </div>
-//                     </div>
-//                   )}
-
-//                   {activeTabs[product._id] === "description" && (
-//                     <div className="section-container">
-//                       {/* Description & Media Content */}
-//                       <div className="section-header">
-//                         <div className="section-title">
-//                           <div className="icon-container">
-//                             <FaShoppingBag />
-//                           </div>
-//                           <div>
-//                             <h1 className="section-title-text">
-//                               {product.productName}
-//                             </h1>
-//                             <p className="section-subtitle">
-//                               SKU-{product.sku} • Available Qty -{" "}
-//                               {product.quantity} {product.unit}
-//                             </p>
-//                           </div>
-//                         </div>
-//                         <div className="edit-icon">
-//                           <FaPencilAlt />
-//                         </div>
-//                       </div>
-//                       <div>
-//                         <div className="media-content">
-//                           {product.images?.[0] && (
-//                             <img
-//                               src={product.images[0].url}
-//                               alt={product.productName}
-//                               className="media-image"
-//                               style={{ height: "250px", width: "255px" }}
-//                             />
-//                           )}
-
-//                           <div>
-//                             <div className="seo-content">
-//                               <div>
-//                                 <p className="label">SEO META TITLE</p>
-//                                 <p className="value">{product.seoTitle}</p>
-//                               </div>
-//                               <div>
-//                                 <p className="label">SEO META Description</p>
-//                                 <p className="value">{product.seoDescription}</p>
-//                               </div>
-//                             </div>
-//                             <div>
-//                               <p className="label">Description</p>
-//                               <p className="value">{product.description}</p>
-//                             </div>
-//                           </div>
-//                         </div>
-//                       </div>
-//                     </div>
-//                   )}
-
-//                   {activeTabs[product._id] === "variants" && product.variants && (
-//                     <div className="section-container">
-//                       {/* Variants Content */}
-//                       <div className="section-header">
-//                         <div className="section-title">
-//                           <div className="icon-container">
-//                             <FaShoppingBag />
-//                           </div>
-//                           <div>
-//                             <h1 className="section-title-text">
-//                               {product.productName}
-//                             </h1>
-//                             <p className="section-subtitle">
-//                               SKU-{product.sku} • Available Qty -{" "}
-//                               {product.quantity} {product.unit}
-//                             </p>
-//                           </div>
-//                         </div>
-//                         <div className="edit-icon">
-//                           <FaPencilAlt />
-//                         </div>
-//                       </div>
-//                       <div className="variants mb-4">
-//                         <div className="variants-header">
-//                           <p className="label">Variant</p>
-//                         </div>
-//                         {Object.entries(product.variants).map(
-//                           ([variant, qty]) => (
-//                             <div key={variant} className="variants-content">
-//                               <p>{variant}</p>
-//                               <p>{qty}</p>
-//                             </div>
-//                           )
-//                         )}
-//                       </div>
-//                     </div>
-//                   )}
-//                 </div>
-//               </div>
-//             </div>
-//           ))
-//         )}
-//       </div>
-//     </div>
-//   );
-// }
-
-// export default ProductList;
-// // --------------------------------------------------
+import { toast } from 'react-toastify';
 
 
-import { useEffect, useRef, useState } from "react";
+
+import React, { useEffect, useRef, useState } from "react";
+import Select from "react-select";
 import axios from "axios";
 import { FaFileExcel, FaFilePdf, FaPencilAlt } from "react-icons/fa";
 import { Link, useNavigate } from "react-router-dom";
@@ -400,42 +21,93 @@ import { TbEdit, TbEye, TbRefresh, TbTrash } from 'react-icons/tb';
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import * as XLSX from "xlsx";
+import { MdNavigateNext } from "react-icons/md";
+import { GrFormPrevious } from "react-icons/gr";
 
 const Product = () => {
-    const navigate = useNavigate();
- const fileInputRef = useRef();
-    const [products, setProducts] = useState([]);
-      const [expiringProducts, setExpiringProducts] = useState([]);
-        const [expiringCount, setExpiringCount] = useState(0);
-
+  const navigate = useNavigate();
+  const fileInputRef = useRef();
+  const [products, setProducts] = useState([]);
+  const [expiringProducts, setExpiringProducts] = useState([]);
+  const [expiringCount, setExpiringCount] = useState(0);
   const [activeTabs, setActiveTabs] = useState({});
+  // Pagination and filter states
   const [currentPage, setCurrentPage] = useState(1);
-  const [itemsPerPage] = useState(10);
+  const [itemsPerPage, setItemsPerPage] = useState(10);
+  const [total, setTotal] = useState(0);
+  // Filter dropdowns
+  const [brandOptions, setBrandOptions] = useState([]);
+  const [categoryOptions, setCategoryOptions] = useState([]);
+  const [subcategoryOptions, setSubcategoryOptions] = useState([]);
+  const [hsnOptions, setHsnOptions] = useState([]);
+  const [selectedBrand, setSelectedBrand] = useState(null);
+  const [selectedCategory, setSelectedCategory] = useState(null);
+  const [selectedSubcategory, setSelectedSubcategory] = useState(null);
+  const [selectedHsn, setSelectedHsn] = useState(null);
+  const [search, setSearch] = useState("");
 
   
+  // Fetch filter options (brands, categories, hsn)
   useEffect(() => {
-    const fetchProducts = async () => {
-      const token = localStorage.getItem("token"); // Make sure the token is stored here after login
-
-      try {
-        const res = await axios.get(`${BASE_URL}/api/products`, {
-          headers: {
-            Authorization: `Bearer ${token}`, // ✅ token sent properly
-          },
-        });
-        setProducts(res.data);
-        // Initialize all to "general"
-        const initialTabs = res.data.reduce((acc, product) => {
-          acc[product._id] = "general";
-          return acc;
-        }, {});
-        setActiveTabs(initialTabs);
-      } catch (err) {
-        console.error("Failed to fetch products", err);
-      }
-    };
-    fetchProducts();
+    const token = localStorage.getItem("token");
+    // Brands
+    axios.get(`${BASE_URL}/api/brands/active-brands`, { headers: { Authorization: `Bearer ${token}` } })
+      .then(res => setBrandOptions(res.data.brands.map(b => ({ value: b._id, label: b.brandName }))))
+      .catch(() => setBrandOptions([]));
+    // Categories
+    axios.get(`${BASE_URL}/api/category/categories`, { headers: { Authorization: `Bearer ${token}` } })
+      .then(res => setCategoryOptions(res.data.map(c => ({ value: c._id, label: c.categoryName }))))
+      .catch(() => setCategoryOptions([]));
+    // HSN
+    axios.get(`${BASE_URL}/api/hsn/all`, { headers: { Authorization: `Bearer ${token}` } })
+      .then(res => setHsnOptions(res.data.map(h => ({ value: h._id, label: h.code || h.hsnCode || h.name }))))
+      .catch(() => setHsnOptions([]));
   }, []);
+
+  // Fetch subcategories when category changes
+  useEffect(() => {
+    if (!selectedCategory) { setSubcategoryOptions([]); setSelectedSubcategory(null); return; }
+    const token = localStorage.getItem("token");
+    axios.get(`${BASE_URL}/api/subcategory/by-category/${selectedCategory.value}`, { headers: { Authorization: `Bearer ${token}` } })
+      .then(res => setSubcategoryOptions(res.data.map(s => ({ value: s._id, label: s.subCategoryName }))))
+      .catch(() => setSubcategoryOptions([]));
+  }, [selectedCategory]);
+
+  // Fetch products with filters and pagination
+  const fetchProducts = React.useCallback(async () => {
+    const token = localStorage.getItem("token");
+    const params = {
+      page: currentPage,
+      limit: itemsPerPage,
+    };
+    if (selectedBrand) params.brand = selectedBrand.value;
+    if (selectedCategory) params.category = selectedCategory.value;
+    if (selectedSubcategory) params.subcategory = selectedSubcategory.value;
+    if (selectedHsn) params.hsn = selectedHsn.value;
+    if (search) params.search = search;
+    try {
+      const res = await axios.get(`${BASE_URL}/api/products`, {
+        headers: { Authorization: `Bearer ${token}` },
+        params,
+      });
+      setProducts(res.data.products);
+      setTotal(res.data.total);
+      // Initialize all to "general"
+      const initialTabs = res.data.products.reduce((acc, product) => {
+        acc[product._id] = "general";
+        return acc;
+      }, {});
+      setActiveTabs(initialTabs);
+    } catch (err) {
+      setProducts([]);
+      setTotal(0);
+      console.error("Failed to fetch products", err);
+    }
+  }, [selectedBrand, selectedCategory, selectedSubcategory, selectedHsn, search, currentPage, itemsPerPage]);
+
+  useEffect(() => {
+    fetchProducts();
+  }, [fetchProducts]);
 
   const handleTabClick = (productId, tab) => {
     setActiveTabs((prev) => ({ ...prev, [productId]: tab }));
@@ -536,11 +208,11 @@ const Product = () => {
     };
   }, []);
 
-  const totalItems = products.length;
-  const totalPages = Math.ceil(totalItems / itemsPerPage);
-  const startIndex = (currentPage - 1) * itemsPerPage;
-  const endIndex = startIndex + itemsPerPage;
-  const paginatedData = products.slice(startIndex, endIndex);
+  // const totalItems = products.length;
+  // const totalPages = Math.ceil(totalItems / itemsPerPage);
+  // const startIndex = (currentPage - 1) * itemsPerPage;
+  // const endIndex = startIndex + itemsPerPage;
+  // const paginatedData = products.slice(startIndex, endIndex);
 
   //delete product--------------------------------------------------------------------------------------------------------------------------------------------------------
 
@@ -698,99 +370,133 @@ const Product = () => {
 
 
   return (
-   
-      <div className="page-wrapper">
-  <div className="content">
-    <div className="page-header">
-      <div className="add-item d-flex">
-        <div className="page-title">
-          <h4 className="fw-bold">Product List</h4>
-          <h6>Manage your products</h6>
+    <div className="page-wrapper">
+      <div className="content">
+        <div className="page-header">
+          <div className="add-item d-flex">
+            <div className="page-title">
+              <h4 className="fw-bold">Product List</h4>
+              <h6>Manage your products</h6>
+            </div>
+          </div>
+          <ul className="table-top-head">
+            <li>
+              <a data-bs-toggle="tooltip" data-bs-placement="top" title="Pdf" onClick={handlePdf}><FaFilePdf style={{ color: "red" }} /></a>
+            </li>
+            <li>
+              <a data-bs-toggle="tooltip" data-bs-placement="top" title="Excel" onClick={handleExcel}><FaFileExcel style={{ color: "orange" }} /></a>
+            </li>
+            <li>
+              <a
+                data-bs-toggle="tooltip"
+                data-bs-placement="top"
+                title="Refresh"
+                // onClick={() => {
+                //   fetchProducts();
+                //   toast.success("Product list refreshed successfully!");
+                // }}
+              >
+                <TbRefresh className="ti ti-refresh" />
+              </a>
+            </li>
+            {/* <li>
+              <a data-bs-toggle="tooltip" data-bs-placement="top" title="Collapse" id="collapse-header"><i className="ti ti-chevron-up" /></a>
+            </li> */}
+          </ul>
+          <div className="page-btn">
+            <Link to="/add-product">
+              <a className="btn btn-primary"><i className="ti ti-circle-plus me-1" />Add Product</a>
+            </Link>
+          </div>
+          <div className="page-btn import">
+            <a href="#" className="btn btn-secondary color" data-bs-toggle="modal" data-bs-target="#view-notes"><i data-feather="download" className="me-1" />Import Product</a>
+          </div>
         </div>
-      </div>
-      <ul className="table-top-head">
-        <li>
-          <a data-bs-toggle="tooltip" data-bs-placement="top" title="Pdf" onClick={handlePdf}><FaFilePdf style={{ color: "red" }} /></a>
-        </li>
-        <li>
-          <a data-bs-toggle="tooltip" data-bs-placement="top" title="Excel" onClick={handleExcel}><FaFileExcel style={{ color: "orange" }} /></a>
-        </li>
-        <li>
-          <a data-bs-toggle="tooltip" data-bs-placement="top" title="Refresh"><i className="ti ti-refresh" /></a>
-        </li>
-        <li>
-          <a data-bs-toggle="tooltip" data-bs-placement="top" title="Collapse" id="collapse-header"><i className="ti ti-chevron-up" /></a>
-        </li>
-      </ul>
-      <div className="page-btn">
-           <Link to="/add-product">
-            <a  className="btn btn-primary"><i className="ti ti-circle-plus me-1" />Add Product</a>
-           </Link>
-      </div>	
-      <div className="page-btn import">
-        <a href="#" className="btn btn-secondary color" data-bs-toggle="modal" data-bs-target="#view-notes"><i data-feather="download" className="me-1" />Import Product</a>
-      </div>
-    </div>
+        {/* Filter UI */}
+        {/* <div className="row mb-3">
+          <div className="col-md-2">
+            <Select options={brandOptions} value={selectedBrand} onChange={setSelectedBrand} placeholder="Brand" isClearable />
+          </div>
+          <div className="col-md-2">
+            <Select options={categoryOptions} value={selectedCategory} onChange={setSelectedCategory} placeholder="Category" isClearable />
+          </div>
+          <div className="col-md-2">
+            <Select options={subcategoryOptions} value={selectedSubcategory} onChange={setSelectedSubcategory} placeholder="Subcategory" isClearable />
+          </div>
+          <div className="col-md-2">
+            <Select options={hsnOptions} value={selectedHsn} onChange={setSelectedHsn} placeholder="HSN" isClearable />
+          </div>
+          <div className="col-md-2">
+            <input type="text" className="form-control" placeholder="Search by name..." value={search} onChange={e => setSearch(e.target.value)} />
+          </div>
+        </div> */}
+        {/* Pagination Controls */}
+        {/* <div className="d-flex justify-content-between align-items-center mb-2">
+          <div>
+            <span>Page {currentPage} of {Math.ceil(total / itemsPerPage) || 1}</span>
+            <button className="btn btn-sm btn-outline-secondary ms-2" disabled={currentPage === 1} onClick={() => setCurrentPage(p => Math.max(1, p - 1))}>Prev</button>
+            <button className="btn btn-sm btn-outline-secondary ms-2" disabled={currentPage >= Math.ceil(total / itemsPerPage)} onClick={() => setCurrentPage(p => p + 1)}>Next</button>
+          </div>
+          <div>
+            <select value={itemsPerPage} onChange={e => { setItemsPerPage(Number(e.target.value)); setCurrentPage(1); }}>
+              {[10, 20, 50, 100].map(n => <option key={n} value={n}>{n} per page</option>)}
+            </select>
+          </div>
+        </div> */}
     {/* /product list */}
     <div className="card">
-      <div className="card-header d-flex align-items-center justify-content-between flex-wrap row-gap-3">
-        <div className="search-set">
-          <div className="search-input">
-            <span className="btn-searchset"><i className="ti ti-search fs-14 feather-search" /></span>
-          </div>
+
+          <div className="card-header">
+  <div className="row align-items-center justify-content-between">
+    
+    <div className="col-md-3">
+      <input
+        type="text"
+        className="form-control"
+        placeholder="Search by product name..."
+        value={search}
+        onChange={(e) => setSearch(e.target.value)}
+      />
+    </div>
+
+    {/* Right Side: Brand and Category */}
+    <div className="col-md-6 ms-auto">
+      <div className="row justify-content-end">
+        <div className="col-md-4">
+          <Select
+            options={brandOptions}
+            value={selectedBrand}
+            onChange={setSelectedBrand}
+            placeholder="Brand"
+            isClearable
+          />
         </div>
-        <div className="d-flex table-dropdown my-xl-auto right-content align-items-center flex-wrap row-gap-3">
-          <div className="dropdown me-2">
-            <a href="" className="dropdown-toggle btn btn-white btn-md d-inline-flex align-items-center" data-bs-toggle="dropdown">
-              Category
-            </a>
-            <ul className="dropdown-menu  dropdown-menu-end p-3">
-              <li>
-                <a href="" className="dropdown-item rounded-1">Computers</a>
-              </li>
-              <li>
-                <a href="" className="dropdown-item rounded-1">Electronics</a>
-              </li>
-              <li>
-                <a href="" className="dropdown-item rounded-1">Shoe</a>
-              </li>
-              <li>
-                <a href="" className="dropdown-item rounded-1">Electronics</a>
-              </li>
-            </ul>
-          </div>
-          <div className="dropdown">
-            <a href="" className="dropdown-toggle btn btn-white btn-md d-inline-flex align-items-center" data-bs-toggle="dropdown">
-              Brand
-            </a>
-            <ul className="dropdown-menu  dropdown-menu-end p-3">
-              <li>
-                <a href="" className="dropdown-item rounded-1">Lenovo</a>
-              </li>
-              <li>
-                <a href="" className="dropdown-item rounded-1">Beats</a>
-              </li>
-              <li>
-                <a href="" className="dropdown-item rounded-1">Nike</a>
-              </li>
-              <li>
-                <a href="" className="dropdown-item rounded-1">Apple</a>
-              </li>
-            </ul>
-          </div>
+        <div className="col-md-4">
+          <Select
+            options={categoryOptions}
+            value={selectedCategory}
+            onChange={setSelectedCategory}
+            placeholder="Category"
+            isClearable
+          />
         </div>
       </div>
+    </div>
+
+  </div>
+</div>
+
       <div className="card-body p-0">
         <div className="table-responsive">
           <table className="table datatable">
             <thead className="thead-light">
               <tr>
-                <th className="no-sort">
+                {/* <th className="no-sort">
                   <label className="checkboxs">
                     <input type="checkbox" id="select-all" />
                     <span className="checkmarks" />
                   </label>
-                </th>
+                </th> */}
                 <th>SKU </th>
                 <th>Product Name</th>
                 <th>Category</th>
@@ -804,7 +510,7 @@ const Product = () => {
             </thead>
             <tbody>
 
-               {paginatedData.length === 0 ? (
+               {products.length === 0 ? (
                     <tr>
                       <td
                         colSpan="6"
@@ -814,14 +520,14 @@ const Product = () => {
                       </td>
                     </tr>
                   ) : (
-                    paginatedData.map((product) => (
+                    products.map((product) => (
                        <tr>
-                <td>
+                {/* <td>
                   <label className="checkboxs">
                     <input type="checkbox" />
                     <span className="checkmarks" />
                   </label>
-                </td>
+                </td> */}
                 <td>{product.sku} </td>
                 <td  onClick={() => handlePopupOpen(product)}>
                   <div className="d-flex align-items-center">
@@ -872,6 +578,44 @@ const Product = () => {
           </table>
         </div>
       </div>
+        {/* Pagination */}
+          <div
+            className="d-flex justify-content-end gap-3"
+            style={{ padding: "10px 20px" }}
+          >
+
+            <select className="form-select w-auto" value={itemsPerPage} onChange={e => { setItemsPerPage(Number(e.target.value)); setCurrentPage(1); }}>
+              {[10, 20, 50, 100].map(n => <option key={n} value={n}>{n} per page</option>)}
+            </select>
+
+            <span
+              style={{
+                backgroundColor: "white",
+                boxShadow: "rgb(0 0 0 / 4%) 0px 3px 8px",
+                padding: "7px",
+                borderRadius: "5px",
+                border: "1px solid #e4e0e0ff",
+                color: "gray",
+              }}
+            >
+              <span>Page {currentPage} of {Math.ceil(total / itemsPerPage) || 1}</span>
+              {" "}
+              <button
+                style={{
+                  border: "none",
+                  color: "grey",
+                  backgroundColor: "white",
+                }}
+                disabled={currentPage === 1} onClick={() => setCurrentPage(p => Math.max(1, p - 1))}>
+                <GrFormPrevious />
+              </button>{" "}
+              <button
+                style={{ border: "none", backgroundColor: "white" }}
+                disabled={currentPage >= Math.ceil(total / itemsPerPage)} onClick={() => setCurrentPage(p => p + 1)}>
+                <MdNavigateNext />
+              </button>
+            </span>
+          </div>
     </div>
     {/* /product list */}
   </div>
@@ -2041,10 +1785,10 @@ const Product = () => {
 
                         <div className="" style={{ border: '1px solid #F5F6FA', borderRadius: '6px', marginTop: '15px' }}>
                           {Object.entries(selectedProduct.variants).map(
-                            ([variant, qty], index) => (
+                            ([variant, value], index) => (
                               <div key={variant} className="" style={{ padding: '10px 15px', display: 'flex', backgroundColor: index % 2 === 0 ? 'white' : '#F5F6FA' }}>
                                 <span style={{ width: '100px' }}>{variant}</span>
-                                <span style={{ color: 'black' }}>: {qty}</span>
+                                <span style={{ color: 'black' }}>: {value}</span>
                               </div>
                             )
                           )}

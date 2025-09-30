@@ -1167,7 +1167,8 @@ const EditCustomerModal = ({ customer, onClose, onSuccess }) => {
                           )}
                         </div>
                       </div>
-                      <div className="col-lg-4 col-md-6">
+                      <div className="col-lg-4 col-md-6" style={{display:'flex', gap:'5px'}}>
+                        <label className="">Status</label>
                         <div className="form-check form-switch mb-3">
                           <input
                             className="form-check-input"
@@ -1175,8 +1176,7 @@ const EditCustomerModal = ({ customer, onClose, onSuccess }) => {
                             checked={form.status}
                             onChange={handleStatusChange}
                           />
-                          <label className="form-check-label">Status</label>
-                        </div>
+                        </div> 
                       </div>
                     </div>
                   </div>

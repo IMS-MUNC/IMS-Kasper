@@ -321,7 +321,7 @@ function Navbar() {
           </li> */}
 
           {/* Add New Dropdown */}
-          {/* <li className="nav-item dropdown link-nav">
+          <li className="nav-item dropdown link-nav">
             <button className="btn btn-primary btn-md d-inline-flex align-items-center" data-bs-toggle="dropdown">
               <TbCirclePlus className="me-1" />
               {t("addNew")}
@@ -342,7 +342,7 @@ function Navbar() {
                 </div>
               </div>
             </div>
-          </li> */}
+          </li>
 
           {/* POS Button */}
           <li className="nav-item pos-nav">

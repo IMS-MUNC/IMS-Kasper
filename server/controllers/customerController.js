@@ -84,6 +84,16 @@ exports.createCustomer = async (req, res) => {
       },
     };
 
+    const emailExists = await Customer.findOne({ email: data.email });
+    if (emailExists) {
+      return res.status(400).json({ error: 'Email already exists' });
+    }
+
+    const phoneExists = await Customer.findOne({ phone: data.phone });
+    if (phoneExists) {
+      return res.status(400).json({ error: 'Phone number already exists' });
+    }
+    
     const customer = new Customer(data);
     await customer.save();
 
