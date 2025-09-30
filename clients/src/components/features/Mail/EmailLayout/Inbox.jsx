@@ -262,7 +262,7 @@ import { useInbox } from "../../../../components/features/Mail/SideBar/InboxCont
 
 const Inbox = () => {
   const [emails, setEmails] = useState([]);
-    const { setEmails: updateEmailList, fetchInboxCount, setInboxCount  } = useInbox();
+  const { setEmails: updateEmailList, fetchInboxCount, setInboxCount } = useInbox();
 
   const fetchInboxEmails = async () => {
     try {
@@ -275,10 +275,10 @@ const Inbox = () => {
 
       const formatted = res.data.data.map((email) => {
         const senderName = email.from?.firstName
-            ? `${email.from.firstName} ${email.from.lastName || ''}`.trim()
-            : "Unknown";
-          const profileImage = email.from?.profileImage?.url || email.from?.profileImage || null;
-          const initials = senderName.split(" ").map((w) => w[0]).join("").toUpperCase().slice(0, 2);
+          ? `${email.from.firstName} ${email.from.lastName || ''}`.trim()
+          : "Unknown";
+        const profileImage = email.from?.profileImage?.url || email.from?.profileImage || null;
+        const initials = senderName.split(" ").map((w) => w[0]).join("").toUpperCase().slice(0, 2);
 
         return {
           ...email,
@@ -293,13 +293,13 @@ const Inbox = () => {
           time:
             email.createdAt && !isNaN(new Date(email.createdAt))
               ? new Intl.DateTimeFormat("en-GB", {
-                  day: "2-digit",
-                  month: "short",
-                  year: "numeric",
-                  hour: "2-digit",
-                  minute: "2-digit",
-                  hour12: true,
-                }).format(new Date(email.createdAt))
+                day: "2-digit",
+                month: "short",
+                year: "numeric",
+                hour: "2-digit",
+                minute: "2-digit",
+                hour12: true,
+              }).format(new Date(email.createdAt))
               : "Invalid Date",
           status: { dotColor: "red" },
           folders: {
@@ -315,79 +315,124 @@ const Inbox = () => {
       const inboxOnly = formatted.filter((email) => email.type === "inbox");
       setEmails(inboxOnly);
       const unreadCount = inboxOnly.filter((e) => !e.isRead).length;
-setInboxCount(unreadCount);
+      setInboxCount(unreadCount);
     } catch (error) {
       console.error("Failed to fetch inbox emails", error);
     }
   };
 
-useEffect(() => {
-  fetchInboxEmails();
-}, []);
+  useEffect(() => {
+    fetchInboxEmails();
+  }, []);
 
 
 
+
+  // const handleToggleStar = async (id, currentStarred) => {
+  //   setEmails((prevEmails) =>
+  //     prevEmails.map((email) =>
+  //       email._id === id
+  //         ? { ...email, tags: { ...email.tags, starred: !currentStarred } }
+  //         : email
+  //     )
+  //   );
+
+  //   try {
+  //     const token = localStorage.getItem("token");
+  //     await axios.put(`${BASE_URL}/api/email/mail/star/${id}`,
+  //       { starred: !currentStarred },
+  //       {
+  //         headers: {
+  //           Authorization: `Bearer ${token}`,
+  //         },
+  //       });
+
+  //     setEmails((prevEmails) =>
+  //       prevEmails.map((email) =>
+  //         email._id === id
+  //           ? { ...email, tags: { ...email.tags, starred: !currentStarred } }
+  //           : email
+  //       )
+  //     );
+  //   } catch (error) {
+  //     console.error("Failed to update starred status", error);
+  //   }
+  // setEmails((prevEmails) =>
+  //   prevEmails.map((email) =>
+  //     email._id === id
+  //       ? { ...email, tags: { ...email.tags, starred: currentStarred } } // revert change
+  //       : email
+  //   )
+  // );
+  // };
 
   const handleToggleStar = async (id, currentStarred) => {
-    try {
-      const token = localStorage.getItem("token");
-      await axios.put(`${BASE_URL}/api/email/mail/star/${id}`,
-        { starred: !currentStarred },
-        {
-        headers: {
-            Authorization: `Bearer ${token}`,
-          }, 
-      });
+  // 1️⃣ Optimistic update
+  setEmails((prevEmails) =>
+    prevEmails.map((email) =>
+      email._id === id
+        ? { ...email, tags: { ...email.tags, starred: !currentStarred } }
+        : email
+    )
+  );
 
-      setEmails((prevEmails) =>
-        prevEmails.map((email) =>
-          email._id === id
-            ? { ...email, tags: { ...email.tags, starred: !currentStarred } }
-            : email
-        )
-      );
-    } catch (error) {
-      console.error("Failed to update starred status", error);
-    }
-  };
-
- 
-const markAsRead = async (emailId) => {
   try {
     const token = localStorage.getItem("token");
-        console.log("🔹 readInboxEmails called for emailId:", emailId, "by user:", userEmail);
-    console.log("Token present:", !!token);
-
-    const res = await axios.put(
-      `${BASE_URL}/api/email/mail/read/${emailId}`,
-      {},
+    await axios.put(`${BASE_URL}/api/email/mail/star/${id}`, 
+      { starred: !currentStarred },
       { headers: { Authorization: `Bearer ${token}` } }
     );
-
-    console.log("Response from backend:", res.data);
-
-    if (res.data.success) {
-        console.log("Backend confirmed email marked as read");
-       fetchInboxCount();
-      // update local state
-      updateEmailList((prevEmails) =>
-        prevEmails.map((email) =>
-          email._id === emailId && !email.isRead
-            ? { ...email, status: { ...email.status, dotColor: "transparent" }, isRead: true }
-            : email
-        )
-      );
-       console.log("📄 Updated local email list");
-
-       setInboxCount((prev) => Math.max(prev - 1, 0));
-
-      // 3️⃣ Optional: fetch fresh count from backend to be sure
-      // fetchInboxCount();
-    }
+    // ✅ Success: do nothing else, state already updated
   } catch (error) {
-    console.error("Failed to mark email as read", error);
+    console.error("Failed to update starred status", error);
+    // Optional: revert if API fails
+    setEmails((prevEmails) =>
+      prevEmails.map((email) =>
+        email._id === id
+          ? { ...email, tags: { ...email.tags, starred: currentStarred } }
+          : email
+      )
+    );
   }
 };
+
+
+  const markAsRead = async (emailId) => {
+    try {
+      const token = localStorage.getItem("token");
+      console.log("🔹 readInboxEmails called for emailId:", emailId, "by user:", userEmail);
+      console.log("Token present:", !!token);
+
+      const res = await axios.put(
+        `${BASE_URL}/api/email/mail/read/${emailId}`,
+        {},
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+
+      console.log("Response from backend:", res.data);
+
+      if (res.data.success) {
+        console.log("Backend confirmed email marked as read");
+        fetchInboxCount();
+        // update local state
+        updateEmailList((prevEmails) =>
+          prevEmails.map((email) =>
+            email._id === emailId && !email.isRead
+              ? { ...email, status: { ...email.status, dotColor: "transparent" }, isRead: true }
+              : email
+          )
+        );
+        console.log("📄 Updated local email list");
+
+        setInboxCount((prev) => Math.max(prev - 1, 0));
+
+        // 3️⃣ Optional: fetch fresh count from backend to be sure
+        // fetchInboxCount();
+      }
+    } catch (error) {
+      console.error("Failed to mark email as read", error);
+    }
+  };
 
   return (
     <EmailMessages

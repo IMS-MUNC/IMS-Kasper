@@ -42,44 +42,29 @@ import { GiExpense } from "react-icons/gi";
 import { IoLogoWebComponent } from "react-icons/io5";
 import { useAuth } from "../../auth/AuthContext";
 
-export const getMenuData = () => {
+export const getMenuData = (user, t) => {
+  if(!user) return [];
 
-  // old code 
+
 // const { t } = useTranslation();
-//   const { user } = useAuth();
-
-//   // 🛑 If no user (logged out or not yet logged in) → return empty sidebar
-//   if (!user) return [];
-
-//   const id = user?._id;
-//   const permissions = user?.role?.modulePermissions || {};
-
-//   const canAccess = (module, action = "read") => {
-//     if (!permissions || !permissions[module]) return true;
-//     return permissions[module]?.all || permissions[module]?.[action] || true;
-//   };
-
-
-const { t } = useTranslation();
-const { user } = useAuth();
+// const { user } = useAuth();
 
 // 🛑 If no user (logged out or not yet logged in) → return empty sidebar
-if (!user) return [];
+// if (!user) return [];
 
 const id = user?._id;
 const permissions = user?.role?.modulePermissions || {};
 
 const canAccess = (module, action = "read") => {
-  // ✅ SuperAdmin bypass: full access to everything
-  if (user?.role?.name === "SuperAdmin") return true;
+  // ✅ SuperAdmin bypass: full access (case-insensitive)
+  if (user?.role?.name?.toLowerCase() === "superadmin") return true;
 
   // If no permissions or module not defined → deny
   if (!permissions || !permissions[module]) return false;
 
   // ✅ Allow only if all:true or specific action:true
-  return permissions[module]?.all === true || permissions[module]?.[action] === true;
+   return permissions[module]?.all === true || permissions[module]?.[action] === true;
 };
-
 
   const menu = [
     // MAIN
@@ -108,7 +93,7 @@ const canAccess = (module, action = "read") => {
       icon: <TbBrandAppleArcade className="icons" />,
       subItems: [
         canAccess("Chat", "read") && { label: t("chat"), path: "/chat" },
-        canAccess("Mail", "read") && { label: t("mail"), path: "/mail" },
+        canAccess("Mail", "read") && { label: t("mail"), path: "/mail/inbox" },
       ].filter(Boolean),
     },
   ].filter(

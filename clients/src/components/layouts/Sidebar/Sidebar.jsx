@@ -1,116 +1,4 @@
-// import React from "react";
-// import { Link } from "react-router-dom";
-// import "../../../styles/sidebar.css";
-// import Logo from "../../../assets/img/logo/munclogotm.png";
-// import IconLogo from "../../../assets/img/logo/MuncSmall.svg";
-// import { AiOutlineMenuFold, AiOutlineMenuUnfold } from "react-icons/ai";
-// import { getMenuData } from "./MenuData.jsx";
-// import { useSidebar } from "../../../Context/sidetoggle/SidebarContext";
-
-// const Sidebar = () => {
-//   const { openMenus, toggleMenu, mobileOpen, handleMobileToggle, handleLinkClick } = useSidebar();
-
-//   const menuData = getMenuData();
-//   return (
-//     <>
-//       {mobileOpen && <div className="sidebar-overlay" onClick={handleMobileToggle}></div>}
-
-//       <div className={`sidebar ${mobileOpen ? "open" : "collapsed "}`}>
-//         <div className="sidebar-logo">
-//           <Link to="/home"><img src={IconLogo} className="compact-logo" alt="Logo" /></Link>
-//           <Link to="/home"><img src={Logo} className="full-logo" alt="Full Logo" /></Link>
-//           <button className="mobile-toggle-btn" onClick={handleMobileToggle}>
-//             {mobileOpen ? <AiOutlineMenuFold /> : <AiOutlineMenuUnfold />}
-//           </button>
-//         </div>
-
-//         <div className="sidebar-inner">
-//           <div className="sidebar-menu">
-//             <ul>
-//               {menuData.map((section, idx) => (
-//                 <li key={idx} className={`submenu-open ${openMenus[section.key] ? "active" : ""}`}>
-//                   {section.section && <h6 className="submenu-hdr">{section.section}</h6>}
-//                   <ul>
-//                     {section.items.map((item, i) => (
-//                       item.subItems ? (
-//                         <li key={i} className={`submenu ${openMenus[item.key] ? "open" : ""}`}>
-//                           <div
-//                             className={`subdrop ${openMenus[item.key] ? "active" : ""}`}
-//                             onClick={() => toggleMenu(item.key, true)}
-//                           >
-//                             <span className="menu-item">
-//                               {item.icon }
-//                               <span>{item.title}</span>
-//                             </span>
-//                             <span className={`menu-arrow ${openMenus[item.key] ? "rotated" : ""}`} />
-//                           </div>
-//                           {openMenus[item.key] && (
-//                             <ul>
-//                               {item.subItems.map((sub, subIdx) => (
-//                                 sub.nested ? (
-//                                   <li key={subIdx} className={`submenu submenu-two ${openMenus[sub.nestedKey] ? "open" : ""}`}>
-//                                     <div onClick={() => toggleMenu(sub.nestedKey)}>
-//                                       <span>{sub.label}</span>
-//                                       <span className={`menu-arrow inside-submenu ${openMenus[sub.nestedKey] ? "rotated" : ""}`} />
-//                                     </div>
-//                                     {openMenus[sub.nestedKey] && (
-//                                       <ul>
-//                                         {sub.nested.map((n, nIdx) => (
-//                                           <li key={nIdx}>
-//                                             <Link to={n.path} onClick={handleLinkClick}>
-//                                               {n.label}
-//                                             </Link>
-//                                           </li>
-//                                         ))}
-//                                       </ul>
-//                                     )}
-//                                   </li>
-//                                 ) : (
-//                                   <li key={subIdx}>
-//                                     <Link to={sub.path} onClick={handleLinkClick}>{sub.label}</Link>
-//                                   </li>
-//                                 )
-//                               ))}
-//                             </ul>
-//                           )}
-//                         </li>
-//                       ) : (
-//                         <li key={i}>
-//                           <Link
-//                             to={item.path}
-//                             onClick={() => {
-//                               handleLinkClick();
-//                               toggleMenu(section.key, true);
-//                             }}
-//                           >
-//                             <span className="menu-item">
-//                               {item.icon}
-//                               <span>{item.label}</span>
-//                             </span>
-//                           </Link>
-//                         </li>
-//                       )
-//                     ))}
-//                   </ul>
-//                 </li>
-//               ))}
-//             </ul>
-//           </div>
-//         </div>
-//         <div class="sidebar-bottom">
-//           <Link to="/"> <img src={IconLogo} class="compact-logo" alt="Compact Footer Logo" /></Link>
-//           <Link to="/"> <img src={Logo} class="full-logo" alt="Full Footer Logo" /></Link>
-
-//         </div>
-//       </div>
-//     </>
-//   );
-// };
-
-// export default Sidebar;
-
-// //theme final code 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { setThemeColor, restoreThemeColor } from '../../../utils/setThemeColor';
 import PerfectScrollbar from 'react-perfect-scrollbar';
 import 'react-perfect-scrollbar/dist/css/styles.css';
@@ -126,6 +14,8 @@ import { TbBell, TbCirclePlus, TbCommand, TbDeviceLaptop, TbDotsVertical, TbFile
 import { AiOutlineMenuFold, AiOutlineDown, AiOutlineLeft, AiOutlineRight, AiOutlineUp } from 'react-icons/ai';
 import { NavLink, useLocation } from "react-router-dom";
 import { IoIosArrowForward } from 'react-icons/io';
+import { useAuth } from '../../auth/AuthContext.jsx';
+import { useTranslation } from "react-i18next";
 
 
 // Main Sidebar Menu Data
@@ -226,12 +116,14 @@ const twoColSidebarTabs = [
 
 
 const Sidebar = () => {
+	const { user, setUser} = useAuth();
+	 const { t } = useTranslation();
 //   const [sidebarOpen, setSidebarOpen] = useState(false); // For mobile sidebar
 //   const [miniSidebar, setMiniSidebar] = useState(false); // For mini sidebar
 //   const [hovered, setHovered] = useState(false); // For mini sidebar hover
   const [themeColor, setThemeColor] = useState(localStorage.getItem('color') || 'info');
   const sidebarRef = useRef(null);
-  const menuData = getMenuData();
+  const menuData = useMemo(() => getMenuData(user, t), [user, t]);
 	// const { openMenus, toggleMenu, mobileOpen, handleMobileToggle, handleLinkClick } = useSidebar();
 	const {
   openMenus,
@@ -243,6 +135,8 @@ const Sidebar = () => {
   handleMobileToggle,
   handleLinkClick,
 } = useSidebar();
+  const [companyImages, setCompanyImages] = useState(null)
+  const [isDarkMode, setIsDarkMode] = useState(false)
 
 	
 	const location = useLocation();
@@ -338,7 +232,7 @@ const isPathActive = (path) => {
 	// Optionally, sticky sidebar logic can be added here with useEffect
 
 	// user profile
-	const [user, setUser] = useState(null);
+	// const [user, setUser] = useState(null);
 	const userObj = JSON.parse(localStorage.getItem("user"));
 	const userId = userObj?.id; // or userObj?._id based on your schema
 	const token = localStorage.getItem("token");
@@ -365,6 +259,24 @@ const isPathActive = (path) => {
 	fetchUser();
   }, [userId, token]);
 
+  // fetch company details
+    useEffect(() => {
+      const fetchCompanyDetails = async () => {
+        try {
+          const res = await axios.get(`${BASE_URL}/api/companyprofile/get`)
+          if (res.status === 200) {
+            setCompanyImages(res.data.data)
+            console.log("res.data", res.data.data)
+          }
+        } catch (error) {
+          toast.error("Unable to find company details", {
+            position: 'top-center'
+          })
+        }
+      }
+      fetchCompanyDetails();
+    }, []);
+
 	return (
 		<>
 			{/* Sidebar Overlay for mobile */}
@@ -384,15 +296,17 @@ const isPathActive = (path) => {
 			>
 				{/* Logo and Profile */}
 				<div className="sidebar-logo active">
-					<a href="/home" className="logo logo-normal">
-						<img src={Logo} alt="Img" />
+					<a href="/dashboard" className="logo logo-normal" style={{ padding: '0 10px', height: '40px', width: 'auto', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+						{/* <img src={Logo} alt="Img" /> */}
+						 <img src={isDarkMode ? companyImages?.companyDarkLogo : companyImages?.companyLogo} className="compact-logo" alt="Logo" />
 					</a>
-					<a href="/home" className="logo logo-white">
-						<img src={Logo} alt="Img" />
+					<a href="/dashboard" className="logo logo-white" style={{ padding: '0 10px', height: '40px', width: 'auto', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+						{/* <img src={Logo} alt="Img" /> */}
+						<img  src={isDarkMode ? companyImages?.companyDarkLogo : companyImages?.companyLogo} className="full-logo" alt="Full Logo" />
 					</a>
-					<a href="/home" className="logo-small">
-						<img src={IconLogo} alt="Img" />
-					</a>
+					{/* <a href="/dashboard" className="logo-small" style={{ padding: '0 10px', height: '40px', width: '40px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+						 <img src={companyImages?.companyIcon} class="compact-logo" alt="Compact Footer Logo" />
+					</a> */}
 					<a
 						id="toggle_btn"
 						href="#"

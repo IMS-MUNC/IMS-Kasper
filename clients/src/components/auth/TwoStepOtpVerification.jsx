@@ -39,15 +39,15 @@ const OtpVerification = () => {
 
   const handleChange = (e, index) => {
     const value = e.target.value.replace(/\D/, ""); // allow only numbers
-    if (!value) return;
+
 
     const newOtp = [...otp];
-    newOtp[index] = value.substring(value.length - 1); // only last digit
+    newOtp[index] = value ? value.slice(-1) : ""; // take only last digit
     setOtp(newOtp);
 
-     if (value && index < 5) {
-    inputRefs.current[index + 1].focus();
-  }
+    if (value && index < 5) {
+      inputRefs.current[index + 1].focus();
+    }
   };
 
   const handleKeyDown = (e, index) => {
@@ -83,9 +83,13 @@ const OtpVerification = () => {
         navigate("/dashboard");
       } else {
         toast.error("Invalid OTP");
+        setOtp(new Array(6).fill(""));  //clear otp fields
+        inputRefs.current[0].focus();   //focus first input
       }
     } catch (error) {
       toast.error(error.response?.data?.message || "OTP verification failed");
+      setOtp(new Array(6).fill(""));  //clear otp fields
+      inputRefs.current[0].focus();   //focus first input
       console.error("OTP verification error:", error);
     }
   };
@@ -120,21 +124,21 @@ const OtpVerification = () => {
     );
   };
 
-const handleResendOtp = async () => {
-  setIsResending(true);
-  try {
-    const res = await axios.post(`${BASE_URL}/api/auth/resend-otp`, { email });
-    toast.success(res.data.message || "OTP resent successfully");
-    setOtp(new Array(6).fill(""));
-    inputRefs.current[0].focus();
-    setTimer(30); // reset timer
-  } catch (error) {
-    toast.error(error.response?.data?.message || "Failed to resend OTP");
-    console.error("Resend OTP error:", error);
-  } finally {
-    setIsResending(false);
-  }
-};
+  const handleResendOtp = async () => {
+    setIsResending(true);
+    try {
+      const res = await axios.post(`${BASE_URL}/api/auth/resend-otp`, { email });
+      toast.success(res.data.message || "OTP resent successfully");
+      setOtp(new Array(6).fill(""));
+      inputRefs.current[0].focus();
+      setTimer(30); // reset timer
+    } catch (error) {
+      toast.error(error.response?.data?.message || "Failed to resend OTP");
+      console.error("Resend OTP error:", error);
+    } finally {
+      setIsResending(false);
+    }
+  };
 
 
 

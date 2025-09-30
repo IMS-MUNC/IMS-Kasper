@@ -176,7 +176,7 @@ const Sidebar = () => {
               </span>
               <span>{deletedCount}</span>
             </NavLink>
-            <NavLink
+            {/* <NavLink
               className={({ isActive }) => (isActive ? "item active" : "item")}
               style={{ textDecoration: "none" }}
               to="/mail/spam"
@@ -206,7 +206,7 @@ const Sidebar = () => {
                     .length
                 }
               </span>
-            </NavLink>
+            </NavLink> */}
             <NavLink
               className={({ isActive }) =>
                 isActive ? "item active" : "item"

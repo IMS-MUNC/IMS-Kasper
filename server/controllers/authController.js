@@ -47,8 +47,16 @@ exports.loginUser = async (req, res) => {
 
     // Generate OTP
     if (user.twoFactorEnabled) {
+      const now = Date.now();
+      if (user.otpExpires && user.otpExpires > now && user.otpExpires - now > 4.5 * 60 * 1000) {
+        return res.status(429).json({
+          message: "OTP already sent. Please wait 30 seconds before requesting again.",
+          twoFactor: true,
+          email: user.email,
+        });
+      }
       const otp = Math.floor(100000 + Math.random() * 900000);
-      const expiry = Date.now() + 5 * 60 * 1000;
+      const expiry = now + 5 * 60 * 1000;
       user.otp = otp;
       user.otpExpires = expiry;
       await user.save();
@@ -160,7 +168,6 @@ exports.verifyOtpCheck = async (req, res) => {
     res.status(500).json({ message: "Server error during OTP verification" });
   }
 };
-
 
 // VERIFY OTP & RESET PASSWORD
 exports.verifyOtpAndReset = async (req, res) => {
