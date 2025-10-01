@@ -105,6 +105,7 @@ const AddSupplierModals = ({ onClose, onSuccess, editSupplier }) => {
   const [gstDetails, setGstDetails] = useState(null);
   const [gstLoading, setGstLoading] = useState(false);
   const [gstError, setGstError] = useState('');
+  const [validationErrors, setValidationErrors] = useState({});
   const token = localStorage.getItem("token");
 
   const businessTypeOptions = [
@@ -112,6 +113,38 @@ const AddSupplierModals = ({ onClose, onSuccess, editSupplier }) => {
     { value: 'Wholesaler', label: 'Wholesaler' },
     { value: 'Distributor', label: 'Distributor' }
   ];
+
+  // Regex patterns for validation
+  const regexPatterns = {
+    firstName: /^[a-zA-Z\s]{1,50}$/,
+    lastName: /^[a-zA-Z\s]{1,50}$/,
+    companyName: /^[a-zA-Z0-9\s&.-]{1,100}$/,
+    companyWebsite: /^(https?:\/\/)?([\da-z\.-]+)\.([a-z\.]{2,6})([\/\w \.-]*)*\/?$/,
+    gstin: /^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}Z[0-9A-Z]{1}$/,
+    email: /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
+    phone: /^[6-9]\d{9}$/,
+    postalCode: /^\d{6}$/,
+    
+    pincode: /^\d{6}$/,
+    bankName: /^[a-zA-Z0-9\s&.-]{1,100}$/,
+    branch: /^[a-zA-Z0-9\s&.-]{1,100}$/,
+    accountHolder: /^[a-zA-Z\s]{1,100}$/,
+    accountNumber: /^\d{9,18}$/,
+    ifsc: /^[A-Z]{4}0[A-Z0-9]{6}$/,
+  };
+
+  // Sanitization function
+  const sanitizeInput = (value) => {
+    if (typeof value !== 'string') return value;
+    return value.trim().replace(/<[^>]*>/g, '').substring(0, 500); // Trim, remove HTML tags, limit length
+  };
+
+  // Validation function
+  const validateField = (name, value) => {
+    if (!value) return true; // Empty is valid for optional fields
+    if (!regexPatterns[name]) return true; // No regex for this field
+    return regexPatterns[name].test(value);
+  };
 
   useEffect(() => {
     fetchCountries();
@@ -165,7 +198,15 @@ const AddSupplierModals = ({ onClose, onSuccess, editSupplier }) => {
   // Input handlers
   const handleInputChange = (e) => {
     const { name, value } = e.target;
-    setForm((prev) => ({ ...prev, [name]: value }));
+    const sanitizedValue = sanitizeInput(value);
+    setForm((prev) => ({ ...prev, [name]: sanitizedValue }));
+
+    // Validate and set errors
+    if (!validateField(name, sanitizedValue)) {
+      setValidationErrors((prev) => ({ ...prev, [name]: `Invalid ${name} format` }));
+    } else {
+      setValidationErrors((prev) => ({ ...prev, [name]: '' }));
+    }
   };
 
   const handleSelectChange = (section, name, option) => {
@@ -204,7 +245,15 @@ const AddSupplierModals = ({ onClose, onSuccess, editSupplier }) => {
 
   const handleBankChange = (e) => {
     const { name, value } = e.target;
-    setForm((prev) => ({ ...prev, bank: { ...prev.bank, [name]: value } }));
+    const sanitizedValue = sanitizeInput(value);
+    setForm((prev) => ({ ...prev, bank: { ...prev.bank, [name]: sanitizedValue } }));
+
+    // Validate and set errors
+    if (!validateField(name, sanitizedValue)) {
+      setValidationErrors((prev) => ({ ...prev, [name]: `Invalid ${name} format` }));
+    } else {
+      setValidationErrors((prev) => ({ ...prev, [name]: '' }));
+    }
   };
 
   // GSTIN verification
@@ -307,116 +356,107 @@ const AddSupplierModals = ({ onClose, onSuccess, editSupplier }) => {
   // Submit handler
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    // Validate all fields before submit
+    const errors = {};
+    const requiredFields = ['firstName', 'lastName', 'companyName', 'companyWebsite', 'gstin', 'email', 'phone'];
+
+    // Check required fields
+    requiredFields.forEach(field => {
+      if (!form[field] || form[field].trim() === '') {
+        errors[field] = `${field} is required`;
+      }
+    });
+
+    Object.entries(form).forEach(([key, value]) => {
+      if (typeof value === 'string') {
+        const sanitizedValue = sanitizeInput(value);
+        if (!validateField(key, sanitizedValue)) {
+          errors[key] = `Invalid ${key} format`;
+        }
+      } else if (typeof value === 'object' && value !== null) {
+        // For nested objects like billing, shipping, bank
+        Object.entries(value).forEach(([subKey, subValue]) => {
+          if (typeof subValue === 'string') {
+            const sanitizedSubValue = sanitizeInput(subValue);
+            if (!validateField(subKey, sanitizedSubValue)) {
+              errors[subKey] = `Invalid ${subKey} format`;
+            }
+          }
+        });
+      }
+    });
+
+    if (Object.keys(errors).length > 0) {
+      setValidationErrors(errors);
+      toast.error('Please fix validation errors before submitting.');
+      return;
+    }
+
     setLoading(true);
     try {
-      // const payload = {
-      //   ...form,
-      //   billing: {
-      //     ...form.billing,
-      //     country: form.billing.country?.value || '',
-      //     state: form.billing.state?.value || '',
-      //     city: form.billing.city?.value || '',
-      //   },
-      //   shipping: {
-      //     ...form.shipping,
-      //     country: form.shipping.country?.value || '',
-      //     state: form.shipping.state?.value || '',
-      //     city: form.shipping.city?.value || '',
-      //   }
-      // };
+      const payload = {
+        ...form,
+        billing: {
+          ...form.billing,
+          country: form.billing.country?.value || null,
+          state: form.billing.state?.value || null,
+          city: form.billing.city?.value || null,
+        },
+        shipping: {
+          ...form.shipping,
+          country: form.shipping.country?.value || null,
+          state: form.shipping.state?.value || null,
+          city: form.shipping.city?.value || null,
+        }
+      };
 
-      // if (selectedImages.length > 0 && selectedImages.some(img => img.file)) {
-      //   const formData = new FormData();
-      //   Object.entries(payload).forEach(([key, value]) => {
-      //     if (typeof value === 'object' && value !== null) {
-      //       formData.append(key, JSON.stringify(value));
-      //     } else {
-      //       formData.append(key, value);
-      //     }
-      //   });
-      //   selectedImages.forEach(img => {
-      //     if (img.file) formData.append('images', img.file);
-      //   });
-      //   if (editSupplier && editSupplier._id) {
-      //     await axios.put(`${BASE_URL}/api/suppliers/${editSupplier._id}`, formData, {
-      //       headers: { 'Content-Type': 'multipart/form-data' },
-      //     });
-      //   } else {
-      //     await axios.post(`${BASE_URL}/api/suppliers`, formData, {
-      //       headers: { 'Content-Type': 'multipart/form-data' },
-      //     });
-      //   }
-      // } else {
-      //   if (editSupplier && editSupplier._id) {
-      //     await axios.put(`${BASE_URL}/api/suppliers/${editSupplier._id}`, payload);
-      //   } else {
-      //     await axios.post(`${BASE_URL}/api/suppliers`, payload);
-      //   }
-      // }
+      if (selectedImages.length > 0 && selectedImages.some(img => img.file)) {
+        const formData = new FormData();
+        Object.entries(payload).forEach(([key, value]) => {
+          if (key === 'billing' || key === 'shipping') return; // skip these here
+          if (typeof value === 'object' && value !== null) {
+            formData.append(key, JSON.stringify(value));
+          } else {
+            formData.append(key, value);
+          }
+        });
+        // Append billing and shipping once
+        formData.append('billing', JSON.stringify(payload.billing));
+        formData.append('shipping', JSON.stringify(payload.shipping));
+        selectedImages.forEach(img => {
+          if (img.file) formData.append('images', img.file);
+        });
+        if (editSupplier && editSupplier._id) {
+          await axios.put(`${BASE_URL}/api/suppliers/${editSupplier._id}`, formData, {
+            headers: { 'Content-Type': 'multipart/form-data' ,
+                      Authorization: `Bearer ${token}`,
 
-      // ...inside handleSubmit...
-const payload = {
-  ...form,
-  billing: {
-    ...form.billing,
-    country: form.billing.country?.value || null,
-    state: form.billing.state?.value || null,
-    city: form.billing.city?.value || null,
-  },
-  shipping: {
-    ...form.shipping,
-    country: form.shipping.country?.value || null,
-    state: form.shipping.state?.value || null,
-    city: form.shipping.city?.value || null,
-  }
-};
+            },
+          });
+        } else {
+          await axios.post(`${BASE_URL}/api/suppliers`, formData, {
+            headers: { 'Content-Type': 'multipart/form-data',
+                      Authorization: `Bearer ${token}`,
 
-if (selectedImages.length > 0 && selectedImages.some(img => img.file)) {
-  const formData = new FormData();
-  Object.entries(payload).forEach(([key, value]) => {
-    if (key === 'billing' || key === 'shipping') return; // skip these here
-    if (typeof value === 'object' && value !== null) {
-      formData.append(key, JSON.stringify(value));
-    } else {
-      formData.append(key, value);
-    }
-  });
-  // Append billing and shipping once
-  formData.append('billing', JSON.stringify(payload.billing));
-  formData.append('shipping', JSON.stringify(payload.shipping));
-  selectedImages.forEach(img => {
-    if (img.file) formData.append('images', img.file);
-  });
-  if (editSupplier && editSupplier._id) {
-    await axios.put(`${BASE_URL}/api/suppliers/${editSupplier._id}`, formData, {
-      headers: { 'Content-Type': 'multipart/form-data' ,
-                Authorization: `Bearer ${token}`,
-
-      },
-    });
-  } else {
-    await axios.post(`${BASE_URL}/api/suppliers`, formData, {
-      headers: { 'Content-Type': 'multipart/form-data',
-                Authorization: `Bearer ${token}`,
-
-       },
-    });
-  }
-} else {
-  if (editSupplier && editSupplier._id) {
-    await axios.put(`${BASE_URL}/api/suppliers/${editSupplier._id}`, payload,{
-      headers: {
-      Authorization: `Bearer ${token}`,
-    },
-    });
-  } else {
-    await axios.post(`${BASE_URL}/api/suppliers`, payload,{
-      headers: {
-      Authorization: `Bearer ${token}`,
-    },
-    });
-  }
-}
+             },
+          });
+        }
+      } else {
+        if (editSupplier && editSupplier._id) {
+          await axios.put(`${BASE_URL}/api/suppliers/${editSupplier._id}`, payload,{
+            headers: {
+            Authorization: `Bearer ${token}`,
+          },
+          });
+        } else {
+          await axios.post(`${BASE_URL}/api/suppliers`, payload,{
+            headers: {
+            Authorization: `Bearer ${token}`,
+          },
+          });
+        }
+      }
       toast.success(editSupplier ? 'Supplier updated successfully!' : 'Supplier created successfully!');
       if (onSuccess) onSuccess();
       if (onClose) onClose();
@@ -538,23 +578,27 @@ if (selectedImages.length > 0 && selectedImages.some(img => img.file)) {
            <div className="row">
              <div className="col-md-6 mb-3">
                <label>First Name</label><span className="text-danger ms-1">*</span>
-               <input type="text" name="firstName" className="form-control" value={form.firstName}
+               <input type="text" name="firstName" className={`form-control ${validationErrors.firstName ? 'is-invalid' : ''}`} value={form.firstName}
                  onChange={handleInputChange} />
+               {validationErrors.firstName && <div className="invalid-feedback">{validationErrors.firstName}</div>}
              </div>
              <div className="col-md-6 mb-3">
                <label>Last Name</label> <span className="text-danger ms-1">*</span>
-               <input type="text" name="lastName" className="form-control" value={form.lastName}
+               <input type="text" name="lastName" className={`form-control ${validationErrors.lastName ? 'is-invalid' : ''}`} value={form.lastName}
                  onChange={handleInputChange} />
+               {validationErrors.lastName && <div className="invalid-feedback">{validationErrors.lastName}</div>}
              </div>
              <div className="col-md-6 mb-3">
                <label>Company Name</label>  <span className="text-danger ms-1">*</span>
-               <input type="text" name="companyName" className="form-control" value={form.companyName}
+               <input type="text" name="companyName" className={`form-control ${validationErrors.companyName ? 'is-invalid' : ''}`} value={form.companyName}
                  onChange={handleInputChange} />
+               {validationErrors.companyName && <div className="invalid-feedback">{validationErrors.companyName}</div>}
              </div>
              <div className="col-md-6 mb-3">
                <label>Company Website</label>  <span className="text-danger ms-1">*</span>
-               <input type="text" name="companyWebsite" className="form-control" value={form.companyWebsite}
+               <input type="text" name="companyWebsite" className={`form-control ${validationErrors.companyWebsite ? 'is-invalid' : ''}`} value={form.companyWebsite}
                  onChange={handleInputChange} />
+               {validationErrors.companyWebsite && <div className="invalid-feedback">{validationErrors.companyWebsite}</div>}
              </div>
 
              <div className="col-md-6 mb-3">
@@ -568,13 +612,14 @@ if (selectedImages.length > 0 && selectedImages.some(img => img.file)) {
              <div className="col-md-6 mb-3">
                <label>GSTIN</label>  <span className="text-danger ms-1">*</span>
                <div className="d-flex gap-2">
-                 <input type="text" name="gstin" className="form-control" value={form.gstin}
+                 <input type="text" name="gstin" className={`form-control ${validationErrors.gstin ? 'is-invalid' : ''}`} value={form.gstin}
                    onChange={handleInputChange} />
                  <button type="button" className="btn btn-outline-primary" onClick={handleVerifyGSTIN}
-                   disabled={!form.gstin || gstLoading}>
+                   disabled={!form.gstin || gstLoading || validationErrors.gstin}>
                    {gstLoading ? 'Verifying...' : 'Verify'}
                  </button>
                </div>
+               {validationErrors.gstin && <div className="invalid-feedback">{validationErrors.gstin}</div>}
                {gstError && <small className="text-danger">{gstError}</small>}
                {gstDetails?.valid && (
                <div className="alert alert-success mt-2">
@@ -587,13 +632,15 @@ if (selectedImages.length > 0 && selectedImages.some(img => img.file)) {
              </div>
              <div className="col-md-6 mb-3">
                <label>Email</label>  <span className="text-danger ms-1">*</span>
-               <input type="email" name="email" className="form-control" value={form.email}
+               <input type="email" name="email" className={`form-control ${validationErrors.email ? 'is-invalid' : ''}`} value={form.email}
                  onChange={handleInputChange} />
+               {validationErrors.email && <div className="invalid-feedback">{validationErrors.email}</div>}
              </div>
              <div className="col-md-6 mb-3">
                <label>Phone</label>  <span className="text-danger ms-1">*</span>
-               <input type="number" name="phone" className="form-control" value={form.phone}
+               <input type="text" name="phone" className={`form-control ${validationErrors.phone ? 'is-invalid' : ''}`} value={form.phone}
                  onChange={handleInputChange} />
+               {validationErrors.phone && <div className="invalid-feedback">{validationErrors.phone}</div>}
              </div>
              {/* Billing Address */}
              <div className="border-top my-2">
@@ -645,9 +692,17 @@ if (selectedImages.length > 0 && selectedImages.some(img => img.file)) {
                          </div>
                          <div className="col-md-6 mb-3">
                            <label className="form-label">Postal Code</label>
-                           <input type="text" className="form-control" name="postalCode" value={form.billing.postalCode}
-                             onChange={e=> setForm(prev => ({ ...prev, billing: { ...prev.billing, postalCode:
-                           e.target.value } }))} />
+                           <input type="text" className={`form-control ${validationErrors.postalCode ? 'is-invalid' : ''}`} name="postalCode" value={form.billing.postalCode}
+                             onChange={e=> {
+                               const sanitizedValue = sanitizeInput(e.target.value);
+                               setForm(prev => ({ ...prev, billing: { ...prev.billing, postalCode: sanitizedValue } }));
+                               if (!validateField('postalCode', sanitizedValue)) {
+                                 setValidationErrors((prev) => ({ ...prev, postalCode: `Invalid postalCode format` }));
+                               } else {
+                                 setValidationErrors((prev) => ({ ...prev, postalCode: '' }));
+                               }
+                             }} />
+                           {validationErrors.postalCode && <div className="invalid-feedback">{validationErrors.postalCode}</div>}
                          </div>
                        </div>
                      </div>
@@ -708,9 +763,17 @@ if (selectedImages.length > 0 && selectedImages.some(img => img.file)) {
                      <div className="col-md-6">
                        <div className="mb-3">
                          <label className="form-label">Pincode</label>
-                         <input type="text" className="form-control" name="pincode" value={form.shipping.pincode}
-                           onChange={e=> setForm(prev => ({ ...prev, shipping: { ...prev.shipping, pincode:
-                         e.target.value } }))} />
+                         <input type="text" className={`form-control ${validationErrors.pincode ? 'is-invalid' : ''}`} name="pincode" value={form.shipping.pincode}
+                           onChange={e=> {
+                             const sanitizedValue = sanitizeInput(e.target.value);
+                             setForm(prev => ({ ...prev, shipping: { ...prev.shipping, pincode: sanitizedValue } }));
+                             if (!validateField('pincode', sanitizedValue)) {
+                               setValidationErrors((prev) => ({ ...prev, pincode: `Invalid pincode format` }));
+                             } else {
+                               setValidationErrors((prev) => ({ ...prev, pincode: '' }));
+                             }
+                           }} />
+                         {validationErrors.pincode && <div className="invalid-feedback">{validationErrors.pincode}</div>}
                        </div>
                      </div>
                    </div>
@@ -738,13 +801,15 @@ if (selectedImages.length > 0 && selectedImages.some(img => img.file)) {
              </div>
              <div className="col-md-6 mb-3">
                <label>Account Number</label>
-               <input type="text" name="accountNumber" className="form-control" value={form.bank.accountNumber}
+               <input type="text" name="accountNumber" className={`form-control ${validationErrors.accountNumber ? 'is-invalid' : ''}`} value={form.bank.accountNumber}
                  onChange={handleBankChange} />
+               {validationErrors.accountNumber && <div className="invalid-feedback">{validationErrors.accountNumber}</div>}
              </div>
              <div className="col-md-6 mb-3">
                <label>IFSC</label>
-               <input type="text" name="ifsc" className="form-control" value={form.bank.ifsc}
+               <input type="text" name="ifsc" className={`form-control ${validationErrors.ifsc ? 'is-invalid' : ''}`} value={form.bank.ifsc}
                  onChange={handleBankChange} />
+               {validationErrors.ifsc && <div className="invalid-feedback">{validationErrors.ifsc}</div>}
              </div>
            </div>
            <div></div>
