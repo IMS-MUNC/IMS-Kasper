@@ -125,6 +125,109 @@ exports.deleteStockHistory = async (req, res) => {
     }
 };
 
+exports.getStockHistoryTotals = async (req, res) => {
+    try {
+        const { productName, startDate, endDate } = req.query;
+        const matchQuery = {};
+
+        // Apply date filters
+        if (startDate || endDate) matchQuery.date = {};
+        if (startDate) matchQuery.date.$gte = new Date(startDate);
+        if (endDate) matchQuery.date.$lte = new Date(endDate);
+
+        // Filter by product name if provided
+        if (productName) {
+            const matchingProducts = await Product.find({
+                productName: { $regex: productName, $options: 'i' },
+            }).select('_id');
+
+            const matchingIds = matchingProducts.map((p) => p._id);
+            matchQuery.product = { $in: matchingIds };
+        }
+
+        // Use MongoDB aggregation to calculate totals efficiently
+        const aggregationPipeline = [
+            { $match: matchQuery },
+            {
+                $group: {
+                    _id: null,
+                    totalQuantity: {
+                        $sum: {
+                            $cond: [
+                                { $ne: [{ $toLower: "$type" }, "return"] },
+                                { $toDouble: "$quantityChanged" },
+                                0
+                            ]
+                        }
+                    },
+                    totalPrice: {
+                        $sum: {
+                            $cond: [
+                                { $ne: [{ $toLower: "$type" }, "return"] },
+                                { $multiply: [{ $toDouble: "$priceChanged" }, { $toDouble: "$quantityChanged" }] },
+                                0
+                            ]
+                        }
+                    },
+                    totalReturnQty: {
+                        $sum: {
+                            $cond: [
+                                { $eq: [{ $toLower: "$type" }, "return"] },
+                                { $abs: { $toDouble: "$quantityChanged" } },
+                                0
+                            ]
+                        }
+                    },
+                    totalReturnPrice: {
+                        $sum: {
+                            $cond: [
+                                { $eq: [{ $toLower: "$type" }, "return"] },
+                                { $multiply: [{ $toDouble: "$priceChanged" }, { $abs: { $toDouble: "$quantityChanged" } }] },
+                                0
+                            ]
+                        }
+                    },
+                    totalReturnAmount: {
+                        $sum: {
+                            $cond: [
+                                { $eq: [{ $toLower: "$type" }, "return"] },
+                                { $multiply: [{ $toDouble: "$priceChanged" }, { $abs: { $toDouble: "$quantityChanged" } }] },
+                                0
+                            ]
+                        }
+                    }
+                }
+            }
+        ];
+
+        const result = await StockHistory.aggregate(aggregationPipeline);
+        
+        const totals = result.length > 0 ? result[0] : {
+            totalQuantity: 0,
+            totalPrice: 0,
+            totalReturnQty: 0,
+            totalReturnPrice: 0,
+            totalReturnAmount: 0
+        };
+
+        // Calculate available quantities
+        const availableQty = totals.totalQuantity - totals.totalReturnQty;
+        const availablePrice = totals.totalPrice - totals.totalReturnPrice;
+
+        res.json({
+            success: true,
+            totals: {
+                ...totals,
+                availableQty,
+                availablePrice
+            }
+        });
+    } catch (error) {
+        console.error("Error fetching stock history totals:", error);
+        res.status(500).json({ success: false, message: 'Server error' });
+    }
+};
+
 
 // const StockHistory = require('../models/stockHistoryModels');
 
