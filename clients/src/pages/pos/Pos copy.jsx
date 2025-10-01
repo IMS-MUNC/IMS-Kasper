@@ -386,16 +386,18 @@ function Pos() {
     const fetchProducts = async () => {
       try {
         const res = await axios.get(`${BASE_URL}/api/products`);
-        setProducts(res.data);
-        setAllProducts(res.data); // Store all products
-        // console.log("Products right:", res.data);
+        // Access the products array from the response object
+        const productsData = res.data.products || res.data || [];
+        setProducts(productsData);
+        setAllProducts(productsData); // Store all products
+        // console.log("Products right:", productsData);
         // Log first product to see image structure
-        if (res.data.length > 0) {
-          // console.log("First product structure:", res.data[0]);
-          // console.log("First product images:", res.data[0].images);
+        if (productsData.length > 0) {
+          // console.log("First product structure:", productsData[0]);
+          // console.log("First product images:", productsData[0].images);
         }
         // Initialize all to "general"
-        const initialTabs = res.data.reduce((acc, product) => {
+        const initialTabs = productsData.reduce((acc, product) => {
           acc[product._id] = "general";
           return acc;
         }, {});
