@@ -136,7 +136,7 @@ const filteredPurchases = purchases.filter((purchase) => {
                 <TbRefresh className="ti ti-refresh" />
               </a>
             </li>
-            <li>
+            {/* <li>
               <a
                 data-bs-toggle="tooltip"
                 data-bs-placement="top"
@@ -145,7 +145,7 @@ const filteredPurchases = purchases.filter((purchase) => {
               >
                 <i className="ti ti-chevron-up" />
               </a>
-            </li>
+            </li> */}
             <li>
               {/* <a href="#" className="btn btn-secondary w-auto shadow-none" data-bs-toggle="modal" data-bs-target="#send-email"><i data-feather="mail" className="feather-mail" />Send Email</a> */}
             </li>
