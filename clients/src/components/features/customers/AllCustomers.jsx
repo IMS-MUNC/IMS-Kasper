@@ -23,6 +23,7 @@ import { toast } from "react-toastify";
 import jsPDF from "jspdf";
 import "jspdf-autotable";
 import { autoTable } from "jspdf-autotable";
+import DeleteAlert from "../../../utils/sweetAlert/DeleteAlert";
 
 function formatAddress(billing) {
   if (!billing) return '';
@@ -172,7 +173,12 @@ function AllCustomers({ onClose }) {
   };
 
   const handleDeleteCustomer = async (customerId) => {
-    if (!window.confirm("Are you sure you want to delete this customer?")) return;
+    const confirmed = await DeleteAlert({
+      title: "Are you sure?",
+      text: "You won't be able to revert this!",
+      confirmButtonText: "Yes, delete it!"
+    });
+    if (!confirmed) return;
     try {
       const token = localStorage.getItem("token");
       await axios.delete(`${BASE_URL}/api/customers/${customerId}`, {
@@ -191,7 +197,12 @@ function AllCustomers({ onClose }) {
   const handleBulkDelete = async () => {
     if (selectedCustomers.length === 0) return;
 
-    if (!window.confirm(`Are you sure you want to delete ${selectedCustomers.length} customers?`)) return;
+    const confirmed = await DeleteAlert({
+      title: "Are you sure?",
+      text: `You won't be able to revert the deletion of ${selectedCustomers.length} customer${selectedCustomers.length > 1 ? 's' : ''}!`,
+      confirmButtonText: "Yes, delete them!"
+    });
+    if (!confirmed) return;
 
     try {
       const token = localStorage.getItem("token");
