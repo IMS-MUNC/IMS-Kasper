@@ -37,7 +37,6 @@ function StockMovementLog() {
   }, []);
 
   //fetch warehoouses
-
   useEffect(() => {
     const token = localStorage.getItem("token");
     axios
@@ -471,7 +470,7 @@ const filteredPurchases = purchases.filter((purchase) => {
       {isPopupOpen && selectedStock && (
         <div
           style={{
-            position: "fixed",
+            position: "absolute",
             top: 70,
             left: 0,
             width: "100%",

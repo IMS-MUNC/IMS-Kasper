@@ -268,7 +268,8 @@ useEffect(() => {
   
 
   return (
-    <div>
+    <div className="page-wrapper">
+      <div className="content">
       {/* Breadcrumb Navigation */}
       <div style={{ padding: "20px", overflowY: "auto", height: "88vh" }}>
         <div
@@ -1295,6 +1296,7 @@ useEffect(() => {
             <span>Selected</span>
           </div>
         </div>
+      </div>
       </div>
     </div>
   );

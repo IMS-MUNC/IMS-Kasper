@@ -2333,7 +2333,6 @@ function AddWarehouse() {
                             </label>
                             <input
                               type="number"
-                              required
                               value={rows}
                               onChange={(e) =>
                                 setRows(
@@ -2351,7 +2350,9 @@ function AddWarehouse() {
                                 color: "#6B7280",
                                 fontSize: "14px",
                               }}
+                              required
                             />
+                            
                           </div>
                           <div style={{ flex: 1 }}>
                             <label

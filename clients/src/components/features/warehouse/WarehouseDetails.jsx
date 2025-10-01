@@ -868,7 +868,7 @@ const token = localStorage.getItem("token");
                 // }}
               >
                 <th style={{ padding: "12px 24px", display: "flex", gap: "20px" }}>
-                  <input type="checkbox" />Product</th>
+                  {/* <input type="checkbox" /> */}Product</th> 
                 <th style={{ padding: "12px 24px" }}>SKU</th>
                 <th style={{ padding: "12px 24px" }}>MRP</th>
                 <th style={{ padding: "12px 24px" }}>Available Quantity</th>
@@ -897,7 +897,7 @@ const token = localStorage.getItem("token");
                           gap: "20px",
                         }}
                       >
-                        <input type="checkbox" />
+                        {/* <input type="checkbox" /> */}
                          <div style={{display:"flex",alignItems:"center",gap:"10px",width:"50px",justifyContent:"center",height:"50px",border:"1px solid #e6e6e6",borderRadius:"8px",padding:"5px"}}>
                           <img
                           src={item.images[0]?.url}
