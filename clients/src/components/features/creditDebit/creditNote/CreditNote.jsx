@@ -158,11 +158,11 @@ const CreditNote = () => {
                                         <input className="form-check-input" type="checkbox" id="select-all" />
                                     </div>
                                 </th>
-                                <th className="no-sort">ID</th>
+                                <th className="no-sort">ID---</th>
                                 <th>Date</th>
                                 <th>Customer</th>
                                 <th>Products</th>
-                              
+
                                 <th>Amount</th>
                                 <th>Status</th>
                                 <th className="no-sort" />
@@ -188,22 +188,29 @@ const CreditNote = () => {
                                         <td>{note.date ? new Date(note.date).toLocaleDateString() : (note.creditNoteDate ? new Date(note.creditNoteDate).toLocaleDateString() : '')}</td>
                                         <td>
                                             {/* Show customer image if available from sale.customer, billFrom, or billTo */}
-                                            {note.sale?.customer?.images && note.sale.customer.images.length > 0 ? (
-                                                <img src={note.sale.customer.images[0].url} alt={note.sale.customer.name} style={{width:32, height:32, borderRadius:'50%', objectFit:'cover', marginRight:6}} />
-                                            ) : note.billFrom?.images && note.billFrom.images.length > 0 ? (
-                                                <img src={note.billFrom.images[0].url} alt={note.billFrom.name} style={{width:32, height:32, borderRadius:'50%', objectFit:'cover', marginRight:6}} />
-                                            ) : note.billTo?.images && note.billTo.images.length > 0 ? (
-                                                <img src={note.billTo.images[0].url} alt={note.billTo.name} style={{width:32, height:32, borderRadius:'50%', objectFit:'cover', marginRight:6}} />
+                                            {note.sale && note.sale.customer && Array.isArray(note.sale.customer.images) && note.sale.customer.images.length > 0 ? (
+                                                <img src={note.sale.customer.images[0]?.url || note.sale.customer.images[0]} alt={note.sale.customer.name || '-'} style={{width:32, height:32, borderRadius:'50%', objectFit:'cover', marginRight:6}} />
+                                            ) : note.billFrom && Array.isArray(note.billFrom.images) && note.billFrom.images.length > 0 ? (
+                                                <img src={note.billFrom.images[0]?.url || note.billFrom.images[0]} alt={note.billFrom.name || '-'} style={{width:32, height:32, borderRadius:'50%', objectFit:'cover', marginRight:6}} />
+                                            ) : note.billTo && Array.isArray(note.billTo.images) && note.billTo.images.length > 0 ? (
+                                                <img src={note.billTo.images[0]?.url || note.billTo.images[0]} alt={note.billTo.name || '-'} style={{width:32, height:32, borderRadius:'50%', objectFit:'cover', marginRight:6}} />
                                             ) : null}
-                                            {/* Show customer name from sale.customer, billFrom, or billTo */}
-                                            {note.sale?.customer?.name
-                                                || note.billFrom?.name
-                                                || note.billTo?.name
-                                                || note.billFrom?.firstName
-                                                || note.billTo?.firstName
-                                                || note.billFrom?.email
-                                                || note.billTo?.email
-                                                || '-'}
+                                            {/* Show customer name from sale.customer, billFrom, or billTo, fallback to email or '-' */}
+                                            {note.sale && note.sale.customer && note.sale.customer.name
+                                                ? note.sale.customer.name
+                                                : note.billFrom && note.billFrom.name
+                                                ? note.billFrom.name
+                                                : note.billTo && note.billTo.name
+                                                ? note.billTo.name
+                                                : note.billFrom && note.billFrom.firstName
+                                                ? note.billFrom.firstName
+                                                : note.billTo && note.billTo.firstName
+                                                ? note.billTo.firstName
+                                                : note.billFrom && note.billFrom.email
+                                                ? note.billFrom.email
+                                                : note.billTo && note.billTo.email
+                                                ? note.billTo.email
+                                                : '-'}
                                         </td>
                                         <td>
                                             {Array.isArray(note.items) && note.items.length > 0 ? (

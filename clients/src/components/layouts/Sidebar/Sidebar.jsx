@@ -300,7 +300,7 @@ const isPathActive = (path) => {
 						{/* <img src={Logo} alt="Img" /> */}
 						 <img src={isDarkMode ? companyImages?.companyDarkLogo : companyImages?.companyLogo} className="compact-logo" alt="Logo" />
 					</a>
-					<a href="/dashboard" className="logo logo-white" style={{ padding: '0 10px', height: '40px', width: 'auto', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+					<a href="/dashboard" className="logo logo-white" >
 						{/* <img src={Logo} alt="Img" /> */}
 						<img  src={isDarkMode ? companyImages?.companyDarkLogo : companyImages?.companyLogo} className="full-logo" alt="Full Logo" />
 					</a>

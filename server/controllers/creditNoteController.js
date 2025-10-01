@@ -100,6 +100,12 @@ exports.getAllCreditNotes = async (req, res) => {
         },
       })
       .populate('items.productId');
+    // Also populate customer directly for convenience
+    await CreditNote.populate(creditNotes, [
+      { path: 'sale.customer', select: 'name images' },
+      { path: 'billFrom', select: 'name images' },
+      { path: 'billTo', select: 'name images' }
+    ]);
     res.json({ success: true, data: creditNotes });
   } catch (err) {
     res.status(500).json({ success: false, error: err.message });
@@ -122,6 +128,12 @@ exports.getAllCreditNotesBySale = async (req, res) => {
         },
       })
       .populate('items.productId');
+    // Also populate customer directly for convenience
+    await CreditNote.populate(creditNotes, [
+      { path: 'sale.customer', select: 'name images' },
+      { path: 'billFrom', select: 'name images' },
+      { path: 'billTo', select: 'name images' }
+    ]);
     res.json({ success: true, data: creditNotes });
   } catch (err) {
     res.status(500).json({ success: false, error: err.message });
