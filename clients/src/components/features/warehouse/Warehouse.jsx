@@ -515,8 +515,8 @@ function Warehouse() {
         </div>
 
         {/* Owened Warehouse */}
-
-        <div
+ 
+        {/* <div
           style={{
             fontWeight: "500",
             fontSize: "16px",
@@ -527,7 +527,7 @@ function Warehouse() {
         >
           <span>Owened</span>
 
-          {/* Cards */}
+        
 
           <div style={{ marginTop: "2px" }}>
             <div className="row">
@@ -544,7 +544,7 @@ function Warehouse() {
                     position: "relative", // for absolute positioning inside
                   }}
                 >
-                  {/* WH-006 and Heart - Left Side */}
+                  
                   <div
                     style={{
                       display: "flex",
@@ -553,7 +553,7 @@ function Warehouse() {
                       marginBottom: "10px",
                     }}
                   >
-                    {/* Left: WH-006 */}
+                    
                     <div
                       style={{
                         backgroundColor: "#f1f1f1",
@@ -575,7 +575,7 @@ function Warehouse() {
                       </span>
                     </div>
 
-                    {/* Right: Heart icon */}
+                  
                     <div
                       style={{
                         padding: "10px",
@@ -594,7 +594,7 @@ function Warehouse() {
                     </div>
                   </div>
 
-                  {/* Bottom Section (Address + Arrow) */}
+                  
                   <div
                     style={{
                       position: "absolute",
@@ -606,7 +606,7 @@ function Warehouse() {
                       alignItems: "flex-end",
                     }}
                   >
-                    {/* Address */}
+                    
                     <div>
                       <p style={{ margin: "0", fontWeight: "500" }}>
                         Noida - Suraj Kumar
@@ -615,7 +615,7 @@ function Warehouse() {
                       <span style={{ marginLeft: "4px" }}>Stock Valuation</span>
                     </div>
 
-                    {/* Arrow */}
+                    
                     <div>
                       <Link to="/WarehouseDetails">
                         <FaArrowRight />
@@ -625,13 +625,13 @@ function Warehouse() {
                 </div>
               </div>
 
-              {/* Other Columns (2nd) */}
+              
             </div>
           </div>
-        </div>
+        </div> */}
 
-        {/* Third-Party warehouse */}
-
+      
+{/* 
         <div
           style={{
             fontWeight: "500",
@@ -643,7 +643,7 @@ function Warehouse() {
         >
           <span>Third-Party warehouse</span>
 
-          {/* Cards */}
+        
 
           <div style={{ marginTop: "2px" }}>
             <div className="row">
@@ -660,7 +660,7 @@ function Warehouse() {
                     position: "relative", // for absolute positioning inside
                   }}
                 >
-                  {/* WH-006 and Heart - Left Side */}
+                  
                   <div
                     style={{
                       display: "flex",
@@ -669,7 +669,7 @@ function Warehouse() {
                       marginBottom: "10px",
                     }}
                   >
-                    {/* Left: WH-006 */}
+                    
                     <div
                       style={{
                         backgroundColor: "#f1f1f1",
@@ -691,7 +691,7 @@ function Warehouse() {
                       </span>
                     </div>
 
-                    {/* Right: Heart icon */}
+                    
                     <div
                       style={{
                         padding: "10px",
@@ -710,7 +710,7 @@ function Warehouse() {
                     </div>
                   </div>
 
-                  {/* Bottom Section (Address + Arrow) */}
+                  
                   <div
                     style={{
                       position: "absolute",
@@ -722,7 +722,7 @@ function Warehouse() {
                       alignItems: "flex-end",
                     }}
                   >
-                    {/* Address */}
+                    
                     <div>
                       <p style={{ margin: "0", fontWeight: "500" }}>
                         Delhi - Ram Prashad
@@ -731,7 +731,7 @@ function Warehouse() {
                       <span style={{ marginLeft: "4px" }}>Stock Valuation</span>
                     </div>
 
-                    {/* Arrow */}
+                    
                     <div>
                       <Link to="/WarehouseDetails">
                         <FaArrowRight />
@@ -742,7 +742,8 @@ function Warehouse() {
               </div>
             </div>
           </div>
-        </div>
+        </div>  */}
+        
       </div>
     </div>
   );

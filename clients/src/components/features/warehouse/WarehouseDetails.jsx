@@ -41,70 +41,7 @@ function WarehouseDetails() {
   const [showTooltips, setShowTooltips] = useState(false);
 const token = localStorage.getItem("token");
 
-  // LineChart Current year months
-  const currentYear = new Date().getFullYear();
-
-  const months = [
-    "Jan",
-    "Feb",
-    "Mar",
-    "Apr",
-    "May",
-    "Jun",
-    "Jul",
-    "Aug",
-    "Sep",
-    "Oct",
-    "Nov",
-    "Dec",
-  ];
-
-  const xLabels = months.map((m, i) => `${m} ${currentYear}`);
-
-  const soldItemsPerMonth = xLabels.map((label) => {
-    const [monthStr, yearStr] = label.split(" ");
-    const month = new Date(`${monthStr} 1, ${yearStr}`).getMonth();
-    const year = parseInt(yearStr);
-
-    let totalSold = 0;
-
-    sales.forEach((sale) => {
-      // ✅ Use correct date field (createdAt OR date)
-      const saleDate = new Date(sale.date || sale.createdAt);
-      if (saleDate.getMonth() === month && saleDate.getFullYear() === year) {
-        if (Array.isArray(sale.products)) {
-          sale.products.forEach((p) => {
-            // ✅ Use correct quantity field
-            totalSold += p.unitSold || 0;
-          });
-        }
-      }
-    });
-
-    return totalSold;
-  });
-
-  const purchasesItemsPerMonth = xLabels.map((label) => {
-    const [monthStr, yearStr] = label.split(" ");
-    const month = new Date(`${monthStr} 1, ${yearStr}`).getMonth();
-    const year = parseInt(yearStr);
-    let totalPurchased = 0;
-    purchases.forEach((purchase) => {
-      const purchaseDate = new Date(purchase.date || purchase.createdAt);
-      if (
-        purchaseDate.getMonth() === month &&
-        purchaseDate.getFullYear() === year
-      ) {
-        if (Array.isArray(purchase.products)) {
-          purchase.products.forEach((p) => {
-            totalPurchased += p.initialQuantity || 0;
-          });
-        }
-      }
-    });
-    return totalPurchased;
-  });
-
+ 
   const detailsWarehouses = useCallback(async () => {
     setLoading(true);
     try {
@@ -254,10 +191,12 @@ const token = localStorage.getItem("token");
   //Out of Stock items
 
   const outOfStockItems = product.filter(
-    (item) =>
-      item.warehouseName === warehousesDetails?.warehouseName &&
-      item.quantity === 0
-  );
+    (item) => {
+      if (item.warehouseName !== warehousesDetails?.warehouseName) return false;
+    
+    const soldUnits = salesMap[item._id] || 0;
+    return item.quantity - soldUnits <= 0;
+  });
 
   //dougnut chart data
 
@@ -337,6 +276,74 @@ const token = localStorage.getItem("token");
     }
   }, [warehousesDetails]);
 
+
+   // LineChart Current year months
+  const currentYear = new Date().getFullYear();
+
+  const months = [
+    "Jan",
+    "Feb",
+    "Mar",
+    "Apr",
+    "May",
+    "Jun",
+    "Jul",
+    "Aug",
+    "Sep",
+    "Oct",
+    "Nov",
+    "Dec",
+  ];
+
+  const xLabels = months.map((m, i) => `${m} ${currentYear}`);
+
+  const soldItemsPerMonth = xLabels.map((label) => {
+    const [monthStr, yearStr] = label.split(" ");
+    const month = new Date(`${monthStr} 1, ${yearStr}`).getMonth();
+    const year = parseInt(yearStr);
+
+    let totalSold = 0;
+
+    sales.forEach((sale) => {
+      // ✅ Use correct date field (createdAt OR date)
+      const saleDate = new Date(sale.date || sale.createdAt);
+      if (saleDate.getMonth() === month && saleDate.getFullYear() === year) {
+        if (Array.isArray(sale.products)) {
+          sale.products.forEach((p) => {
+            // ✅ Use correct quantity field
+            totalSold += p.saleQty || 0;
+          });
+        }
+      }
+    });
+
+    return totalSold;
+  });
+
+  
+
+  const purchasesItemsPerMonth = xLabels.map((label) => {
+    const [monthStr, yearStr] = label.split(" ");
+    const month = new Date(`${monthStr} 1, ${yearStr}`).getMonth();
+    const year = parseInt(yearStr);
+    let totalPurchased = 0;
+    purchases.forEach((purchase) => {
+      const purchaseDate = new Date(purchase.date || purchase.createdAt);
+      if (
+        purchaseDate.getMonth() === month &&
+        purchaseDate.getFullYear() === year
+      ) {
+        if (Array.isArray(purchase.products)) {
+          purchase.products.forEach((p) => {
+            totalPurchased += p.quantity || 0;
+          });
+        }
+      }
+    });
+    return totalPurchased;
+  });
+
+
   return (
   <div className="page-wrapper" >
     <div className="content">
@@ -368,7 +375,7 @@ const token = localStorage.getItem("token");
               gap: "10px", // Moved gap here to work with flex
             }}
           >
-            Warehouse <MdArrowForwardIos />{" "}
+            Warehouse <MdArrowForwardIos />
             <Link
               style={{ color: "#676767", textDecoration: "none" }}
               to={"/warehouse"}
@@ -665,7 +672,7 @@ const token = localStorage.getItem("token");
           <span
             style={{ color: "#262626", fontWeight: "500", fontSize: "16px" }}
           >
-            Storage
+            Stroage
           </span>
           <br />
           <div>
@@ -678,7 +685,7 @@ const token = localStorage.getItem("token");
             <span
               style={{ color: "#1368ec", fontWeight: "400", fontSize: "16px" }}
             >
-              {100 - ((totalItems / totalInitialItems) * 100 || 0).toFixed(2)} %
+              {parseFloat((100 - ((totalItems / totalInitialItems) * 100 || 0)).toFixed(2))}%
               Left
             </span>
           </div>
@@ -1173,29 +1180,6 @@ const token = localStorage.getItem("token");
               onClick={() => setActiveTab("Stock Out")}
             >
               Stock Out
-            </span>
-
-            <span
-              style={{
-                font: "Robot",
-                fontWeight: "400",
-                fontSize: "16px",
-                color: "#262626",
-                padding: "8px",
-              }}
-            >
-              Transfer
-            </span>
-            <span
-              style={{
-                font: "Robot",
-                fontWeight: "400",
-                fontSize: "16px",
-                color: "#262626",
-                padding: "8px",
-              }}
-            >
-              Processing
             </span>
           </div>
 
