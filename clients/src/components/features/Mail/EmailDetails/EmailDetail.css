@@ -73,8 +73,11 @@
 }
 
 .attachment-grid {
-  display: flex;
+  /* display: flex;
   flex-wrap: wrap;
+  gap: 16px; */
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
   gap: 16px;
 }
 
@@ -153,8 +156,9 @@ div:hover .hover-actions {
 
 .attachment-card {
   position: relative;
-  width: 160px;
-  height: 160px;
+  width: 100%;
+  max-width: 160px;
+  height: auto;
   border: 1px solid #ccc;
   border-radius: 8px;
   overflow: hidden;
@@ -258,4 +262,49 @@ div:hover .hover-actions {
   font-size: 18px;
   box-shadow: 0 1px 4px rgba(0, 0, 0, 0.2);
   text-decoration: none;
+}
+
+@media (max-width: 768px) {
+  .email-meta {
+    position: relative;
+    margin-left: 0;
+    width: 100%;
+  }
+  .searchinputdiv {
+    flex: 1;
+    width: 100%;
+  }
+
+  .subject-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+}
+
+/* Phones (480px and down) */
+@media (max-width: 480px) {
+  .mainemailmessage {
+    width: 100%;
+    border-radius: 0;
+    padding: 8px;
+  }
+
+  .twothreemail {
+    font-size: 14px;
+  }
+
+  .subject-header {
+    gap: 6px;
+  }
+
+  .subject-right {
+    font-size: 14px;
+    gap: 6px;
+  }
+
+  .attachment-card,
+  .attachment-box {
+    width: 100%;
+    height: auto;
+  }
 }

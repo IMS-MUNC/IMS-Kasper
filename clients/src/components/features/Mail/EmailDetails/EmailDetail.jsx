@@ -93,12 +93,20 @@ const EmailDetail = ({ email, onBack, handleToggleStar, onDelete }) => {
     }
   };
 
+  const extractEmail = (data) => {
+    if (!data) return "";
+    if (typeof data === "string") return data;
+    if (Array.isArray(data)) return extractEmail(data[0]);
+    if (typeof data === "object") return data.email || "";
+    return "";
+  }
+
   // function for handle reply and forward
   const handleReply = () => {
     setModalData({
       show: true,
-      to: email.from,
-      // subject: `Re: ${email.subject}`,
+      to: extractEmail(email.from),
+      subject: `Re: ${email.subject}`,
       body: `\n\n------------------ Original Message ------------------\n${email.body}`,
     });
   };
@@ -107,11 +115,11 @@ const EmailDetail = ({ email, onBack, handleToggleStar, onDelete }) => {
     setModalData({
       show: true,
       to: "",
-      subject: `Fwd: ${email.subject}`,
-      body: `\n\n------------------ Forwarded Message ------------------\nFrom: ${email.from
-        }\nDate: ${new Date(
-          email.createdAt
-        ).toLocaleString()}\nTo: ${email.to.join(", ")}\nSubject: ${email.subject
+      subject: `Fwd: ${email.subject || ""}`,
+      body: `\n\n------------------ Forwarded Message ------------------\nFrom:
+      ${extractEmail(email.from)}\nDate: ${new Date(
+        email.createdAt
+      ).toLocaleString()}\nTo: ${getRecipientsDisplay(email.to)}\nSubject: ${email.subject
         }\n\n${email.body}`,
     });
   };
@@ -162,6 +170,7 @@ const EmailDetail = ({ email, onBack, handleToggleStar, onDelete }) => {
     }
     return "Unknown";
   };
+
 
   // safely get recipients list
   // const getRecipientsDisplay = (recipients) => {
@@ -247,7 +256,13 @@ const EmailDetail = ({ email, onBack, handleToggleStar, onDelete }) => {
     return "Unknown";
   };
 
-
+  const getInitials = (sender) => {
+    if (!sender) return "";
+    if (sender.name) {
+      const parts = sender.name.trim().split(" ");
+      return parts.length > 1 ? `${parts[0][0]}${parts[1][0]}`.toUpperCase() : parts[0][0].toUpperCase();
+    }
+  }
 
 
   return (
@@ -323,7 +338,7 @@ const EmailDetail = ({ email, onBack, handleToggleStar, onDelete }) => {
               {email.sender.profileImage ? (
                 <img
                   src={email.sender.profileImage}
-                  alt="alk"
+                  alt={""}
                   style={{
                     width: "25px",
                     height: "25px",
@@ -345,7 +360,8 @@ const EmailDetail = ({ email, onBack, handleToggleStar, onDelete }) => {
                     color: "#fff",
                   }}
                 >
-                  {email.sender.name?.[0]?.toUpperCase()}
+                  {/* {email.sender.name?.[0]?.toUpperCase()} */}
+                  {getInitials(email.sender)}
                 </div>
               )}
             </span>
@@ -412,13 +428,7 @@ const EmailDetail = ({ email, onBack, handleToggleStar, onDelete }) => {
           {/* <span className="icon" onClick={handleReply}>
             <LuReply />
           </span> */}
-          <EmailModal
-            show={modalData.show}
-            onClose={() => setModalData({ ...modalData, show: false })}
-            to={modalData.to}
-            subject={modalData.subject}
-            body={modalData.body}
-          />
+
           <span onClick={() => setMenuOpenId(email._id)}>
             <div style={{ position: "relative" }}>
               <span
@@ -711,6 +721,13 @@ const EmailDetail = ({ email, onBack, handleToggleStar, onDelete }) => {
         </span>
         {console.log("Email body being sent:", email.body)}
       </div>
+      <EmailModal
+        show={modalData.show}
+        onClose={() => setModalData({ ...modalData, show: false })}
+        to={modalData.to}
+        subject={modalData.subject}
+        body={modalData.body}
+      />
       {showEmojiPicker && (
         <div className="emoji-picker">
           <EmojiPicker onEmojiClick={handleEmojiClick} />
