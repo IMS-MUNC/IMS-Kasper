@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import { RxUpdate } from "react-icons/rx";
 import { RiArrowDropUpLine } from "react-icons/ri";
 import { IoIosAddCircleOutline } from "react-icons/io";
@@ -7,7 +7,7 @@ import { IoIosAddCircleOutline } from "react-icons/io";
 import "./Coupons.css";
 import { IoIosSearch } from "react-icons/io";
 import { IoMdSettings } from "react-icons/io";
-import { FaRegEdit } from "react-icons/fa";
+import { FaRegEdit, FaFileExcel, FaFilePdf } from "react-icons/fa";
 import { RiDeleteBin6Line } from "react-icons/ri";
 import { GrFormPrevious } from "react-icons/gr";
 import { MdNavigateNext } from "react-icons/md";
@@ -44,6 +44,8 @@ const Coupons = () => {
   const [selectedCoupons, setSelectedCoupons] = useState([]);
   const [selectAll, setSelectAll] = useState(false);
 
+  // Ref for file input
+  const fileInputRef = useRef(null);
 
   // Callback for modal
   const fetchCoupons = async () => {
@@ -180,36 +182,138 @@ const Coupons = () => {
   };
 
   //pdf and excel converter
-  const exportToExcel = (data) => {
-    const worksheet = XLSX.utils.json_to_sheet(data);
+  const handleExcel = () => {
+    // Prepare data for Excel export
+    const excelData = coupons.map(item => ({
+      'Name': item.name || '',
+      'Code': item.code || '',
+      'Description': item.description || '',
+      'Type': item.type || '',
+      'Discount': item.discount || '',
+      'Limit': item.limit || '',
+      'Valid Date': new Date(item.valid).toLocaleDateString(),
+      'Status': item.validStatus || ''
+    }));
+
+    // Create workbook and worksheet
     const workbook = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(workbook, worksheet, "Coupons");
-    const excelBuffer = XLSX.write(workbook, { bookType: "xlsx", type: "array" });
-    const file = new Blob([excelBuffer], { type: "application/octet-stream" });
-    saveAs(file, "coupons.xlsx");
+    const worksheet = XLSX.utils.json_to_sheet(excelData);
+
+    // Set column widths for better formatting
+    const columnWidths = [
+      { wch: 20 }, // Name
+      { wch: 15 }, // Code
+      { wch: 30 }, // Description
+      { wch: 12 }, // Type
+      { wch: 10 }, // Discount
+      { wch: 8 },  // Limit
+      { wch: 12 }, // Valid Date
+      { wch: 10 }  // Status
+    ];
+    worksheet['!cols'] = columnWidths;
+
+    // Add worksheet to workbook
+    XLSX.utils.book_append_sheet(workbook, worksheet, 'Coupon List');
+
+    // Export the file
+    XLSX.writeFile(workbook, 'coupon-list.xlsx');
   };
 
-  const exportToPDF = (data) => {
+  const handlePdf = () => {
     const doc = new jsPDF();
-
-    const tableData = data.map(item => [
-      item.name,
-      item.code,
-      item.description,
-      item.type,
-      item.discount,
-      item.limit,
+    
+    // Prepare data for PDF
+    const pdfData = coupons.map(item => [
+      item.name || '',
+      item.code || '',
+      item.description || '',
+      item.type || '',
+      item.discount || '',
+      item.limit || '',
       new Date(item.valid).toLocaleDateString(),
-      item.validStatus
+      item.validStatus || ''
     ]);
 
+    // Add title
+    doc.setFontSize(16);
+    doc.text('Coupon List', 14, 15);
+
+    // Add table
     autoTable(doc, {
-      head: [["Name", "Code", "Description", "Type", "Discount", "Limit", "Valid", "Status"]],
-      body: tableData,
+      head: [['Name', 'Code', 'Description', 'Type', 'Discount', 'Limit', 'Valid Date', 'Status']],
+      body: pdfData,
+      startY: 25,
+      styles: {
+        fontSize: 8,
+        cellPadding: 2,
+      },
+      headStyles: {
+        fillColor: [41, 128, 185],
+        textColor: 255,
+        fontStyle: 'bold'
+      },
+      alternateRowStyles: {
+        fillColor: [245, 245, 245]
+      }
     });
 
-    doc.save("coupons.pdf");
+    doc.save('coupon-list.pdf');
   };
+
+  const handleImport = (event) => {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = async (e) => {
+      try {
+        const data = new Uint8Array(e.target.result);
+        const workbook = XLSX.read(data, { type: 'array' });
+        const sheetName = workbook.SheetNames[0];
+        const worksheet = workbook.Sheets[sheetName];
+        const jsonData = XLSX.utils.sheet_to_json(worksheet);
+
+        // Format data to match backend model
+        const formattedData = jsonData.map(item => ({
+          name: item.Name || item.name || '',
+          code: item.Code || item.code || '',
+          description: item.Description || item.description || '',
+          type: item.Type || item.type || 'percentage',
+          discount: item.Discount || item.discount || '',
+          limit: item.Limit || item.limit || 0,
+          valid: item['Valid Date'] || item.valid || new Date(),
+          validStatus: item.Status || item.validStatus || 'Active'
+        }));
+
+        // Send to backend
+        const token = localStorage.getItem('token');
+        const response = await fetch(`${BASE_URL}/api/coupons/import`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          },
+          body: JSON.stringify({ coupons: formattedData })
+        });
+
+        if (response.ok) {
+          toast.success('Coupons imported successfully!');
+          fetchCoupons(); // Refresh the list
+        } else {
+          const errorData = await response.json();
+          toast.error(`Import failed: ${errorData.message || 'Unknown error'}`);
+        }
+      } catch (error) {
+        console.error('Import error:', error);
+        toast.error('Failed to import coupons. Please check the file format.');
+      }
+    };
+
+    reader.readAsArrayBuffer(file);
+    // Reset file input
+    event.target.value = '';
+  };
+
   //component name changes
   const handleShowAdd = () => {
     setModalMode("add");
@@ -248,43 +352,59 @@ const Coupons = () => {
       <div className="content" >
         
           <div className="page-header">
-            <div>
-              <h4>Coupons</h4>
-              <h6 style={{ color: "#a9aca9" }}>Manage Your Coupons</h6>
+            <div className="add-item d-flex">
+              <div className="page-title">
+                <h4 className="fw-bold">Coupons</h4>
+                <h6 className="text-secondary">Manage Your Coupons</h6>
+              </div>
             </div>
-            <div className="d-flex gap-3 align-items-center">
-              {selectedCoupons.length > 0 && (
-                <button className="btn btn-danger" onClick={handleBulkDelete}>
-                  Delete ({selectedCoupons.length}) Selected
-                </button>
-              )}
-              {/* <span className="pdf-icon"  onClick={() => exportToPDF(coupons)} style={{ cursor: "pointer" }}>
-                <img className="img-fluid" src={pdf_logo} alt="pdf_logo" />
-              </span>
-              <span className="excel-icon" onClick={() => exportToExcel(coupons)} style={{ cursor: "pointer" }}>
-                <img
-                  className="img-fluid"
-                  src={execel_logo}
-                  alt="execel_logo"
-                />
-              </span> */}
-              <span className="update-icon" onClick={() => window.location.reload()} style={{ cursor: "pointer",fontSize:'17px' }}> 
-                <RxUpdate />
-              </span>
-              {/* <span className="dropdown-icon">
-                <RiArrowDropUpLine />
-              </span> */}
-              <span className="add-coupons-btn">
-                <button onClick={handleShowAdd} className="btn btn-primary">
-                  <IoIosAddCircleOutline />
-                  Add Coupons
-                </button>
-              </span>
+            <div className="table-top-head me-2">
+              <li>
+                {selectedCoupons.length > 0 && (
+                  <button className="btn btn-danger me-2" onClick={handleBulkDelete}>
+                    Delete ({selectedCoupons.length}) Selected
+                  </button>
+                )}
+              </li>
+              <li style={{ display: "flex", alignItems: "center", gap: '5px' }} className="icon-btn">
+                <label className="" title="">Export : </label>
+                <button onClick={handlePdf} title="Download PDF" style={{
+                  backgroundColor: "white",
+                  display: "flex",
+                  alignItems: "center",
+                  border: "none",
+                }}><FaFilePdf className="fs-20" style={{ color: "red" }} /></button>
+                <button onClick={handleExcel} title="Download Excel" style={{
+                  backgroundColor: "white",
+                  display: "flex",
+                  alignItems: "center",
+                  border: "none",
+                }}><FaFileExcel className="fs-20" style={{ color: "orange" }} /></button>
+              </li>
+              <li style={{ display: "flex", alignItems: "center", gap: '5px' }} className="icon-btn">
+                <label className="" title="">Import : </label>
+                <label className="" title="Import Excel">
+                  <input
+                    type="file"
+                    accept=".xlsx,.xls,.csv"
+                    hidden
+                    onChange={handleImport}
+                    ref={fileInputRef}
+                  />
+                  <FaFileExcel style={{ color: 'green', cursor: 'pointer' }} />
+                </label>
+              </li>
+            </div>
+            <div className="page-btn">
+              <a onClick={handleShowAdd} className="btn btn-primary">
+                <IoIosAddCircleOutline className="me-1" />
+                Add Coupons
+              </a>
             </div>
           </div>
 
           <div className="card table-list-card" style={{}}>
-          <div className="">
+          
             <div className="table-top">
               <div className="searchfiler d-flex align-items-center gap-2">
                 <IoIosSearch />
@@ -449,6 +569,7 @@ const Coupons = () => {
                 </tbody>
               </table>
             </div>
+
             <div
               className="d-flex justify-content-end gap-3"
               style={{ padding: "10px 20px" }}
@@ -506,7 +627,7 @@ const Coupons = () => {
                 </button>
               </span>
             </div>
-          </div>
+          
           </div>
 
       </div>

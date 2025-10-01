@@ -21,20 +21,37 @@ const getGiftCard = async (req,res)=>{
 
 const updateGiftCard = async (req,res)=>{
     try {
-        const userId = req.params.id;
-        const updatedGift = await GiftCard.findByIdAndUpdate(userId,req.body , {new : true});
-        res.status(200).json({message : "updated : "}, updatedGift);
+        const giftCardId = req.params.id;
+        const updatedGift = await GiftCard.findByIdAndUpdate(giftCardId, req.body, {new: true});
+        
+        if (!updatedGift) {
+            return res.status(404).json({error: "Gift card not found"});
+        }
+        
+        res.status(200).json({
+            message: "Gift card updated successfully",
+            data: updatedGift
+        });
     } catch (err) {
-        res.status(400).json({error : err.message});
+        res.status(400).json({error: err.message});
     }
 };
 
 const deletedGiftCard = async(req, res)=>{
     try {
-        const deletegif =  await GiftCard.findByIdAndDelete(req.params.id);
-        res.status(204).json({message : "GiftCard Deleted"},deletegif);
+        const giftCardId = req.params.id;
+        const deletedGift = await GiftCard.findByIdAndDelete(giftCardId);
+        
+        if (!deletedGift) {
+            return res.status(404).json({error: "Gift card not found"});
+        }
+        
+        res.status(200).json({
+            message: "Gift card deleted successfully",
+            data: deletedGift
+        });
     } catch (err) {
-        res.status(500).json({error : err.message});
+        res.status(500).json({error: err.message});
     }
 }
-module.exports = {createGiftCard,getGiftCard, updateGiftCard,deletedGiftCard}; 
+module.exports = {createGiftCard,getGiftCard, updateGiftCard,deletedGiftCard};
