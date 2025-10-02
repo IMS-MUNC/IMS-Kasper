@@ -50,18 +50,18 @@ const Pos=() => {
 
     const [categoryValue, setCategoryValue] = useState('');
     const handleCategoryChange = (e) => {
-        console.log('📂 handleCategoryChange called with:', e.target.value);
+        // console.log('📂 handleCategoryChange called with:', e.target.value);
         setCategoryValue(e.target.value);
         // Capitalize the status value to match database enum
         const capitalizedValue = e.target.value ? e.target.value.charAt(0).toUpperCase() + e.target.value.slice(1) : '';
         const statusFilter = activeQuickFilter === 'all' ? capitalizedValue : (activeQuickFilter.charAt(0).toUpperCase() + activeQuickFilter.slice(1));
-        console.log('📊 Category status filter:', statusFilter);
+        // console.log('📊 Category status filter:', statusFilter);
         fetchPosSales(1, transactionSearchQuery, statusFilter, socketValue);
     };
 
     const [socketValue, setSocketValue] = useState('');
     const handleSocketChange = (e) => {
-        console.log('🔌 handleSocketChange called with:', e.target.value);
+        // console.log('🔌 handleSocketChange called with:', e.target.value);
         setSocketValue(e.target.value);
         // Capitalize the status filter to match database enum
         const statusFilter = activeQuickFilter === 'all' ? 
@@ -70,8 +70,8 @@ const Pos=() => {
         // Capitalize payment method value to match database enum (special case for UPI)
         const capitalizedPaymentMethod = e.target.value ? 
             (e.target.value.toLowerCase() === 'upi' ? 'UPI' : e.target.value.charAt(0).toUpperCase() + e.target.value.slice(1)) : '';
-        console.log('📊 Socket status filter:', statusFilter);
-        console.log('💳 Payment method filter:', capitalizedPaymentMethod);
+        // console.log('📊 Socket status filter:', statusFilter);
+        // console.log('💳 Payment method filter:', capitalizedPaymentMethod);
         fetchPosSales(1, transactionSearchQuery, statusFilter, capitalizedPaymentMethod);
     };
 
@@ -100,12 +100,12 @@ const Pos=() => {
 
     // Quick filter handlers
     const handleQuickFilter = (filterType) => {
-        console.log('🎯 handleQuickFilter called with:', filterType);
+        // console.log('🎯 handleQuickFilter called with:', filterType);
         setActiveQuickFilter(filterType);
         // Capitalize the first letter to match database enum values
         const statusFilter = filterType === 'all' ? '' : filterType.charAt(0).toUpperCase() + filterType.slice(1);
-        console.log('📊 Status filter set to:', statusFilter);
-        console.log('🔌 Socket value:', socketValue);
+        // console.log('📊 Status filter set to:', statusFilter);
+        // console.log('🔌 Socket value:', socketValue);
         fetchPosSales(1, transactionSearchQuery, statusFilter, socketValue);
     };
 
@@ -618,19 +618,22 @@ const [selectedPaymentMethod, setSelectedPaymentMethod] = useState(null);
         },
         });
         
+        // Access the products array from the response object
+        const productsData = res.data.products || res.data || [];
+        
         // Filter out expired products
-        const nonExpiredProducts = res.data.filter(product => !isProductExpired(product));
+        const nonExpiredProducts = productsData.filter(product => !isProductExpired(product));
         
         setProducts(nonExpiredProducts);
         setAllProducts(nonExpiredProducts); // Store all non-expired products
-        // console.log("Products right:", res.data);
+        // console.log("Products right:", productsData);
         // Log first product to see image structure
-        if (res.data.length > 0) {
-          // console.log("First product structure:", res.data[0]);
-          // console.log("First product images:", res.data[0].images);
+        if (productsData.length > 0) {
+          // console.log("First product structure:", productsData[0]);
+          // console.log("First product images:", productsData[0].images);
         }
         // Initialize all to "general"
-        const initialTabs = res.data.reduce((acc, product) => {
+        const initialTabs = productsData.reduce((acc, product) => {
           acc[product._id] = "general";
           return acc;
         }, {});
@@ -924,7 +927,7 @@ const fetchCustomers = async () => {
   const fetchPosSales = async (page = 1, searchQuery = '', statusFilter = '', paymentMethodFilter = '') => {
     try {
       setLoading(true);
-      console.log('🔍 fetchPosSales called with:', { page, searchQuery, statusFilter, paymentMethodFilter });
+      // console.log('🔍 fetchPosSales called with:', { page, searchQuery, statusFilter, paymentMethodFilter });
       
       const token = localStorage.getItem("token");
       const params = new URLSearchParams({
@@ -945,14 +948,14 @@ const fetchCustomers = async () => {
       }
       
       const apiUrl = `${BASE_URL}/api/pos-sales/transactions?${params}`;
-      console.log('🌐 API URL:', apiUrl);
-      console.log('📋 URL Params:', params.toString());
+      // console.log('🌐 API URL:', apiUrl);
+      // console.log('📋 URL Params:', params.toString());
       
       const response = await axios.get(apiUrl, {
         headers: { Authorization: `Bearer ${token}` }
       });
       
-      console.log('✅ API Response:', response.data);
+      // console.log('✅ API Response:', response.data);
       setPosSales(response.data.data);
       setTotalPages(response.data.pagination.totalPages);
       setTotalSales(response.data.pagination.totalSales);

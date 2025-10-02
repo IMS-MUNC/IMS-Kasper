@@ -10,7 +10,7 @@ const DeleteModal = ({ show, handleClose, handleDelete }) => {
       <Modal.Body>
         Are you sure you want to delete this item? This action cannot be undone.
       </Modal.Body>
-      <Modal.Footer>
+      <Modal.Footer className="d-flex justify-content-end gap-2">
         <Button variant="secondary" onClick={handleClose}>
           Cancel
         </Button>

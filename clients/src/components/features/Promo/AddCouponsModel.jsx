@@ -4,6 +4,8 @@ import { IoMdClose } from "react-icons/io";
 import ReactQuill from 'react-quill';
 import 'react-quill/dist/quill.snow.css';
 import BASE_URL from "../../../pages/config/config";
+import { toast } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 
 const AddCouponModal = ({ show, handleClose, onSave, editCoupon = null, mode }) => {
   const isEditMode = mode === "edit";
@@ -76,6 +78,7 @@ const AddCouponModal = ({ show, handleClose, onSave, editCoupon = null, mode }) 
     }
 
     try {
+      const token = localStorage.getItem("token");
       
       const url = editCoupon
         ? `${BASE_URL}/api/coupons/${editCoupon._id}`
@@ -85,7 +88,10 @@ const AddCouponModal = ({ show, handleClose, onSave, editCoupon = null, mode }) 
 
       const res = await fetch(url, {
         method,
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
         body: JSON.stringify(finalData)
       });
 
@@ -95,7 +101,8 @@ const AddCouponModal = ({ show, handleClose, onSave, editCoupon = null, mode }) 
         alert(`Error: ${result.message || 'Failed to save coupon'}`);
         return;
       }
-
+      
+      toast.success(`Coupon ${isEditMode ? 'updated' : 'created'} successfully!`);
       onSave(); // refresh table
       handleClose();
     } catch (err) {
@@ -165,7 +172,7 @@ const AddCouponModal = ({ show, handleClose, onSave, editCoupon = null, mode }) 
               <Form.Label>Discount <span className="text-danger">*</span></Form.Label>
               <Form.Control
                 name="discount"
-                type="text"
+                type="number"
                 placeholder="e.g. 20% or ₹100"
                 value={formData.discount}
                 onChange={handleChange}
@@ -176,7 +183,7 @@ const AddCouponModal = ({ show, handleClose, onSave, editCoupon = null, mode }) 
               <Form.Label>Limit <span className="text-danger">*</span></Form.Label>
               <Form.Control
                 name="limit"
-                type="text"
+                type="number"
                 placeholder="Enter usage limit"
                 value={formData.limit}
                 onChange={handleChange}
@@ -211,10 +218,10 @@ const AddCouponModal = ({ show, handleClose, onSave, editCoupon = null, mode }) 
                 value={description}
                 onChange={setDescription}
                 placeholder="Type the message"
-                style={{ height: "120px" }}
+                style={{ height: "120px", marginBottom: "35px" }}
               />
             </div>
-            <div className="col-md-12 d-flex align-items-center justify-content-between pt-3">
+            {/* <div className="col-md-12 d-flex align-items-center justify-content-between pt-3">
               <Form.Label className="mb-0">Active Status</Form.Label>
               <div className="form-check form-switch">
                 <input
@@ -225,7 +232,7 @@ const AddCouponModal = ({ show, handleClose, onSave, editCoupon = null, mode }) 
                   onChange={handleChange}
                 />
               </div>
-            </div>
+            </div> */}
           </div>
         </Form>
       </Modal.Body>
