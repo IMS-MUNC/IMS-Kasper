@@ -181,9 +181,10 @@ const token = localStorage.getItem("token");
           Authorization: `Bearer ${token}`,
         },
         });
-        setProducts(res.data);
+        const productsArr = Array.isArray(res.data) ? res.data : [];
+        setProducts(productsArr);
         // Initialize all to "general"
-        const initialTabs = res.data.reduce((acc, product) => {
+        const initialTabs = productsArr.reduce((acc, product) => {
           acc[product._id] = "general";
           return acc;
         }, {});
@@ -244,26 +245,30 @@ const token = localStorage.getItem("token");
 
   //low stock items
 
-  const lowStockItems = product.filter(
+  // const lowStockItems = product.filter(
+  //   (item) =>
+  //     item.warehouseName === warehousesDetails?.warehouseName &&
+  //     item.quantity < 2500 &&
+  //     item.quantity > 0
+  // );
+  const lowStockItems = Array.isArray(product) ? product.filter(
     (item) =>
       item.warehouseName === warehousesDetails?.warehouseName &&
       item.quantity < 2500 &&
       item.quantity > 0
-  );
+  ) : [];
 
   //Out of Stock items
-
-  const outOfStockItems = product.filter(
+  const outOfStockItems = Array.isArray(product) ? product.filter(
     (item) =>
       item.warehouseName === warehousesDetails?.warehouseName &&
       item.quantity === 0
-  );
+  ) : [];
 
   //dougnut chart data
-
-  const filteredProducts = product.filter(
+  const filteredProducts = Array.isArray(product) ? product.filter(
     (item) => item.warehouseName === warehousesDetails?.warehouseName
-  );
+  ) : [];
 
   const totalStock = filteredProducts.reduce(
     (sum, item) => sum + (parseFloat(item.quantity) || 0),
