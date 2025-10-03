@@ -141,11 +141,6 @@ exports.createProduct = async (req, res) => {
 
 exports.getAllProducts = async (req, res) => {
   try {
-    // Pagination
-    const page = parseInt(req.query.page) || 1;
-    const limit = parseInt(req.query.limit) || 10;
-    const skip = (page - 1) * limit;
-
     // Filters
     const filter = {};
     if (req.query.brand) filter.brand = req.query.brand;
@@ -158,7 +153,6 @@ exports.getAllProducts = async (req, res) => {
       filter.productName = { $regex: req.query.search, $options: "i" };
     }
 
-    const total = await Product.countDocuments(filter);
     const products = await Product.find(filter)
       .populate("brand")
       .populate("category")
@@ -166,9 +160,7 @@ exports.getAllProducts = async (req, res) => {
       .populate("hsn")
       // .populate("supplier")
       .populate("warehouse")
-      .sort({ createdAt: -1 })
-      .skip(skip)
-      .limit(limit);
+      .sort({ createdAt: -1 });
 
     // Ensure hsnCode, warehouseName are always present for frontend
     const productsWithDetails = products.map(prod => {
@@ -196,10 +188,7 @@ exports.getAllProducts = async (req, res) => {
       return { ...rest, hsnCode, warehouseName };
     });
     res.status(200).json({
-      products: productsWithDetails,
-      total,
-      page,
-      limit
+      products: productsWithDetails
     });
   } catch (err) {
     res.status(500).json({ message: err.message });
@@ -605,21 +594,21 @@ exports.updateProduct = async (req, res) => {
     // Parse variants if sent as JSON string
     // const variants = variantsString ? JSON.parse(variantsString) : {};
     // --- VARIANTS PATCH: match createProduct logic ---
-  let variants = {};
-if (typeof variantsRaw !== 'undefined') {
-  try {
-    if (typeof variantsRaw === 'string') {
-      variants = JSON.parse(variantsRaw);
-    } else if (typeof variantsRaw === 'object' && variantsRaw !== null) {
-      variants = variantsRaw;
+    let variants = {};
+    if (typeof variantsRaw !== 'undefined') {
+      try {
+        if (typeof variantsRaw === 'string') {
+          variants = JSON.parse(variantsRaw);
+        } else if (typeof variantsRaw === 'object' && variantsRaw !== null) {
+          variants = variantsRaw;
+        }
+      } catch (e) {
+        variants = {};
+      }
     }
-  } catch (e) {
-    variants = {};
-  }
-}
-if (!variants || typeof variants !== 'object' || Array.isArray(variants)) {
-  variants = {};
-}
+    if (!variants || typeof variants !== 'object' || Array.isArray(variants)) {
+      variants = {};
+    }
     // Upload new images if provided
     let newImages = [];
     if (req.files && req.files.length > 0) {
@@ -638,7 +627,7 @@ if (!variants || typeof variants !== 'object' || Array.isArray(variants)) {
       existingImages = parsed.map(img => {
         if (typeof img === "string") {
           return { url: img, public_id: "" }; // no public_id if not sent
-          
+
         } else {
           return img;
         }
