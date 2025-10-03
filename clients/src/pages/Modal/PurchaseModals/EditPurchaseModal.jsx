@@ -206,17 +206,40 @@ const token = localStorage.getItem("token");
 
          }
       });
+      
+      // Show success toast message
+      const { toast } = await import('react-toastify');
+      toast.success('Purchase updated successfully');
+      
+      // Call the onUpdate callback to refresh the table
       if (onUpdate) onUpdate();
-      // const modalEl = document.getElementById('edit-purchase');
-      // const modal = Modal.getInstance(modalEl) || new Modal(modalEl);
-      // modal.hide();
-      const modalEl = document.getElementById("add-purchase");
-      const modalInstance = bootstrap.Modal.getInstance(modalEl);
-      modalInstance?.hide();
-      // window.$(`#add-purchase`).modal("hide");
+      
+      // Hide the modal with robust approach
+      setTimeout(() => {
+        if (window.$) {
+          window.$('#edit-purchase').modal('hide');
+          // Remove leftover backdrop and modal-open class
+          setTimeout(() => {
+            document.body.classList.remove('modal-open');
+            const backdrops = document.querySelectorAll('.modal-backdrop');
+            backdrops.forEach(b => b.remove());
+          }, 200);
+        } else {
+          const modal = document.getElementById('edit-purchase');
+          if (modal && modal.classList.contains('show')) {
+            modal.classList.remove('show');
+            modal.style.display = 'none';
+          }
+          document.body.classList.remove('modal-open');
+          const backdrops = document.querySelectorAll('.modal-backdrop');
+          backdrops.forEach(b => b.remove());
+        }
+      }, 300);
 
     } catch (err) {
       console.error("Update failed:", err);
+      const { toast } = await import('react-toastify');
+      toast.error('Failed to update purchase');
     }
   };
 
@@ -598,7 +621,7 @@ const token = localStorage.getItem("token");
               </div>
             </div>
 
-            <div className="modal-footer">
+            <div className="modal-footer" style={{gap:'10px'}}>
               <button type="button" className="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
               <button type="submit" className="btn btn-primary">Update Purchase</button>
             </div>
