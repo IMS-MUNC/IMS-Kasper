@@ -22,70 +22,70 @@ const rackSchema = new mongoose.Schema(
 const warehouseSchema = new mongoose.Schema(
   {
     warehouseName: {
-        type: String, 
-        required: true
-     },
+      type: String,
+      required: true
+    },
     space: {
-         type: String,
-        //   required: true 
-        },
-    items: { 
-        type: String, 
-        // required: true
-     },
+      type: String,
+      //   required: true 
+    },
+    items: {
+      type: String,
+      // required: true
+    },
     itemSize: {
       type: String,
       enum: ["small", "medium", "large"],
       default: "medium",
     },
-    contactPerson: { type: String},
-    warehouseCode :{type : String,  required:true},
-    warehouseOwner: { type: String,  required:true },
-    
-    phone: { 
-        type: String,
-         required: true 
-        },
-    email: { 
-        type: String,
-        //  required: true
-         },
+    contactPerson: { type: String },
+    warehouseCode: { type: String, required: true },
+    warehouseOwner: { type: String, required: true },
+
+    phone: {
+      type: String,
+      required: true
+    },
+    email: {
+      type: String,
+      //  required: true
+    },
     phoneWork: String,
     // streetAddress: String,
-    address: { type : String,  required:true},
+    address: { type: String, required: true },
 
     country: {
       // type: mongoose.Schema.Types.ObjectId,
-        type :String,
+      type: String,
       // ref: "Country",
       required: true,
     },
     state: {
       // type: mongoose.Schema.Types.ObjectId,
-        type :String,
+      type: String,
       // ref: "State",
       required: true,
     },
-    city: { 
+    city: {
       // type: mongoose.Schema.Types.ObjectId, 
-      type :String,
+      type: String,
       // ref: "City", 
-      required: true 
+      required: true
     },
     // postalCode: { 
     //     type: String, 
     //     // required: true
     //  },
-    pinCode: { 
-        type: String, 
-        required: true
-     },
-     layout: {
-    rows: { type: Number },
-    columns: { type: Number },
-    width: { type: String },
-    zones: { type: String }
-  },
+    pinCode: {
+      type: String,
+      required: true
+    },
+    layout: {
+      rows: { type: Number, required: true },
+      columns: { type: Number, required: true },
+      width: { type: String },
+      zones: { type: String, required: true }
+    },
     //   status: { type: Boolean, default: true },
     status: {
       type: String,
@@ -99,7 +99,7 @@ const warehouseSchema = new mongoose.Schema(
       type: Boolean,
       default: false,
     },
-     //  Racks embedded here
+    //  Racks embedded here
   },
   { timestamps: true }
 );
