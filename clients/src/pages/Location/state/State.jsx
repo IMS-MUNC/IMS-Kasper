@@ -1,5 +1,3 @@
-
-
 import React, { useEffect, useState } from "react";
 import { FaFileExcel, FaFilePdf } from "react-icons/fa";
 import { TbEdit, TbTrash } from "react-icons/tb";
@@ -10,6 +8,13 @@ import { toast } from "react-toastify";
 import Select from "react-select";
 import CountryModal from "../country/CountryEdit";
 import DeleteAlert from "../../../utils/sweetAlert/DeleteAlert";
+import { GrFormPrevious } from "react-icons/gr";
+import { MdNavigateNext } from "react-icons/md";
+import jsPDF from "jspdf";
+import autoTable from "jspdf-autotable";
+import Swal from "sweetalert2";
+import * as XLSX from "xlsx";
+import { saveAs } from "file-saver";
 
 const State = () => {
   const [countries, setCountries] = useState([]);
@@ -17,6 +22,10 @@ const State = () => {
   const [selectedCountry, setSelectedCountry] = useState(null);
   const [stateName, setStateName] = useState("");
   const [searchTerm, setSearchTerm] = useState("");
+  const [sortOption, setSortOption] = useState("recent");
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(10);
+  const [selectedStates, setSelectedStates] = useState([])
 
   const [editingState, setEditingState] = useState(null); // 🔄 For edit modal
   const [editStateName, setEditStateName] = useState("");
@@ -24,7 +33,7 @@ const State = () => {
 
   //   const [editCountry, setEditCountry] = useState(null);
   const [, setEditMode] = useState(false);
-const token = localStorage.getItem("token");
+  const token = localStorage.getItem("token");
   useEffect(() => {
     fetchCountries();
     fetchStates();
@@ -32,8 +41,8 @@ const token = localStorage.getItem("token");
 
   const fetchCountries = async () => {
     try {
-      const res = await axios.get(`${BASE_URL}/api/countries`,{
-         headers: {
+      const res = await axios.get(`${BASE_URL}/api/countries`, {
+        headers: {
           Authorization: `Bearer ${token}`,
         },
       });
@@ -50,8 +59,8 @@ const token = localStorage.getItem("token");
 
   const fetchStates = async () => {
     try {
-      const res = await axios.get(`${BASE_URL}/api/states`,{
-         headers: {
+      const res = await axios.get(`${BASE_URL}/api/states`, {
+        headers: {
           Authorization: `Bearer ${token}`,
         },
       });
@@ -65,68 +74,68 @@ const token = localStorage.getItem("token");
   const handleChange = (selectedOption) => {
     setSelectedCountry(selectedOption);
   };
-const handleAddState = async (e) => {
-  e.preventDefault();
-  if (!selectedCountry || !stateName.trim()) {
-    toast.error("Both country and state name are required.");
-    return;
-  }
+  const handleAddState = async (e) => {
+    e.preventDefault();
+    if (!selectedCountry || !stateName.trim()) {
+      toast.error("Both country and state name are required.");
+      return;
+    }
 
-  try {
-    await axios.post(
-      `${BASE_URL}/api/states`,
-      {
-        stateName: stateName,
-        stateCode: stateName.slice(0, 2).toUpperCase(),
-        country: selectedCountry.value,
-      },
-      {
-        headers: {
-          Authorization: `Bearer ${token}`,
+    try {
+      await axios.post(
+        `${BASE_URL}/api/states`,
+        {
+          stateName: stateName,
+          stateCode: stateName.slice(0, 2).toUpperCase(),
+          country: selectedCountry.value,
         },
-      }
-    );
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
 
-    toast.success("State added");
-    setStateName("");
-    setSelectedCountry(null);
-    fetchStates();
-    window.$(`#add-state`).modal("hide");
-  } catch (err) {
-    console.error(err);
-    toast.error(err.response?.data?.message || "Error adding state");
-  }
-};
+      toast.success("State added");
+      setStateName("");
+      setSelectedCountry(null);
+      fetchStates();
+      window.$(`#add-state`).modal("hide");
+    } catch (err) {
+      console.error(err);
+      toast.error(err.response?.data?.message || "Error adding state");
+    }
+  };
 
-const handleUpdate = async (e) => {
-  e.preventDefault();
-  try {
-    await axios.put(
-      `${BASE_URL}/api/states/${editingState._id}`,
-      {
-        stateName: editStateName,
-        stateCode: editStateCode,
-      },
-      {
-        headers: {
-          Authorization: `Bearer ${token}`,
+  const handleUpdate = async (e) => {
+    e.preventDefault();
+    try {
+      await axios.put(
+        `${BASE_URL}/api/states/${editingState._id}`,
+        {
+          stateName: editStateName,
+          stateCode: editStateCode,
         },
-      }
-    );
-    console.log("Editing state ID:", editingState?._id);
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+      console.log("Editing state ID:", editingState?._id);
 
-    toast.success("State updated");
-    setEditMode(false);
-    setEditingState(null);
-    setEditStateName("");
-    setEditStateCode("");
-    fetchStates();
-    window.$(`#edit-state`).modal("hide");
-  } catch (err) {
-    console.error(err);
-    toast.error("Failed to update");
-  }
-};
+      toast.success("State updated");
+      setEditMode(false);
+      setEditingState(null);
+      setEditStateName("");
+      setEditStateCode("");
+      fetchStates();
+      window.$(`#edit-state`).modal("hide");
+    } catch (err) {
+      console.error(err);
+      toast.error("Failed to update");
+    }
+  };
   // const handleAddState = async (e) => {
   //   e.preventDefault();
   //   if (!selectedCountry || !stateName.trim()) {
@@ -151,7 +160,7 @@ const handleUpdate = async (e) => {
   //     toast.error(err.response?.data?.message || "Error adding state");
   //   }
   // };
-  
+
   // const handleUpdate = async (e) => {
   //   e.preventDefault();
   //   try {
@@ -195,11 +204,95 @@ const handleUpdate = async (e) => {
   //     }
   //   };
 
+  const filteredStates = states.filter(
+    (state) =>
+      (state?.stateName || "").toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (state?.stateCode || "").toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
+  const handleExportPDF = () => {
+    const doc = new jsPDF();
+    doc.text("State List", 14, 16);
+    const tableColumn = ["State Name", "State Code"];
+    const tableRows = [];
+    filteredStates.forEach((states) => {
+      const stateData = [
+        states.stateName,
+        states.country?.name,
+      ];
+      tableRows.push(stateData);
+    });
+    autoTable(doc, {
+      startY: 20,
+      head: [tableColumn],
+      body: tableRows,
+    });
+    doc.save('state_list.pdf')
+  }
+
+  const handleExportExcel = () => {
+    const worksheetData = states.map((state) => ({
+      "State Name": state.stateName,
+      "Country Name": state.country?.name || "",
+    }));
+    const worksheet = XLSX.utils.json_to_sheet(worksheetData);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, "States");
+
+    const excelBuffer = XLSX.write(workbook, {
+      bookType: "xlsx",
+      type: "array",
+    });
+
+    const fileData = new Blob([excelBuffer], {
+      type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    });
+
+    saveAs(fileData, "States.xlsx");
+  };
+  const sortedStates = [...filteredStates].sort((a, b) => {
+    if (sortOption === "asc") {
+      return (a.stateName || "").localeCompare(b.stateName || "");
+    }
+    if (sortOption === "desc") {
+      return (b.stateName || "").localeCompare(a.stateName || "");
+    }
+
+    if (sortOption === "recent") {
+      return new Date(b.createdAt || 0) - new Date(a.createdAt || 0);
+    }
+    return 0;
+  });
+
+  // filter by time (if backend returns createdAt field)
+  let finalStates = sortedStates;
+  if (sortOption === "last7") {
+    const sevenDaysAgo = new Date();
+    sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+    finalStates = sortedStates.filter((c) => new Date(c.createdAt) >= sevenDaysAgo)
+  }
+
+  if (sortOption === "lastMonth") {
+    const oneMonthAgo = new Date();
+    oneMonthAgo.setMonth(oneMonthAgo.getMonth() - 1);
+    finalStates = sortedStates.filter((c) => new Date(c.createdAt) >= oneMonthAgo)
+  }
+
+  const totalPages = Math.ceil(finalStates.length / itemsPerPage) || 1;
+  const paginatedStates = finalStates.slice(
+    (currentPage - 1) * itemsPerPage,
+    currentPage * itemsPerPage
+  );
+
   const handleDeleteState = async (id) => {
     const confirmed = await DeleteAlert({});
     if (!confirmed) return;
     try {
-      await axios.delete(`${BASE_URL}/api/states/${id}`);
+      await axios.delete(`${BASE_URL}/api/states/${id}`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
       toast.success("State deleted");
       fetchStates();
     } catch (err) {
@@ -209,6 +302,33 @@ const handleUpdate = async (e) => {
   };
 
   console.log("State opening:", states);
+
+  const handleBulkDelete = async () => {
+    const confirmed = await DeleteAlert({});
+    if (!confirmed) return;
+    try {
+      const token = localStorage.getItem("token");
+      await axios.post(`${BASE_URL}/api/states/bulk-delete`, {
+        ids: selectedStates,
+      }, {
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      });
+      toast.success("Selected countries deleted");
+      setSelectedStates([]);
+      fetchStates();
+    } catch (error) {
+      console.log(error);
+      if (error.response?.status === 401) {
+        toast.error("Unauthorired. Please login again");
+      } else if (error.response?.status === 403) {
+        toast.error("You don't have permission to delete state");
+      } else {
+        toast.error("Bulk delete failed.Please try again")
+      }
+    }
+  }
 
   return (
     <div className="page-wrapper">
@@ -228,21 +348,25 @@ const handleUpdate = async (e) => {
                 data-bs-placement="top"
                 title="Pdf"
                 className="icon-btn"
+                onClick={handleExportPDF}
               >
                 <FaFilePdf />
               </button>
             </li>
             <li>
-              <label className="icon-btn m-0" title="Import Excel">
-                <input
-                  type="file"
-                  accept=".xlsx, .xls"
-                  style={{ display: "none" }}
-                />
+              <button
+                type="button"
+                data-bs-toggle="tooltip"
+                data-bs-placement="top"
+                title="Export Excel"
+                id="collapse-header"
+                className="icon-btn"
+                onClick={handleExportExcel}
+              >
                 <FaFileExcel style={{ color: "green" }} />
-              </label>
+              </button>
             </li>
-            <li>
+            {/* <li>
               <button
                 type="button"
                 data-bs-toggle="tooltip"
@@ -253,7 +377,7 @@ const handleUpdate = async (e) => {
               >
                 <FaFileExcel />
               </button>
-            </li>
+            </li> */}
           </div>
           <div className="page-btn">
             <a
@@ -267,6 +391,13 @@ const handleUpdate = async (e) => {
             </a>
           </div>
         </div>
+        {selectedStates.length > 0 && (
+          <div className="mb-3">
+            <div className="btn btn-danger" onClick={handleBulkDelete}>
+              Delete Selected({selectedStates.length})
+            </div>
+          </div>
+        )}
         {/* /product list */}
         <div className="card">
           <div className="card-header d-flex align-items-center justify-content-between flex-wrap row-gap-3">
@@ -274,7 +405,7 @@ const handleUpdate = async (e) => {
               <div className="search-input">
                 <input
                   type="text"
-                  placeholder="Search country..."
+                  placeholder="Search state..."
                   className="form-control"
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
@@ -288,49 +419,46 @@ const handleUpdate = async (e) => {
                   className="dropdown-toggle btn btn-white btn-md d-inline-flex align-items-center"
                   data-bs-toggle="dropdown"
                 >
-                  Sort By : Last 7 Days
+                  Sort By : {
+                    sortOption === "recent" ? "Recently Added" :
+                      sortOption === "asc" ? "Ascending" :
+                        sortOption === "desc" ? "Descending" :
+                          sortOption === "lastMonth" ? "Last Month" :
+                            sortOption === "last7" ? "Last 7 Days" : ""
+                  }
                 </a>
                 <ul className="dropdown-menu  dropdown-menu-end p-3">
                   <li>
-                    <a
-                      href="javascript:void(0);"
-                      className="dropdown-item rounded-1"
-                    >
+                    <a href="javascript:void(0);" className="dropdown-item rounded-1"
+                      onClick={() => setSortOption("recent")}>
                       Recently Added
                     </a>
                   </li>
                   <li>
-                    <a
-                      href="javascript:void(0);"
-                      className="dropdown-item rounded-1"
-                    >
+                    <a href="javascript:void(0);" className="dropdown-item rounded-1"
+                      onClick={() => setSortOption("asc")}>
                       Ascending
                     </a>
                   </li>
                   <li>
-                    <a
-                      href="javascript:void(0);"
-                      className="dropdown-item rounded-1"
-                    >
-                      Desending
+                    <a href="javascript:void(0);" className="dropdown-item rounded-1"
+                      onClick={() => setSortOption("desc")}>
+                      Descending
                     </a>
                   </li>
                   <li>
-                    <a
-                      href="javascript:void(0);"
-                      className="dropdown-item rounded-1"
-                    >
+                    <a href="javascript:void(0);" className="dropdown-item rounded-1"
+                      onClick={() => setSortOption("lastMonth")}>
                       Last Month
                     </a>
                   </li>
                   <li>
-                    <a
-                      href="javascript:void(0);"
-                      className="dropdown-item rounded-1"
-                    >
+                    <a href="javascript:void(0);" className="dropdown-item rounded-1"
+                      onClick={() => setSortOption("last7")}>
                       Last 7 Days
                     </a>
                   </li>
+
                 </ul>
               </div>
             </div>
@@ -339,25 +467,49 @@ const handleUpdate = async (e) => {
             <div className="table-responsive">
               <table className="table datatable">
                 <thead className="thead-light">
-                  <tr>
+                  <tr style={{ textAlign: 'center' }}>
                     <th className="no-sort">
                       <label className="checkboxs">
-                        <input type="checkbox" id="select-all" />
+                        <input type="checkbox"
+                          checked={paginatedStates.length > 0 && paginatedStates.every((state) => selectedStates.includes(state._id))}
+                          onChange={(e) => {
+                            if (e.target.checked) {
+                              const newIds = paginatedStates.map((state) => state._id);
+                              setSelectedStates((prev) => [
+                                ...new Set([...prev, ...newIds]),
+                              ])
+                            } else {
+                              const idsToRemove = paginatedStates.map((state) => state._id);
+                              setSelectedStates((prev) => prev.filter((id) => !idsToRemove.includes(id)))
+                            }
+                          }}
+                          id="select-all" />
                         <span className="checkmarks" />
                       </label>
                     </th>
                     <th>State Name</th>
                     <th>Country Name</th>
-                    <th className="no-sort" />
+                    <th>Action</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {states.length > 0 ? (
-                    states.map((state) => (
-                      <tr key={state._id}>
+                  {paginatedStates.length > 0 ? (
+                    paginatedStates.map((state) => (
+                      <tr key={state._id} style={{ textAlign: 'center' }}>
                         <td>
                           <label className="checkboxs">
-                            <input type="checkbox" />
+                            <input
+                              type="checkbox"
+                              checked={selectedStates.includes(state._id)}
+                              onChange={(e) => {
+                                if (e.target.checked) {
+                                  setSelectedStates((prev) => [...prev, state._id]);
+                                } else {
+                                  setSelectedStates((prev) => prev.filter((id) => id !== state._id));
+                                }
+                              }}
+                            />
+
                             <span className="checkmarks" />
                           </label>
                         </td>
@@ -428,19 +580,78 @@ const handleUpdate = async (e) => {
               </table>
             </div>
           </div>
+          {/* pagination start */}
+          <div
+            className="d-flex justify-content-end gap-3"
+            style={{ padding: "10px 20px" }}
+          >
+            <select
+              value={itemsPerPage}
+              onChange={(e) => {
+                setItemsPerPage(Number(e.target.value));
+                setCurrentPage(1);
+              }}
+              className="form-select w-auto"
+            >
+              <option value={10}>10 Per Page</option>
+              <option value={25}>25 Per Page</option>
+              <option value={50}>50 Per Page</option>
+              <option value={100}>100 Per Page</option>
+            </select>
+            <span
+              style={{
+                backgroundColor: "white",
+                boxShadow: "rgb(0 0 0 / 4%) 0px 3px 8px",
+                padding: "7px",
+                borderRadius: "5px",
+                border: "1px solid #e4e0e0ff",
+                color: "gray",
+              }}
+            >
+              {finalStates.length === 0
+                ? "0 of 0"
+                : `${(currentPage - 1) * itemsPerPage + 1}-${Math.min(
+                  currentPage * itemsPerPage,
+                  finalStates.length
+                )} of ${finalStates.length}`}
+              <button
+                style={{
+                  border: "none",
+                  color: "grey",
+                  backgroundColor: "white",
+                }}
+                onClick={() =>
+                  setCurrentPage((prev) => Math.max(prev - 1, 1))
+                }
+                disabled={currentPage === 1}
+              >
+                <GrFormPrevious />
+              </button>{" "}
+              <button
+                style={{ border: "none", backgroundColor: "white" }}
+                onClick={() =>
+                  setCurrentPage((prev) => Math.min(prev + 1, totalPages))
+                }
+                disabled={currentPage === totalPages}
+              >
+                <MdNavigateNext />
+              </button>
+            </span>
+          </div>
+          {/* pagination end */}
         </div>
         {/* /product list */}
       </div>
       {/* Add State Modal */}
-      <div className="modal fade" id="add-state">
+      <div className="modal" id="add-state">
         <div className="modal-dialog modal-dialog-centered">
           <div className="modal-content">
             <form onSubmit={handleAddState}>
               <div className="modal-header">
                 <h4 className="modal-title">Add State</h4>
-                <button type="button" className="close" data-bs-dismiss="modal">
+                {/* <button type="button" className="close" data-bs-dismiss="modal">
                   &times;
-                </button>
+                </button> */}
               </div>
               <div className="modal-body">
                 <div className="mb-3">
@@ -466,7 +677,7 @@ const handleUpdate = async (e) => {
                   />
                 </div>
               </div>
-              <div className="modal-footer">
+              <div className="modal-footer" style={{ display: 'flex', gap: '10px' }}>
                 <button
                   type="button"
                   className="btn btn-secondary"

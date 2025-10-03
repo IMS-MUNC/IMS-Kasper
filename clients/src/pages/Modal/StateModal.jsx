@@ -11,17 +11,17 @@ const StateModal = ({
   submitLabel = "Submit",
 }) => {
   return (
-    <div className="modal fade" id={modalId} tabIndex="-1" aria-hidden="true">
+    <div className="modal" id={modalId} tabIndex="-1" aria-hidden="true">
       <div className="modal-dialog modal-dialog-centered">
         <div className="modal-content">
           <div className="modal-header">
             <h5 className="modal-title">{title}</h5>
-            <button
+            {/* <button
               type="button"
               className="btn-close"
               data-bs-dismiss="modal"
               aria-label="Close"
-            ></button>
+            ></button> */}
           </div>
 
           <form onSubmit={onSubmit}>
@@ -53,7 +53,7 @@ const StateModal = ({
               </div>
             </div>
 
-            <div className="modal-footer">
+            <div className="modal-footer" style={{ display: 'flex', gap: '10px' }}>
               <button
                 type="button"
                 className="btn btn-secondary"
