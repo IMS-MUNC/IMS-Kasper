@@ -16,6 +16,7 @@ router.get("/cities/state/:stateId",authMiddleware, cityController.getCitiesBySt
 router.put("/cities/:id",authMiddleware, cityController.updateCity);
 
 // Delete
-router.delete("/cities/:id",authMiddleware, cityController.deleteCity);
+router.delete("/cities/:id", authMiddleware, cityController.deleteCity);
+router.post("/cities/bulk-delete", authMiddleware, cityController.bulkDeleteCity);
 
 module.exports = router;
