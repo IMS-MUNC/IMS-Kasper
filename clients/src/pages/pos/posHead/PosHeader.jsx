@@ -4,6 +4,8 @@ import { Link } from 'react-router-dom';
 import { useSidebar } from '../../../Context/sidetoggle/SidebarContext';
 import { TbCalculator, TbCash, TbChartInfographic, TbMaximize, TbPrinter, TbProgress, TbSettings } from 'react-icons/tb';
 import Mundc from "../../../assets/img/logo/munclogotm.png"
+import { toast } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 
 const PosHeader = () => {
   const { openMenus, toggleMenu, mobileOpen, handleMobileToggle, handleLinkClick } = useSidebar();
