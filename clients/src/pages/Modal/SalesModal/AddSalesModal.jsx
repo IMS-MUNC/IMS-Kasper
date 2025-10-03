@@ -475,7 +475,7 @@ const AddSalesModal = ({ onSuccess, onClose }) => {
           backdrops.forEach(b => b.remove());
         }
       }, 300);
-            Swal.fire("Success", "Purchase created successfully", "success");
+            Swal.fire("Success", "Sales created successfully", "success");
       
     } catch (error) {
       console.error("Error saving sale:", error);
@@ -569,52 +569,7 @@ useEffect(() => {
 
 }, [selectedProducts, shippingCost, labourCost, formState, paidAmount, paymentType]);
 
-  // // Calculate all product totals
-  // const productTotals = selectedProducts.map(calculateLineTotal);
-  // const totalProductAmount = productTotals.reduce((acc, t) => acc + t.lineTotal, 0);
-
-  // // Amount: only product total
-  // const amount = totalProductAmount;
-
-  // // Additional charges
-  // const additionalCharges = (formState.enableAddCharges ? (labourCost + shippingCost) : 0);
-
-  // // Tax summary (CGST/SGST)
-  // let cgstValue = 0;
-  // let sgstValue = 0;
-  // if (formState.enableTax && formState.cgst) {
-  //   const percent = parseFloat(formState.cgst) || 0;
-  //   cgstValue = (amount * percent) / 100;
-  // }
-  // if (formState.enableTax && formState.sgst) {
-  //   const percent = parseFloat(formState.sgst) || 0;
-  //   sgstValue = (amount * percent) / 100;
-  // }
-
-
-  // // Grand total calculation
-  // let grandTotal = amount + cgstValue + sgstValue + additionalCharges ;
-  // if (formState.roundOff) {
-  //   grandTotal = Math.round(grandTotal);
-  // }
-
-
-  // let roundOffValue = 0;
-  // if (formState.roundOff) {
-  //   const rounded = Math.round(grandTotal);
-  //   roundOffValue = rounded - grandTotal;
-  //   grandTotal = rounded;
-  // }
-
-  // useEffect(() => {
-  //   if (paymentType === "Partial") {
-  //     const due = grandTotal - paidAmount;
-  //     setDueAmount(due > 0 ? due : 0);
-  //   } else {
-  //     setPaidAmount(grandTotal);
-  //     setDueAmount(0);
-  //   }
-  // }, [paymentType, paidAmount, grandTotal]);
+  
 
   const [showAddModal, setShowAddModal] = useState(false);
   const [companyImages, setCompanyImages] = useState(null)
@@ -653,46 +608,6 @@ useEffect(() => {
   }, [companyImages])
 
 
-  //   // Separate calculation logic for product row
-  // const getProductRowCalculation = (product) => {
-  //   const qty = product.quantity || 1;
-  //   const availableQty = product.availableQty || 0;
-  //   const remainingQty = availableQty - qty;
-  //   const price = product.sellingPrice || 0;
-  //   const discount = product.discount || 0;
-  //   const tax = product.tax || 0;
-  //   const subTotal = qty * price;
-  //   let discountAmount = 0;
-  //   let discountDisplay = '';
-  //   if (product.discountType === 'Percentage') {
-  //     discountDisplay = discount + '%';
-  //     discountAmount = (subTotal * discount) / 100;
-  //   } else {
-  //     discountDisplay = '₹' + discount;
-  //     discountAmount = discount;
-  //   }
-  //   const afterDiscount = subTotal - discountAmount;
-  //   const taxAmount = (afterDiscount * tax) / 100;
-  //   const lineTotal = afterDiscount ;
-  //   const unitCost = qty > 0 ? lineTotal / qty : 0;
-  //   return {
-  //     qty,
-  //     availableQty,
-  //     remainingQty,
-  //     price,
-  //     discount,
-  //     tax,
-  //     subTotal,
-  //     discountAmount,
-  //     discountDisplay,
-  //     afterDiscount,
-  //     taxAmount,
-  //     lineTotal,
-  //     unitCost
-  //   };
-  // };
-
-  // 📌 inside your component
 const [amounts, setAmounts] = React.useState(0);        // Subtotal
 const [discountTotal, setDiscountTotal] = React.useState(0); // Discount
 const [taxTotal, setTaxTotal] = React.useState(0);    // Total tax
@@ -739,37 +654,6 @@ React.useEffect(() => {
 }, [selectedProducts, shippingCost, labourCost]);
 
 
-// // 🟢 Grand Total Calculation Function
-// const calculateBillSummary = (products, shippingCost = 0, labourCost = 0) => {
-//   let subTotal = 0;
-//   let discountSum = 0;
-//   let taxableSum = 0;
-//   let taxSum = 0;
-
-//   products.forEach((p) => {
-//     const d = getProductRowCalculation(p);
-//     subTotal += d.subTotal;            // base total
-//     discountSum += d.discountAmount;   // total discount
-//     taxableSum += d.taxableAmount;     // after discount, before tax
-//     taxSum += d.taxAmount;             // total GST
-//   });
-
-//   const cgst = taxSum / 2;
-//   const sgst = taxSum / 2;
-//   const grandTotal = taxableSum + taxSum + shippingCost + labourCost;
-
-//   return {
-//     subTotal,
-//     discountSum,
-//     taxableSum,
-//     cgst,
-//     sgst,
-//     taxSum,
-//     shippingCost,
-//     labourCost,
-//     grandTotal,
-//   };
-// };
 
 // // 🟢 Inside your component
 const [summary, setSummary] = React.useState({
@@ -783,26 +667,6 @@ const [summary, setSummary] = React.useState({
   labourCost: 0,
   grandTotal: 0,
 });
-
-// React.useEffect(() => {
-//   if (selectedProducts && selectedProducts.length > 0) {
-//     const res = calculateBillSummary(selectedProducts, shippingCost, labourCost);
-//     setSummary(res);
-//   } else {
-//     setSummary({
-//       subTotal: 0,
-//       discountSum: 0,
-//       taxableSum: 0,
-//       cgst: 0,
-//       sgst: 0,
-//       taxSum: 0,
-//       shippingCost,
-//       labourCost,
-//       grandTotal: 0,
-//     });
-//   }
-// }, [selectedProducts, shippingCost, labourCost]);
-
 
 // 🟢 Safe Row Calculation
 const getProductRowCalculation = (product) => {
@@ -849,39 +713,6 @@ const getProductRowCalculation = (product) => {
 };
 
 
-// 🟢 Safe Summary Calculation
-// const calculateBillSummary = (products = [], shippingCost = 0, labourCost = 0) => {
-//   let subTotal = 0;
-//   let discountSum = 0;
-//   let taxableSum = 0;
-//   let taxSum = 0;
-
-//   (products || []).forEach((p) => {
-//     const d = getProductRowCalculation(p);
-//     subTotal += d.subTotal || 0;
-//     discountSum += d.discountAmount || 0;
-//     taxableSum += d.taxableAmount || 0;
-//     taxSum += d.taxAmount || 0;
-//   });
-
-//   const cgst = taxSum / 2;
-//   const sgst = taxSum / 2;
-//   const grandTotal =
-//     (taxableSum || 0) + (taxSum || 0) + (Number(shippingCost) || 0) + (Number(labourCost) || 0);
-
-//   return {
-//     subTotal,
-//     discountSum,
-//     taxableSum,
-//     cgst,
-//     sgst,
-//     taxSum,
-//     shippingCost: Number(shippingCost) || 0,
-//     labourCost: Number(labourCost) || 0,
-//     grandTotal,
-//   };
-// };
-
 
 const calculateBillSummary = (products = [], shippingCost = 0, labourCost = 0) => {
   let subTotal = 0;
@@ -924,6 +755,38 @@ React.useEffect(() => {
 
 // const summary = calculateBillSummary(selectedProducts); // yaha selectedProducts aapka product list hai
 
+
+// validation and Sanitization
+
+  // Error state for validation
+  const [formErrors, setFormErrors] = useState({});
+
+  // Sanitization helper
+  const sanitizeInput = (value) => {
+    if (typeof value === 'string') {
+      return value.replace(/[<>]/g, ''); // Remove angle brackets (basic XSS protection)
+    }
+    return value;
+  };
+
+  // Validation function
+  const validateForm = () => {
+    const errors = {};
+    if (!selectedCustomer) errors.selectedCustomer = 'Customer is required.';
+    if (!saleDate) errors.saleDate = 'Sale date is required.';
+    if (!status) errors.status = 'Status is required.';
+    if (!selectedProducts || selectedProducts.length === 0) errors.selectedProducts = 'At least one product is required.';
+    selectedProducts.forEach((p, idx) => {
+      if (!p.productName) errors[`productName_${idx}`] = 'Product name required.';
+      if (!p.quantity || p.quantity <= 0) errors[`quantity_${idx}`] = 'Quantity must be greater than 0.';
+    });
+    if (paymentType === 'Partial') {
+      if (paidAmount < 0) errors.paidAmount = 'Paid amount cannot be negative.';
+      if (paidAmount > grandTotals) errors.paidAmount = 'Paid amount cannot exceed total.';
+      if (!dueDate) errors.dueDate = 'Due date required for partial payment.';
+    }
+    return errors;
+  };
 
   return (
     <div className="modal fade" id="add-sales-new">
