@@ -17,6 +17,8 @@ import AddDebitNoteModals from "../../../../pages/Modal/debitNoteModals/AddDebit
 import * as XLSX from "xlsx";
 import { jsPDF } from 'jspdf';
 import autoTable from 'jspdf-autotable';
+import { GrFormPrevious } from "react-icons/gr";
+import { MdNavigateNext } from "react-icons/md";
 
 
 const Purchase = () => {
@@ -541,13 +543,57 @@ const token = localStorage.getItem("token");
               </table>
             </div>
 
-            <div className="d-flex justify-content-between align-items-center p-2 mb-0">
+              {/* Pagination controls */}
+                        <div
+                          className="d-flex justify-content-end gap-3"
+                          style={{ padding: "10px 20px" }}
+                        >
+            
+                          <select
+                            className="form-select w-auto"
+                            value={page}
+                            onChange={e => { totalPages(Number(e.target.value)); }}
+                          >
+                            {[10, 20, 50, 100].map(n => <option key={n} value={n}>{n} per page</option>)}
+                          </select>
+            
+                          <span
+                            style={{
+                              backgroundColor: "white",
+                              boxShadow: "rgb(0 0 0 / 4%) 0px 3px 8px",
+                              padding: "7px",
+                              borderRadius: "5px",
+                              border: "1px solid #e4e0e0ff",
+                              color: "gray",
+                            }}
+                          >
+                            <span>Page {page} of {totalPages || 1}</span>
+            
+                            {" "}
+                            <button
+                              style={{
+                                border: "none",
+                                color: "grey",
+                                backgroundColor: "white",
+                              }}
+                             onClick={() => handlePageChange(page - 1)} disabled={page === 1}>
+                              <GrFormPrevious />
+                            </button>{" "}
+                            <button
+                              style={{ border: "none", backgroundColor: "white" }}
+                              onClick={() => handlePageChange(page + 1)} disabled={page === totalPages}>
+                              <MdNavigateNext />
+                            </button>
+                          </span>
+                        </div>
+
+            {/* <div className="d-flex justify-content-between align-items-center p-2 mb-0">
               <div>Page {page} of {totalPages}</div>
               <div className="btn-group">
                 <button className="btn btn-sm btn-outline-secondary" onClick={() => handlePageChange(page - 1)} disabled={page === 1}>Prev</button>
                 <button className="btn btn-sm btn-outline-secondary" onClick={() => handlePageChange(page + 1)} disabled={page === totalPages}>Next</button>
               </div>
-            </div>
+            </div> */}
           </div>
         </div>
 
