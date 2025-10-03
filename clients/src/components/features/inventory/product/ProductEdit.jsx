@@ -71,8 +71,8 @@ const ProductEdit = () => {
     brand: "",
     category: "",
     subCategory: "",
-    supplier: "",
-    itemBarcode: "",
+    // supplier: "",
+    // itemBarcode: "",
     store: "",
     warehouse: "",
     purchasePrice: "",
@@ -91,7 +91,7 @@ const ProductEdit = () => {
     seoDescription: "",
     variants: {},
     sellingType: "",
-    barcodeSymbology: "",
+    // barcodeSymbology: "",
     productType: "Single",
     itemType: "Good",
     isAdvanced: false,
@@ -130,6 +130,18 @@ const ProductEdit = () => {
   const [supplierId, setSupplierId] = useState(null);
   const [warehouseId, setWarehouseId] = useState(null);
 
+    //    const [variants, setVariants] = useState([
+    //   { selectedVariant: "", selectedValue: "", valueDropdown: [] },
+    // ]);
+
+    const [variants, setVariants] = useState([
+  { selectedVariant: "", selectedValue: [], valueDropdown: [] },
+]);
+  
+    const [variantDropdown, setVariantDropdown] = useState([]);
+  
+  
+
   // Image state
   const [images, setImages] = useState([]);
 
@@ -165,7 +177,7 @@ const ProductEdit = () => {
           ),
           serialNumber: sanitizeHtml(data.serialNumber || "", sanitizeOptions),
           batchNumber: sanitizeHtml(data.batchNumber || "", sanitizeOptions),
-          itemBarcode: sanitizeHtml(data.itemBarcode || "", sanitizeOptions),
+          // itemBarcode: sanitizeHtml(data.itemBarcode || "", sanitizeOptions),
           store: sanitizeHtml(data.store || "", sanitizeOptions),
         };
         setFormData(sanitizedData);
@@ -199,6 +211,35 @@ const ProductEdit = () => {
           if (hsnOption) setSelectedHSN(hsnOption);
         }
 
+       
+
+        // --- VARIANTS PATCH ---
+if (data.variants && typeof data.variants === "object" && Object.keys(data.variants).length > 0) {
+  const token = localStorage.getItem("token");
+  Promise.all(
+    Object.entries(data.variants).map(async ([variantName, values]) => {
+      // Fetch valueDropdown for this variant
+      let valueDropdown = [];
+      try {
+        const res = await fetch(`${BASE_URL}/api/variant-attributes/values/${encodeURIComponent(variantName)}`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        const data = await res.json();
+        valueDropdown = Array.isArray(data)
+          ? data.flatMap(val => typeof val === 'string' ? val.split(',').map(v => v.trim()).filter(Boolean) : [])
+          : [];
+      } catch (err) {}
+      return {
+        selectedVariant: variantName,
+        selectedValue: Array.isArray(values) ? values : [values],
+        valueDropdown,
+      };
+    })
+  ).then(variantArr => setVariants(variantArr));
+} else {
+  setVariants([{ selectedVariant: "", selectedValue: [], valueDropdown: [] }]);
+}
+
         if (data.images && data.images.length > 0) {
           const existingImages = data.images.map((img) => ({
             preview: img.url, // Dropzone expects `preview`
@@ -217,6 +258,65 @@ const ProductEdit = () => {
     };
     fetchProduct();
   }, [id, optionsHsn]);
+
+   // ✅ Fetch all active variants for dropdown
+  useEffect(() => {
+    const token = localStorage.getItem("token");
+    if (!token) return;
+
+    fetch(`${BASE_URL}/api/variant-attributes/active-variants`, {
+      headers: { Authorization: `Bearer ${token}` },
+    })
+      .then(res => res.json())
+      .then(data => setVariantDropdown(data))
+      .catch(err => console.error("Error fetching variant dropdown:", err));
+  }, [BASE_URL]);
+
+  // ✅ Handle variant change per row
+  // const handleVariantChange = (index, value) => {
+  //   const token = localStorage.getItem("token");
+
+  //   // reset valueDropdown when variant changes
+  //   setVariants(prev =>
+  //     prev.map((v, i) =>
+  //       i === index
+  //         ? { ...v, selectedVariant: value, selectedValue: [], valueDropdown: [] }
+  //         : v
+  //     )
+  //   );
+
+  //   if (!value || !token) return;
+
+  //   fetch(`${BASE_URL}/api/variant-attributes/values/${encodeURIComponent(value)}`, {
+  //     headers: { Authorization: `Bearer ${token}` },
+  //   })
+  //     .then(res => res.json())
+  //     .then(data => {
+  //       let values = [];
+  //       data.forEach(val => {
+  //         if (typeof val === "string") {
+  //           values.push(...val.split(",").map(v => v.trim()).filter(Boolean));
+  //         }
+  //       });
+
+  //       setVariants(prev =>
+  //         prev.map((v, i) =>
+  //           i === index ? { ...v, valueDropdown: values } : v
+  //         )
+  //       );
+  //     })
+  //     .catch(err => console.error("Error fetching value dropdown:", err));
+  // };
+
+  // ✅ Handle value change
+  // const handleValueChange = (index, selectedValues) => {
+  //   setVariants(prev =>
+  //     prev.map((v, i) =>
+  //       i === index ? { ...v, selectedValue: selectedValues } : v
+  //     )
+  //   );
+  // };
+
 
   // Fetch dropdown options (categories, brands, units, suppliers, warehouses, HSN)
   useEffect(() => {
@@ -273,25 +373,28 @@ const ProductEdit = () => {
         setUnitsOptions(options);
       } catch (error) {}
     };
-    const fetchSuppliers = async () => {
-      try {
-        const token = localStorage.getItem("token");
-        const res = await axios.get(`${BASE_URL}/api/suppliers/active`, {
-          headers: {
-            Authorization: `Bearer ${token}`, // ✅ token sent properly
-          },
-        });
-        const options = res.data.suppliers.map((supplier) => ({
-          value: supplier._id,
-          label: sanitizeHtml(
-            `${supplier.firstName}${supplier.lastName} (${supplier.supplierCode})`,
-            sanitizeOptions
-          ), // Commented out: Sanitization
-          // label: `${supplier.firstName}${supplier.lastName} (${supplier.supplierCode})`,
-        }));
-        setOptions(options);
-      } catch (error) {}
-    };
+
+    // const fetchSuppliers = async () => {
+    //   try {
+    //     const token = localStorage.getItem("token");
+    //     const res = await axios.get(`${BASE_URL}/api/suppliers/active`, {
+    //       headers: {
+    //         Authorization: `Bearer ${token}`, // ✅ token sent properly
+    //       },
+    //     });
+    //     const options = res.data.suppliers.map((supplier) => ({
+    //       value: supplier._id,
+    //       label: sanitizeHtml(
+    //         `${supplier.firstName}${supplier.lastName} (${supplier.supplierCode})`,
+    //         sanitizeOptions
+    //       ), // Commented out: Sanitization
+    //       // label: `${supplier.firstName}${supplier.lastName} (${supplier.supplierCode})`,
+    //     }));
+    //     setOptions(options);
+    //   } catch (error) {}
+    // };
+    
+    
     const fetchWarehouses = async () => {
       try {
         const token = localStorage.getItem("token");
@@ -336,7 +439,7 @@ const ProductEdit = () => {
     fetchCategories();
     fetchBrands();
     fetchUnits();
-    fetchSuppliers();
+    // fetchSuppliers();
     fetchWarehouses();
     fetchHSN();
   }, []);
@@ -428,8 +531,8 @@ const ProductEdit = () => {
   const handleBrandChange = (selectedOption) =>
     setSelectedBrands(selectedOption);
   const handleUnitChange = (selectedOption) => setSelectedUnits(selectedOption);
-  const handleSupplierChange = (selectedOption) =>
-    setSelectedSupplier(selectedOption);
+  // const handleSupplierChange = (selectedOption) =>
+  //   setSelectedSupplier(selectedOption);
   const handleWarehouseChange = (selectedOption) =>
     setSelectedWarehouse(selectedOption);
   const handleHSNChange = (selectedOption) => setSelectedHSN(selectedOption);
@@ -516,10 +619,10 @@ const ProductEdit = () => {
         !errors.sku &&
         selectedCategory &&
         selectedsubCategory &&
-        selectedSupplier &&
+        // selectedSupplier &&
         selectedWarehouse &&
         selectedHSN &&
-        formData.itemBarcode &&
+        // formData.itemBarcode &&
         formData.store &&
         (!formData.isAdvanced ||
           (formData.leadTime &&
@@ -620,26 +723,26 @@ const ProductEdit = () => {
     setFormData((prev) => ({ ...prev, sku: sanitizedSKU }));
   };
 
-  // Barcode generator
-  const generateBarcode = () => {
-    const prefix = "BR";
-    const randomNumber = Math.floor(100000000 + Math.random() * 900000000);
-    return `${prefix}${randomNumber}`;
-  };
+  // // Barcode generator
+  // const generateBarcode = () => {
+  //   const prefix = "BR";
+  //   const randomNumber = Math.floor(100000000 + Math.random() * 900000000);
+  //   return `${prefix}${randomNumber}`;
+  // };
 
   // Submit handler
   const handleSubmit = async (e) => {
-    console.log("SUBMIT: selectedBrands", selectedBrands);
-    console.log("SUBMIT: selectedCategory", selectedCategory);
-    console.log("SUBMIT: selectedsubCategory", selectedsubCategory);
-    console.log("SUBMIT: selectedSupplier", selectedSupplier);
-    console.log("SUBMIT: selectedWarehouse", selectedWarehouse);
-    console.log("SUBMIT: selectedUnits", selectedUnits);
-    console.log("SUBMIT: selectedHSN", selectedHSN);
-    console.log(
-      "SUBMIT: subcategory value sent:",
-      selectedsubCategory?.value || ""
-    );
+    // console.log("SUBMIT: selectedBrands", selectedBrands);
+    // console.log("SUBMIT: selectedCategory", selectedCategory);
+    // console.log("SUBMIT: selectedsubCategory", selectedsubCategory);
+    // console.log("SUBMIT: selectedSupplier", selectedSupplier);
+    // console.log("SUBMIT: selectedWarehouse", selectedWarehouse);
+    // console.log("SUBMIT: selectedUnits", selectedUnits);
+    // console.log("SUBMIT: selectedHSN", selectedHSN);
+    // console.log(
+    //   "SUBMIT: subcategory value sent:",
+    //   selectedsubCategory?.value || ""
+    // );
     e.preventDefault();
     if (!validateStep()) {
       // Commented out: Validation check
@@ -654,9 +757,9 @@ const ProductEdit = () => {
     formPayload.append("brand", selectedBrands?.value || "");
     formPayload.append("category", selectedCategory?.value || "");
     formPayload.append("subcategory", selectedsubCategory?.value || "");
-    formPayload.append("supplier", selectedSupplier?.value || "");
-    if (formData.itemBarcode)
-      formPayload.append("itemBarcode", formData.itemBarcode);
+    // formPayload.append("supplier", selectedSupplier?.value || "");
+    // if (formData.itemBarcode)
+    //   formPayload.append("itemBarcode", formData.itemBarcode);
     if (formData.store) formPayload.append("store", formData.store);
     formPayload.append("warehouse", selectedWarehouse?.value || "");
     if (formData.purchasePrice)
@@ -706,8 +809,11 @@ const ProductEdit = () => {
     if (formData.expirationDate)
       formPayload.append("expirationDate", formData.expirationDate);
     formPayload.append("hsn", selectedHSN?.value || "");
+    
+    // if (formData.variants && Object.keys(formData.variants).length > 0)
+    //   formPayload.append("variants", JSON.stringify(formData.variants));
     if (formData.variants && Object.keys(formData.variants).length > 0)
-      formPayload.append("variants", JSON.stringify(formData.variants));
+  formPayload.append("variants", JSON.stringify(formData.variants));
     // append new images only
     images.forEach((imgFile) => {
       if (imgFile instanceof File) {
@@ -757,6 +863,67 @@ const ProductEdit = () => {
       setImages((prev) => prev.filter((f) => f !== file));
     }
   };
+
+
+  
+ 
+    // Fetch all active variants for dropdown
+    // useEffect(() => {
+    //   const token = localStorage.getItem("token");
+    //   if (!token) return;
+  
+    //   fetch(`${BASE_URL}/api/variant-attributes/active-variants`, {
+    //     headers: { Authorization: `Bearer ${token}` },
+    //   })
+    //     .then(res => res.json())
+    //     .then(data => setVariantDropdown(data))
+    //     .catch(err => console.error("Error fetching variant dropdown:", err));
+    // }, []);
+  
+    // Handle variant change per row
+    const handleVariantChange = (index, value) => {
+      const token = localStorage.getItem("token");
+      setVariants(prev =>
+        prev.map((v, i) =>
+          i === index ? { ...v, selectedVariant: value, selectedValue: "", valueDropdown: [] } : v
+        )
+      );
+  
+      if (!value || !token) return;
+  
+      fetch(`${BASE_URL}/api/variant-attributes/values/${encodeURIComponent(value)}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      })
+        .then(res => res.json())
+        .then(data => {
+          let values = [];
+          data.forEach(val => {
+            if (typeof val === "string") {
+              values.push(...val.split(",").map(v => v.trim()).filter(Boolean));
+            }
+          });
+          setVariants(prev =>
+            prev.map((v, i) => (i === index ? { ...v, valueDropdown: values } : v))
+          );
+        })
+        .catch(err => console.error("Error fetching value dropdown:", err));
+    };
+  
+    const handleValueChange = (index, value) => {
+      setVariants(prev =>
+        prev.map((v, i) => (i === index ? { ...v, selectedValue: value } : v))
+      );
+    };
+  
+    const handleAddVariant = () => {
+      setVariants(prev => [...prev, { selectedVariant: "", selectedValue: "", valueDropdown: [] }]);
+    };
+  
+    const handleRemoveVariant = index => {
+      if (variants.length > 1) {
+        setVariants(prev => prev.filter((_, i) => i !== index));
+      }
+    };
 
   return (
     <div className="page-wrapper mt-4">
@@ -1119,7 +1286,7 @@ const ProductEdit = () => {
                     </div>
 
                     {/* Supplier */}
-                    <div className="col-sm-6 col-12 mb-3">
+                    {/* <div className="col-sm-6 col-12 mb-3">
                       <label className="form-label">
                         {t("supplier")}
                         <span className="text-danger">*</span>
@@ -1131,9 +1298,9 @@ const ProductEdit = () => {
                         placeholder="Choose a supplier..."
                         isClearable
                       />
-                    </div>
+                    </div> */}
 
-                    <div className="col-lg-6 col-sm-6 col-12">
+                    {/* <div className="col-lg-6 col-sm-6 col-12">
                       <div className="mb-3 list position-relative">
                         <label className="form-label">
                           {t("itemBarcode")}
@@ -1167,7 +1334,7 @@ const ProductEdit = () => {
                           {t("generate")}
                         </button>
                       </div>
-                    </div>
+                    </div> */}
 
                     {/* Store */}
                     <div className="col-sm-6 col-12 mb-3">
@@ -1672,7 +1839,7 @@ const ProductEdit = () => {
 
                 <div className="row mt-3">
                   {images.map((file, i) => (
-                    <div className="col-3 mb-3" key={i}>
+                    <div className="col-2 mb-3" key={i}>
                       <img
                         src={file.url || file.preview}
                         className="img-thumbnail"
@@ -1763,7 +1930,66 @@ const ProductEdit = () => {
             {/* Step 3 - Variants */}
             {step === 3 && (
               <>
-                <div className="variant-tabs mb-3 d-flex flex-wrap gap-2">
+
+                 <div className="card mt-4">
+      <div className="card-body">
+        {variants.map((variant, index) => (
+          <div className="row mb-3" key={index}>
+            <div className="col-md-5">
+              <label className="form-label">Variant</label>
+              <select
+                className="form-select"
+                value={variant.selectedVariant}
+                onChange={e => handleVariantChange(index, e.target.value)}
+              >
+                <option value="">Select Variant</option>
+                {variantDropdown.map((v, idx) => (
+                  <option key={idx} value={v}>{v}</option>
+                ))}
+              </select>
+            </div>
+            <div className="col-md-5">
+              <label className="form-label">Value</label>
+              <select
+                className="form-select"
+                value={variant.selectedValue}
+                onChange={e => handleValueChange(index, e.target.value)}
+                disabled={!variant.selectedVariant}
+              >
+                <option value="">Select Value</option>
+                {variant.valueDropdown.map((val, idx) => (
+                  <option key={idx} value={val}>{val}</option>
+                ))}
+              </select>
+            </div>
+            <div className="col-md-2 d-flex align-items-end">
+              {variants.length > 1 && (
+                <button
+                  type="button"
+                  className="btn btn-danger"
+                  onClick={() => handleRemoveVariant(index)}
+                >
+                  ×
+                </button>
+              )}
+            </div>
+          </div>
+        ))}
+
+        <button
+          type="button"
+          className="btn btn-outline-primary"
+          onClick={handleAddVariant}
+        >
+          + Add another variant
+        </button>
+      </div>
+    </div>
+
+
+
+
+                {/* <div className="variant-tabs mb-3 d-flex flex-wrap gap-2">
                   {variantTabs.map((tab) => (
                     <button
                       type="button"
@@ -1790,13 +2016,13 @@ const ProductEdit = () => {
                       tab: activeTab,
                     })}
                   />
-                </div>
+                </div> */}
               </>
             )}
           </div>
 
           {/* Navigation Buttons */}
-          <div className="mt-4 d-flex justify-content-between">
+          <div className="mb-4 d-flex justify-content-between">
             <button
               type="button"
               className="btn btn-outline-primary"

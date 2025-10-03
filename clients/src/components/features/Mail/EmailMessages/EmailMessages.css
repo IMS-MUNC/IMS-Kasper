@@ -9,7 +9,9 @@
   border: 1px solid #e6e6e6;
   box-shadow: rgba(149, 157, 165, 0.2) 0px 8px 24px;
   border-radius: 8px;
-  flex-grow: 1;
+  flex: 1;
+  min-width: 220px;
+  height: auto;
 }
 
 .header22 {
@@ -327,8 +329,56 @@
 
 .justinmaindivmap {
   overflow-y: auto;
-  height: calc(100vh - 180px);
+  max-height: calc(100vh - 180px);
+  flex: 1;
+  height: auto;
 }
 .justinmaindivmap::-webkit-scrollbar {
   display: none;
+}
+
+@media (max-width: 768px) {
+  .header22 {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+  }
+
+  .filter {
+    flex-wrap: wrap;
+    gap: 10px;
+    width: 100%;
+  }
+  .searchinputdiv {
+    flex: 1;
+    width: 100%;
+  }
+}
+
+/* Phones (480px and down) */
+@media (max-width: 480px) {
+  .mainemailmessage {
+    width: 100%;
+    border-radius: 0;
+    padding: 8px;
+  }
+
+  .twothreemail {
+    font-size: 14px;
+  }
+
+  .subject-header {
+    gap: 6px;
+  }
+
+  .subject-right {
+    font-size: 14px;
+    gap: 6px;
+  }
+
+  .attachment-card,
+  .attachment-box {
+    width: 100%;
+    height: auto;
+  }
 }

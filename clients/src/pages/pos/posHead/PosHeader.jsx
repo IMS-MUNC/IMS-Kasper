@@ -4,6 +4,8 @@ import { Link } from 'react-router-dom';
 import { useSidebar } from '../../../Context/sidetoggle/SidebarContext';
 import { TbCalculator, TbCash, TbChartInfographic, TbMaximize, TbPrinter, TbProgress, TbSettings } from 'react-icons/tb';
 import Mundc from "../../../assets/img/logo/munclogotm.png"
+import { toast } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 
 const PosHeader = () => {
   const { openMenus, toggleMenu, mobileOpen, handleMobileToggle, handleLinkClick } = useSidebar();
@@ -72,7 +74,7 @@ const PosHeader = () => {
             <i className="ti ti-world me-1" />Dashboard
           </a>
         </li>
-
+{/* 
         <li className="nav-item nav-item-box">
           <a href="#" data-bs-toggle="modal" data-bs-target="#calculator" className="bg-orange border-orange text-white"><TbCalculator className="ti ti-calculator" /></a>
         </li>
@@ -95,7 +97,7 @@ const PosHeader = () => {
         </li>
         <li className="nav-item nav-item-box" data-bs-toggle="tooltip" data-bs-placement="top" data-bs-title="POS Settings">
           <a href="#"><TbSettings className="ti ti-settings" /></a>
-        </li>
+        </li> */}
         {/* <li className="nav-item dropdown has-arrow main-drop profile-nav">
       <a href="javascript:void(0);" className="nav-link userset" data-bs-toggle="dropdown">
         <span className="user-info p-0">

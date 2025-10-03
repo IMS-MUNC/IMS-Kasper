@@ -1,3 +1,4 @@
+
 import React from 'react'
 import { useRef } from 'react';
 import AddSalesModal from '../../../pages/Modal/SalesModal/AddSalesModal'
@@ -7,15 +8,41 @@ import axios from 'axios';
 import BASE_URL from '../../../pages/config/config';
 import { useEffect } from 'react';
 import EditSalesModal from '../../../pages/Modal/SalesModal/EditSalesModal';
-import { TbDotsVertical, TbEye, TbEdit, TbCurrency, TbCirclePlus, TbDownload, TbTrash, TbPointFilled } from "react-icons/tb";
+import { TbDotsVertical, TbEye, TbEdit, TbCurrency, TbCirclePlus, TbDownload, TbTrash, TbPointFilled, TbRefresh } from "react-icons/tb";
 import { useParams, useNavigate } from 'react-router-dom';
 import UserImg from '../../../assets/img/no_user.png'
+import PDF from "../../../assets/img/icons/pdf.svg"
+import EXCEL from "../../../assets/img/icons/excel.svg"
+import { GrFormPrevious } from 'react-icons/gr';
+import { MdNavigateNext } from 'react-icons/md';
+import jsPDF from "jspdf";
+import autoTable from "jspdf-autotable";
+import * as XLSX from "xlsx";
+import { saveAs } from "file-saver";
+import { IoMdArrowDropdown } from 'react-icons/io';
+import SalesDashboard from './SalesDashboard';
 
 const Sales = () => {
+  // Fix Bootstrap modal config error
+ 
   const token = localStorage.getItem("token");
-
+  const [fromDate, setFromDate] = useState('');
+  const [toDate, setToDate] = useState('');
   // Invoice ID generator (simulate for frontend)
   const invoiceCounter = useRef(1);
+  // states
+// const [filterStatus, setFilterStatus] = useState("");
+// const [filterPaymentStatus, setFilterPaymentStatus] = useState("");
+
+// helper label functions
+const getStatusLabel = () => {
+  return filterStatus ? `Status: ${filterStatus}` : "Status";
+};
+
+const getPaymentStatusLabel = () => {
+  return filterPaymentStatus ? `Payment: ${filterPaymentStatus}` : "Payment Status";
+};
+
   const generateInvoiceId = () => {
     const id = `INV${invoiceCounter.current.toString().padStart(3, '0')}`;
     invoiceCounter.current += 1;
@@ -47,6 +74,12 @@ const Sales = () => {
             invoiceId: res.data.sale.invoiceId,
             saleDate: res.data.sale.saleDate,
             dueDate: res.data.sale.dueDate,
+            sellingPrice: res.data.sale.sellingPrice,
+            taxamount: res.data.sale.taxamount,
+            discount: res.data.sale.discount,
+            // subtotal: res.data.sale.subtotal,
+            discountamount: res.data.sale.discountamount,
+            subtotal: res.data.sale.subtotal,
             totalAmount: res.data.sale.totalAmount,
             paidAmount: res.data.sale.paidAmount,
             dueAmount: res.data.sale.dueAmount,
@@ -89,21 +122,53 @@ const Sales = () => {
     setEditSale(sale);
     setShowModal(true);
   };
-             const handleCredit = (sale) => {
-              setAddCreditSale(sale);
-              setCreditShow(true);
-            };
-  // Handler for Convert to sales return (credit note)
-  // const handleCreditNote = async (saleId) => {
-  //   try {
-  //     // Fetch latest sale details by _id for credit note
-  //     const res = await axios.get(`${BASE_URL}/api/sales/${saleId}`);
-  //     setAddCreditSale(res.data.sale);
-  //     setCreditShow(true);
-  //   } catch (err) {
-  //     alert('Failed to fetch sale details');
-  //   }
-  // };
+        // const handleCredit = (sale) => {
+        //       setAddCreditSale(sale);
+        //       setCreditShow(true);
+        //     };
+
+        const handleCredit = (sale) => {
+  // Calculate returnable products with remaining qty
+  const updatedProducts = sale.products.map(prod => {
+    let returnedQty = 0;
+
+    if (Array.isArray(sale.creditNotes)) {
+      sale.creditNotes.forEach(note => {
+        if (Array.isArray(note.products)) {
+          note.products.forEach(retProd => {
+            if ((retProd.productId?._id || retProd.productId) === (prod.productId?._id || prod.productId || prod._id)) {
+              returnedQty += Number(retProd.returnQty || 0);
+            }
+          });
+        }
+      });
+    }
+
+    const saleQty = Number(prod.saleQty || prod.quantity || 0);
+    const remainingQty = saleQty - returnedQty;
+
+    return {
+      ...prod,
+      returnedQty,     // already returned
+      remainingQty,    // available to return
+      returnAmount: remainingQty * Number(prod.sellingPrice || 0) // calculate refund
+    };
+  });
+
+  // Filter only products where return is still possible
+  const returnableProducts = updatedProducts.filter(p => p.remainingQty > 0);
+
+  const calculatedSale = {
+    ...sale,
+    returnableProducts,
+    totalReturnAmount: returnableProducts.reduce((sum, p) => sum + p.returnAmount, 0)
+  };
+
+  setAddCreditSale(calculatedSale);
+  setCreditShow(true);
+};
+
+
 
   // Delete button handler
   const handleDelete = async (id) => {
@@ -139,6 +204,8 @@ const Sales = () => {
   const [pages, setPages] = useState(1);
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
+    const [currentPage, setCurrentPage] = useState(1);
+    const [itemsPerPage, setItemsPerPage] = useState(10);
 
   // console.log("salessss", sales);
 
@@ -149,11 +216,16 @@ const Sales = () => {
       // Calculate date range for 'Recently Added'
       let startDate = '';
       let endDate = '';
+      let sort = '';
       if (sortBy === 'Recently Added') {
         const now = new Date();
         endDate = now.toISOString().slice(0, 10);
         const fiveDaysAgo = new Date(now.getTime() - 5 * 24 * 60 * 60 * 1000);
         startDate = fiveDaysAgo.toISOString().slice(0, 10);
+      } else if (sortBy === 'Ascending') {
+        sort = 'asc';
+      } else if (sortBy === 'Desending') {
+        sort = 'desc';
       }
       const res = await axios.get(`${BASE_URL}/api/sales`, {
         params: {
@@ -164,6 +236,9 @@ const Sales = () => {
           paymentStatus: filterPaymentStatus,
           startDate,
           endDate,
+          sort,
+          fromDate,
+          toDate,
         },
         headers: {
           Authorization: `Bearer ${token}`,
@@ -177,6 +252,8 @@ const Sales = () => {
     }
     setLoading(false);
   };
+
+
 
   useEffect(() => {
     fetchSales();
@@ -206,6 +283,63 @@ const Sales = () => {
     // Modal will open via React conditional rendering below
   };
 
+  // PDF Export
+const handleExportPDF = () => {
+  const doc = new jsPDF();
+  doc.text("Sales Report", 14, 15);
+
+  const tableColumn = ["Customer", "Reference", "Date", "Status", "Grand Total", "Paid", "Due"];
+  const tableRows = [];
+
+  sales.forEach((sale) => {
+    const row = [
+      sale.customer?.name || "-",
+      sale.referenceNumber || "-",
+      sale.saleDate ? new Date(sale.saleDate).toLocaleDateString() : "-",
+      sale.status,
+      sale.grandTotal || "0.00",
+      sale.paidAmount || "0.00",
+      sale.dueAmount ?? (0).toFixed(2)
+    ];
+    tableRows.push(row);
+  });
+
+  autoTable(doc, {
+    head: [tableColumn],
+    body: tableRows,
+    startY: 25,
+  });
+
+  doc.save("Sales_Report.pdf");
+};
+
+// Excel Export
+const handleExportExcel = () => {
+  const worksheetData = sales.map((sale) => ({
+    Customer: sale.customer?.name || "-",
+    Reference: sale.referenceNumber || "-",
+    Date: sale.saleDate ? new Date(sale.saleDate).toLocaleDateString() : "-",
+    Status: sale.status,
+    GrandTotal: sale.grandTotal || "0.00",
+    Paid: sale.paidAmount || "0.00",
+    Due: sale.dueAmount ?? (0).toFixed(2)
+  }));
+
+  const worksheet = XLSX.utils.json_to_sheet(worksheetData);
+  const workbook = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(workbook, worksheet, "Sales");
+
+  const excelBuffer = XLSX.write(workbook, { bookType: "xlsx", type: "array" });
+  saveAs(new Blob([excelBuffer], { type: "application/octet-stream" }), "Sales_Report.xlsx");
+};
+
+ const [expandedRow, setExpandedRow] = useState(null);
+  // const navigate = useNavigate();
+
+  const toggleExpand = (saleId) => {
+    setExpandedRow(expandedRow === saleId ? null : saleId);
+  };
+
   return (
     <div className="page-wrapper">
       <div className="content">
@@ -219,23 +353,22 @@ const Sales = () => {
           </div>
           <ul className="table-top-head">
             <li>
-              <a data-bs-toggle="tooltip" data-bs-placement="top" title="Pdf"><img src="assets/img/icons/pdf.svg" alt="img" /></a>
+              <a onClick={handleExportPDF} data-bs-toggle="tooltip" data-bs-placement="top" title="Pdf"><img src={PDF} alt="img" /></a>
             </li>
             <li>
-              <a data-bs-toggle="tooltip" data-bs-placement="top" title="Excel"><img src="assets/img/icons/excel.svg" alt="img" /></a>
+              <a onClick={handleExportExcel} data-bs-toggle="tooltip" data-bs-placement="top" title="Excel"><img src={EXCEL} alt="img" /></a>
             </li>
             <li>
-              <a data-bs-toggle="tooltip" data-bs-placement="top" title="Refresh"><i className="ti ti-refresh" /></a>
+              <a onClick={fetchSales} data-bs-toggle="tooltip" data-bs-placement="top" title="Refresh"><TbRefresh className="ti ti-refresh" /></a>
             </li>
-            <li>
-              <a data-bs-toggle="tooltip" data-bs-placement="top" title="Collapse" id="collapse-header"><i className="ti ti-chevron-up" /></a>
-            </li>
+           
           </ul>
           <div className="page-btn">
             <a href="#" className="btn btn-primary" data-bs-toggle="modal" data-bs-target="#add-sales-new"><i className="ti ti-circle-plus me-1" />Add Sales</a>
           </div>
         </div>
         <div className="card">
+     
           <div className="card-header d-flex align-items-center justify-content-between flex-wrap row-gap-3">
             <div className="search-set">
               <div className="search-input">
@@ -243,65 +376,47 @@ const Sales = () => {
                   type="text"
                   placeholder="Search sales code or customer..."
                   className="form-control"
-                // value={search}
-                // onChange={e => { setSearch(e.target.value); setPage(1); }}
+                  value={search}
+                  onChange={e => { setSearch(e.target.value);  }}
                 />
               </div>
             </div>
             <div className="d-flex table-dropdown my-xl-auto right-content align-items-center flex-wrap row-gap-3">
-              {/* <div className="dropdown me-2">
-                <a className="dropdown-toggle btn btn-white btn-md d-inline-flex align-items-center" data-bs-toggle="dropdown">
-                  Customer
-                </a>
-                <ul className="dropdown-menu  dropdown-menu-end p-3">
-                  <li>
-                    <a className="dropdown-item rounded-1">Carl Evans</a>
-                  </li>
-                  <li>
-                    <a className="dropdown-item rounded-1">Minerva Rameriz</a>
-                  </li>
-                  <li>
-                    <a className="dropdown-item rounded-1">Robert Lamon</a>
-                  </li>
-                  <li>
-                    <a className="dropdown-item rounded-1">Patricia Lewis</a>
-                  </li>
-                </ul>
-              </div> */}
+              
+              <div className="d-flex gap-3 align-items-center me-2">
+                <div>
+                  <input type="date" className="form-control" value={fromDate} onChange={e => { setFromDate(e.target.value); setPages(1); }} />
+                </div>
+                <div>
+                  <input type="date" className="form-control" value={toDate} onChange={e => { setToDate(e.target.value); setPages(1); }} />
+                </div>
+
+              </div>
+
               <div className="dropdown me-2">
-                <a className="dropdown-toggle btn btn-white btn-md d-inline-flex align-items-center" data-bs-toggle="dropdown">
-                  Status
+                <a className=" btn btn-white btn-md d-inline-flex align-items-center" data-bs-toggle="dropdown">
+                  {getStatusLabel()} <IoMdArrowDropdown className='ms-1'/>
                 </a>
                 <ul className="dropdown-menu dropdown-menu-end p-3">
-                  <li><a className="dropdown-item rounded-1" onClick={() => setFilterStatus('Complete')}>Completed</a></li>
-                  <li><a className="dropdown-item rounded-1" onClick={() => setFilterStatus('Pending')}>Pending</a></li>
                   <li><a className="dropdown-item rounded-1" onClick={() => setFilterStatus('')}>All</a></li>
+                  <li><a className="dropdown-item rounded-1" onClick={() => setFilterStatus('Pending')}>Pending</a></li>
+                  <li><a className="dropdown-item rounded-1" onClick={() => setFilterStatus('Complete')}>Completed</a></li>
                 </ul>
               </div>
               <div className="dropdown me-2">
-                <a className="dropdown-toggle btn btn-white btn-md d-inline-flex align-items-center" data-bs-toggle="dropdown">
-                  Payment Status
+                <a className=" btn btn-white btn-md d-inline-flex align-items-center" data-bs-toggle="dropdown">
+                  {getPaymentStatusLabel()} <IoMdArrowDropdown className='ms-1'/>
+
                 </a>
                 <ul className="dropdown-menu dropdown-menu-end p-3">
+                  <li><a className="dropdown-item rounded-1" onClick={() => setFilterPaymentStatus('')}>All</a></li>
+                  <li><a className="dropdown-item rounded-1" onClick={() => setFilterPaymentStatus('Pending')}>Pending</a></li>
                   <li><a className="dropdown-item rounded-1" onClick={() => setFilterPaymentStatus('Paid')}>Paid</a></li>
                   <li><a className="dropdown-item rounded-1" onClick={() => setFilterPaymentStatus('Unpaid')}>Unpaid</a></li>
                   <li><a className="dropdown-item rounded-1" onClick={() => setFilterPaymentStatus('Partial')}>Partial</a></li>
-                  <li><a className="dropdown-item rounded-1" onClick={() => setFilterPaymentStatus('Pending')}>Pending</a></li>
-                  <li><a className="dropdown-item rounded-1" onClick={() => setFilterPaymentStatus('')}>All</a></li>
                 </ul>
               </div>
-              <div className="dropdown">
-                <a className="dropdown-toggle btn btn-white btn-md d-inline-flex align-items-center" data-bs-toggle="dropdown">
-                  Sort By : {sortBy || 'Last 7 Days'}
-                </a>
-                <ul className="dropdown-menu dropdown-menu-end p-3">
-                  <li><a className="dropdown-item rounded-1" onClick={() => setSortBy('Recently Added')}>Recently Added</a></li>
-                  <li><a className="dropdown-item rounded-1" onClick={() => setSortBy('Ascending')}>Ascending</a></li>
-                  <li><a className="dropdown-item rounded-1" onClick={() => setSortBy('Desending')}>Desending</a></li>
-                  <li><a className="dropdown-item rounded-1" onClick={() => setSortBy('Last Month')}>Last Month</a></li>
-                  <li><a className="dropdown-item rounded-1" onClick={() => setSortBy('Last 7 Days')}>Last 7 Days</a></li>
-                </ul>
-              </div>
+              
             </div>
           </div>
           <div className="card-body p-0">
@@ -309,20 +424,23 @@ const Sales = () => {
               <table className="table datatable">
                 <thead className="thead-light">
                   <tr>
-                    <th className="no-sort">
+                    {/* <th className="no-sort">
                       <label className="checkboxs">
                         <input type="checkbox" id="select-all" />
                         <span className="checkmarks" />
                       </label>
-                    </th>
+                    </th> */}
                     <th>Customer</th>
-                      <th>Products</th>
+                    <th>Products</th>
                     <th>Reference</th>
+                    <th>Invoice Id</th>
+                    <th>Return Id</th>
                     <th>Date</th>
                     <th>Status</th>
                     <th>Sold Qyt</th>
                     <th>Selling Price</th>
-                    <th>Grand Total</th>
+                    <th>Discount</th>
+                    <th>Invoice Total</th>
                     <th>Paid</th>
                     <th>Due</th>
                     <th>Payment Status</th>
@@ -333,155 +451,360 @@ const Sales = () => {
                 <tbody className="sales-list">
                   {sales.length > 0 ? (
                     sales.map((sale) => (
-                      <tr key={sale._id}>
-                        <td>
-                          <label className="checkboxs">
-                            <input type="checkbox" />
-                            <span className="checkmarks" />
-                          </label>
-                        </td>
-                        <td>
-                          <div className="d-flex align-items-center me-2">
-                            <img className ="me-2" style={{ width: 32, height: 32, objectFit: 'cover', borderRadius: 4, opacity: 0.5 }} 
-        src={sale.customer?.image || UserImg} // ✅ fallback dummy image
-        alt={sale.customer?.name || "User"}
-        onError={(e) => {
-          e.target.src = "assets/img/dummy-user.png"; // ✅ if broken image, show dummy
-        }}
-      />
-                            <span>{sale.customer?.name || '-'}</span>
-                          </div>
-                        </td>
-                        {/* Products column */}
-                        <td>
-                          <div className="d-flex flex-column gap-1">
-                            {sale.products && sale.products.length > 0 ? (
-                              sale.products.map((product, idx) => {
-                                // Try to get image from product.productImage, then product.products.images[0].url, else fallback
-                                let imgSrc = '';
-                                if (product.productImage) {
-                                  imgSrc = product.productImage;
-                                } else if (product.products?.images?.[0]?.url) {
-                                  imgSrc = product.products.images[0].url;
-                                } else if (product.images?.[0]?.url) {
-                                  imgSrc = product.images[0].url;
-                                }
-                                return (
-                                  <div key={idx} className="d-flex align-items-center">
-                                    <a href="" className="avatar avatar-md me-2">
-                                      {imgSrc ? (
-                                        <img src={imgSrc} alt={product.productName || product.name || 'N/A'} className="media-image"  />
-                                      ) : (
-                                        <img src="/vite.svg" alt="No Img" style={{ width: 32, height: 32, objectFit: 'cover', borderRadius: 4, opacity: 0.5 }} />
-                                      )}
-                                    </a>
-                                    <div className="ms-2">
-                                      <h6 className="fw-bold mb-1"><a >{product.productName || product.name || 'N/A'}</a></h6>
-                                      {product.hsnCode ? (
-                                        <p className="fs-13" >
-                                        HSN: {product.hsnCode}
-                                        </p>
-                                      ) : null}
+                      <React.Fragment key={sale._id}>
+                        <tr>
+                          {/* ...existing sale columns, unchanged... */}
+                          <td>
+                            <div className="d-flex align-items-center me-2">
+                              {sale.customer?.images?.[0] ? (
+                                <img
+                                  className="me-2"
+                                  style={{ width: 32, height: 32, objectFit: "cover", borderRadius: 4 }}
+                                  src={sale.customer.images[0]?.url || sale.customer.images[0]}
+                                  alt={sale.customer?.name || "User"}
+                                />
+                              ) : (
+                                <div className="me-2 d-flex align-items-center justify-content-center" style={{ width: 32, height: 32, borderRadius: "50%", backgroundColor: "#007bff", color: "#fff", fontSize: "14px", fontWeight: "bold", textTransform: "uppercase", opacity: 0.8 }}>
+                                  {sale.customer?.name?.charAt(0) || "U"}
+                                </div>
+                              )}
+                              <span>{sale.customer?.name || "-"}</span>
+                            </div>
+                          </td>
+                          <td>
+                            <div className="d-flex flex-column gap-1">
+                              {sale.products && sale.products.length > 0 ? (
+                                sale.products.map((product, idx) => {
+                                  let imgSrc = '';
+                                  if (product.productImage) {
+                                    imgSrc = product.productImage;
+                                  } else if (product.products?.images?.[0]?.url) {
+                                    imgSrc = product.products.images[0].url;
+                                  } else if (product.images?.[0]?.url) {
+                                    imgSrc = product.images[0].url;
+                                  }
+                                  return (
+                                    <div key={idx} className="d-flex align-items-center">
+                                      <a href="" className="avatar avatar-md me-2">
+                                        {imgSrc ? (
+                                          <img src={imgSrc} alt={product.productName || product.name || 'N/A'} className="media-image" />
+                                        ) : (
+                                          <img src="/vite.svg" alt="No Img" style={{ width: 32, height: 32, objectFit: 'cover', borderRadius: 4, opacity: 0.5 }} />
+                                        )}
+                                      </a>
+                                      <div className="ms-2">
+                                        <h6 className="fw-bold mb-1"><a >{product.productName || product.name || 'N/A'}</a></h6>
+                                        {product.hsnCode ? (
+                                          <p className="fs-13" >
+                                            HSN: {product.hsnCode}
+                                          </p>
+                                        ) : null}
+                                      </div>
                                     </div>
-                                  </div>
-                                );
-                              })
-                            ) : (
-                              <span className="text-muted">-</span>
-                            )}
+                                  );
+                                })
+                              ) : (
+                                <span className="text-muted">-</span>
+                              )}
+                            </div>
+                          </td>
+                          <td>{sale.referenceNumber}</td>
+                          <td>{sale.invoiceId || "Not Generated"} </td>
+                          {/* <td>
+  {Array.isArray(sale.creditNotes) && sale.creditNotes.length > 0 ? (
+    sale.creditNotes.map((note, idx) => (
+      <span key={note._id} className="badge bg-info text-dark me-1">
+        {note.creditNoteId || `CN-${idx + 1}`}
+      </span>
+    ))
+  ) : (
+    "-"
+  )}
+</td> */}
+<td>
+  {Array.isArray(sale.creditNotes) && sale.creditNotes.length > 0 ? (
+    <>
+      {/* पहला CreditNote full ID दिखे */}
+      <span
+        key={sale.creditNotes[0]._id}
+        className="badge bg-info text-light me-1"
+        style={{ cursor: "pointer" }}
+        onClick={() => toggleExpand(sale._id)}
+      >
+        {sale.creditNotes[0].creditNoteId}
+      </span>
 
-                           
-                          </div>
-                        </td>
-                        <td>{sale.referenceNumber}</td>
-                        <td>{sale.saleDate ? new Date(sale.saleDate).toLocaleDateString() : '-'}</td>
-                        <td> <span
-                          className={`badge table-badge fw-medium fs-10 ${sale.status === "Complete"
-                            ? "bg-success"
-                            : "bg-danger"
-                            }`}
-                        >
-                          {sale.status}
-                        </span></td>
-                        <td>
-                          <div className="d-flex flex-column">
-                            {sale.products && sale.products.length > 0 ? (
-                              sale.products.map((p, idx) => (
-                                <div key={idx}>{p.saleQty || p.quantity || 0}</div>
-                              ))
-                            ) : (
-                              <span className="text-muted">-</span>
-                            )}
-                          </div>
-                        </td>
-                        <td>
-                          <div className="d-flex flex-column">
-                            {sale.products && sale.products.length > 0 ? (
-                              sale.products.map((p, idx) => (
-                                <div key={idx}>₹{p.sellingPrice || 0}</div>
-                              ))
-                            ) : (
-                              <span className="text-muted">-</span>
-                            )}
-                          </div>
-                        </td>
-                        <td>{sale.grandTotal || '-'}</td>
-                        <td>{sale.paidAmount || '-'}</td>
-                        <td>{sale.dueAmount || '-'}</td>
-                        <td>
-                          <span
-                            className={`badge shadow-none badge-xs
-                            ${sale.paymentStatus === "Paid" ? "badge-soft-success" : ""}
-                            ${sale.paymentStatus === "Unpaid" ? "badge-soft-danger" : ""}
-                            ${sale.paymentStatus === "Pending" ? "badge-soft-warning" : ""}
-                            ${sale.paymentStatus === "Partial" ? "badge-soft-primary" : ""}
-                          `}
-                          >
-                            <TbPointFilled className="me-1" />
-                            {sale.paymentStatus}
-                          </span>
-                        </td>
+      {sale.creditNotes.length > 1 && (
+        <span
+          className="badge bg-secondary text-light"
+          style={{ cursor: "pointer" }}
+          title={sale.creditNotes.slice(1).map(n => n.creditNoteId).join(", ")} 
+          onClick={() => toggleExpand(sale._id)}
+        >
+          +{sale.creditNotes.length - 1} more
+        </span>
+      )}
+    </>
+  ) : (
+    "N/A"
+  )}
+</td>
 
-                        <td>{sale.billing?.name || '-'}</td>
-                        <td className="text-center">
-                          <a className="action-set" data-bs-toggle="dropdown" aria-expanded="true">
-                            <TbDotsVertical />
-                          </a>
-                          <ul className="dropdown-menu">
-                            <li>
-                              <a className="dropdown-item" data-bs-toggle="modal" data-bs-target="#sales-details-new" onClick={() => navigate(`/sales/view/${sale._id}`)}><TbEye className="info-img" />Sale Detail</a>
-                            </li>
-                            <li>
-                              <a className="dropdown-item" data-bs-toggle="modal" data-bs-target="#edit-sales-new" onClick={() => handleEdit(sale)}><TbEdit className="info-img" />Edit Sale</a>
+
+                {/* <td>
+                  {Array.isArray(sale.creditNotes) && sale.creditNotes.length > 0 ? (
+                    sale.creditNotes.map((note, idx) => (
+                      <span
+                        key={note._id}
+                        className="badge bg-info text-light me-1"
+                        style={{ cursor: "pointer" }}
+                        onClick={() => toggleExpand(sale._id)}
+                      >
+                        {note.creditNoteId || `CN-${idx + 1}`}
+                      </span>
+                    ))
+                  ) : (
+                    "N/A"
+                  )}
+                </td> */}
+                          <td>{sale.saleDate ? new Date(sale.saleDate).toLocaleDateString() : '-'}</td>
+                          <td> <span className={`badge table-badge fw-medium fs-10 ${sale.status === "Complete" ? "bg-success" : "bg-danger"}`}>{sale.status}</span></td>
+                          <td>
+                            <div className="d-flex flex-column">
+                              {sale.products && sale.products.length > 0 ? (
+                                sale.products.map((p, idx) => (
+                                  <div key={idx}>{(p.saleQty || p.quantity || 0)} {p.unit || ""}</div>
+                                ))
+                              ) : (
+                                <span className="text-muted">-</span>
+                              )}
+                            </div>
+                          </td>
+                          <td>
+                            <div className="d-flex flex-column">
+                              {sale.products && sale.products.length > 0 ? (
+                                sale.products.map((p, idx) => (
+                                  <div key={idx}>₹ {p.sellingPrice || 0}</div>
+                                ))
+                              ) : (
+                                <span className="text-muted">-</span>
+                              )}
+                            </div>
+                          </td>
+                          <td>
+                            <div className="d-flex flex-column">
+                              {sale.products && sale.products.length > 0 ? (
+                                sale.products.map((p, idx) => (
+                                  <div key={idx}><span>{p.discount || 0}</span><span className="ms-1">{p.discountType === "Percentage" ? "%" : "₹"}</span></div>
+                                ))
+                              ) : (
+                                <span className="text-muted">-</span>
+                              )}
+                            </div>
+                          </td>
+                          <td>₹ {sale.grandTotal || '0.00'}</td>
+                          <td>₹ {sale.paidAmount || '0.00'}</td>
+                          <td>₹ {Number(sale.dueAmount ?? 0).toFixed(2)}</td>
+                          <td>
+                            <span className={`badge shadow-none badge-xs ${sale.paymentStatus === "Paid" ? "badge-soft-success" : ""} ${sale.paymentStatus === "Unpaid" ? "badge-soft-danger" : ""} ${sale.paymentStatus === "Pending" ? "badge-soft-warning" : ""} ${sale.paymentStatus === "Partial" ? "badge-soft-primary" : ""}`}>
+                              <TbPointFilled className="me-1" />
+                              {sale.paymentStatus}
+                            </span>
+                          </td>
+                          <td>{sale.createdBy ? `${sale.createdBy.name}` : '--'}</td>
+                          <td className="text-center">
+                            <a className="action-set" data-bs-toggle="dropdown" aria-expanded="true">
+                              <TbDotsVertical />
+                            </a>
+                            <ul className="dropdown-menu dropdown-menu-end">
                               <li>
-                                <a className="dropdown-item" onClick={() => handleConvertToInvoice(sale)}><TbDownload className="info-img" />Convert to Invoice</a>
+                                <a className="dropdown-item" data-bs-toggle="modal" data-bs-target="#sales-details-new" onClick={() => navigate(`/sales/view/${sale._id}`)}><TbEye className="info-img" />Sale Detail</a>
                               </li>
+                              <li>
+                                <a className="dropdown-item" data-bs-toggle="modal" data-bs-target="#add-sales-edits" onClick={() => handleEdit(sale)}><TbEdit className="info-img" />Edit Sale</a>
+                              </li>
+                              {!sale.invoiceId && (
+                                <li>
+                                  <a className="dropdown-item" onClick={() => handleConvertToInvoice(sale)}><TbDownload className="info-img" />Convert to Invoice</a>
+                                </li>
+                              )}
                               {sale.invoiceId && (
                                 <li>
                                   <a className="dropdown-item" onClick={() => navigate(`/invoice/${sale.invoiceId}`)}><TbDownload className="info-img" />View Invoice</a>
                                 </li>
                               )}
-                            </li>
-                            <li>
-                              <a className="dropdown-item" data-bs-toggle="modal" data-bs-target="#showpayment"><TbCurrency className="info-img" />Show Payments</a>
-                            </li>
-                            <li>
-                              {/* <a className="dropdown-item" data-bs-toggle="modal" data-bs-target="#createpayment" onClick={() => handleSaleToReturn(sale)}><TbCirclePlus className="info-img" />Convert to sales return</a> */}
-                              <a className="dropdown-item" data-bs-toggle="modal" data-bs-target="#createpayment" onClick={() => handleCredit(sale)}><TbCirclePlus className="info-img" />Convert to sales return</a>
-                            </li>
-                            <li>
-                              <a className="dropdown-item"><TbDownload className="info-img" />Download pdf</a>
-                            </li>
-                            <li>
-                              <a className="dropdown-item mb-0" data-bs-toggle="modal" data-bs-target="#delete" onClick={() => handleDelete(sale._id)}><TbTrash className="info-img" />Delete Sale</a>
-                            </li>
-                          </ul>
-                        </td>
-                      </tr>
+                              <li>
+                                <a className="dropdown-item" data-bs-toggle="modal" data-bs-target="#showpayment"><TbCurrency className="info-img" />Show Payments</a>
+                              </li>
+                              
+                              {sale.status === "Complete" && (() => {
+                                // Disable if all products are fully returned (sum returnQty from all credit notes)
+                                const fullyReturned = Array.isArray(sale.products) && sale.products.length > 0 && sale.products.every(prod => {
+                                  let totalReturnedQty = 0;
+                                  if (Array.isArray(sale.creditNotes)) {
+                                    sale.creditNotes.forEach(note => {
+                                      if (Array.isArray(note.products)) {
+                                        note.products.forEach(retProd => {
+                                          const prodId = prod.productId?._id || prod.productId || prod._id;
+                                          const retProdId = retProd.productId?._id || retProd.productId || retProd._id;
+                                          if (prodId && retProdId && prodId === retProdId) {
+                                            totalReturnedQty += Number(retProd.returnQty || 0);
+                                          }
+                                        });
+                                      }
+                                    });
+                                  }
+                                  return Number(prod.saleQty || prod.quantity || 0) <= totalReturnedQty;
+                                });
+                                return (
+                                  <li>
+                                    <a
+                                      className="dropdown-item"
+                                      data-bs-toggle="modal"
+                                      data-bs-target="#add-sales-credit"
+                                      onClick={() => !fullyReturned && handleCredit(sale)}
+                                      style={fullyReturned ? { pointerEvents: 'none', opacity: 0.5 } : {}}
+                                    >
+                                      <TbCirclePlus className="info-img" />Convert to sales return
+                                    </a>
+                                  </li>
+                                );
+                              })()}
+                             
+                              {/* <li>
+                                <a className="dropdown-item"><TbDownload className="info-img" />Download pdf</a>
+                              </li> */}
+                              <li>
+                                <a className="dropdown-item mb-0" data-bs-toggle="modal" data-bs-target="#delete" onClick={() => handleDelete(sale._id)}><TbTrash className="info-img" />Delete Sale</a>
+                              </li>
+                            </ul>
+                          </td>
+                        </tr>
+                         {expandedRow === sale._id && Array.isArray(sale.creditNotes) && (
+                <tr>
+                  <td colSpan="16" style={{ background: "#f9f9f9" }}>
+                    <div style={{ fontWeight: 600, marginBottom: 6 }}>
+                      Credit Notes (Returns)
+                    </div>
+                    <table className="table table-sm table-bordered mb-0">
+                      <thead className="table-light">
+                        <tr>
+                          <th>Return ID</th>
+                          <th>Date</th>
+                          <th>Product</th>
+                          <th>Returned Qty</th>
+                          <th>HSN</th>
+                          <th>Line Total</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {sale.creditNotes.map((note) =>
+                          note.products?.length > 0 ? (
+                            note.products.map((prod, idx) => (
+                              <tr key={`${note._id}-${idx}`}>
+                                <td>{note.creditNoteId}</td>
+                                <td>
+                                  {note.createdAt
+                                    ? new Date(note.createdAt).toLocaleDateString()
+                                    : "-"}
+                                </td>
+                                <td>
+                                  <div className="d-flex align-items-center">
+                                    {prod.productId?.images?.[0]?.url ? (
+                                      <img
+                                        src={prod.productId.images[0].url}
+                                        alt={prod.productId?.productName || "Product"}
+                                        style={{
+                                          width: 28,
+                                          height: 28,
+                                          objectFit: "cover",
+                                          borderRadius: 4,
+                                          marginRight: 6,
+                                        }}
+                                      />
+                                    ) : (
+                                      <div
+                                        style={{
+                                          width: 28,
+                                          height: 28,
+                                          background: "#e9ecef",
+                                          borderRadius: 4,
+                                          marginRight: 6,
+                                        }}
+                                      />
+                                    )}
+                                    <span>{prod.productId?.productName || "-"}</span>
+                                  </div>
+                                </td>
+                                <td>{prod.returnQty || prod.quantity || "-"}</td>
+                                <td>{prod.hsnCode || "-"}</td>
+                                <td>{prod.lineTotal ? `₹${prod.lineTotal}` : "-"}</td>
+                              </tr>
+                            ))
+                          ) : (
+                            <tr key={`${note._id}-empty`}>
+                              <td>{note.creditNoteId}</td>
+                              <td>
+                                {note.createdAt
+                                  ? new Date(note.createdAt).toLocaleDateString()
+                                  : "-"}
+                              </td>
+                              <td colSpan="4">No returned products</td>
+                            </tr>
+                          )
+                        )}
+                      </tbody>
+                    </table>
+                  </td>
+                </tr>
+              )}
+                        {/* Show credit notes for this sale, if any */}
+                        {/* {Array.isArray(sale.creditNotes) && sale.creditNotes.length > 0 && (
+                          <tr>
+                            <td colSpan="15" style={{ background: '#f9f9f9' }}>
+                              <div style={{ fontWeight: 600, marginBottom: 4 }}>Credit Notes (Returns):</div>
+                              <table className="table table-bordered mb-0">
+                                <thead>
+                                  <tr>
+                                    <th>Credit Note ID</th>
+                                    <th>Date</th>
+                                    <th>Product</th>
+                                    <th>Return Qty</th>
+                                    <th>HSN</th>
+                                    <th>Amount</th>
+                                  </tr>
+                                </thead>
+                                <tbody>
+                                  {sale.creditNotes.map(note => (
+                                    note.products && note.products.length > 0 ? (
+                                      note.products.map((prod, idx) => (
+                                        <tr key={note._id + '-' + idx}>
+                                          <td>{note.creditNoteId}</td>
+                                          <td>{note.createdAt ? new Date(note.createdAt).toLocaleDateString() : '-'}</td>
+                                          <td>{prod.productId?.productName || '-'}</td>
+                                          <td>{prod.returnQty || prod.quantity || '-'}</td>
+                                          <td>{prod.hsnCode || '-'}</td>
+                                          <td>{prod.lineTotal ? `₹${prod.lineTotal}` : '-'}</td>
+                                        </tr>
+                                      ))
+                                    ) : (
+                                      <tr key={note._id + '-empty'}>
+                                        <td>{note.creditNoteId}</td>
+                                        <td>{note.createdAt ? new Date(note.createdAt).toLocaleDateString() : '-'}</td>
+                                        <td colSpan="4">No returned products</td>
+                                      </tr>
+                                    )
+                                  ))}
+                                </tbody>
+                              </table>
+                            </td>
+                          </tr>
+                        )} */}
+                      </React.Fragment>
                     ))
                   ) : (
                     <tr>
-                      <td colSpan="6" className="text-center text-muted">
+                      <td colSpan="15" className="text-center text-muted">
                         No Sales found.
                       </td>
                     </tr>
@@ -491,15 +814,52 @@ const Sales = () => {
               </table>
             </div>
             {/* Pagination controls */}
-            <div className="d-flex justify-content-between align-items-center p-3">
-              <button className="btn btn-sm btn-outline-primary" onClick={handlePrev} disabled={page === 1}>Prev</button>
-              <span>Page {page} of {pages}</span>
-              <button className="btn btn-sm btn-outline-primary" onClick={handleNext} disabled={page === pages}>Next</button>
-              <span>Total: {total}</span>
+            <div
+              className="d-flex justify-content-end gap-3"
+              style={{ padding: "10px 20px" }}
+            >
+
+              <select
+                className="form-select w-auto"
+                value={limit}
+                onChange={e => { setLimit(Number(e.target.value)); setPage(1); }}
+              >
+                {[10, 20, 50, 100].map(n => <option key={n} value={n}>{n} per page</option>)}
+              </select>
+
+              <span
+                style={{
+                  backgroundColor: "white",
+                  boxShadow: "rgb(0 0 0 / 4%) 0px 3px 8px",
+                  padding: "7px",
+                  borderRadius: "5px",
+                  border: "1px solid #e4e0e0ff",
+                  color: "gray",
+                }}
+              >
+                <span>Page {page} of {pages || 1}</span>
+
+                {" "}
+                <button
+                  style={{
+                    border: "none",
+                    color: "grey",
+                    backgroundColor: "white",
+                  }}
+                  onClick={handlePrev} disabled={page === 1}>
+                  <GrFormPrevious />
+                </button>{" "}
+                <button
+                  style={{ border: "none", backgroundColor: "white" }}
+                  onClick={handleNext} disabled={page === pages}>
+                  <MdNavigateNext />
+                </button>
+              </span>
             </div>
+
           </div>
         </div>
-
+<SalesDashboard/>
       </div>
       {showModal && editSale && (
         <EditSalesModal

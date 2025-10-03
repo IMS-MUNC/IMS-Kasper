@@ -148,6 +148,124 @@ const sendEmail = async (req, res) => {
 
 //receiveEmail only returns inbox emails for the logged-in user, and getSentEmails returns only sent emails.
 
+
+// const sendEmail = async (req, res) => {
+//   try {
+//     let {
+//       to,
+//       cc = [],
+//       bcc = [],
+//       subject,
+//       body,
+//     } = req.body;
+
+//     // Ensure all are arrays
+//     to = Array.isArray(to) ? to : [to].filter(Boolean);
+//     cc = Array.isArray(cc) ? cc : [cc].filter(Boolean);
+//     bcc = Array.isArray(bcc) ? bcc : [bcc].filter(Boolean);
+
+//       const normalizedAttachments = req.files?.attachments
+//       ? req.files.attachments.map((file) => file.path) // Cloudinary URL
+//       : [];
+
+//     const normalizedImages = req.files?.images
+//       ? req.files.images.map((file) => file.path) // Cloudinary URL
+//       : [];
+
+//     const senderEmail = req.user.email.toLowerCase();
+//     const existingUser = await User.findOne({ email: senderEmail });
+//     const sender = existingUser
+//       ? {
+//           email: existingUser.email,
+//           firstName: existingUser.firstName,
+//           lastName: existingUser.lastName,
+//           profileImage: existingUser.profileImage,
+//         }
+//       : {
+//           email: senderEmail,
+//           firstName: "Unknown",
+//           lastName: "",
+//           profileImage: null,
+//         };
+
+//          const transporter = nodemailer.createTransport({
+//       host: "smtp.gmail.com",
+//       port: 465,
+//       secure: true,
+//       auth: {
+//         user: process.env.EMAIL_USER,
+//         pass: process.env.EMAIL_PASS, // app password
+//       },
+//     });
+
+//     const mailOptions = {
+//       from: sender.email,
+//       to: Array.isArray(to) ? to.join(",") : to,
+//       cc: cc.length ? cc.join(",") : undefined,
+//       bcc: bcc.length ? bcc.join(",") : undefined,
+//       subject,
+//       html: `<div style="white-space: pre-wrap;">${body}</div>`,
+//       attachments: [
+//         ...normalizedAttachments.map((file) => ({ path: file })),
+//         ...normalizedImages.map((img) => ({ path: img })),
+//       ],
+//     };
+
+//     await transporter.sendMail(mailOptions);
+
+
+//     // Save email for sender (sent)
+//     const sentEmail = new EmailModal({
+//       to,
+//       cc,
+//       bcc,
+//       from: sender,
+//       subject,
+//       body,
+//       attachments: normalizedAttachments,
+//       image: normalizedImages,
+//       type: "sent",
+//       name: "You",
+//       starred: false,
+//       bin: false,
+//       date: new Date(),
+//     });
+//     await sentEmail.save();
+
+//     // Save email for each recipient (inbox), but skip the sender
+//     const recipients = [...(Array.isArray(to) ? to : [to]), ...cc, ...bcc];
+
+//     for (const recEmail of recipients) {
+//       if (recEmail.toLowerCase() === senderEmail) continue; // skip sender
+
+//       const user = await User.findOne({ email: recEmail.toLowerCase() });
+//       const inboxEmail = new EmailModal({
+//         to: [recEmail],
+//         cc: [],
+//         bcc: [],
+//         from: sender,
+//         subject,
+//         body,
+//         attachments: normalizedAttachments,
+//         image: normalizedImages,
+//         type: "inbox",
+//         name: user ? `${user.firstName} ${user.lastName}` : "Unknown",
+//         starred: false,
+//         bin: false,
+//         isRead: false,
+//         date: new Date(),
+//       });
+
+//       await inboxEmail.save();
+//     }
+
+//     res.status(201).json({ success: true, message: "Email sent" });
+//   } catch (error) {
+//     console.log(error);
+//     res.status(500).json({ success: false, message: error.message });
+//   }
+// };
+
 const receiveEmail = async (req, res) => {
   try {
     const userEmail = req.user.email.toLowerCase();

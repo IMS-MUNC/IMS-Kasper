@@ -12,7 +12,7 @@ exports.createProduct = async (req, res) => {
       brand,
       category,
       subCategory,
-      supplier,
+      // supplier,
       // itemBarcode,
       store,
       warehouse,
@@ -91,14 +91,14 @@ exports.createProduct = async (req, res) => {
       return res.status(400).json({ message: "HSN is required and must be selected." });
     }
 
-    const supplierValue = (supplier && typeof supplier === 'string' && supplier.trim() !== '') ? supplier : undefined;
+    // const supplierValue = (supplier && typeof supplier === 'string' && supplier.trim() !== '') ? supplier : undefined;
     const newProduct = new Product({
       productName,
       sku,
       brand,
       category,
       subcategory: subCatValue,
-      supplier: supplierValue,
+      // supplier: supplierValue,
       // itemBarcode,
       store,
       warehouse,
@@ -141,16 +141,28 @@ exports.createProduct = async (req, res) => {
 
 exports.getAllProducts = async (req, res) => {
   try {
-    const products = await Product.find()
+    // Filters
+    const filter = {};
+    if (req.query.brand) filter.brand = req.query.brand;
+    if (req.query.category) filter.category = req.query.category;
+    if (req.query.subcategory) filter.subcategory = req.query.subcategory;
+    if (req.query.hsn) filter.hsn = req.query.hsn;
+
+    // Optional: add text search for productName
+    if (req.query.search) {
+      filter.productName = { $regex: req.query.search, $options: "i" };
+    }
+
+    const products = await Product.find(filter)
       .populate("brand")
       .populate("category")
       .populate("subcategory")
       .populate("hsn")
-      .populate("supplier")
+      // .populate("supplier")
       .populate("warehouse")
-      .sort({ createdAt: -1 }); // Optional: latest first
+      .sort({ createdAt: -1 });
 
-    // Ensure hsnCode, supplierName, warehouseName are always present for frontend
+    // Ensure hsnCode, warehouseName are always present for frontend
     const productsWithDetails = products.map(prod => {
       let hsnCode = "";
       if (prod.hsn) {
@@ -163,15 +175,6 @@ exports.getAllProducts = async (req, res) => {
         hsnCode = prod.hsnCode;
       }
 
-      let supplierName = "";
-      if (prod.supplier) {
-        if (typeof prod.supplier === "object" && prod.supplier !== null) {
-          supplierName = prod.supplier.name || prod.supplier.supplierName || prod.supplier.companyName || prod.supplier.firstName || prod.supplier._id || "";
-        } else {
-          supplierName = prod.supplier;
-        }
-      }
-
       let warehouseName = "";
       if (prod.warehouse) {
         if (typeof prod.warehouse === "object" && prod.warehouse !== null) {
@@ -181,11 +184,12 @@ exports.getAllProducts = async (req, res) => {
         }
       }
 
-      // Remove full supplier and warehouse objects from response, only send names
       const { supplier, warehouse, ...rest } = prod._doc;
-      return { ...rest, hsnCode, supplierName, warehouseName };
+      return { ...rest, hsnCode, warehouseName };
     });
-    res.status(200).json(productsWithDetails);
+    res.status(200).json({
+      products: productsWithDetails
+    });
   } catch (err) {
     res.status(500).json({ message: err.message });
   }
@@ -206,7 +210,7 @@ exports.searchProductsByName = async (req, res) => {
       .populate("category")
       .populate("subcategory")
       .populate("hsn")
-      .populate("supplier")
+      // .populate("supplier")
       .populate("warehouse")
       .sort({ createdAt: -1 });
 
@@ -262,7 +266,7 @@ exports.getProductStock = async (req, res) => {
       .populate("category")
       .populate("subcategory")
       .populate("hsn")
-      .populate("supplier")
+      // .populate("supplier")
       .populate("warehouse")
       .sort({ createdAt: -1 })
       .skip(skip)
@@ -305,14 +309,14 @@ exports.getProductStock = async (req, res) => {
           warehouseName = prod.warehouse;
         }
       }
-      let supplierName = '';
-      if (prod.supplier) {
-        if (typeof prod.supplier === 'object' && prod.supplier !== null) {
-          supplierName = prod.supplier.name || prod.supplier.supplierName || prod.supplier.companyName || prod.supplier.firstName || prod.supplier._id || '';
-        } else {
-          supplierName = prod.supplier;
-        }
-      }
+      // let supplierName = '';
+      // if (prod.supplier) {
+      //   if (typeof prod.supplier === 'object' && prod.supplier !== null) {
+      //     supplierName = prod.supplier.name || prod.supplier.supplierName || prod.supplier.companyName || prod.supplier.firstName || prod.supplier._id || '';
+      //   } else {
+      //     supplierName = prod.supplier;
+      //   }
+      // }
       let image = '';
       if (Array.isArray(prod.images) && prod.images.length > 0) {
         image = prod.images[0].url;
@@ -326,7 +330,7 @@ exports.getProductStock = async (req, res) => {
         purchasePrice,
         stockValue,
         warehouseName,
-        supplierName,
+        // supplierName,
         image
       };
     });
@@ -565,7 +569,7 @@ exports.updateProduct = async (req, res) => {
       brand,
       category,
       subcategory,
-      supplier,
+      // supplier,
       // itemBarcode,
       store,
       warehouse,
@@ -584,12 +588,27 @@ exports.updateProduct = async (req, res) => {
       seoTitle,
       seoDescription,
       hsn,
-      variants: variantsString
+      variants: variantsRaw
     } = req.body;
 
     // Parse variants if sent as JSON string
-    const variants = variantsString ? JSON.parse(variantsString) : {};
-
+    // const variants = variantsString ? JSON.parse(variantsString) : {};
+    // --- VARIANTS PATCH: match createProduct logic ---
+    let variants = {};
+    if (typeof variantsRaw !== 'undefined') {
+      try {
+        if (typeof variantsRaw === 'string') {
+          variants = JSON.parse(variantsRaw);
+        } else if (typeof variantsRaw === 'object' && variantsRaw !== null) {
+          variants = variantsRaw;
+        }
+      } catch (e) {
+        variants = {};
+      }
+    }
+    if (!variants || typeof variants !== 'object' || Array.isArray(variants)) {
+      variants = {};
+    }
     // Upload new images if provided
     let newImages = [];
     if (req.files && req.files.length > 0) {
@@ -608,6 +627,7 @@ exports.updateProduct = async (req, res) => {
       existingImages = parsed.map(img => {
         if (typeof img === "string") {
           return { url: img, public_id: "" }; // no public_id if not sent
+
         } else {
           return img;
         }
@@ -685,7 +705,7 @@ exports.importProducts = async (req, res) => {
         brand: row.brand, // Make sure this is an ObjectId if using ref
         category: row.category,
         subcategory: row.subcategory,
-        supplier: row.supplier,
+        // supplier: row.supplier,
         // itemBarcode: row.itemBarcode,
         store: row.store,
         warehouse: row.warehouse,
@@ -741,7 +761,7 @@ exports.getUpcomingExpiryProducts = async (req, res) => {
       .populate("category")
       .populate("subcategory")
       .populate("hsn")
-      .populate("supplier")
+      // .populate("supplier")
       .populate("warehouse")
       .sort({ expirationDate: 1 });
     res.status(200).json(products);

@@ -11,6 +11,17 @@ const invoiceSchema = new mongoose.Schema({
             sellingPrice: { type: Number, required: true },
             discount: { type: Number, default: 0 },
             tax: { type: Number, default: 0 },
+            unit: { type: String, default: "" }, // New field for unit
+            hsnCode: { type: String, default: "" }, // New field for HSN code
+            discountType: { type: String, default: "" },
+            unit: { type: String, default: "" },
+            hsnCode: { type: String, default: "" },
+            subTotal: { type: Number, default: "" },
+            discountAmount: { type: Number, default: "" },
+            taxableAmount: { type: Number, default: "" },
+            taxAmount: { type: Number, default: "" },
+            lineTotal: { type: Number, default: "" },
+            unitCost: { type: Number, default: "" },
         },
     ],
     billing: {

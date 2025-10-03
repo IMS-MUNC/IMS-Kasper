@@ -62,13 +62,22 @@ const salesSchema = new mongoose.Schema(
     products: [
       {
         productId: { type: mongoose.Schema.Types.ObjectId, ref: "Product", required: true },
-        saleQty: { type: Number, default: 1 },
-        quantity: { type: Number, default: 1 },
+        saleQty: { type: Number, default: "" },
+        quantity: { type: Number, default: "" },
         sellingPrice: { type: Number, required: true },
         discount: { type: Number, default: 0 },
         tax: { type: Number, default: 0 },
         unit: { type: String, default: "" }, // New field for unit
-        hsnCode: { type: String, default: "" }, // New field for HSN code 
+        hsnCode: { type: String, default: "" }, // New field for HSN code
+        discountType: { type: String, default: "" },
+        unit: { type: String, default: "" },
+        hsnCode: { type: String, default: "" },
+        subTotal: { type: Number, default: "" },
+        discountAmount: { type: Number, default: "" },
+        taxableAmount: { type: Number, default: "" },
+        taxAmount: { type: Number, default: "" },
+        lineTotal: { type: Number, default: "" },
+        unitCost: { type: Number, default: "" },
       },
     ],
     saleDate: { type: Date, required: true },
@@ -90,6 +99,8 @@ const salesSchema = new mongoose.Schema(
     description: { type: String },
     cgst: { type: String },
     sgst: { type: String },
+    cgstValue: { type: Number, default: 0 },
+    sgstValue: { type: Number, default: 0 },
 
 
     totalAmount: { type: Number, },
@@ -111,6 +122,18 @@ const salesSchema = new mongoose.Schema(
         returnDate: { type: Date, default: Date.now },
       }
     ],
+    // Array of linked credit notes
+    creditNotes: [{ type: mongoose.Schema.Types.ObjectId, ref: 'CreditNote' }],
+    createdBy: {
+      name: { type: String },
+      email: { type: String }
+    },
+    updatedBy: {
+      name: { type: String },
+      email: { type: String }
+    },
+    // createdBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
+    // updatedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
   },
   { timestamps: true }
 );

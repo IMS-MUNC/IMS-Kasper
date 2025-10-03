@@ -17,8 +17,9 @@ import { MdFileDownload } from "react-icons/md";
 import { BiSolidFilePdf } from "react-icons/bi";
 import BASE_URL from "../../../../pages/config/config.js";
 
-const EmailDetail = ({ email, onBack, handleToggleStar }) => {
+const EmailDetail = ({ email, onBack, handleToggleStar, onDelete }) => {
   const [showDetails, setShowDetails] = useState(false);
+  const detailsRef = useRef(null);
   // const [emailshow, setEmailShow] = useState(false);
   const [menuOpenId, setMenuOpenId] = useState(null);
   const [emails, setEmails] = useState([]);
@@ -46,6 +47,16 @@ const EmailDetail = ({ email, onBack, handleToggleStar }) => {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (detailsRef.current && !detailsRef.current.contains(event.target)) {
+        setShowDetails(false); // close dropdown
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
   const handleDeleteSelected = async () => {
     try {
       await axios.post(`${BASE_URL}/api/email/mail/delete`, {
@@ -65,23 +76,37 @@ const EmailDetail = ({ email, onBack, handleToggleStar }) => {
       const token = localStorage.getItem("token");
       await axios.post(`${BASE_URL}/api/email/mail/delete`, {
         ids: [id],
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
-      setEmails((prev) => prev.filter((email) => email._id !== id));
+      },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+      if (onDelete) onDelete(id);
+      // setEmails((prev) => prev.filter((email) => email._id !== id));
+      // setEmailsState((prev) => prev.filter((email) => getEmailId(email) !== id));
       setMenuOpenId(null);
+      // navigate back after delete
+      if (onBack) onBack();
     } catch (error) {
       console.error("Failed to delete email", error);
     }
   };
 
+  const extractEmail = (data) => {
+    if (!data) return "";
+    if (typeof data === "string") return data;
+    if (Array.isArray(data)) return extractEmail(data[0]);
+    if (typeof data === "object") return data.email || "";
+    return "";
+  }
+
   // function for handle reply and forward
   const handleReply = () => {
     setModalData({
       show: true,
-      to: email.from,
-      // subject: `Re: ${email.subject}`,
+      to: extractEmail(email.from),
+      subject: `Re: ${email.subject}`,
       body: `\n\n------------------ Original Message ------------------\n${email.body}`,
     });
   };
@@ -90,11 +115,11 @@ const EmailDetail = ({ email, onBack, handleToggleStar }) => {
     setModalData({
       show: true,
       to: "",
-      subject: `Fwd: ${email.subject}`,
-      body: `\n\n------------------ Forwarded Message ------------------\nFrom: ${email.from
-        }\nDate: ${new Date(
-          email.createdAt
-        ).toLocaleString()}\nTo: ${email.to.join(", ")}\nSubject: ${email.subject
+      subject: `Fwd: ${email.subject || ""}`,
+      body: `\n\n------------------ Forwarded Message ------------------\nFrom:
+      ${extractEmail(email.from)}\nDate: ${new Date(
+        email.createdAt
+      ).toLocaleString()}\nTo: ${getRecipientsDisplay(email.to)}\nSubject: ${email.subject
         }\n\n${email.body}`,
     });
   };
@@ -146,32 +171,98 @@ const EmailDetail = ({ email, onBack, handleToggleStar }) => {
     return "Unknown";
   };
 
+
   // safely get recipients list
+  // const getRecipientsDisplay = (recipients) => {
+  //   if (!recipients) return "";
+  //   if (typeof recipients === "string") return recipients;
+  //   if (Array.isArray(recipients)) {
+  //     return recipients
+
+  //       .map((r) => {
+  //         if (!r) return ""; // skip nulls
+  //         if (typeof r === "string") return r;
+  //         if (typeof r === "object") {
+
+  //           return r.firstName || r.lastName
+  //             ? `${r.firstName || ""} ${r.lastName || ""}`.trim()
+  //             : r.email || "";
+  //         }
+  //         return "";
+  //       })
+  //       .filter(Boolean)
+  //       .join(", ");
+  //   }
+  //   if (typeof recipients === "object") return recipients.email || "";
+  //   return "";
+  // };
   const getRecipientsDisplay = (recipients) => {
     if (!recipients) return "";
     if (typeof recipients === "string") return recipients;
+
     if (Array.isArray(recipients)) {
       return recipients
-    //     .map((r) => (typeof r === "object" ? r.email : r))
-    //     .join(", ");
-    // }
-     .map((r) => {
-        if (!r) return ""; // skip nulls
-        if (typeof r === "string") return r;
-       if (typeof r === "object") {
-          // use firstName + lastName if available, else email
-          return r.firstName || r.lastName
-            ? `${r.firstName || ""} ${r.lastName || ""}`.trim()
-            : r.email || "";
-        }
-        return "";
-      })
-      .filter(Boolean) // remove empty strings
-      .join(", ");
-  }
-    if (typeof recipients === "object") return recipients.email || "";
+        .map((r) => {
+          if (!r) return "";
+          if (typeof r === "string") return r;
+
+          if (typeof r === "object") {
+            const name = r.firstName || r.lastName
+              ? `${r.firstName || ""} ${r.lastName || ""}`.trim()
+              : "";
+            const email = r.email || "";
+            return name ? `${name} <${email}>` : email;
+          }
+          return "";
+        })
+        .filter(Boolean)
+        .join(", ");
+    }
+
+    if (typeof recipients === "object") {
+      const name = recipients.firstName || recipients.lastName
+        ? `${recipients.firstName || ""} ${recipients.lastName || ""}`.trim()
+        : "";
+      const email = recipients.email || "";
+      return name ? `${name} <${email}>` : email;
+    }
+
     return "";
   };
+
+
+  const getNameOnly = (recipient) => {
+    if (!recipient) return "Unknown";
+
+    if (typeof recipient === "string") return recipient; // fallback (email only)
+
+    if (Array.isArray(recipient)) {
+      // for sent emails, show first recipient only in collapsed view
+      const r = recipient[0];
+      if (!r) return "Unknown";
+      const name = r.firstName || r.lastName
+        ? `${r.firstName || ""} ${r.lastName || ""}`.trim()
+        : "";
+      return name || r.email || "Unknown";
+    }
+
+    if (typeof recipient === "object") {
+      const name = recipient.firstName || recipient.lastName
+        ? `${recipient.firstName || ""} ${recipient.lastName || ""}`.trim()
+        : "";
+      return name || recipient.email || "Unknown";
+    }
+
+    return "Unknown";
+  };
+
+  const getInitials = (sender) => {
+    if (!sender) return "";
+    if (sender.name) {
+      const parts = sender.name.trim().split(" ");
+      return parts.length > 1 ? `${parts[0][0]}${parts[1][0]}`.toUpperCase() : parts[0][0].toUpperCase();
+    }
+  }
 
 
   return (
@@ -247,7 +338,7 @@ const EmailDetail = ({ email, onBack, handleToggleStar }) => {
               {email.sender.profileImage ? (
                 <img
                   src={email.sender.profileImage}
-                  alt="alk"
+                  alt={""}
                   style={{
                     width: "25px",
                     height: "25px",
@@ -269,14 +360,15 @@ const EmailDetail = ({ email, onBack, handleToggleStar }) => {
                     color: "#fff",
                   }}
                 >
-                  {email.sender.name?.[0]?.toUpperCase()}
+                  {/* {email.sender.name?.[0]?.toUpperCase()} */}
+                  {getInitials(email.sender)}
                 </div>
               )}
             </span>
             <div style={{ display: 'flex', flexDirection: 'column', margin: 0, padding: 0 }}>
               <span style={{ display: "block", margin: 0, padding: 0, marginTop: '-20px', marginBottom: '-10px' }}>
-                <span style={{ margin: 0, paddingRight: '4px', color: '#262626', fontSize: '14px', fontWeight: 500, lineHeight: '14px' }}>{email.type === "sent" ? getRecipientsDisplay(email.to) : email.sender?.name || getSenderDisplay(email.from) || "Unknown"}</span>
-                <span style={{ margin: 0, paddingRight: '4px', fontSize: '12px', fontWeight: 400, lineHeight: '14px', color: '#676767' }}>&lt;{email.type === "sent" ? getRecipientsDisplay(email.to) : getRecipientsDisplay(email.from)}&gt;</span>
+                <span style={{ margin: 0, paddingRight: '4px', color: '#262626', fontSize: '14px', fontWeight: 500, lineHeight: '14px' }}>{email.type === "sent" ? getNameOnly(email.to) : email.sender?.name || "Unknown"}</span>
+                <span style={{ margin: 0, paddingRight: '4px', fontSize: '12px', fontWeight: 400, lineHeight: '14px', color: '#676767' }}>&lt;{email.type === "sent" ? getNameOnly(email.to) : getNameOnly(email.from)}&gt;</span>
                 <button
                   onClick={() => setShowDetails(!showDetails)}
                   className="toggle-meta"
@@ -336,13 +428,7 @@ const EmailDetail = ({ email, onBack, handleToggleStar }) => {
           {/* <span className="icon" onClick={handleReply}>
             <LuReply />
           </span> */}
-          <EmailModal
-            show={modalData.show}
-            onClose={() => setModalData({ ...modalData, show: false })}
-            to={modalData.to}
-            subject={modalData.subject}
-            body={modalData.body}
-          />
+
           <span onClick={() => setMenuOpenId(email._id)}>
             <div style={{ position: "relative" }}>
               <span
@@ -370,7 +456,7 @@ const EmailDetail = ({ email, onBack, handleToggleStar }) => {
         </div>
       </div>
       {showDetails && (
-        <div className="email-meta">
+        <div className="email-meta" ref={detailsRef}>
           {console.log("📌 Email detailsws:", email)}
           <p
             style={{
@@ -456,7 +542,7 @@ const EmailDetail = ({ email, onBack, handleToggleStar }) => {
       )}
       <hr style={{ color: '#b8b8b8ff', height: '1px', fontWeight: 400 }} />
       <div
-        style={{ border: "none", fontSize: '14px', fontWeight: 400, lineHeight: '14px', color: '#262626' }}
+        style={{ border: "none", fontSize: '14px', fontWeight: 400, lineHeight: '14px', color: '#262626', whiteSpace: 'pre-wrap', wordBreak: 'break-word', overflowWrap: 'anywhere' }}
         className="email-body"
         dangerouslySetInnerHTML={{
           __html: email.body.replace(/\n/g, "<br/>"),
@@ -464,123 +550,126 @@ const EmailDetail = ({ email, onBack, handleToggleStar }) => {
       />
 
       {/* image and attachment */}
-      <div style={{ marginTop: "20px" }}>
-        <h4
-          style={{
-            fontSize: '14px', fontWeight: 400, lineHeight: '14px', color: '#262626'
-          }}
-        >Attachments</h4>
-        <div style={{ display: "flex", flexWrap: "wrap", gap: "20px" }}>
-          {/* Images */}
-          {email.image?.map((imgUrl, index) => {
-            // const imgUrl = `http://localhost:5000/${imgPath.replace(
-            //   /\\/g,
-            //   "/"
-            // )}`;
-            return (
-              <div className="attachment-box" key={index}>
-                <img
-                  src={imgUrl}
-                  alt={`attachment-${index}`}
-                  className="attachment-img"
-                />
-                <div className="hover-download-btn">
-                  <a
-                    className="acker"
-                    onClick={() =>
-                      handleDownload(imgUrl, `attachment-${index}.jpeg`)
-                    }
-                    href="#"
-                  >
-                    <MdFileDownload />
-                  </a>
-                  <a
-                    className="acker"
-                    href={imgUrl}
-                    target="_blank"
-                    rel="noreferrer"
-                  >
-                    <BsEyeFill />
-                  </a>
+      {(email.image?.length > 0 || email.attachments?.length > 0) && (
+        <div style={{ marginTop: "20px" }}>
+          <h4
+            style={{
+              fontSize: '14px', fontWeight: 400, lineHeight: '14px', color: '#262626'
+            }}
+          >Attachments</h4>
+          <div style={{ display: "flex", flexWrap: "wrap", gap: "20px" }}>
+            {/* Images */}
+            {email.image?.map((imgUrl, index) => {
+              // const imgUrl = `http://localhost:5000/${imgPath.replace(
+              //   /\\/g,
+              //   "/"
+              // )}`;
+              return (
+                <div className="attachment-box" key={index}>
+                  <img
+                    src={imgUrl}
+                    alt={`attachment-${index}`}
+                    className="attachment-img"
+                  />
+                  <div className="hover-download-btn">
+                    <a
+                      className="acker"
+                      onClick={() =>
+                        handleDownload(imgUrl, `attachment-${index}.jpeg`)
+                      }
+                      href="#"
+                    >
+                      <MdFileDownload />
+                    </a>
+                    <a
+                      className="acker"
+                      href={imgUrl}
+                      target="_blank"
+                      rel="noreferrer"
+                    >
+                      <BsEyeFill />
+                    </a>
+                  </div>
                 </div>
-              </div>
-            );
-          })}
+              );
+            })}
 
-          {/* PDFs and Others */}
-          {email.attachments?.map((fileUrl, index) => {
-            const fileName = fileUrl.split("/").pop();
-            const extension = fileUrl.split(".").pop().toLowerCase();
-            const isImage = /\.(jpeg|jpg|png|gif)$/i.test(fileUrl);
-            if (isImage) return null;
+            {/* PDFs and Others */}
+            {email.attachments?.map((fileUrl, index) => {
+              const fileName = fileUrl.split("/").pop();
+              const extension = fileUrl.split(".").pop().toLowerCase();
+              const isImage = /\.(jpeg|jpg|png|gif)$/i.test(fileUrl);
+              if (isImage) return null;
 
-            const isPdf = extension === "pdf";
-            // const iconPreview = isPdf
-            //   ? fileUrl.replace("/upload/", "/upload/pg_1,w_120,h_120,c_thumb/")
-            //   : "/file-icon.png";
-            const iconPreview = isPdf ? "/pdf.png" : "/file-icon.png";
+              const isPdf = extension === "pdf";
+              // const iconPreview = isPdf
+              //   ? fileUrl.replace("/upload/", "/upload/pg_1,w_120,h_120,c_thumb/")
+              //   : "/file-icon.png";
+              const iconPreview = isPdf ? "/pdf.png" : "/file-icon.png";
 
-            return (
-              <div className="attachment-box" key={index}>
-                <img
-                  src={iconPreview}
-                  // alt={fileName}
-                  className="attachment-img"
-                />
-                <div className="hover-download-btn">
-                  <a
-                    className="acker"
-                    onClick={() => handleDownload(fileUrl, fileName)}
-                    href="#"
-                  >
-                    <MdFileDownload />
-                  </a>
+              return (
+                <div className="attachment-box" key={index}>
+                  <img
+                    src={iconPreview}
+                    // alt={fileName}
+                    className="attachment-img"
+                  />
+                  <div className="hover-download-btn">
+                    <a
+                      className="acker"
+                      onClick={() => handleDownload(fileUrl, fileName)}
+                      href="#"
+                    >
+                      <MdFileDownload />
+                    </a>
+                    <a
+                      className="acker"
+                      href={fileUrl}
+                      target="_blank"
+                      rel="noreferrer"
+                    >
+                      <BsEyeFill />
+                    </a>
+                  </div>
                   <a
                     className="acker"
                     href={fileUrl}
                     target="_blank"
                     rel="noreferrer"
+                    download
+                    style={{
+                      display: "block",
+                      marginTop: "10px",
+                      color: "#333",
+                      fontSize: "14px",
+                      overflow: "hidden",
+                      textOverflow: "ellipsis",
+                      whiteSpace: "nowrap",
+                      textDecoration: "none",
+                    }}
+                    title={fileName}
                   >
-                    <BsEyeFill />
+                    {fileName}
                   </a>
                 </div>
-                <a
-                  className="acker"
-                  href={fileUrl}
-                  target="_blank"
-                  rel="noreferrer"
-                  download
-                  style={{
-                    display: "block",
-                    marginTop: "10px",
-                    color: "#333",
-                    fontSize: "14px",
-                    overflow: "hidden",
-                    textOverflow: "ellipsis",
-                    whiteSpace: "nowrap",
-                    textDecoration: "none",
-                  }}
-                  title={fileName}
-                >
-                  {fileName}
-                </a>
-              </div>
-            );
-          })}
-        </div>
-        {emojiList.length > 0 && (
-          <div
-            className="emoji-preview"
-            style={{ marginTop: "10px", fontSize: "22px" }}
-          >
-            {emojiList.map((emoji, index) => (
-              <span key={index} style={{ marginRight: "10px" }}>
-                {emoji}
-              </span>
-            ))}
+              );
+            })}
           </div>
-        )}
-      </div>
+
+          {emojiList.length > 0 && (
+            <div
+              className="emoji-preview"
+              style={{ marginTop: "10px", fontSize: "22px" }}
+            >
+              {emojiList.map((emoji, index) => (
+                <span key={index} style={{ marginRight: "10px" }}>
+                  {emoji}
+                </span>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
 
       <div
         style={{
@@ -632,6 +721,13 @@ const EmailDetail = ({ email, onBack, handleToggleStar }) => {
         </span>
         {console.log("Email body being sent:", email.body)}
       </div>
+      <EmailModal
+        show={modalData.show}
+        onClose={() => setModalData({ ...modalData, show: false })}
+        to={modalData.to}
+        subject={modalData.subject}
+        body={modalData.body}
+      />
       {showEmojiPicker && (
         <div className="emoji-picker">
           <EmojiPicker onEmojiClick={handleEmojiClick} />

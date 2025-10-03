@@ -12,21 +12,21 @@ const CountryModal = ({
   submitLabel = "Submit",
 }) => {
   return (
-    <div className="modal fade" id={modalId}>
+    <div className="modal" id={modalId}>
       <div className="modal-dialog modal-dialog-centered">
         <div className="modal-content">
           <div className="modal-header">
             <div className="page-title">
               <h4>{title}</h4>
             </div>
-            <button
+            {/* <button
               type="button"
               className="close"
               data-bs-dismiss="modal"
               aria-label="Close"
             >
               <span aria-hidden="true">×</span>
-            </button>
+            </button> */}
           </div>
           <form onSubmit={onSubmit}>
             <div className="modal-body">
@@ -53,7 +53,7 @@ const CountryModal = ({
                 />
               </div>
             </div>
-            <div className="modal-footer">
+            <div className="modal-footer" style={{display:'flex', gap:'10px'}}>
               <button
                 type="button"
                 className="btn btn-secondary"

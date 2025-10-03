@@ -79,7 +79,14 @@ function Warehouse() {
           Authorization: `Bearer ${token}`,
         },
       });
-      setProducts(res.data);
+      // Defensive: support both res.data.products and res.data (array)
+      if (Array.isArray(res.data)) {
+        setProducts(res.data);
+      } else if (Array.isArray(res.data.products)) {
+        setProducts(res.data.products);
+      } else {
+        setProducts([]);
+      }
     } catch (err) {
       console.error("Error fetching products:", err);
       setProducts([]);

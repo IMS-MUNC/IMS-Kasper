@@ -50,6 +50,7 @@ const posSaleRoutes = require('./routes/posSaleRoutes.js');
 const invoiceSettingsRoutes = require('./routes/invoiceSettings');
 const creditNoteRoutes = require('./routes/creditNoteRoutes');
 const expenseRoutes = require('./routes/expenseRoutes.js')
+const GstRoutes = require("./routes/gstRoutes.js")
 
 
 const http = require('http');
@@ -89,6 +90,7 @@ app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 app.use(cors(corsOptions));
 
 // Routes
+app.use("/api/gst", GstRoutes);
 app.use("/api/role", roleRoutes);
 app.use("/api/user", usersRoutes);
 app.use("/api/auth", authRoutes);

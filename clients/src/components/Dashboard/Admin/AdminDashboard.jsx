@@ -632,7 +632,7 @@ useEffect(() => {
 
                     <div className="mb-3">
                         <h1 className="mb-1">Welcome,    {userObj?.firstName || 'User'} {userObj?.lastName || ''}</h1>
-                        <p className="fw-medium">You have <span className="text-primary fw-bold">200+</span> Orders, Today</p>
+                        {/* <p className="fw-medium">You have <span className="text-primary fw-bold">200+</span> Orders, Today</p> */}
                         {/* <div className="mt-3">
                             <h5>Recent Purchases</h5>
                             <ul>

@@ -5,6 +5,9 @@ const  {authMiddleware}=require("../middleware/auth.js")
 
 router.get('/', authMiddleware,stockHistoryController.getStockHistory);
 
+// Get stock history totals with aggregation
+router.get('/totals', authMiddleware, stockHistoryController.getStockHistoryTotals);
+
 // Update a stock log
 router.put('/:id', authMiddleware,stockHistoryController.updateStockHistory);
 
