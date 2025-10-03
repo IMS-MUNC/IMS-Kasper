@@ -46,6 +46,51 @@ const GiftCard = ({ show, handleClose }) => {
   const [selectedGiftCards, setSelectedGiftCards] = useState([]);
   const [selectAll, setSelectAll] = useState(false);
 
+  // Function to check and update expired gift cards
+  const checkAndUpdateExpiredGiftCards = async (giftCards) => {
+    const currentDate = new Date();
+    const expiredCards = giftCards.filter(card => {
+      const expiryDate = new Date(card.expiryDate);
+      return card.status === true && expiryDate < currentDate;
+    });
+
+    if (expiredCards.length > 0) {
+      try {
+        const token = localStorage.getItem("token");
+        
+        // Update each expired card
+        for (const card of expiredCards) {
+          await fetch(`${BASE_URL}/api/giftcard/${card._id}`, {
+            method: 'PUT',
+            headers: {
+              'Content-Type': 'application/json',
+              Authorization: `Bearer ${token}`,
+            },
+            body: JSON.stringify({
+              ...card,
+              status: false // Set to inactive
+            }),
+          });
+        }
+        
+        // Update local state to reflect changes
+        const updatedCards = giftCards.map(card => {
+          const expiryDate = new Date(card.expiryDate);
+          if (card.status === true && expiryDate < currentDate) {
+            return { ...card, status: false };
+          }
+          return card;
+        });
+        
+        return updatedCards;
+      } catch (error) {
+        console.error('Error updating expired gift cards:', error);
+        return giftCards;
+      }
+    }
+    
+    return giftCards;
+  };
 
   useEffect(() => {
     const fetchGiftData = async () => {
@@ -62,11 +107,15 @@ const GiftCard = ({ show, handleClose }) => {
         }
         const data = await response.json();
         console.log(data);
-        const updatedData = data.map((item) => ({
+        
+        // Check and update expired gift cards
+        const updatedData = await checkAndUpdateExpiredGiftCards(data);
+        
+        const finalData = updatedData.map((item) => ({
           ...item,
           id: item._id, // Mapping _id to id
         }));
-        setGiftCardDatas(updatedData);
+        setGiftCardDatas(finalData);
       } catch (err) {
         setError(err.message);
       }
@@ -74,6 +123,32 @@ const GiftCard = ({ show, handleClose }) => {
 
     fetchGiftData();
   }, []);
+
+  // Periodic check for expired gift cards
+  useEffect(() => {
+    const checkExpiredCards = async () => {
+      if (GiftCardDatas.length > 0) {
+        const updatedCards = await checkAndUpdateExpiredGiftCards(GiftCardDatas);
+        if (JSON.stringify(updatedCards) !== JSON.stringify(GiftCardDatas)) {
+          const finalData = updatedCards.map((item) => ({
+            ...item,
+            id: item._id,
+          }));
+          setGiftCardDatas(finalData);
+        }
+      }
+    };
+
+    // Check immediately when component mounts and data is available
+    if (GiftCardDatas.length > 0) {
+      checkExpiredCards();
+    }
+
+    // Set up interval to check every hour (3600000 ms)
+    const interval = setInterval(checkExpiredCards, 3600000);
+
+    return () => clearInterval(interval);
+  }, [GiftCardDatas]);
 
   useEffect(() => {
     const fetchCustomers = async () => {
@@ -373,7 +448,7 @@ const GiftCard = ({ show, handleClose }) => {
     expiryDate: dayjs(row.expiryDate).format("YYYY-MM-DD"), // Format the date
     amount: row.amount.toString(), // Ensure amount is a string
     balance: row.balance.toString(), // Ensure balance is a string
-    status: row.status === "Active", // Set status to true if it's active
+    status: row.status, // Use the boolean status directly
   });
 
   const toISO = (prettyDate) => {
