@@ -1341,6 +1341,20 @@ function AddWarehouse() {
 
   const [loading, setLoading] = useState(false);
 
+  const handleCancel = () => {
+    setWarehouseName("");
+    setPhone("");
+    setWarehouseCode("");
+    setWarehouseOwner("");
+    setAddress("");
+    setAddress("");
+    setCountry("");
+
+    setCountry("");
+    setState("");
+    setPinCode("");
+  }
+
   // Retrieve token
   const token = localStorage.getItem("token");
 
@@ -1765,6 +1779,9 @@ function AddWarehouse() {
   };
 
   return (
+    <div className="page-wrapper">
+      <div className="content">
+        
     <div
       style={{
         fontFamily: "Arial, sans-serif",
@@ -1837,7 +1854,7 @@ function AddWarehouse() {
                   display: "block",
                 }}
               >
-                Warehouse Name <span className="text-danger">*</span>
+                Warehouse Name 
               </label>
               <input
                 type="text"
@@ -1855,12 +1872,7 @@ function AddWarehouse() {
                 }}
                 placeholder="Enter Warehouse Name"
               />
-              {errors.warehouseName && (
-                <div style={{ color: "#EF4444", fontSize: "12px", marginTop: "4px" }}>
-                  {errors.warehouseName}
-                </div>
-              )}
-            </div>
+            </div>                                    
             <div style={{ flex: 1 }}>
               <label
                 style={{
@@ -2352,7 +2364,8 @@ function AddWarehouse() {
                           </label>
                           <input
                             type="number"
-                            min="0"
+                            required
+                            
                             value={zones}
                             onChange={(e) => {
                               const val = e.target.value === "" ? "" : Math.max(0, parseInt(e.target.value));
@@ -2399,7 +2412,6 @@ function AddWarehouse() {
                             </label>
                             <input
                               type="number"
-                              min="1"
                               value={rows}
                               onChange={(e) => {
                                 const val = e.target.value === "" ? "" : Math.max(1, parseInt(e.target.value));
@@ -2418,12 +2430,9 @@ function AddWarehouse() {
                                 color: "#6B7280",
                                 fontSize: "14px",
                               }}
+                              required
                             />
-                            {popupErrors.rows && (
-                              <div style={{ color: "#EF4444", fontSize: "12px", marginTop: "4px" }}>
-                                {popupErrors.rows}
-                              </div>
-                            )}
+                            
                           </div>
                           <div style={{ flex: 1 }}>
                             <label
@@ -2439,7 +2448,7 @@ function AddWarehouse() {
                             </label>
                             <input
                               type="number"
-                              min="1"
+                              required 
                               value={columns}
                               onChange={(e) => {
                                 const val = e.target.value === "" ? "" : Math.max(1, parseInt(e.target.value));
@@ -2648,7 +2657,7 @@ function AddWarehouse() {
             <>
               <button
                 type="button"
-                onClick={handleDraft}
+                onClick={handleCancel}
                 style={{
                   backgroundColor: "#6B7280",
                   color: "#FFFFFF",
@@ -2666,7 +2675,7 @@ function AddWarehouse() {
                 }
                 onMouseOut={(e) => (e.target.style.backgroundColor = "#6B7280")}
               >
-                Draft
+                Cancel
               </button>
               <button
                 type="button"
@@ -2715,6 +2724,8 @@ function AddWarehouse() {
           )}
         </div>
       </form>
+    </div>
+      </div>
     </div>
   );
 }
