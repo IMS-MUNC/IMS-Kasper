@@ -98,9 +98,11 @@ const token = localStorage.getItem("token");
           Authorization: `Bearer ${token}`,
         },
       });
+      console.log("Purchase API response:", res.data);
       setPurchases(res.data.purchases);
     } catch (error) {
       console.error("Error fetching purchases:", error);
+      setPurchases([])
     }
   };
 
@@ -110,28 +112,33 @@ const token = localStorage.getItem("token");
 
   // products fetching
 
-  useEffect(() => {
-    const fetchProducts = async () => {
-      try {
-        const res = await axios.get(`${BASE_URL}/api/products`,{
-          headers: {
-          Authorization: `Bearer ${token}`,
-        },
-        });
-        const productsArr = Array.isArray(res.data) ? res.data : [];
-        setProducts(productsArr);
-        // Initialize all to "general"
-        const initialTabs = productsArr.reduce((acc, product) => {
-          acc[product._id] = "general";
-          return acc;
-        }, {});
-        setActiveTabs(initialTabs);
-      } catch (err) {
-        console.error("Failed to fetch products", err);
-      }
-    };
-    fetchProducts();
-  }, []);
+useEffect(() => {
+  const fetchProducts = async () => {
+    try {
+      const res = await axios.get(`${BASE_URL}/api/products`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      console.log("Products API response:", res.data);
+
+      // ensure array
+      const productsArr = Array.isArray(res.data) 
+        ? res.data 
+        : res.data.products || [];
+
+      setProducts(productsArr);
+
+      const initialTabs = productsArr.reduce((acc, product) => {
+        acc[product._id] = "general";
+        return acc;
+      }, {});
+      setActiveTabs(initialTabs);
+    } catch (err) {
+      console.error("Failed to fetch products", err);
+    }
+  };
+  fetchProducts();
+}, []);
 
   //sales map for top selling products
   const salesMap = sales.reduce((acc, sale) => {
@@ -988,19 +995,19 @@ const token = localStorage.getItem("token");
               cursor: "pointer",
             }}
           >
-            <Link
+            {/* <Link
               
               to={`/Godown/${id}`}
               style={{ textDecoration: "none", color: "#1368EC" }}
             >
               View All <FaArrowRight />
-            </Link>
+            </Link> */}
           </span>
         </div>
 
         {/* Content - zone 1 */}
         {zones.length > 0 ? (
-          zones.slice(0,2).map((zone, idx) => (
+          zones.map((zone, idx) => (
             <>
               <div
                 key={idx}
@@ -1255,6 +1262,7 @@ const token = localStorage.getItem("token");
             </thead>
 
             <tbody>
+              
               {filteredPurchases.slice(0, 5).map((purchase) => (
                 <tr key={purchase._id} style={{ cursor: "pointer" }}>
                   <td
