@@ -56,7 +56,83 @@ const EditCreditNote = ({ noteId, onClose, onUpdated }) => {
           <label>Amount</label>
           <input name="amount" value={form.amount || ''} onChange={handleChange} className="form-control" />
         </div>
-        {/* Add more fields as needed */}
+        <div className="mb-2">
+          <label>Payment Type</label>
+          <select name="paymentType" value={form.paymentType || ''} onChange={handleChange} className="form-control">
+            <option value="">Select</option>
+            <option value="Full">Full</option>
+            <option value="Partial">Partial</option>
+          </select>
+        </div>
+        <div className="mb-2">
+          <label>Paid Amount</label>
+          <input name="paidAmount" type="number" value={form.paidAmount || ''} onChange={handleChange} className="form-control" />
+        </div>
+        <div className="mb-2">
+          <label>Due Amount</label>
+          <input name="dueAmount" type="number" value={form.dueAmount || ''} onChange={handleChange} className="form-control" />
+        </div>
+        <div className="mb-2">
+          <label>Due Date</label>
+          <input name="dueDate" type="date" value={form.dueDate ? form.dueDate.slice(0,10) : ''} onChange={handleChange} className="form-control" />
+        </div>
+        <div className="mb-2">
+          <label>Payment Method</label>
+          <select name="paymentMethod" value={form.paymentMethod || ''} onChange={handleChange} className="form-control">
+            <option value="">Select</option>
+            <option value="Cash">Cash</option>
+            <option value="Online">Online</option>
+            <option value="Cheque">Cheque</option>
+          </select>
+        </div>
+        {form.paymentMethod === 'Online' && (
+          <>
+            <div className="mb-2">
+              <label>Online Payment Mode</label>
+              <select name="onlineMod" value={form.onlineMod || ''} onChange={handleChange} className="form-control">
+                <option value="">Select</option>
+                <option value="UPI">UPI</option>
+                <option value="NEFT">NEFT</option>
+                <option value="RTGS">RTGS</option>
+                <option value="IMPS">IMPS</option>
+                <option value="Net Banking">Net Banking</option>
+                <option value="Credit Card">Credit Card</option>
+                <option value="Debit Card">Debit Card</option>
+                <option value="Wallet">Wallet</option>
+              </select>
+            </div>
+            <div className="mb-2">
+              <label>Transaction ID</label>
+              <input name="transactionId" value={form.transactionId || ''} onChange={handleChange} className="form-control" />
+            </div>
+            <div className="mb-2">
+              <label>Transaction Date</label>
+              <input name="transactionDate" type="date" value={form.transactionDate ? form.transactionDate.slice(0,10) : ''} onChange={handleChange} className="form-control" />
+            </div>
+          </>
+        )}
+        {form.paymentMethod === 'Cheque' && (
+          <>
+            <div className="mb-2">
+              <label>Cheque No</label>
+              <input name="transactionId" value={form.transactionId || ''} onChange={handleChange} className="form-control" />
+            </div>
+            <div className="mb-2">
+              <label>Transaction Date</label>
+              <input name="transactionDate" type="date" value={form.transactionDate ? form.transactionDate.slice(0,10) : ''} onChange={handleChange} className="form-control" />
+            </div>
+          </>
+        )}
+        <div className="mb-2">
+          <label>Payment Status</label>
+          <select name="paymentStatus" value={form.paymentStatus || ''} onChange={handleChange} className="form-control">
+            <option value="">Select</option>
+            <option value="Paid">Paid</option>
+            <option value="Unpaid">Unpaid</option>
+            <option value="Pending">Pending</option>
+            <option value="Partial">Partial</option>
+          </select>
+        </div>
         <button type="submit" className="btn btn-primary" disabled={loading}>Update</button>
         <button type="button" className="btn btn-secondary ms-2" onClick={onClose}>Cancel</button>
       </form>

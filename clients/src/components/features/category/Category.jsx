@@ -384,8 +384,17 @@ const Category = () => {
           <a data-bs-toggle="tooltip" data-bs-placement="top" title="Collapse" id="collapse-header"><i className="ti ti-chevron-up" /></a>
         </li>
       </ul> */}
-          <div className="table-top-head me-2">
-            <li style={{ display: "flex", alignItems: "center", gap: '5px' }} className="icon-btn">
+          <div className="table-top-head me-2" style={{ display: "flex", alignItems: "center", gap: '10px' }}>
+
+            {selectedCategories.length > 0 && (
+          <div className="">
+            <button className="btn btn-danger" onClick={handleBulkDelete}>
+              Delete Selected ({selectedCategories.length})
+            </button>
+          </div>
+            )}
+
+            <div style={{ display: "flex", alignItems: "center", gap: '5px' }} className="icon-btn">
               <label className="" title="">Export : </label>
               <button onClick={handlePdf} title="Download PDF" style={{
                 backgroundColor: "white",
@@ -399,8 +408,9 @@ const Category = () => {
                 alignItems: "center",
                 border: "none",
               }}><FaFileExcel className="fs-20" style={{ color: "orange" }} /></button>
-            </li>
-            <li style={{ display: "flex", alignItems: "center", gap: '5px' }} className="icon-btn">
+            </div>
+
+            <div style={{ display: "flex", alignItems: "center", gap: '5px' }} className="icon-btn">
               <label className="" title="">Import : </label>
               <label className="" title="Import Excel">
                 <button
@@ -423,7 +433,7 @@ const Category = () => {
                   onChange={handleFileChange}
                 />
               </label>
-            </li>
+            </div>
             {/* <li>
               <button
                 type="button"
@@ -467,13 +477,7 @@ const Category = () => {
             </a>
           </div>
         </div>
-        {selectedCategories.length > 0 && (
-          <div className="mb-3">
-            <button className="btn btn-danger" onClick={handleBulkDelete}>
-              Delete Selected ({selectedCategories.length})
-            </button>
-          </div>
-        )}
+
         {/* /product list */}
         <div className="card">
           <div className="card-header d-flex align-items-center justify-content-between flex-wrap row-gap-3">

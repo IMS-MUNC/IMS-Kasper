@@ -1,3 +1,55 @@
+// Sales and Return Stock Aggregation for Dashboard
+exports.getSalesReturnStats = async (req, res) => {
+  try {
+    // Aggregate total sale quantity and amount
+    const sales = await Sales.find({})
+      .populate({ path: 'products.productId', select: 'productName' })
+      .populate({
+        path: 'creditNotes',
+        select: 'products total grandTotal',
+        populate: [
+          { path: 'products.productId', select: 'productName' },
+        ],
+      });
+
+    let totalSaleQty = 0;
+    let totalSaleAmount = 0;
+    let totalReturnQty = 0;
+    let totalReturnAmount = 0;
+
+    sales.forEach(sale => {
+      // Sum sale quantities and amounts
+      sale.products.forEach(p => {
+        totalSaleQty += Number(p.saleQty || p.quantity || 0);
+        totalSaleAmount += Number(p.lineTotal || p.subTotal || 0);
+      });
+      // Sum return quantities and amounts from credit notes
+      if (Array.isArray(sale.creditNotes)) {
+        sale.creditNotes.forEach(note => {
+          if (Array.isArray(note.products)) {
+            note.products.forEach(retProd => {
+              totalReturnQty += Number(retProd.returnQty || 0);
+              totalReturnAmount += Number(retProd.returnAmount || 0);
+            });
+          }
+          // Fallback: add grandTotal if returnAmount not present
+          if (!note.products?.length && note.grandTotal) {
+            totalReturnAmount += Number(note.grandTotal);
+          }
+        });
+      }
+    });
+
+    res.json({
+      totalSaleQty,
+      totalSaleAmount,
+      totalReturnQty,
+      totalReturnAmount
+    });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+};
 
 
 // Auto-generate next sale reference number (like purchase)
@@ -631,6 +683,7 @@ exports.getSales = async (req, res) => {
       if (search) {
         query.$or = [
           { referenceNumber: { $regex: search, $options: "i" } },
+          { productName: { $regex: search, $options: "i" } },
           { description: { $regex: search, $options: "i" } },
           { notes: { $regex: search, $options: "i" } },
         ];
@@ -663,6 +716,13 @@ exports.getSales = async (req, res) => {
     const salesRaw = await Sales.find(query)
       .populate({ path: "customer", select: "-password -__v" })
       .populate({ path: "products.productId", select: "productName images" })
+      .populate({
+        path: "creditNotes",
+        select: "creditNoteId total grandTotal createdAt products isDeleted",
+        populate: [
+          { path: "products.productId", select: "productName hsnCode images" },
+        ],
+      })
       .sort(sortOrder)
       .skip(skip)
       .limit(limit);
@@ -675,8 +735,26 @@ exports.getSales = async (req, res) => {
       let taxTotal = 0;
       let grandTotal = 0;
 
+      // Add netQty and totalReturnedQty to each product
       const products = sale.products.map((item) => {
+        // Calculate totalReturnedQty for this product from all credit notes
+        let totalReturnedQty = 0;
+        if (Array.isArray(sale.creditNotes)) {
+          sale.creditNotes.forEach(note => {
+            if (Array.isArray(note.products)) {
+              note.products.forEach(retProd => {
+                const prodId = item.productId?._id?.toString() || item.productId?.toString() || item._id?.toString();
+                const retProdId = retProd.productId?._id?.toString() || retProd.productId?.toString() || retProd._id?.toString();
+                if (prodId && retProdId && prodId === retProdId) {
+                  totalReturnedQty += Number(retProd.returnQty || 0);
+                }
+              });
+            }
+          });
+        }
         const saleQty = Number(item.saleQty || item.quantity || 1);
+        const netQty = saleQty - totalReturnedQty;
+
         const price = Number(item.sellingPrice || 0);
         const discount = Number(item.discount || 0);
         const tax = Number(item.tax || 0);
@@ -716,6 +794,9 @@ exports.getSales = async (req, res) => {
           taxAmount,
           lineTotal,
           unitCost,
+          saleQty,
+          totalReturnedQty,
+          netQty,
         };
       });
 
@@ -774,14 +855,17 @@ exports.getSales = async (req, res) => {
 exports.getSaleById = async (req, res) => {
   try {
     const sale = await Sales.findById(req.params.id)
-      .populate({ path: 'products.productId', select: 'productName images' });
+      .populate({ path: 'products.productId', select: 'productName images' })
+      .populate({
+        path: 'creditNotes',
+        select: 'creditNoteId total grandTotal createdAt products isDeleted',
+        populate: [
+          { path: 'products.productId', select: 'productName hsnCode images' },
+        ],
+      });
     if (!sale) return res.status(404).json({ message: 'Sale not found' });
-    // Optionally, map productName and image to top-level for each product
-    const products = sale.products.map(p => ({
-      ...p.toObject(),
-      productName: p.productId?.productName || '',
-      productImage: p.productId?.images?.[0]?.url || ''
-    }));
+    // Map productName, image, and netQty to top-level for each product
+
     res.json({ ...sale.toObject(), products });
   } catch (err) {
     res.status(500).json({ message: err.message });

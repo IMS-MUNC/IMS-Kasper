@@ -482,7 +482,6 @@ const ExpriedProduct = () => {
                 title="Refresh"
                 onClick={() => {
                   window.location.reload();
-                  toast.success("Expired products refreshed successfully!");
                 }}
                 className="fs-20"
                 style={{ backgroundColor: 'white', color: '', padding: '5px 5px', display: 'flex', alignItems: 'center', border: '1px solid #e8eaebff', cursor: 'pointer', borderRadius: '4px' }}
