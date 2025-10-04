@@ -18,6 +18,8 @@ import CountryModal from "./CountryEdit";
 import DeleteAlert from "../../../utils/sweetAlert/DeleteAlert";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
+import { GrFormPrevious } from "react-icons/gr";
+import { MdNavigateNext } from "react-icons/md";
 
 const Country = () => {
   const [countries, setCountries] = useState([]);
@@ -28,6 +30,9 @@ const Country = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const token = localStorage.getItem("token");
   const [sortOption, setSortOption] = useState("recent");
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(10);
+  const [selectedCountries, setSelectedCountries] = useState([])
 
   // Fetch countries on mount
   useEffect(() => {
@@ -142,7 +147,7 @@ const Country = () => {
       setNewName("");
       setNewCode("");
       fetchCountries();
-      window.$(`#add-country`).modal("hide"); // auto close
+      window.$(`#edit-country`).modal("hide"); // auto close
     } catch (err) {
       console.error(err);
       toast.error("Failed to update");
@@ -284,6 +289,39 @@ const Country = () => {
     finalCountries = sortedCountries.filter((c) => new Date(c.createdAt) >= oneMonthAgo)
   }
 
+  const totalPages = Math.ceil(finalCountries.length / itemsPerPage) || 1;
+  const paginatedCountries = finalCountries.slice(
+    (currentPage - 1) * itemsPerPage,
+    currentPage * itemsPerPage
+  );
+
+  const handleBulkDelete = async () => {
+    const confirmed = await DeleteAlert({});
+    if (!confirmed) return;
+    try {
+      const token = localStorage.getItem("token");
+      await axios.post(`${BASE_URL}/api/countries/bulk-delete`, {
+        ids: selectedCountries,
+      }, {
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      });
+      toast.success("Selected countries deleted");
+      setSelectedCountries([]);
+      fetchCountries();
+    } catch (error) {
+      console.log(error);
+      if (error.response?.status === 401) {
+        toast.error("Unauthorired. Please login again");
+      } else if (error.response?.status === 403) {
+        toast.error("You don't have permission to delete country");
+      } else {
+        toast.error("Bulk delete failed.Please try again")
+      }
+    }
+  }
+
   return (
     <div className="page-wrapper">
       <div className="content">
@@ -349,6 +387,13 @@ const Country = () => {
             </a>
           </div>
         </div>
+        {selectedCountries.length > 0 && (
+          <div className="mb-3">
+            <div className="btn btn-danger" onClick={handleBulkDelete}>
+              Delete Selected({selectedCountries.length})
+            </div>
+          </div>
+        )}
         {/* /product list */}
         <div className="card">
           <div className="card-header d-flex align-items-center justify-content-between flex-wrap row-gap-3">
@@ -426,26 +471,53 @@ const Country = () => {
             <div className="table-responsive">
               <table className="table datatable">
                 <thead className="thead-light">
-                  <tr>
+                  <tr style={{ textAlign: 'center' }}>
                     <th className="no-sort">
                       <label className="checkboxs">
-                        <input type="checkbox" id="select-all" />
+                        <input type="checkbox"
+                          checked={paginatedCountries.length > 0 && paginatedCountries.every((coun) => selectedCountries.includes(coun._id))}
+                          onChange={(e) => {
+                            if (e.target.checked) {
+                              const newIds = paginatedCountries.map((coun) => coun._id);
+                              setSelectedCountries((prev) => [
+                                ...new Set([...prev, ...newIds]),
+                              ])
+                            } else {
+                              const idsToRemove = paginatedCountries.map((coun) => coun._id);
+                              setSelectedCountries((prev) => prev.filter((id) => !idsToRemove.includes(id)))
+                            }
+                          }}
+                          id="select-all" />
                         <span className="checkmarks" />
                       </label>
                     </th>
                     <th>Country Name</th>
                     <th>Country Code</th>
                     {/* <th>Status</th> */}
-                    <th className="no-sort" />
+                    <th>Action</th>
                   </tr>
                 </thead>
                 <tbody>
                   {finalCountries.length > 0 ? (
-                    finalCountries.map((country) => (
-                      <tr key={country._id}>
+                    paginatedCountries.map((country) => (
+                      <tr key={country._id} style={{ textAlign: 'center' }}>
                         <td>
                           <label className="checkboxs">
-                            <input type="checkbox" />
+                            <input type="checkbox" checked={
+                              paginatedCountries.length > 0 &&
+                              paginatedCountries.every((c) => selectedCountries.includes(c._id))
+                            }
+                              onChange={(e) => {
+                                if (e.target.checked) {
+                                  setSelectedCountries((prev) => [
+                                    ...prev,
+                                    country._id
+                                  ])
+                                } else {
+                                  setSelectedCountries((prev) =>
+                                    prev.filter((id) => id !== country._id))
+                                }
+                              }} />
                             <span className="checkmarks" />
                           </label>
                         </td>
@@ -486,6 +558,65 @@ const Country = () => {
                 </tbody>
               </table>
             </div>
+            {/* pagination start */}
+            <div
+              className="d-flex justify-content-end gap-3"
+              style={{ padding: "10px 20px" }}
+            >
+              <select
+                value={itemsPerPage}
+                onChange={(e) => {
+                  setItemsPerPage(Number(e.target.value));
+                  setCurrentPage(1);
+                }}
+                className="form-select w-auto"
+              >
+                <option value={10}>10 Per Page</option>
+                <option value={25}>25 Per Page</option>
+                <option value={50}>50 Per Page</option>
+                <option value={100}>100 Per Page</option>
+              </select>
+              <span
+                style={{
+                  backgroundColor: "white",
+                  boxShadow: "rgb(0 0 0 / 4%) 0px 3px 8px",
+                  padding: "7px",
+                  borderRadius: "5px",
+                  border: "1px solid #e4e0e0ff",
+                  color: "gray",
+                }}
+              >
+                {finalCountries.length === 0
+                  ? "0 of 0"
+                  : `${(currentPage - 1) * itemsPerPage + 1}-${Math.min(
+                    currentPage * itemsPerPage,
+                    finalCountries.length
+                  )} of ${finalCountries.length}`}
+                <button
+                  style={{
+                    border: "none",
+                    color: "grey",
+                    backgroundColor: "white",
+                  }}
+                  onClick={() =>
+                    setCurrentPage((prev) => Math.max(prev - 1, 1))
+                  }
+                  disabled={currentPage === 1}
+                >
+                  <GrFormPrevious />
+                </button>{" "}
+                <button
+                  style={{ border: "none", backgroundColor: "white" }}
+                  onClick={() =>
+                    setCurrentPage((prev) => Math.min(prev + 1, totalPages))
+                  }
+                  disabled={currentPage === totalPages}
+                >
+                  <MdNavigateNext />
+                </button>
+              </span>
+            </div>
+            {/* pagination end */}
           </div>
         </div>
         {/* /product list */}

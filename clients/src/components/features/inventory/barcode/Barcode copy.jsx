@@ -321,7 +321,6 @@ function Barcode() {
       return;
     }
 
-    // Copy the modal's HTML and styles for printing
     const printContent = printRef.current.innerHTML;
     const printWindow = window.open('', '_blank');
     printWindow.document.write(`
@@ -335,7 +334,20 @@ function Barcode() {
                 padding: 10mm;
                 font-family: Arial, sans-serif;
               }
-              .barcode-scanner-link {
+              .barcode-row {
+                display: flex;
+                flex-wrap: wrap;
+                margin-bottom: 10mm;
+                page-break-inside: avoid;
+                gap: 10px;
+              }
+              .barcode-col {
+                flex: 0 0 calc(52% - 5mm);
+                max-width: calc(52% - 5mm);
+                box-sizing: border-box;
+                padding: 5mm;
+              }
+              .barcode-item {
                 border: 2px solid #E6E6E6;
                 border-radius: 8px;
                 padding: 16px 24px;
@@ -345,15 +357,15 @@ function Barcode() {
                 page-break-inside: avoid;
                 text-align: left;
                 font-size: 14px;
-                margin: 0 auto 16px auto;
               }
-              .barcode-scanner-link svg {
+              .barcode-item svg {
                 width: 100%;
                 height: 60px;
                 margin-top: 10px;
               }
-              .barcode-scanner-link h6, .barcode-scanner-link p {
-                margin: 0 0 5px 0;
+              .barcode-item span {
+                display: block;
+                margin-bottom: 5px;
               }
               @page {
                 size: A4;
@@ -363,29 +375,61 @@ function Barcode() {
           </style>
         </head>
         <body>
-          <div id="barcode-print-root">${printContent}</div>
+          <div class="barcode-container">
+            ${Array.from({ length: Math.ceil((numberOfBarcodes || 1) / 2) })
+        .map((_, rowIndex) => {
+          const startIndex = rowIndex * 2;
+          return `
+                  <div class="barcode-row">
+                    ${Array.from({ length: Math.min(2, (numberOfBarcodes || 1) - startIndex) })
+              .map((_, colIndex) => {
+                const index = startIndex + colIndex;
+                const barcodeId = `barcode-print-${index}`;
+                return `
+                          <div class="barcode-col">
+                            <div class="barcode-item">
+                              ${product.showProductName && product.productName ? `<span style="font-weight: 600; color: black;">${product.productName}</span>` : ''}
+                              ${product.showSku && product.sku ? `<span style="color: black;">SKU: ${product.sku}</span>` : ''}
+                              ${product.showPrice && product.price ? `<span style="font-weight: 500; color: black;">MRP: ₹${product.price}</span>` : ''}
+                              <div style="display: flex; justify-content: space-between;">
+                                ${product.showExpiryDate && product.expiryDate ? `<span style="color: black;">Expiry: ${new Date(product.expiryDate).toLocaleDateString()}</span>` : ''}
+                                ${product.showQuantity && product.quantity ? `<span style="color: black;">QTY: ${product.quantity}</span>` : ''}
+                              </div>
+                              <div style="text-align: center;">
+                                <svg id="${barcodeId}"></svg>
+                              </div>
+                            </div>
+                          </div>
+                        `;
+              })
+              .join('')}
+                  </div>
+                `;
+        })
+        .join('')}
+          </div>
           <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
           <script>
-            (${function(barcodes, numberOfBarcodes) {
-              for (let i = 0; i < (numberOfBarcodes || 1); i++) {
-                const svg = document.getElementById(`barcode-svg-${i}`);
-                if (svg) {
-                  window.JsBarcode(svg, barcodes[i] || barcodes[0] || '', {
-                    format: "CODE128",
+            ${Array.from({ length: numberOfBarcodes || 1 })
+        .map((_, index) => {
+          const barcodeId = `barcode-print-${index}`;
+          return `
+                  JsBarcode("#${barcodeId}", "${product.uniqueBarcodes[index] || product.barcode}", {
+                    format: "CODE39",
                     lineColor: "#000",
                     width: 1,
                     height: 60,
                     displayValue: true
                   });
-                }
-              }
-              window.onload = function() {
-                window.print();
-                window.onafterprint = function() {
-                  window.close();
-                };
+                `;
+        })
+        .join('')}
+            window.onload = function() {
+              window.print();
+              window.onafterprint = function() {
+                window.close();
               };
-            }.toString()})(${JSON.stringify(product.uniqueBarcodes)}, ${numberOfBarcodes || 1});
+            };
           </script>
         </body>
       </html>
@@ -1117,73 +1161,161 @@ function Barcode() {
             </div>
           </div> */}
 
-            <div className="paper-search-size">
-              <div className="row align-items-center">
-
-                {/* <div className="col-lg-6 pt-3"> */}
-
-                  <div className="row mt-3 " >
-                    <div className="col-4 col-sm-2">
-                      <div className="search-toggle-list">
-                        <p>Show Product Name</p>
-                        <div className="m-0">
-                          <div className="status-toggle modal-status d-flex justify-content-between align-items-center">
-                            <input
-                              type="checkbox"
-                              id="showProductName"
-                              className="check"
-                              name="showProductName"
-                              checked={product.showProductName}
-                              onChange={handleChange}
-                            />
-                            <label htmlFor="showProductName" className="checktoggle mb-0" />
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                    <div className="col-4 col-sm-2">
-                      <div className="search-toggle-list">
-                        <p>Show Price</p>
-                        <div className="m-0">
-                          <div className="status-toggle modal-status d-flex justify-content-between align-items-center">
-                            <input
-                              type="checkbox"
-                              id="showPrice"
-                              className="check"
-                              name="showPrice"
-                              checked={product.showPrice}
-                              onChange={handleChange}
-                            />
-                            <label htmlFor="showPrice" className="checktoggle mb-0" />
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-
-                    <div className="col-4 col-sm-2">
-                      <div className="search-toggle-list">
-                        <p>Show Expiry Date</p>
-                        <div className="m-0">
-                          <div className="status-toggle modal-status d-flex justify-content-between align-items-center">
-                            <input
-                              type="checkbox"
-                              id="showExpiryDate"
-                              className="check"
-                              name="showExpiryDate"
-                              checked={product.showExpiryDate}
-                              onChange={handleChange}
-                            />
-                            <label htmlFor="showExpiryDate" className="checktoggle mb-0" />
-                          </div>
-                        </div>
-                      </div>
+             <div className="paper-search-size">
+        <div className="row align-items-center">
+       
+          <div className="col-lg-6 pt-3">
+            {/* <div className="row">
+               
+              <div className="col-sm-4">
+                <div className="search-toggle-list">
+                  <p>Show Product Name</p>
+                  <div className="m-0">
+                    <div className="status-toggle modal-status d-flex justify-content-between align-items-center">
+                      <input type="checkbox" id="user8" className="check" defaultChecked />
+                      <label htmlFor="user8" className="checktoggle mb-0" />
                     </div>
                   </div>
-
-                {/* </div> */}
-
+                </div> 
               </div>
-            </div> 
+              <div className="col-sm-4">
+                <div className="search-toggle-list">
+                  <p>Show Price</p>
+                  <div className="m-0">
+                    <div className="status-toggle modal-status d-flex justify-content-between align-items-center">
+                      <input type="checkbox" id="user9" className="check" defaultChecked />
+                      <label htmlFor="user9" className="checktoggle mb-0">	</label>
+                    </div>
+                  </div>
+                </div> 
+              </div> 
+               <div className="col-sm-4">
+                <div className="search-toggle-list">
+                  <p>Show Expire Date</p>
+                  <div className="m-0">
+                    <div className="status-toggle modal-status d-flex justify-content-between align-items-center">
+                      <input type="checkbox" id="user7" className="check" defaultChecked />
+                      <label htmlFor="user7" className="checktoggle mb-0" />
+                    </div>
+                  </div>
+                </div> 
+              </div>  
+            </div>      
+             */}
+             <div className="row" style={{ marginTop: '16px' }}>
+  <div className="col-sm-4">
+    <div className="search-toggle-list">
+      <p>Show Product Name</p>
+      <div className="m-0">
+        <div className="status-toggle modal-status d-flex justify-content-between align-items-center">
+          <input
+            type="checkbox"
+            id="showProductName"
+            className="check"
+            name="showProductName"
+            checked={product.showProductName}
+            onChange={handleChange}
+          />
+          <label htmlFor="showProductName" className="checktoggle mb-0" />
+        </div>
+      </div>
+    </div>
+  </div>
+   <div className="col-sm-4">
+    <div className="search-toggle-list">
+      <p>Show Price</p>
+      <div className="m-0">
+        <div className="status-toggle modal-status d-flex justify-content-between align-items-center">
+          <input
+            type="checkbox"
+            id="showPrice"
+            className="check"
+            name="showPrice"
+            checked={product.showPrice}
+            onChange={handleChange}
+          />
+          <label htmlFor="showPrice" className="checktoggle mb-0" />
+        </div>
+      </div>
+    </div>
+  </div>
+
+   <div className="col-sm-4">
+    <div className="search-toggle-list">
+      <p>Show Expiry Date</p>
+      <div className="m-0">
+        <div className="status-toggle modal-status d-flex justify-content-between align-items-center">
+          <input
+            type="checkbox"
+            id="showExpiryDate"
+            className="check"
+            name="showExpiryDate"
+            checked={product.showExpiryDate}
+            onChange={handleChange}
+          />
+          <label htmlFor="showExpiryDate" className="checktoggle mb-0" />
+        </div>
+      </div>
+    </div>
+  </div>
+
+  {/* <div className="col-sm-4">
+    <div className="search-toggle-list">
+      <p>Show SKU</p>
+      <div className="m-0">
+        <div className="status-toggle modal-status d-flex justify-content-between align-items-center">
+          <input
+            type="checkbox"
+            id="showSku"
+            className="check"
+            name="showSku"
+            checked={product.showSku}
+            onChange={handleChange}
+          />
+          <label htmlFor="showSku" className="checktoggle mb-0" />
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div className="col-sm-4">
+    <div className="search-toggle-list">
+      <p>Show Quantity</p>
+      <div className="m-0">
+        <div className="status-toggle modal-status d-flex justify-content-between align-items-center">
+          <input
+            type="checkbox"
+            id="showQuantity"
+            className="check"
+            name="showQuantity"
+            checked={product.showQuantity}
+            onChange={handleChange}
+          />
+          <label htmlFor="showQuantity" className="checktoggle mb-0" />
+        </div>
+      </div>
+    </div>
+  </div> */}
+</div>
+
+          </div>
+          {/* <div className="col-lg-6 flex-end">
+            <div className="search-barcode-button">                            
+        <a   onClick={() => {
+              setIsFormOpen(true);
+              generateBarcode();
+            }}
+            disabled={!selectedProduct} className="btn btn-submit btn-primary me-2 mt-0" data-bs-toggle="modal" data-bs-target="#prints-barcode">
+          <span><TbEye className="fas fa-eye me-1" /></span>Generate Barcode
+        </a>
+        <a onClick={closeForm} className="btn btn-cancel btn-secondary fs-13 me-2">
+          <span><i className="fas fa-power-off me-1" /></span>Cancel 
+        </a>
+      
+      </div>
+          </div> */}
+        </div>
+      </div> 
       {/* <div className="search-barcode-button">                            
         <a className="btn btn-submit btn-primary me-2 mt-0" data-bs-toggle="modal" data-bs-target="#prints-barcode">
           <span><i className="fas fa-eye me-1" /></span>Generate Barcode
@@ -1195,23 +1327,22 @@ function Barcode() {
           <span><i className="fas fa-print me-1" /></span>Print Barcode
         </a>
       </div> */}
-            <div className="barcode-content-list border-top pt-3 mt-3">
-              <div className="search-barcode-button">
-                <a onClick={() => {
-                  setIsFormOpen(true);
-                  generateBarcode();
-                }}
-                  disabled={!selectedProduct} className="btn btn-submit btn-primary me-2 mt-0" data-bs-toggle="modal" data-bs-target="#prints-barcode">
-                  <span><TbEye className="fas fa-eye me-1" /></span>Generate Barcode
-                </a>
-                <a onClick={closeForm} className="btn btn-cancel btn-secondary fs-13 me-2">
-                  <span><i className="fas fa-power-off me-1" /></span>Cancel
-                </a>
-
-              </div>
-            </div>
-
+          <div className="search-barcode-button">                            
+        <a   onClick={() => {
+              setIsFormOpen(true);
+              generateBarcode();
+            }}
+            disabled={!selectedProduct} className="btn btn-submit btn-primary me-2 mt-0" data-bs-toggle="modal" data-bs-target="#prints-barcode">
+          <span><TbEye className="fas fa-eye me-1" /></span>Generate Barcode
+        </a>
+        <a onClick={closeForm} className="btn btn-cancel btn-secondary fs-13 me-2">
+          <span><i className="fas fa-power-off me-1" /></span>Cancel 
+        </a>
+      
+      </div>
         </div>
+
+        
 
         {/* <div
           style={{
@@ -1259,135 +1390,83 @@ function Barcode() {
 
         {/* Show Barcode SVG */}
         {isFormOpen && (
-          <div className="modal fade" id="prints-barcode">
-  <div className="modal-dialog modal-dialog-centered stock-adjust-modal barcode-modal">
-    <div className="modal-content">
-      <div className="modal-header">
-        <div className="page-title">
-          <h4>Barcode</h4>
-        </div>
-        <button type="button" className="close bg-danger text-white fs-16 shadow-none" data-bs-dismiss="modal" aria-label="Close">
-          <span aria-hidden="true">×</span>
-        </button>
-      </div>
-      <div className="modal-body pb-0">
-        <div className="d-flex justify-content-end">
-          <a onClick={handleDownloadPDF} className="btn btn-cancel close-btn btn-danger shadow-none me-2">
-            <span><FaFilePdf className="fas fa-print me-2" /></span>                                  
-          </a>
-          <a onClick={handlePrint} className="btn btn-cancel close-btn btn-danger shadow-none">
-            <span><IoPrint className="fas fa-print me-2" /></span>                                  
-            Print Barcode</a>
-        </div>
-      
-        <div ref={printRef}  className="row mt-3">
-           {Array.from({ length: numberOfBarcodes || 1 }).map((_, index) => (
-             <div className="col-sm-4">
-            <div className="barcode-scanner-link text-center">
-                           {product.showProductName && product.productName && (
-                        <h6>{product.productName}</h6>
+          <div style={{
+            position: 'fixed',
+            top: '0',
+            left: '0',
+            width: '100%',
+            height: '100%',
+            backgroundColor: 'rgba(199, 197, 197, 0.4)',
+            backdropFilter: 'blur(1px)',
+            display: 'flex',
+            justifyContent: 'center',
+            zIndex: '10',
+            overflowY: 'auto',
+          }}>
+            <div ref={formRef} style={{ width: '760px', height: 'auto', margin: 'auto', marginTop: '80px', marginBottom: '80px', backgroundColor: 'white', border: '1px solid #E1E1E1', borderRadius: '8px', padding: '10px 16px', overflowY: 'auto' }}>
+              <div style={{ position: 'fixed', width: '725px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid #E1E1E1', backgroundColor: '#fff', zIndex: '100', marginTop: '-10px', padding: '10px 0px' }}>
+                <div style={{ display: 'flex', gap: '10px' }}>
+                  <button
+                    type="button"
+                    className="icon-btn"
+                    title="Pdf"
+                    onClick={handleDownloadPDF}
+                  >
+                    <FaFilePdf style={{ color: "red" }} />
+                  </button>
+                  <button
+                    type="button"
+                    className="icon-btn"
+                    title="Pdf"
+                    onClick={handlePrint}
+                  >
+                    <IoPrint  style={{fontSize:'22px'}} /> Print
+                  </button>
+                </div>
+                <div style={{}}>
+                  <span style={{ backgroundColor: 'red', color: 'white', padding: '5px 11px', borderRadius: '50%', cursor: 'pointer', fontSize: '20px' }} onClick={handlePopupClose}>x</span>
+                </div>
+              </div>
+
+              <div ref={printRef} className='row' style={{ marginTop: '60px', marginLeft: '1px' }}>
+                {Array.from({ length: numberOfBarcodes || 1 }).map((_, index) => (
+                  <div key={index} className='col-6' style={{ height: '300px', }}>
+                    <div style={{ marginTop: "10px", border: '2px solid #E6E6E6', borderRadius: '8px', width: '320px', padding: '16px 24px', height: '280px', marginBottom: '10px' }}>
+                      {product.showProductName && product.productName && (
+                        <span style={{ fontWeight: '600', color: 'black' }}>{product.productName}</span>
                       )}
-              
-                       {product.showPrice && product.price && (
-                       <p>Price: ₹{product.price}</p> 
-                       
+                      {product.showSku && product.sku && (
+                        <>
+                          <br />
+                          <span style={{ color: 'black' }}>SKU: {product.sku}</span>
+                        </>
                       )}
-                                       {product.showExpiryDate && product.expiryDate && (
-                          <p>Expiry: {new Date(product.expiryDate).toLocaleDateString()}</p>
+                      {product.showPrice && product.price && (
+                        <>
+                          <br /><br />
+                          <span style={{ fontWeight: '500', color: 'black' }}>MRP: ₹{product.price}</span>
+                        </>
+                      )}
+                      <br />
+                      <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                        {product.showExpiryDate && product.expiryDate && (
+                          <span style={{ color: 'black' }}>Expiry: {new Date(product.expiryDate).toLocaleDateString()}</span>
                         )}
-            
-             
-                  {product.barcode && (
-                  <svg id={`barcode-svg-${index}`}></svg>
-                     )}
-            </div>                                                
-          </div>))}
-        
-         
-        </div>   
-     
-      </div>
-    </div>
-  </div>
-</div>
-
-          // <div style={{
-          //   position: 'fixed',
-          //   top: '0',
-          //   left: '0',
-          //   width: '100%',
-          //   height: '100%',
-          //   backgroundColor: 'rgba(199, 197, 197, 0.4)',
-          //   backdropFilter: 'blur(1px)',
-          //   display: 'flex',
-          //   justifyContent: 'center',
-          //   zIndex: '10',
-          //   overflowY: 'auto',
-          // }}>
-          //   <div ref={formRef} style={{ width: '760px', height: 'auto', margin: 'auto', marginTop: '80px', marginBottom: '80px', backgroundColor: 'white', border: '1px solid #E1E1E1', borderRadius: '8px', padding: '10px 16px', overflowY: 'auto' }}>
-          //     <div style={{ position: 'fixed', width: '725px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid #E1E1E1', backgroundColor: '#fff', zIndex: '100', marginTop: '-10px', padding: '10px 0px' }}>
-          //       <div style={{ display: 'flex', gap: '10px' }}>
-          //         <button
-          //           type="button"
-          //           className="icon-btn"
-          //           title="Pdf"
-          //           onClick={handleDownloadPDF}
-          //         >
-          //           <FaFilePdf style={{ color: "red" }} />
-          //         </button>
-          //         <button
-          //           type="button"
-          //           className="icon-btn"
-          //           title="Pdf"
-          //           onClick={handlePrint}
-          //         >
-          //           <IoPrint  style={{fontSize:'22px'}} /> Print
-          //         </button>
-          //       </div>
-          //       <div style={{}}>
-          //         <span style={{ backgroundColor: 'red', color: 'white', padding: '5px 11px', borderRadius: '50%', cursor: 'pointer', fontSize: '20px' }} onClick={handlePopupClose}>x</span>
-          //       </div>
-          //     </div>
-
-          //     <div ref={printRef} className='row' style={{ marginTop: '60px', marginLeft: '1px' }}>
-          //       {Array.from({ length: numberOfBarcodes || 1 }).map((_, index) => (
-          //         <div key={index} className='col-6' style={{ height: '300px', }}>
-          //           <div style={{ marginTop: "10px", border: '2px solid #E6E6E6', borderRadius: '8px', width: '320px', padding: '16px 24px', height: '280px', marginBottom: '10px' }}>
-          //             {product.showProductName && product.productName && (
-          //               <span style={{ fontWeight: '600', color: 'black' }}>{product.productName}</span>
-          //             )}
-          //             {product.showSku && product.sku && (
-          //               <>
-          //                 <br />
-          //                 <span style={{ color: 'black' }}>SKU: {product.sku}</span>
-          //               </>
-          //             )}
-          //             {product.showPrice && product.price && (
-          //               <>
-          //                 <br /><br />
-          //                 <span style={{ fontWeight: '500', color: 'black' }}>MRP: ₹{product.price}</span>
-          //               </>
-          //             )}
-          //             <br />
-          //             <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-          //               {product.showExpiryDate && product.expiryDate && (
-          //                 <span style={{ color: 'black' }}>Expiry: {new Date(product.expiryDate).toLocaleDateString()}</span>
-          //               )}
-          //               {product.showQuantity && product.quantity && (
-          //                 <span style={{ color: 'black' }}>QTY: {product.quantity}</span>
-          //               )}
-          //             </div>
-          //             <div style={{ marginTop: '10px', textAlign: 'center' }}>
-          //               {product.barcode && (
-          //                 <svg id={`barcode-svg-${index}`}></svg>
-          //               )}
-          //             </div>
-          //           </div>
-          //         </div>
-          //       ))}
-          //     </div>
-          //   </div>
-          // </div>
+                        {product.showQuantity && product.quantity && (
+                          <span style={{ color: 'black' }}>QTY: {product.quantity}</span>
+                        )}
+                      </div>
+                      <div style={{ marginTop: '10px', textAlign: 'center' }}>
+                        {product.barcode && (
+                          <svg id={`barcode-svg-${index}`}></svg>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
         )}
       </div>
 </div>

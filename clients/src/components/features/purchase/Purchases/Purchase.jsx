@@ -19,6 +19,8 @@ import { jsPDF } from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { GrFormPrevious } from "react-icons/gr";
 import { MdNavigateNext } from "react-icons/md";
+import { toast } from "react-toastify";
+import DeleteAlert from "../../../../utils/sweetAlert/DeleteAlert";
 
 
 const Purchase = () => {
@@ -59,144 +61,304 @@ const Purchase = () => {
   // };
   // Delete purchase
   const handleDeletePurchase = async (purchaseId, referenceNumber) => {
-    
+    const token = localStorage.getItem("token");
     if (!window.confirm(`Are you sure you want to delete purchase ${referenceNumber}?`)) return;
     try {
       await axios.delete(`${BASE_URL}/api/purchases/${purchaseId}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
-      setPurchases((prev) => prev.filter((p) => p._id !== purchaseId));
-      // Optionally show a toast or alert
-      // alert('Purchase deleted successfully');
+      
+      // Check if we're deleting the last item on the current page
+      const remainingItemsOnPage = purchases.length - 1;
+      if (remainingItemsOnPage === 0 && page > 1) {
+        // If this is the last item on a page that's not the first page, go to previous page
+        setPage(page - 1);
+      } else {
+        // Otherwise, just refresh the current page
+        fetchPurchases();
+      }
+      
+      toast.success(`Purchase ${referenceNumber} deleted successfully`);
     } catch (error) {
-      alert('Failed to delete purchase');
+      toast.error('Failed to delete purchase');
     }
   };
 
 
-  // final Export all table data to PDF
-const handleExportPDF = () => {
-  if (!selectedRows.length) return;
+  // Export data to PDF (selected rows or all data)
+const handleExportPDF = async () => {
+  try {
+    let dataToExport = [];
 
-  const selectedPurchases = purchases.filter((purchase) =>
-    selectedRows.includes(purchase._id)
-  );
+    if (selectedRows.length > 0) {
+      // Export selected rows
+      dataToExport = purchases.filter((purchase) =>
+        selectedRows.includes(purchase._id)
+      );
+    } else {
+      // Export all data by fetching from API without pagination
+      const res = await axios.get(`${BASE_URL}/api/purchases`, {
+        params: {
+          ...filters,
+          limit: 10000, // Large limit to get all data
+        },
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      dataToExport = res.data.purchases;
+    }
 
-  const doc = new jsPDF("l", "pt", "a4");
+    if (!dataToExport.length) {
+      toast.error('No data to export');
+      return;
+    }
 
-  const columns = [
-    "Supplier",
-    "Reference",
-    "Date",
-    "Product",
-    "Quantity",
-    "Unit",
-    "PurchasePrice",
-    "Discount",
-    "Tax",
-    "TaxAmount",
-    "ShippingCost",
-    "ExtraExpense",
-    "UnitCost",
-    "TotalCost",
-    "Status",
-    "Created By",
-    "Updated By"
-  ];
+    const doc = new jsPDF("l", "pt", "a4");
 
-  const rows = [];
+    const columns = [
+      "Supplier",
+      "Reference",
+      "Date",
+      "Product",
+      "Quantity",
+      "Unit",
+      "PurchasePrice",
+      "Discount",
+      "Tax",
+      "TaxAmount",
+      "ShippingCost",
+      "ExtraExpense",
+      "UnitCost",
+      "TotalCost",
+      "Status",
+      "Created By",
+      "Updated By"
+    ];
 
-  selectedPurchases.forEach((purchase) => {
-    purchase.products.forEach((p) => {
-      rows.push([
-        purchase.supplier
-          ? `${purchase.supplier.firstName} ${purchase.supplier.lastName}`
-          : "N/A",
-        purchase.referenceNumber,
-        new Date(purchase.purchaseDate).toLocaleDateString(),
-        p.product?.productName || "",
-        p.quantity,
-        p.unit,
-        p.purchasePrice,
-        p.discount,
-        p.tax,
-        p.taxAmount || ((p.afterDiscount * p.tax) / 100 || 0),
-        purchase.shippingCost,
-        purchase.orderTax,
-        p.unitCost.toFixed(2),
-        p.totalCost.toFixed(2),
-        purchase.status,
-        purchase.createdBy ? `${purchase.createdBy.name} (${purchase.createdBy.email})` : "-",
-        purchase.updatedBy ? `${purchase.updatedBy.name} (${purchase.updatedBy.email})` : "-"
-      ]);
+    const rows = [];
+
+    dataToExport.forEach((purchase) => {
+      purchase.products.forEach((p) => {
+        rows.push([
+          purchase.supplier
+            ? `${purchase.supplier.firstName} ${purchase.supplier.lastName}`
+            : "N/A",
+          purchase.referenceNumber,
+          new Date(purchase.purchaseDate).toLocaleDateString(),
+          p.product?.productName || "",
+          p.quantity,
+          p.unit,
+          p.purchasePrice,
+          p.discount,
+          p.tax,
+          p.taxAmount || ((p.afterDiscount * p.tax) / 100 || 0),
+          purchase.shippingCost,
+          purchase.orderTax,
+          p.unitCost.toFixed(2),
+          p.totalCost.toFixed(2),
+          purchase.status,
+          purchase.createdBy ? `${purchase.createdBy.name} (${purchase.createdBy.email})` : "-",
+          purchase.updatedBy ? `${purchase.updatedBy.name} (${purchase.updatedBy.email})` : "-"
+        ]);
+      });
     });
-  });
 
-  if (!rows.length) return;
+    doc.text("Purchases Report", 40, 30);
 
-  doc.text("Purchases", 40, 30);
+    // Use autoTable as a standalone function
+    autoTable(doc, {
+      head: [columns],
+      body: rows,
+      startY: 50,
+      styles: { fontSize: 7 },
+      margin: { left: 20, right: 20 }
+    });
 
-  // Use autoTable as a standalone function (NOT doc.autoTable)
-  autoTable(doc, {
-    head: [columns],
-    body: rows,
-    startY: 40,
-    styles: { fontSize: 7 },
-    margin: { left: 20, right: 20 }
-  });
-
-  doc.save("selected_purchases.pdf");
+    const filename = selectedRows.length > 0 ? "selected_purchases.pdf" : "all_purchases.pdf";
+    doc.save(filename);
+    
+    toast.success(`PDF exported successfully (${rows.length} records)`);
+  } catch (error) {
+    console.error('Error exporting PDF:', error);
+    toast.error('Failed to export PDF');
+  }
 };
 
   
-  // final Export only selected rows to Excel
-  const handleExportExcel = () => {
-    if (!selectedRows.length) return;
-    const selectedPurchases = purchases.filter((purchase) =>
-      selectedRows.includes(purchase._id)
-    );
-    const rows = [];
-    selectedPurchases.forEach((purchase) => {
-      purchase.products.forEach((p) => {
-        rows.push({
-          Supplier: purchase.supplier ? `${purchase.supplier.firstName} ${purchase.supplier.lastName}` : "N/A",
-          Reference: purchase.referenceNumber,
-          Date: new Date(purchase.purchaseDate).toLocaleDateString(),
-          Product: p.product?.productName || "",
-          Quantity: p.quantity,
-          Unit: p.unit,
-          PurchasePrice: p.purchasePrice,
-          Discount: p.discount,
-          Tax: p.tax,
-          TaxAmount: p.taxAmount || ((p.afterDiscount * p.tax) / 100 || 0),
-          ShippingCost: purchase.shippingCost,
-          ExtraExpense: purchase.orderTax,
-          UnitCost: p.unitCost.toFixed(2),
-          TotalCost: p.totalCost.toFixed(2),
-          Status: purchase.status,
-          CreatedBy: purchase.createdBy ? `${purchase.createdBy.name} (${purchase.createdBy.email})` : "-",
-          UpdatedBy: purchase.updatedBy ? `${purchase.updatedBy.name} (${purchase.updatedBy.email})` : "-"
+  // Export data to Excel (selected rows or all data)
+  const handleExportExcel = async () => {
+    try {
+      let dataToExport = [];
+
+      if (selectedRows.length > 0) {
+        // Export selected rows
+        dataToExport = purchases.filter((purchase) =>
+          selectedRows.includes(purchase._id)
+        );
+      } else {
+        // Export all data by fetching from API without pagination
+        const res = await axios.get(`${BASE_URL}/api/purchases`, {
+          params: {
+            ...filters,
+            limit: 10000, // Large limit to get all data
+          },
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+        dataToExport = res.data.purchases;
+      }
+
+      if (!dataToExport.length) {
+        toast.error('No data to export');
+        return;
+      }
+
+      const rows = [];
+      dataToExport.forEach((purchase) => {
+        purchase.products.forEach((p) => {
+          rows.push({
+            Supplier: purchase.supplier ? `${purchase.supplier.firstName} ${purchase.supplier.lastName}` : "N/A",
+            Reference: purchase.referenceNumber,
+            Date: new Date(purchase.purchaseDate).toLocaleDateString(),
+            Product: p.product?.productName || "",
+            Quantity: p.quantity,
+            Unit: p.unit,
+            PurchasePrice: p.purchasePrice,
+            Discount: p.discount,
+            Tax: p.tax,
+            TaxAmount: p.taxAmount || ((p.afterDiscount * p.tax) / 100 || 0),
+            ShippingCost: purchase.shippingCost,
+            ExtraExpense: purchase.orderTax,
+            UnitCost: p.unitCost.toFixed(2),
+            TotalCost: p.totalCost.toFixed(2),
+            Status: purchase.status,
+            CreatedBy: purchase.createdBy ? `${purchase.createdBy.name} (${purchase.createdBy.email})` : "-",
+            UpdatedBy: purchase.updatedBy ? `${purchase.updatedBy.name} (${purchase.updatedBy.email})` : "-"
+          });
         });
       });
-    });
-    if (!rows.length) return;
-    const ws = XLSX.utils.json_to_sheet(rows);
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, "Purchases");
-    XLSX.writeFile(wb, "selected_purchases.xlsx");
+
+      const ws = XLSX.utils.json_to_sheet(rows);
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, "Purchases");
+      
+      const filename = selectedRows.length > 0 ? "selected_purchases.xlsx" : "all_purchases.xlsx";
+      XLSX.writeFile(wb, filename);
+      
+      toast.success(`Excel exported successfully (${rows.length} records)`);
+    } catch (error) {
+      console.error('Error exporting Excel:', error);
+      toast.error('Failed to export Excel');
+    }
   };
 
-  
+  // Import data from Excel
+  const handleImportExcel = (event) => {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      try {
+        const data = new Uint8Array(e.target.result);
+        const workbook = XLSX.read(data, { type: 'array' });
+        const sheetName = workbook.SheetNames[0];
+        const worksheet = workbook.Sheets[sheetName];
+        const jsonData = XLSX.utils.sheet_to_json(worksheet);
+
+        if (!jsonData.length) {
+          toast.error('No data found in the Excel file');
+          return;
+        }
+
+        // Validate required columns
+        const requiredColumns = ['Supplier', 'Reference', 'Date', 'Product', 'Quantity', 'PurchasePrice'];
+        const firstRow = jsonData[0];
+        const missingColumns = requiredColumns.filter(col => !(col in firstRow));
+        
+        if (missingColumns.length > 0) {
+          toast.error(`Missing required columns: ${missingColumns.join(', ')}`);
+          return;
+        }
+
+        // Process and validate data
+        const processedData = jsonData.map((row, index) => {
+          const errors = [];
+          
+          if (!row.Supplier) errors.push('Supplier is required');
+          if (!row.Reference) errors.push('Reference is required');
+          if (!row.Product) errors.push('Product is required');
+          if (!row.Quantity || isNaN(row.Quantity)) errors.push('Valid quantity is required');
+          if (!row.PurchasePrice || isNaN(row.PurchasePrice)) errors.push('Valid purchase price is required');
+          
+          if (errors.length > 0) {
+            toast.error(`Row ${index + 2}: ${errors.join(', ')}`);
+            return null;
+          }
+
+          return {
+            supplier: row.Supplier,
+            referenceNumber: row.Reference,
+            purchaseDate: row.Date ? new Date(row.Date) : new Date(),
+            product: row.Product,
+            quantity: Number(row.Quantity),
+            unit: row.Unit || 'pcs',
+            purchasePrice: Number(row.PurchasePrice),
+            discount: Number(row.Discount) || 0,
+            tax: Number(row.Tax) || 0,
+            shippingCost: Number(row.ShippingCost) || 0,
+            extraExpense: Number(row.ExtraExpense) || 0,
+            status: row.Status || 'Pending'
+          };
+        }).filter(Boolean);
+
+        if (processedData.length === 0) {
+          toast.error('No valid data to import');
+          return;
+        }
+
+        // Show confirmation dialog
+        const confirmImport = window.confirm(
+          `Found ${processedData.length} valid records to import. Do you want to proceed?`
+        );
+
+        if (confirmImport) {
+          // Here you would typically send the data to your API
+          // For now, we'll just show a success message
+          toast.success(`Successfully processed ${processedData.length} records. Note: Actual import to database needs to be implemented.`);
+          console.log('Processed data:', processedData);
+          
+          // Refresh the purchases list
+          fetchPurchases();
+        }
+
+      } catch (error) {
+        console.error('Error importing Excel:', error);
+        toast.error('Failed to import Excel file. Please check the file format.');
+      }
+    };
+
+    reader.readAsArrayBuffer(file);
+    
+    // Reset the file input
+    event.target.value = '';
+  };
 
  const [selectedRows, setSelectedRows] = useState([]); // For row selection
 
-  // Handle select all
+  // Handle select all for current page
   const handleSelectAll = (e) => {
+    // Since purchases array already contains only current page data from API
+    const currentPageIds = purchases.map((purchase) => purchase._id);
+    
     if (e.target.checked) {
-      // Select all visible purchase IDs
-      setSelectedRows(purchases.map((purchase) => purchase._id));
+      // Add current page IDs to selected rows
+      setSelectedRows((prev) => [...new Set([...prev, ...currentPageIds])]);
     } else {
-      setSelectedRows([]);
+      // Remove current page IDs from selected rows
+      setSelectedRows((prev) => prev.filter((id) => !currentPageIds.includes(id)));
     }
   };
 
@@ -207,6 +369,49 @@ const handleExportPDF = () => {
         ? prev.filter((id) => id !== purchaseId)
         : [...prev, purchaseId]
     );
+  };
+
+  // Bulk delete selected purchases
+  const handleBulkDelete = async () => {
+    if (selectedRows.length === 0) return;
+
+    const confirmed = await DeleteAlert({
+      title: "Are you sure?",
+      text: `You won't be able to revert the deletion of ${selectedRows.length} purchase${selectedRows.length > 1 ? 's' : ''}!`,
+      confirmButtonText: "Yes, delete them!"
+    });
+    if (!confirmed) return;
+
+    try {
+      const token = localStorage.getItem("token");
+
+      await Promise.all(
+        selectedRows.map((id) =>
+          axios.delete(`${BASE_URL}/api/purchases/${id}`, {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          })
+        )
+      );
+
+      // Remove deleted purchases from state and refresh data
+      setSelectedRows([]);
+      toast.success(`${selectedRows.length} purchase${selectedRows.length > 1 ? 's' : ''} deleted successfully`);
+      
+      // Check if we need to navigate to previous page
+      const remainingPurchases = purchases.length - selectedRows.length;
+      const currentPageStart = (page - 1) * 10;
+      
+      if (remainingPurchases <= currentPageStart && page > 1) {
+        setPage(page - 1);
+      } else {
+        fetchPurchases();
+      }
+    } catch (err) {
+      console.error("Bulk delete failed:", err);
+      toast.error("Failed to delete selected purchases");
+    }
   };
 
   
@@ -252,6 +457,7 @@ const token = localStorage.getItem("token");
   // };
   const fetchPurchases = async () => {
     try {
+
       const res = await axios.get(`${BASE_URL}/api/purchases`, {
         params: {
           ...filters,
@@ -276,10 +482,30 @@ const token = localStorage.getItem("token");
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
-    setFilters((prev) => ({
-      ...prev,
+    
+    // Create updated filters object
+    const updatedFilters = {
+      ...filters,
       [name]: value,
-    }));
+    };
+    
+    // Validate date range if both dates are provided
+    if (name === 'endDate' || name === 'startDate') {
+      const startDate = name === 'startDate' ? value : filters.startDate;
+      const endDate = name === 'endDate' ? value : filters.endDate;
+      
+      if (startDate && endDate) {
+        const start = new Date(startDate);
+        const end = new Date(endDate);
+        
+        if (end < start) {
+          toast.error('End date cannot be older than start date. Please input correct date format.');
+          return; // Don't update the filter if validation fails
+        }
+      }
+    }
+    
+    setFilters(updatedFilters);
     setPage(1);
   };
 
@@ -388,8 +614,15 @@ const token = localStorage.getItem("token");
           </div> */}
 
           <div className="table-top-head me-2">
+            <li>
+              {selectedRows.length > 0 && (
+                <button className="btn btn-danger me-2" onClick={handleBulkDelete}>
+                  Delete ({selectedRows.length}) Selected
+                </button>
+              )}
+            </li>
             <li onClick={handleExportPDF}><button type="button" className="icon-btn" title="Pdf"><FaFilePdf /></button></li>
-            <li><label className="icon-btn m-0" title="Import Excel"><input type="file" accept=".xlsx, .xls" hidden /><FaFileExcel style={{ color: "green" }} /></label></li>
+            <li><label className="icon-btn m-0" title="Import Excel"><input type="file" accept=".xlsx, .xls" onChange={handleImportExcel} hidden /><FaFileExcel style={{ color: "green" }} /></label></li>
             <li onClick={handleExportExcel}><button type="button" className="icon-btn" title="Export Excel" ><FaFileExcel /></button></li>
           </div>
 
@@ -432,9 +665,20 @@ const token = localStorage.getItem("token");
                       {/* <input type="checkbox" /> */}
                       <input
                         type="checkbox"
-                        checked={purchases.length > 0 && selectedRows.length === purchases.length}
+                        checked={
+                          purchases.length > 0 &&
+                          purchases.every((purchase) => selectedRows.includes(purchase._id))
+                        }
                         onChange={handleSelectAll}
-                        indeterminate={selectedRows.length > 0 && selectedRows.length < purchases.length ? "indeterminate" : undefined}
+                        ref={(input) => {
+                          if (input) {
+                            // Since purchases array already contains only current page data from API
+                            const currentPageIds = purchases.map((purchase) => purchase._id);
+                            const someSelected = currentPageIds.some((id) => selectedRows.includes(id));
+                            const allSelected = currentPageIds.length > 0 && currentPageIds.every((id) => selectedRows.includes(id));
+                            input.indeterminate = someSelected && !allSelected;
+                          }
+                        }}
                       />
                       <span className="checkmarks" /></label></th>
                     <th>Supplier</th>
@@ -515,9 +759,9 @@ const token = localStorage.getItem("token");
                             <li>
                               <a className="dropdown-item d-flex align-items-center" onClick={() => handleDeletePurchase(purchase._id, purchase.referenceNumber)}><TbTrash className="me-2" />Delete</a>
                             </li>
-                            <li>
+                            {/* <li>
                               <a  class="dropdown-item d-flex align-items-center" onClick={() => setViewPurchaseId(purchase._id)}><TbEye class="isax isax-send-2 me-2"/>View </a>
-                            </li>
+                            </li> */}
                             <li>
                               {/* <a href="" class="dropdown-item d-flex align-items-center"><i class="isax isax-document-download me-2"></i>Download Invoices as PDF</a> */}
                             </li>

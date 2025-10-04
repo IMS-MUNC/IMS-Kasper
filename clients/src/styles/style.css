@@ -39225,7 +39225,7 @@ input:checked + .slider:before {
 
 .barcode-content-list {
   border-radius: 8px;
-  border: 1px solid rgba(145, 158, 171, 0.3);
+  /* border: 1px solid rgba(145, 158, 171, 0.3); */
   background: #ffffff;
   padding: 24px;
 }

@@ -22,6 +22,7 @@ import DeleteAlert from "../../../utils/sweetAlert/DeleteAlert";
 import BASE_URL from "../../../pages/config/config";
 import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
+import dayjs from "dayjs";
 const Coupons = () => {
   const [showAddModal, setShowAddModal] = useState(false);
   const handleShow = () => setShowAddModal(true);
@@ -68,6 +69,63 @@ const Coupons = () => {
       console.error("Fetch error:", error);
     }
   };
+
+  // Function to check and update expired coupons
+  const checkAndUpdateExpiredCoupons = async () => {
+    const currentDate = new Date();
+    
+    // Find expired coupons that are still active
+    const expiredCoupons = coupons.filter((coupon) => {
+      const validDate = new Date(coupon.valid);
+      return coupon.validStatus === "Active" && validDate < currentDate;
+    });
+
+    if (expiredCoupons.length > 0) {
+      try {
+        const token = localStorage.getItem("token");
+        
+        // Update each expired coupon
+        for (const coupon of expiredCoupons) {
+          const validDate = new Date(coupon.valid);
+          if (coupon.validStatus === "Active" && validDate < currentDate) {
+            const response = await fetch(`${BASE_URL}/api/coupons/${coupon._id}`, {
+              method: "PUT",
+              headers: {
+                "Content-Type": "application/json",
+                Authorization: `Bearer ${token}`,
+              },
+              body: JSON.stringify({
+                ...coupon,
+                validStatus: "Inactive",
+              }),
+            });
+
+            if (response.ok) {
+              console.log(`Coupon ${coupon.name} has been automatically set to inactive due to expiry.`);
+            }
+          }
+        }
+
+        // Update local state
+        setCoupons((prevCoupons) =>
+          prevCoupons.map((coupon) => {
+            const validDate = new Date(coupon.valid);
+            if (coupon.validStatus === "Active" && validDate < currentDate) {
+              return { ...coupon, validStatus: "Inactive" };
+            }
+            return coupon;
+          })
+        );
+
+        if (expiredCoupons.length > 0) {
+          toast.info(`${expiredCoupons.length} expired coupon(s) have been automatically set to inactive.`);
+        }
+      } catch (error) {
+        console.error("Error updating expired coupons:", error);
+      }
+    }
+  };
+
   useEffect(() => {
     fetchCoupons();
   }, []);
@@ -75,6 +133,13 @@ const Coupons = () => {
   // Clean up selected coupons when coupon data changes
   useEffect(() => {
     setSelectedCoupons((prev) => prev.filter((id) => coupons.some((c) => c._id === id)));
+  }, [coupons]);
+
+  // Check for expired coupons when coupons data changes
+  useEffect(() => {
+    if (coupons.length > 0) {
+      checkAndUpdateExpiredCoupons();
+    }
   }, [coupons]);
 
   const handleCouponSaved = () => {

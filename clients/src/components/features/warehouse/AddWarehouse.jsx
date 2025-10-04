@@ -56,7 +56,7 @@
 //       setCityList(City.getCitiesOfState(selectedCountry, selectedState));
 //     }
 //   }, [selectedState]);
-  
+
 //   // State for import status and message
 //   const [isImported, setIsImported] = useState(false);
 //   const [showMessage, setShowMessage] = useState(false);
@@ -1275,6 +1275,10 @@ const VALIDATION_PATTERNS = {
   warehouseOwner: /^[a-zA-Z\s]{2,50}$/,
   address: /^[\w\s.,\-\/]{5,200}$/,
   pinCode: /^\d{4,10}$/,
+  zones: /^\d+$/,
+  rows: /^\d+$/,
+  columns: /^\d+$/,
+  width: /^\d+$/,
 };
 
 // Sanitization configuration
@@ -1291,10 +1295,10 @@ function AddWarehouse() {
   const [width, setWidth] = useState("");
   const [zones, setZones] = useState("0"); // Initial 0 for blank popup preview
   // State for main layout (updated only on import)
-  const [mainRows, setMainRows] = useState(4);
-  const [mainColumns, setMainColumns] = useState(3);
-  const [mainWidth, setMainWidth] = useState(1); // Width in meters
-  const [mainZones, setMainZones] = useState(1);
+  const [mainRows, setMainRows] = useState(0);
+  const [mainColumns, setMainColumns] = useState(0);
+  const [mainWidth, setMainWidth] = useState(0); // Width in meters
+  const [mainZones, setMainZones] = useState(0);
   // State for warehouse details form
   const [warehouseName, setWarehouseName] = useState("");
   const [phone, setPhone] = useState("");
@@ -1317,6 +1321,14 @@ function AddWarehouse() {
     country: "",
     state: "",
     city: "",
+  });
+
+  // State for popup validation errors
+  const [popupErrors, setPopupErrors] = useState({
+    zones: "",
+    rows: "",
+    columns: "",
+    width: "",
   });
 
   const [selectedCountry, setSelectedCountry] = useState("");
@@ -1410,6 +1422,21 @@ function AddWarehouse() {
 
   // Handler for importing layout and closing popup
   const handleImport = (close) => {
+    // Validate popup inputs
+    const newPopupErrors = {
+      zones: VALIDATION_PATTERNS.zones.test(zones) && parseInt(zones) >= 0 ? "" : "Zones must be a non-negative integer",
+      rows: VALIDATION_PATTERNS.rows.test(rows) && parseInt(rows) >= 1 ? "" : "Rows must be an integer >= 1",
+      columns: VALIDATION_PATTERNS.columns.test(columns) && parseInt(columns) >= 1 ? "" : "Columns must be an integer >= 1",
+      width: VALIDATION_PATTERNS.width.test(width) && parseInt(width) >= 1 ? "" : "Width must be an integer >= 1",
+    };
+
+    setPopupErrors(newPopupErrors);
+
+    if (Object.values(newPopupErrors).some(error => error !== "")) {
+      toast.error("Please fix all layout validation errors before importing");
+      return;
+    }
+
     const parsedRows = rows === "" ? 3 : Math.max(1, parseInt(rows));
     const parsedColumns = columns === "" ? 3 : Math.max(1, parseInt(columns));
     const parsedWidth = width === "" ? 1 : Math.max(1, parseInt(width));
@@ -1471,6 +1498,20 @@ function AddWarehouse() {
       state: selectedState ? "" : "State is required",
       city: selectedCity ? "" : "City is required",
     };
+
+    // Validate customize layout fields as mandatory
+    if (!mainZones || mainZones < 1) {
+      newErrors.zones = "Zones must be at least 1";
+    }
+    if (!mainRows || mainRows < 1) {
+      newErrors.rows = "Rows must be at least 1";
+    }
+    if (!mainColumns || mainColumns < 1) {
+      newErrors.columns = "Columns must be at least 1";
+    }
+    if (!mainWidth || mainWidth < 1) {
+      newErrors.width = "Width must be at least 1";
+    }
 
     setErrors(newErrors);
 
@@ -1534,10 +1575,10 @@ function AddWarehouse() {
     setState("");
     setCity("");
     setPinCode("");
-    setMainRows(3);
-    setMainColumns(3);
-    setMainWidth(1);
-    setMainZones(1);
+    setMainRows(0);
+    setMainColumns(0);
+    setMainWidth(0);
+    setMainZones(0);
     setIsImported(false);
     setShowMessage(false);
     setErrors({});
@@ -1570,6 +1611,20 @@ function AddWarehouse() {
       state: selectedState ? "" : "State is required",
       city: selectedCity ? "" : "City is required",
     };
+
+    // Validate customize layout fields as mandatory
+    if (!mainZones || mainZones < 1) {
+      newErrors.zones = "Zones must be at least 1";
+    }
+    if (!mainRows || mainRows < 1) {
+      newErrors.rows = "Rows must be at least 1";
+    }
+    if (!mainColumns || mainColumns < 1) {
+      newErrors.columns = "Columns must be at least 1";
+    }
+    if (!mainWidth || mainWidth < 1) {
+      newErrors.width = "Width must be at least 1";
+    }
 
     setErrors(newErrors);
 
@@ -2151,34 +2206,52 @@ function AddWarehouse() {
           }}
         >
           <div style={{ width: "100%", maxWidth: "900px", margin: "0 auto" }}>
-            <div
-              style={{
-                display: "flex",
-                flexDirection: "row",
-                flexWrap: "wrap",
-                gap: "20px",
-                justifyContent: "center",
-                alignItems: "flex-start",
-              }}
-            >
-              {Array.from({ length: mainZones }).map((_, zoneIndex) =>
-                renderGrid(mainRows, mainColumns, mainWidth, zoneIndex)
-              )}
-            </div>
+            {mainZones > 0 ? (
+              <>
+                <div
+                  style={{
+                    display: "flex",
+                    flexDirection: "row",
+                    flexWrap: "wrap",
+                    gap: "20px",
+                    justifyContent: "center",
+                    alignItems: "flex-start",
+                  }}
+                >
+                  {Array.from({ length: mainZones }).map((_, zoneIndex) =>
+                    renderGrid(mainRows, mainColumns, mainWidth, zoneIndex)
+                  )}
+                </div>
 
-            <div
-              style={{
-                display: "flex",
-                justifyContent: "center",
-                marginTop: "10px",
-                color: "#6B7280",
-                fontSize: "14px",
-                fontWeight: "400",
-                marginBottom: "10px",
-              }}
-            >
-              Click to define and assign racks using rows and columns.
-            </div>
+                <div
+                  style={{
+                    display: "flex",
+                    justifyContent: "center",
+                    marginTop: "10px",
+                    color: "#6B7280",
+                    fontSize: "14px",
+                    fontWeight: "400",
+                    marginBottom: "10px",
+                  }}
+                >
+                  Click to define and assign racks using rows and columns.
+                </div>
+              </>
+            ) : (
+              <div
+                style={{
+                  display: "flex",
+                  justifyContent: "center",
+                  marginTop: "20px",
+                  color: "#6B7280",
+                  fontSize: "16px",
+                  fontWeight: "500",
+                  marginBottom: "20px",
+                }}
+              >
+                Please customize the layout to view the warehouse grid.
+              </div>
+            )}
             <div
               style={{
                 display: "flex",
@@ -2294,23 +2367,29 @@ function AddWarehouse() {
                             required
                             
                             value={zones}
-                            onChange={(e) =>
-                              setZones(
-                                e.target.value === ""
-                                  ? ""
-                                  : Math.max(0, parseInt(e.target.value))
-                              )
-                            }
+                            onChange={(e) => {
+                              const val = e.target.value === "" ? "" : Math.max(0, parseInt(e.target.value));
+                              setZones(val);
+                              setPopupErrors((prev) => ({
+                                ...prev,
+                                zones: VALIDATION_PATTERNS.zones.test(val.toString()) && val >= 0 ? "" : "Zones must be a non-negative integer",
+                              }));
+                            }}
                             style={{
                               width: "120px",
                               padding: "12px",
                               borderRadius: "8px",
-                              border: "1px solid #D1D5DB",
+                              border: `1px solid ${popupErrors.zones ? '#EF4444' : '#D1D5DB'}`,
                               backgroundColor: "#F9FAFB",
                               color: "#6B7280",
                               fontSize: "14px",
                             }}
                           />
+                          {popupErrors.zones && (
+                            <div style={{ color: "#EF4444", fontSize: "12px", marginTop: "4px" }}>
+                              {popupErrors.zones}
+                            </div>
+                          )}
                         </div>
                         <div
                           style={{
@@ -2334,18 +2413,19 @@ function AddWarehouse() {
                             <input
                               type="number"
                               value={rows}
-                              onChange={(e) =>
-                                setRows(
-                                  e.target.value === ""
-                                    ? ""
-                                    : Math.max(1, parseInt(e.target.value))
-                                )
-                              }
+                              onChange={(e) => {
+                                const val = e.target.value === "" ? "" : Math.max(1, parseInt(e.target.value));
+                                setRows(val);
+                                setPopupErrors((prev) => ({
+                                  ...prev,
+                                  rows: VALIDATION_PATTERNS.rows.test(val.toString()) && val >= 1 ? "" : "Rows must be an integer >= 1",
+                                }));
+                              }}
                               style={{
                                 width: "100%",
                                 padding: "12px",
                                 borderRadius: "8px",
-                                border: "1px solid #D1D5DB",
+                                border: `1px solid ${popupErrors.rows ? '#EF4444' : '#D1D5DB'}`,
                                 backgroundColor: "#F9FAFB",
                                 color: "#6B7280",
                                 fontSize: "14px",
@@ -2370,23 +2450,29 @@ function AddWarehouse() {
                               type="number"
                               required 
                               value={columns}
-                              onChange={(e) =>
-                                setColumns(
-                                  e.target.value === ""
-                                    ? ""
-                                    : Math.max(1, parseInt(e.target.value))
-                                )
-                              }
+                              onChange={(e) => {
+                                const val = e.target.value === "" ? "" : Math.max(1, parseInt(e.target.value));
+                                setColumns(val);
+                                setPopupErrors((prev) => ({
+                                  ...prev,
+                                  columns: VALIDATION_PATTERNS.columns.test(val.toString()) && val >= 1 ? "" : "Columns must be an integer >= 1",
+                                }));
+                              }}
                               style={{
                                 width: "100%",
                                 padding: "12px",
                                 borderRadius: "8px",
-                                border: "1px solid #D1D5DB",
+                                border: `1px solid ${popupErrors.columns ? '#EF4444' : '#D1D5DB'}`,
                                 backgroundColor: "#F9FAFB",
                                 color: "#6B7280",
                                 fontSize: "14px",
                               }}
                             />
+                            {popupErrors.columns && (
+                              <div style={{ color: "#EF4444", fontSize: "12px", marginTop: "4px" }}>
+                                {popupErrors.columns}
+                              </div>
+                            )}
                           </div>
                         </div>
                         <div
@@ -2412,23 +2498,29 @@ function AddWarehouse() {
                               type="number"
                               min="1"
                               value={width}
-                              onChange={(e) =>
-                                setWidth(
-                                  e.target.value === ""
-                                    ? ""
-                                    : Math.max(1, parseInt(e.target.value))
-                                )
-                              }
+                              onChange={(e) => {
+                                const val = e.target.value === "" ? "" : Math.max(1, parseInt(e.target.value));
+                                setWidth(val);
+                                setPopupErrors((prev) => ({
+                                  ...prev,
+                                  width: VALIDATION_PATTERNS.width.test(val.toString()) && val >= 1 ? "" : "Width must be an integer >= 1",
+                                }));
+                              }}
                               style={{
                                 width: "100%",
                                 padding: "12px",
                                 borderRadius: "8px",
-                                border: "1px solid #D1D5DB",
+                                border: `1px solid ${popupErrors.width ? '#EF4444' : '#D1D5DB'}`,
                                 backgroundColor: "#F9FAFB",
                                 color: "#6B7280",
                                 fontSize: "14px",
                               }}
                             />
+                            {popupErrors.width && (
+                              <div style={{ color: "#EF4444", fontSize: "12px", marginTop: "4px" }}>
+                                {popupErrors.width}
+                              </div>
+                            )}
                           </div>
                         </div>
                         <div
