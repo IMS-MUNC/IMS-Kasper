@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { toast, ToastContainer } from 'react-toastify';
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import 'react-toastify/dist/ReactToastify.css';
 import BASE_URL from '../../../../pages/config/config';
 import axios from 'axios';
@@ -42,6 +42,7 @@ const LowStock = () => {
   const [selectAll, setSelectAll] = useState(false);
 
   const navigate = useNavigate();
+  const location = useLocation();
 
   // Get export data based on active tab
   const getExportData = () => {
@@ -112,6 +113,8 @@ const LowStock = () => {
           });
         
         setProducts(lowStockProducts);
+        setFilteredProducts(lowStockProducts); // Initialize filtered products
+        
         // Out of stock products
         const outStock = allProducts
           .map(p => {
@@ -137,6 +140,7 @@ const LowStock = () => {
             return p.availableQty <= 0 || baseQuantity === 0;
           });
         setOutOfStockProducts(outStock);
+        setFilteredOutOfStockProducts(outStock); // Initialize filtered out of stock products
 
         // Out of stock toast will be shown only when tab is opened
 
@@ -630,8 +634,8 @@ const LowStock = () => {
                   </div>
                   <div className="d-flex table-dropdown my-xl-auto right-content align-items-center flex-wrap row-gap-3">
                     <div className="dropdown me-2">
-                      <a className="dropdown-toggle btn btn-white btn-md d-inline-flex align-items-center" data-bs-toggle="dropdown">
-                        {selectedWarehouse || 'Warehouse'}
+                      <a className="btn btn-white btn-md d-inline-flex align-items-center" data-bs-toggle="dropdown">
+                        Sort by : {selectedWarehouse || 'Warehouse'}
                       </a>
                       <ul className="dropdown-menu dropdown-menu-end p-3" style={{ maxHeight: '200px', overflowY: 'auto' }}>
                         <li>
@@ -647,8 +651,8 @@ const LowStock = () => {
                       </ul>
                     </div>
                     <div className="dropdown me-2">
-                      <a className="dropdown-toggle btn btn-white btn-md d-inline-flex align-items-center" data-bs-toggle="dropdown">
-                        {selectedCategory || 'Category'}
+                      <a className="btn btn-white btn-md d-inline-flex align-items-center" data-bs-toggle="dropdown">
+                        Sort by : {selectedCategory || 'Category'}
                       </a>
                       <ul className="dropdown-menu dropdown-menu-end p-3" style={{ maxHeight: '200px', overflowY: 'auto' }}>
                         <li>
@@ -693,7 +697,7 @@ const LowStock = () => {
                           <th>SKU</th>
                           <th>Qty</th>
                           <th>Qty Alert</th>
-                          <th className="no-sort" />
+                          <th style={{textAlign: 'center'}}>Actions</th>
                         </tr>
                       </thead>
                       <tbody>
@@ -726,11 +730,11 @@ const LowStock = () => {
                               <td>{product.category?.categoryName || product.category || 'N/A'}</td>
 
                               <td>{product.sku}</td>
-                              <td>{product.quantity} {product.unit}</td>
+                              <td>{product.availableQty} {product.unit}</td>
                               <td>{product.quantityAlert} {product.unit}</td>
                               <td className="action-table-data">
                                 <div className="edit-delete-action">
-                                  <a className="me-2 p-2" data-bs-toggle="modal" data-bs-target="#edit-stock" onClick={() => navigate(`/product/edit/${product._id}`)}>
+                                  <a className="me-2 p-2" data-bs-toggle="modal" data-bs-target="#edit-stock" onClick={() => navigate(`/product/edit/${product._id}`,{ state: { from: location.pathname } })}>
                                     <TbEdit data-feather="edit" className="feather-edit" />
                                   </a>
                                   <a data-bs-toggle="modal" data-bs-target="#delete-modal" className="p-2" onClick={() => handleDelete(product)}>
@@ -881,7 +885,7 @@ const LowStock = () => {
                           <th>SKU</th>
                           <th>Qty</th>
                           <th>Qty Alert</th>
-                          <th className="no-sort">Action</th>
+                          <th style={{textAlign: 'center'}}>Actions</th>
                         </tr>
                       </thead>
                       <tbody>
@@ -913,11 +917,11 @@ const LowStock = () => {
                               <td>{product.category?.categoryName || product.category || 'N/A'}</td>
 
                               <td>{product.sku}</td>
-                              <td>{product.quantity} {product.unit}</td>
+                              <td>{product.availableQty} {product.unit}</td>
                               <td>{product.quantityAlert} {product.unit}</td>
                               <td className="action-table-data">
                                 <div className="edit-delete-action">
-                                  <a className="me-2 p-2" data-bs-toggle="modal" data-bs-target="#edit-stock" onClick={() => navigate(`/product/edit/${product._id}`)}>
+                                  <a className="me-2 p-2" data-bs-toggle="modal" data-bs-target="#edit-stock" onClick={() => navigate(`/product/edit/${product._id}`,{ state: { from: location.pathname } })}>
                                     <TbEdit data-feather="edit" className="feather-edit" />
                                   </a>
                                   <a data-bs-toggle="modal" data-bs-target="#delete-modal" className="p-2" onClick={() => handleDelete(product)}>

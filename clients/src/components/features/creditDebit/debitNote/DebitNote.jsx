@@ -73,13 +73,6 @@ const DebitNote = () => {
     }, [fetchNotes]);
 
     const handleDelete = async (id) => {
-        const confirmed = await DeleteAlert({
-            title: "Are you sure?",
-            text: "You won't be able to revert this!",
-            confirmButtonText: "Yes, delete it!"
-        });
-        if (!confirmed) return;
-
         const token = localStorage.getItem("token");
         try {
             await axios.delete(`${BASE_URL}/api/debit-notes/${id}`, {
@@ -118,36 +111,40 @@ const DebitNote = () => {
     const handleBulkDelete = async () => {
         if (selectedRows.length === 0) return;
 
-        const confirmed = await DeleteAlert({
+        const result = await DeleteAlert({
             title: 'Are you sure?',
             text: `You won't be able to revert the deletion of ${selectedRows.length} debit note${selectedRows.length > 1 ? 's' : ''}!`,
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#3085d6',
+            cancelButtonColor: '#d33',
             confirmButtonText: 'Yes, delete them!'
         });
 
-        if (!confirmed) return;
+        if (result.isConfirmed) {
+            try {
+                const token = localStorage.getItem("token");
+                await Promise.all(
+                    selectedRows.map((id) =>
+                        axios.delete(`${BASE_URL}/api/debit-notes/${id}`, {
+                            headers: { Authorization: `Bearer ${token}` },
+                        })
+                    )
+                );
+                setSelectedRows([]);
+                toast.success(`${selectedRows.length} debit note${selectedRows.length > 1 ? 's' : ''} deleted successfully`);
 
-        try {
-            const token = localStorage.getItem("token");
-            await Promise.all(
-                selectedRows.map((id) =>
-                    axios.delete(`${BASE_URL}/api/debit-notes/${id}`, {
-                        headers: { Authorization: `Bearer ${token}` },
-                    })
-                )
-            );
-            setSelectedRows([]);
-            toast.success(`${selectedRows.length} debit note${selectedRows.length > 1 ? 's' : ''} deleted successfully`);
-
-            // Check if we need to go to previous page
-            const remainingNotes = debitNotes.length - selectedRows.length;
-            if (remainingNotes === 0 && page > 1) {
-                setPage(page - 1);
-            } else {
-                fetchNotes();
+                // Check if we need to go to previous page
+                const remainingNotes = debitNotes.length - selectedRows.length;
+                if (remainingNotes === 0 && page > 1) {
+                    setPage(page - 1);
+                } else {
+                    fetchNotes();
+                }
+            } catch (error) {
+                console.error('Error deleting debit notes:', error);
+                toast.error('Failed to delete some debit notes');
             }
-        } catch (error) {
-            console.error('Error deleting debit notes:', error);
-            toast.error('Failed to delete some debit notes');
         }
     };
 
@@ -556,7 +553,7 @@ const DebitNote = () => {
                 </div>
 
                 {/* Modals - Moved outside card structure for proper positioning */}
-                <AddDebitNoteModals onReturnCreated={() => { setEditNote(null); fetchNotes(); }} />
+                <AddDebitNoteModals onAddSuccess={() => { setEditNote(null); fetchNotes(); }} />
                 <EditDebitNoteModals noteData={editNote} onEditSuccess={() => { setEditNote(null); fetchNotes(); }} />
 
                 {/* Modal to show all data for selected debit note */}

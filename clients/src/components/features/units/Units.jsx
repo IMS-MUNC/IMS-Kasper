@@ -246,13 +246,20 @@ const Units = () => {
 
   }, [unitData]);
 
-  const filteredUnits = unitData.filter((u) => {
-    const matchesSearch = u.unitsName?.toLowerCase().includes(searchTerm.toLowerCase().trim());
-    const matchesStatus = selectedStatus
-      ? u.status === selectedStatus
-      : true;
-    return matchesSearch && matchesStatus;
-  })
+  const filteredUnits = unitData
+    .filter((u) => {
+      const matchesSearch = u.unitsName?.toLowerCase().includes(searchTerm.toLowerCase().trim());
+      const matchesStatus = selectedStatus
+        ? u.status === selectedStatus
+        : true;
+      return matchesSearch && matchesStatus;
+    })
+    .sort((a, b) => {
+      // Sort by creation date in descending order (LIFO - newest first)
+      const dateA = new Date(a.createdAt || 0);
+      const dateB = new Date(b.createdAt || 0);
+      return dateB - dateA;
+    })
 
   const totalPages = Math.ceil(filteredUnits.length / itemsPerPage);
   const paginatedUnits = filteredUnits.slice(
@@ -376,10 +383,10 @@ const Units = () => {
               <div className="dropdown">
                 <a
 
-                  className="dropdown-toggle btn btn-white btn-md d-inline-flex align-items-center"
+                  className="btn btn-white btn-md d-inline-flex align-items-center"
                   data-bs-toggle="dropdown"
                 >
-                  {selectedStatus || "Status"}
+                  Sort by : {selectedStatus || "Status"}
                 </a>
                 <ul className="dropdown-menu  dropdown-menu-end p-3">
                   <li>

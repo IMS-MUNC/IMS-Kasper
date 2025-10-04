@@ -41,7 +41,7 @@ function Barcode() {
 
   // Fetch products based on search query
   const searchProducts = async (query) => {
-    if (!query || query.length < 2) {
+    if (!query || query.length < 1) {
       setProducts([]);
       setShowDropdown(false);
       return;
