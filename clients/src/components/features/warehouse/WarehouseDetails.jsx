@@ -1194,7 +1194,7 @@ useEffect(() => {
           </div>
 
           {/* three icon */}
-          <div style={{ display: "flex", gap: "16px", alignItems: "center" }}>
+          {/* <div style={{ display: "flex", gap: "16px", alignItems: "center" }}>
             <div
               style={{
                 display: "flex",
@@ -1219,7 +1219,7 @@ useEffect(() => {
             >
               <LuArrowUpDown />
             </div>
-          </div>
+          </div> */}
         </div>
 
         {/* Table */}
@@ -1323,7 +1323,9 @@ useEffect(() => {
                       borderBottom: "1px solid #e6e6e6",
                     }}
                   >
-                    {purchase.products[0]?.product?.warehouse?.warehouseName}
+                     {purchase.supplier
+                                  ? `${purchase.supplier.firstName} ${purchase.supplier.lastName}`
+                                  : "N/A"}
                   </td>
                   <td
                     style={{
