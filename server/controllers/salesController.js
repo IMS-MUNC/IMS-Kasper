@@ -29,10 +29,10 @@ exports.getSalesReturnStats = async (req, res) => {
           if (Array.isArray(note.products)) {
             note.products.forEach(retProd => {
               totalReturnQty += Number(retProd.returnQty || 0);
-              totalReturnAmount += Number(retProd.returnAmount || 0);
+              totalReturnAmount += Number(retProd.lineTotal || 0);
             });
           }
-          // Fallback: add grandTotal if returnAmount not present
+          // Fallback: add grandTotal if lineTotal not present
           if (!note.products?.length && note.grandTotal) {
             totalReturnAmount += Number(note.grandTotal);
           }
