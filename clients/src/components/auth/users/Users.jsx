@@ -571,12 +571,12 @@ const Users = () => {
             </li>
             <li>
               <button type="button" onClick={handleExportPDF} className="icon-btn" title="Pdf">
-                <FaFilePdf />
+                <FaFilePdf style={{ color: 'red' }} />
               </button>
             </li>
             <li>
               <button type="button" onClick={handleExportExcel} className="icon-btn" title="Export Excel">
-                <FaFileExcel />
+                <FaFileExcel style={{ color: 'green' }} />
               </button>
             </li>
           </div>

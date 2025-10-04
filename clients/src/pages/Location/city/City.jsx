@@ -347,7 +347,7 @@ const City = () => {
           <div className="table-top-head me-2">
             <li>
               <button type="button" className="icon-btn" title="Pdf" onClick={handleExportPDF}>
-                <FaFilePdf />
+                <FaFilePdf  style={{color:'red'}}/>
               </button>
             </li>
             <li>

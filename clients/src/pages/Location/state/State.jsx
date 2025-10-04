@@ -350,7 +350,7 @@ const State = () => {
                 className="icon-btn"
                 onClick={handleExportPDF}
               >
-                <FaFilePdf />
+                <FaFilePdf  style={{color:'red'}}/>
               </button>
             </li>
             <li>

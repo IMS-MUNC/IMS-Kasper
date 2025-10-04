@@ -342,7 +342,7 @@ const Country = () => {
                 title="Pdf"
                 className="icon-btn"
               >
-                <FaFilePdf />
+                <FaFilePdf style={{ color: 'red' }} />
               </button>
             </li>
             {/* <li>
@@ -366,7 +366,7 @@ const Country = () => {
                 className="icon-btn"
                 onClick={handleExportExcel}
               >
-                <FaFileExcel />
+                <FaFileExcel style={{ color: 'green' }} />
               </button>
             </li>
           </div>

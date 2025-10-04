@@ -49,6 +49,7 @@ const EmailMessages = ({
   const [inboxEmails, setInboxEmails] = useState([]);
   const [sentEmails, setSentEmails] = useState([]);
   const getEmailId = (email) => email._id || email.timestamp;
+  const [isSmallScreen, setIsSmallScreen] = useState(window.innerWidth <= 768);
 
 
 
@@ -341,6 +342,12 @@ const EmailMessages = ({
   // const [activeTabs, setActiveTabs] = useState('All')
   // const tabs = ['All', 'Unread', 'Archived']
 
+  useEffect(() => {
+  const handleResize = () => setIsSmallScreen(window.innerWidth <= 768);
+  window.addEventListener("resize", handleResize);
+  return () => window.removeEventListener("resize", handleResize);
+}, []);
+
   return (
     <div className="mainemailmessage">
       <div className="filter">
@@ -585,7 +592,7 @@ const EmailMessages = ({
                             {[
                               ...(email.attachments || []),
                               ...(email.image || []),
-                            ].slice(0, 2).map((fileUrl, index) => {
+                            ].slice(0, isSmallScreen ? 1:2).map((fileUrl, index) => {
                               const fileName = fileUrl.split("/").pop();
                               const extension = fileUrl
                                 .split(".")
