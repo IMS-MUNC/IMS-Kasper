@@ -48,55 +48,61 @@ const token = localStorage.getItem("token");
     if (!formState) return null;
 
     return (
-        <form onSubmit={handleSubmit}>
-            <div className="modal-header">
-                <h5 className="modal-title">Edit Debit Note</h5>
-                <button type="button" className="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div className="modal-body">
-                <div className="mb-3">
-                    <label className="form-label">Reference Number</label>
-                    <input type="text" className="form-control" name="referenceNumber" value={formState.referenceNumber || ''} onChange={handleChange} />
+        <div className="modal fade" id="edit_debit_note" tabIndex="-1" aria-labelledby="editDebitNoteLabel" aria-hidden="true">
+            <div className="modal-dialog modal-lg">
+                <div className="modal-content">
+                    <form onSubmit={handleSubmit}>
+                        <div className="modal-header">
+                            <h5 className="modal-title" id="editDebitNoteLabel">Edit Debit Note</h5>
+                            <button type="button" className="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                        <div className="modal-body">
+                            <div className="mb-3">
+                                <label className="form-label">Reference Number</label>
+                                <input type="text" className="form-control" name="referenceNumber" value={formState.referenceNumber || ''} onChange={handleChange} />
+                            </div>
+                            {/* Add more fields as needed, similar to AddDebitNoteModals */}
+                            {/* Example for editing products */}
+                            <div className="mb-3">
+                                <label className="form-label">Products</label>
+                                <table className="table table-bordered">
+                                    <thead>
+                                        <tr>
+                                            <th>Product</th>
+                                            <th>Qty</th>
+                                            <th>Return Qty</th>
+                                            <th>Unit</th>
+                                            <th>Price</th>
+                                            <th>Discount</th>
+                                            <th>Tax</th>
+                                            <th>Total</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {formState.products && formState.products.length > 0 ? formState.products.map((p, i) => (
+                                            <tr key={i}>
+                                                <td>{p.product?.productName || p.product?.name || p.product || '-'}</td>
+                                                <td><input type="number" className="form-control" value={p.quantity} onChange={e => handleProductChange(i, 'quantity', e.target.value)} /></td>
+                                                <td><input type="number" className="form-control" value={p.returnQty} onChange={e => handleProductChange(i, 'returnQty', e.target.value)} /></td>
+                                                <td>{p.unit}</td>
+                                                <td><input type="number" className="form-control" value={p.purchasePrice} onChange={e => handleProductChange(i, 'purchasePrice', e.target.value)} /></td>
+                                                <td><input type="number" className="form-control" value={p.discount} onChange={e => handleProductChange(i, 'discount', e.target.value)} /></td>
+                                                <td><input type="number" className="form-control" value={p.tax} onChange={e => handleProductChange(i, 'tax', e.target.value)} /></td>
+                                                <td>{p.totalCost || p.total}</td>
+                                            </tr>
+                                        )) : <tr><td colSpan="8">No products</td></tr>}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                        <div className="modal-footer" style={{gap:'10px'}}>
+                            <button type="button" className="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                            <button type="submit" className="btn btn-primary" disabled={loading}>{loading ? 'Saving...' : 'Save Changes'}</button>
+                        </div>
+                    </form>
                 </div>
-                {/* Add more fields as needed, similar to AddDebitNoteModals */}
-                {/* Example for editing products */}
-                <div className="mb-3">
-                    <label className="form-label">Products</label>
-                    <table className="table table-bordered">
-                        <thead>
-                            <tr>
-                                <th>Product</th>
-                                <th>Qty</th>
-                                <th>Return Qty</th>
-                                <th>Unit</th>
-                                <th>Price</th>
-                                <th>Discount</th>
-                                <th>Tax</th>
-                                <th>Total</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {formState.products && formState.products.length > 0 ? formState.products.map((p, i) => (
-                                <tr key={i}>
-                                    <td>{p.product?.productName || p.product?.name || p.product || '-'}</td>
-                                    <td><input type="number" className="form-control" value={p.quantity} onChange={e => handleProductChange(i, 'quantity', e.target.value)} /></td>
-                                    <td><input type="number" className="form-control" value={p.returnQty} onChange={e => handleProductChange(i, 'returnQty', e.target.value)} /></td>
-                                    <td>{p.unit}</td>
-                                    <td><input type="number" className="form-control" value={p.purchasePrice} onChange={e => handleProductChange(i, 'purchasePrice', e.target.value)} /></td>
-                                    <td><input type="number" className="form-control" value={p.discount} onChange={e => handleProductChange(i, 'discount', e.target.value)} /></td>
-                                    <td><input type="number" className="form-control" value={p.tax} onChange={e => handleProductChange(i, 'tax', e.target.value)} /></td>
-                                    <td>{p.totalCost || p.total}</td>
-                                </tr>
-                            )) : <tr><td colSpan="8">No products</td></tr>}
-                        </tbody>
-                    </table>
-                </div>
             </div>
-            <div className="modal-footer">
-                <button type="button" className="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                <button type="submit" className="btn btn-primary" disabled={loading}>{loading ? 'Saving...' : 'Save Changes'}</button>
-            </div>
-        </form>
+        </div>
     );
 };
 
