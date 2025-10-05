@@ -24,70 +24,70 @@ const Companysettings = () => {
   const [cityList, setCityList] = useState([]);
   const token = localStorage.getItem("token")
   const [isUpdating, setIsUpdating] = useState(false);
-    const [companyImages, setCompanyImages] = useState(null)
+  const [companyImages, setCompanyImages] = useState(null)
 
-const textRegex = /^[A-Za-z]+(?: [A-Za-z]+)*$/;
-const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-const phoneRegex = /^[0-9]{10}$/;
-const zipRegex = /^[0-9]{5,6}$/;
-const urlRegex = /^(https?:\/\/)?([\w-]+(\.[\w-]+)+)([\w.,@?^=%&:/~+#-]*[\w@?^=%&/~+#-])?$/;
-const faxRegex = /^[0-9]{10}$/;
-const descriptionRegex = /^.{10,500}$/;
-const [errors, setErrors] = useState({});
-const validateField = (name, value) => {
-  let error;
-  switch (name) {
-    case "companyName":
-      if (!textRegex.test(value)) {
-        error = "Company name should contain only letters and spaces.";
-      }
-      break;
-    case "companyemail":
-      if (!emailRegex.test(value)) {
-        error = "Invalid email format.";
-      }
-      break;
-    case "companyphone":
-      if (!phoneRegex.test(value)) {
-        error = "Phone number should be 10 digits.";
-      }
-      break;
-    case "companypostalcode":
-      if (!zipRegex.test(value)) {  
-        error = "Postal code should be 5 or 6 digits.";
-      }   
-      break;
-    case "companywebsite":
-      if (!urlRegex.test(value)) {
-        error = "Invalid URL format.";
-      }
-      break;
-    case "companyfax":
-      if (!faxRegex.test(value)) {
-        error = "Fax number should be 10 digits.";
-      } 
-      break;
-    case "companydescription":
-      if (!descriptionRegex.test(value)) {
-        error = "Description should be between 10 to 500 characters.";
-      }
-      break;
-    default:
-      break;
-  }
-  setErrors((prev) => ({ ...prev, [name]: error }));
-  return error;
-};
+  const textRegex = /^[A-Za-z]+(?: [A-Za-z]+)*$/;
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  const phoneRegex = /^[0-9]{10}$/;
+  const zipRegex = /^[0-9]{5,6}$/;
+  const urlRegex = /^(https?:\/\/)?([\w-]+(\.[\w-]+)+)([\w.,@?^=%&:/~+#-]*[\w@?^=%&/~+#-])?$/;
+  const faxRegex = /^[0-9]{10}$/;
+  const descriptionRegex = /^.{10,500}$/;
+  const [errors, setErrors] = useState({});
+  const validateField = (name, value) => {
+    let error;
+    switch (name) {
+      case "companyName":
+        if (!textRegex.test(value)) {
+          error = "Company name should contain only letters and spaces.";
+        }
+        break;
+      case "companyemail":
+        if (!emailRegex.test(value)) {
+          error = "Invalid email format.";
+        }
+        break;
+      case "companyphone":
+        if (!phoneRegex.test(value)) {
+          error = "Phone number should be 10 digits.";
+        }
+        break;
+      case "companypostalcode":
+        if (!zipRegex.test(value)) {
+          error = "Postal code should be 5 or 6 digits.";
+        }
+        break;
+      case "companywebsite":
+        if (!urlRegex.test(value)) {
+          error = "Invalid URL format.";
+        }
+        break;
+      case "companyfax":
+        if (!faxRegex.test(value)) {
+          error = "Fax number should be 10 digits.";
+        }
+        break;
+      case "companydescription":
+        if (!descriptionRegex.test(value)) {
+          error = "Description should be between 10 to 500 characters.";
+        }
+        break;
+      default:
+        break;
+    }
+    setErrors((prev) => ({ ...prev, [name]: error }));
+    return error;
+  };
 
-const validateForm = () => {
-  const newErrors = {};
-  Object.entries(formData).forEach(([name, value]) => {
-    const error = validateField(name, value);
-    if (error) newErrors[name] = error;
-  });
-  setErrors(newErrors);
-  return Object.keys(newErrors).length === 0; // return true if no errors
-};
+  const validateForm = () => {
+    const newErrors = {};
+    Object.entries(formData).forEach(([name, value]) => {
+      const error = validateField(name, value);
+      if (error) newErrors[name] = error;
+    });
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0; // return true if no errors
+  };
 
 
 
@@ -188,14 +188,14 @@ const validateForm = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-  const isFormValid = Object.entries(formData).every(
-    ([name, value]) => !validateField(name, value)
-  );
+    const isFormValid = Object.entries(formData).every(
+      ([name, value]) => !validateField(name, value)
+    );
 
-  if (!isFormValid) {
-    toast.error("Please fix validation errors before submitting.");
-    return;
-  }
+    if (!isFormValid) {
+      toast.error("Please fix validation errors before submitting.");
+      return;
+    }
 
     if (!gstinRegex.test(formData.gstin)) {
       toast.error("Invalid GSTIN format");
@@ -246,7 +246,7 @@ const validateForm = () => {
       field: "companyIcon",
       label: "Company Icon",
       description: "Upload an image below or equal to 1MB, Accepted File format JPG, PNG",
-    image: CompyIc,
+      image: CompyIc,
       image: CompyIc,
     },
     {
@@ -270,27 +270,27 @@ const validateForm = () => {
   ];
 
 
-     // fetch company details
-    useEffect(() => {
-      const fetchCompanyDetails = async () => {
-        try {
-          const res = await axios.get(`${BASE_URL}/api/companyprofile/get`,{
-              headers: {
+  // fetch company details
+  useEffect(() => {
+    const fetchCompanyDetails = async () => {
+      try {
+        const res = await axios.get(`${BASE_URL}/api/companyprofile/get`, {
+          headers: {
             Authorization: `Bearer ${token}`,
           },
-          })
-          if (res.status === 200) {
-            setCompanyImages(res.data.data)
-            console.log("res.data from cmpy details", res.data.data)
-          }
-        } catch (error) {
-          toast.error("Unable to find company details", {
-            position: 'top-center'
-          })
+        })
+        if (res.status === 200) {
+          setCompanyImages(res.data.data)
+          console.log("res.data from cmpy details", res.data.data)
         }
+      } catch (error) {
+        toast.error("Unable to find company details", {
+          position: 'top-center'
+        })
       }
-      fetchCompanyDetails();
-    }, []);
+    }
+    fetchCompanyDetails();
+  }, []);
 
   return (
     <div>
@@ -302,17 +302,10 @@ const validateForm = () => {
               <hr style={{ margin: "5px", height: "1px", color: "#bdbdbdff" }} />
             </div>
 
-            <div className="company-info pt-1 pb-3">
+            <div className="company-info">
               <div
-                className="company-info-input"
-                style={{
-                  display: "flex",
-                  flexDirection: "column",
-                  gap: "20px",
-                  padding: "10px 0",
-                }}
-              >
-                <div style={{ display: "flex", gap: "20px" }}>
+                className="company-info-input">
+                <div className="company-info-row">
                   <div
                     style={{
                       display: "flex",
@@ -322,14 +315,14 @@ const validateForm = () => {
                     }}
                   >
                     <span>
-                    <label
-                      className="cfnnystheadlabel"
-                      htmlFor=""
-                      style={{ fontWeight: "400" }}
-                    >
-                      Company Name
-                    </label>
-                     <span className="text-danger ms-1">*</span>
+                      <label
+                        className="cfnnystheadlabel"
+                        htmlFor=""
+                        style={{ fontWeight: "400" }}
+                      >
+                        Company Name
+                      </label>
+                      <span className="text-danger ms-1">*</span>
                     </span>
                     <input
                       className="cfnnystheadinput"
@@ -338,7 +331,7 @@ const validateForm = () => {
                       name="companyName"
                       value={formData.companyName}
                       onChange={handleChange}
-                       onBlur={(e) => validateField(e.target.name, e.target.value)}
+                      onBlur={(e) => validateField(e.target.name, e.target.value)}
                     />
                     {errors.companyName && (
                       <span className="text-danger" style={{ fontSize: '12px' }}>{errors.companyName}</span>
@@ -353,15 +346,15 @@ const validateForm = () => {
                     }}
                   >
                     <span>
-                    <label
-                      className="cfnnystheadlabel"
-                      htmlFor=""
-                      style={{ fontWeight: "400" }}
-                    >
-                      Company Email{" "}
-                    </label>
-                     <span className="text-danger ms-1">*</span>
-                     </span>
+                      <label
+                        className="cfnnystheadlabel"
+                        htmlFor=""
+                        style={{ fontWeight: "400" }}
+                      >
+                        Company Email
+                      </label>
+                      <span className="text-danger ms-1">*</span>
+                    </span>
                     <input
                       className="cfnnystheadinput"
                       type="email"
@@ -383,14 +376,14 @@ const validateForm = () => {
                     }}
                   >
                     <span>
-                    <label
-                      className="cfnnystheadlabel"
-                      htmlFor=""
-                      style={{ fontWeight: "400" }}
-                    >
-                      Company Phone
-                    </label>
-                     <span className="text-danger ms-1">*</span>
+                      <label
+                        className="cfnnystheadlabel"
+                        htmlFor=""
+                        style={{ fontWeight: "400" }}
+                      >
+                        Company Phone
+                      </label>
+                      <span className="text-danger ms-1">*</span>
                     </span>
                     <input
                       className="cfnnystheadinput"
@@ -405,7 +398,8 @@ const validateForm = () => {
                     )}
                   </div>
                 </div>
-                <div style={{ display: "flex", gap: "20px" }}>
+                {/* second row */}
+                <div className="company-info-row">
                   <div
                     style={{
                       display: "flex",
@@ -415,14 +409,14 @@ const validateForm = () => {
                     }}
                   >
                     <span>
-                    <label
-                      className="cfnnystheadlabel"
-                      htmlFor=""
-                      style={{ fontWeight: "400" }}
-                    >
-                      Fax
-                    </label>
-                     <span className="text-danger ms-1">*</span>
+                      <label
+                        className="cfnnystheadlabel"
+                        htmlFor=""
+                        style={{ fontWeight: "400" }}
+                      >
+                        Fax
+                      </label>
+                      <span className="text-danger ms-1">*</span>
                     </span>
                     <input
                       className="cfnnystheadinput"
@@ -447,14 +441,14 @@ const validateForm = () => {
                     }}
                   >
                     <span>
-                    <label
-                      className="cfnnystheadlabel"
-                      htmlFor=""
-                      style={{ fontWeight: "400" }}
-                    >
-                      Website
-                    </label>
-                     <span className="text-danger ms-1">*</span>
+                      <label
+                        className="cfnnystheadlabel"
+                        htmlFor=""
+                        style={{ fontWeight: "400" }}
+                      >
+                        Website
+                      </label>
+                      <span className="text-danger ms-1">*</span>
                     </span>
                     <input
                       className="cfnnystheadinput"
@@ -477,14 +471,14 @@ const validateForm = () => {
                     }}
                   >
                     <span>
-                    <label
-                      className="cfnnystheadlabel"
-                      htmlFor=""
-                      style={{ fontWeight: "400" }}
-                    >
-                      GSTIN
-                    </label>
-                     <span className="text-danger ms-1">*</span>
+                      <label
+                        className="cfnnystheadlabel"
+                        htmlFor=""
+                        style={{ fontWeight: "400" }}
+                      >
+                        GSTIN
+                      </label>
+                      <span className="text-danger ms-1">*</span>
                     </span>
                     <input
                       className="cfnnystheadinput"
@@ -508,14 +502,14 @@ const validateForm = () => {
                     }}
                   >
                     <span>
-                    <label
-                      className="cfnnystheadlabel"
-                      htmlFor=""
-                      style={{ fontWeight: "400" }}
-                    >
-                      CIN
-                    </label>
-                     <span className="text-danger ms-1">*</span>
+                      <label
+                        className="cfnnystheadlabel"
+                        htmlFor=""
+                        style={{ fontWeight: "400" }}
+                      >
+                        CIN
+                      </label>
+                      <span className="text-danger ms-1">*</span>
                     </span>
                     <input
                       className="cfnnystheadinput"
@@ -540,14 +534,14 @@ const validateForm = () => {
                   }}
                 >
                   <span>
-                  <label
-                    className="cfnnystheadlabel"
-                    htmlFor=""
-                    style={{ fontWeight: "400" }}
-                  >
-                    Company Description
-                  </label>
-                   <span className="text-danger ms-1">*</span>
+                    <label
+                      className="cfnnystheadlabel"
+                      htmlFor=""
+                      style={{ fontWeight: "400" }}
+                    >
+                      Company Description
+                    </label>
+                    <span className="text-danger ms-1">*</span>
                   </span>
                   <textarea
                     rows="4"
@@ -560,8 +554,8 @@ const validateForm = () => {
                     onChange={handleChange}
                   ></textarea>
                   {errors.companydescription && (
-                      <span className="text-danger" style={{ fontSize: '12px' }}>{errors.companydescription}</span>
-                    )}
+                    <span className="text-danger" style={{ fontSize: '12px' }}>{errors.companydescription}</span>
+                  )}
                 </div>
               </div>
             </div>
@@ -594,14 +588,14 @@ const validateForm = () => {
                   >
                     <span>
 
-                    <label
-                      className="cfnnystheadlabel"
-                      htmlFor=""
-                      style={{ fontWeight: "400" }}
-                    >
-                      Address
-                    </label>
-                     <span className="text-danger ms-1">*</span>
+                      <label
+                        className="cfnnystheadlabel"
+                        htmlFor=""
+                        style={{ fontWeight: "400" }}
+                      >
+                        Address
+                      </label>
+                      <span className="text-danger ms-1">*</span>
                     </span>
                     <textarea
                       className="cfnnystheadinput"
@@ -629,14 +623,14 @@ const validateForm = () => {
                     }}
                   >
                     <span>
-                    <label
-                      className="cfnnystheadlabel"
-                      htmlFor=""
-                      style={{ fontWeight: "400" }}
-                    >
-                      Country
-                    </label>
-                     <span className="text-danger ms-1">*</span>
+                      <label
+                        className="cfnnystheadlabel"
+                        htmlFor=""
+                        style={{ fontWeight: "400" }}
+                      >
+                        Country
+                      </label>
+                      <span className="text-danger ms-1">*</span>
                     </span>
                     <select
                       className="cfnnystheadinput"
@@ -670,14 +664,14 @@ const validateForm = () => {
                     }}
                   >
                     <span>
-                    <label
-                      className="cfnnystheadlabel"
-                      htmlFor=""
-                      style={{ fontWeight: "400" }}
-                    >
-                      State
-                    </label>
-                     <span className="text-danger ms-1">*</span>
+                      <label
+                        className="cfnnystheadlabel"
+                        htmlFor=""
+                        style={{ fontWeight: "400" }}
+                      >
+                        State
+                      </label>
+                      <span className="text-danger ms-1">*</span>
                     </span>
                     <select
                       className="cfnnystheadinput"
@@ -711,14 +705,14 @@ const validateForm = () => {
                     }}
                   >
                     <span>
-                    <label
-                      className="cfnnystheadlabel"
-                      htmlFor=""
-                      style={{ fontWeight: "400" }}
-                    >
-                      City
-                    </label>
-                     <span className="text-danger ms-1">*</span>
+                      <label
+                        className="cfnnystheadlabel"
+                        htmlFor=""
+                        style={{ fontWeight: "400" }}
+                      >
+                        City
+                      </label>
+                      <span className="text-danger ms-1">*</span>
                     </span>
                     <select
                       className="cfnnystheadinput"
@@ -750,14 +744,14 @@ const validateForm = () => {
                     }}
                   >
                     <span>
-                    <label
-                      className="cfnnystheadlabel"
-                      htmlFor=""
-                      style={{ fontWeight: "400" }}
-                    >
-                      Postal Code
-                    </label>
-                     <span className="text-danger ms-1">*</span>
+                      <label
+                        className="cfnnystheadlabel"
+                        htmlFor=""
+                        style={{ fontWeight: "400" }}
+                      >
+                        Postal Code
+                      </label>
+                      <span className="text-danger ms-1">*</span>
                     </span>
                     <input
                       type="number"
@@ -869,7 +863,7 @@ const validateForm = () => {
                         />
                       ) : (
                         <label
-                        htmlFor={item.field}
+                          htmlFor={item.field}
                           onClick={() =>
                             setImageFiles((prev) => ({
                               ...prev,
