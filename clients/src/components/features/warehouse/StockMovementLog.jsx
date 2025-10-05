@@ -261,7 +261,7 @@ const filteredPurchases = purchases.filter((purchase) => {
                           Stock Out
                         </button>
                       </li>
-                      <li className="nav-item" role="presentation">
+                      {/* <li className="nav-item" role="presentation">
                         <button
                           className={`nav-link${activeTab === 'Transfer' ? ' active' : ''}`}
                           id="pills-transfer-tab"
@@ -290,7 +290,7 @@ const filteredPurchases = purchases.filter((purchase) => {
                         >
                           Processing
                         </button>
-                      </li>
+                      </li> */}
                     </ul>
 
                     {/* <div className="notify d-flex bg-white p-1 px-2 border rounded">
@@ -373,7 +373,7 @@ const filteredPurchases = purchases.filter((purchase) => {
                           <th>Movement Type</th>
                           <th>Source/Destination</th>
                           <th>Reference/Note</th>
-                          <th className="no-sort" />
+                          <th style={{textAlign:"center"}}>Action</th>
                         </tr>
                       </thead>
                       <tbody>
