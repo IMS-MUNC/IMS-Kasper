@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { toast } from 'react-toastify';
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { exportToExcel, exportToPDF } from './exportUtils';
 import BASE_URL from "../../../../pages/config/config";
 import axios from 'axios';
@@ -21,6 +21,7 @@ const ExpriedProduct = () => {
   const [sortOrder, setSortOrder] = useState('desc');
 
   const navigate = useNavigate();
+  const location = useLocation();
 
   // Helper function to get expiry date from product
   const getExpiryDate = (product) => {
@@ -523,7 +524,7 @@ const ExpriedProduct = () => {
             </ul>
           </div> */}
               <div className="dropdown">
-                <a className="dropdown-toggle btn btn-white btn-md d-inline-flex align-items-center" data-bs-toggle="dropdown">
+                <a className="btn btn-white btn-md d-inline-flex align-items-center" data-bs-toggle="dropdown">
                   Sort By : {sortBy}
                 </a>
                 <ul className="dropdown-menu dropdown-menu-end p-3">
@@ -572,7 +573,7 @@ const ExpriedProduct = () => {
                     <th>Quantity</th>
                     <th>Supplier</th>
                     <th>Warehouse</th>
-                    <th className="no-sort" />
+                    <th style={{textAlign: 'center'}}>Action</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -607,7 +608,7 @@ const ExpriedProduct = () => {
                         <td>{product.warehouseName || 'N/A'}</td>
                         <td className="action-table-data">
                           <div className="edit-delete-action">
-                            <a data-bs-toggle="modal" data-bs-target="#edit-expired-product" className="me-2 p-2" onClick={() => navigate(`/product/edit/${product._id}`)}>
+                            <a data-bs-toggle="modal" data-bs-target="#edit-expired-product" className="me-2 p-2" onClick={() => navigate(`/product/edit/${product._id}`,{ state: { from: location.pathname } })}>
                               <TbEdit data-feather="edit" className="feather-edit" />
                             </a>
                             <a data-bs-toggle="modal" data-bs-target="#delete-modal" className="p-2" onClick={() => handleDelete(product)}>

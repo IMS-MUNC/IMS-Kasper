@@ -481,7 +481,7 @@ const Brand = () => {
             <div className="d-flex table-dropdown my-xl-auto right-content align-items-center flex-wrap row-gap-3">
               <div className="dropdown me-2">
                 <a
-                  className="dropdown-toggle btn btn-white btn-md d-inline-flex align-items-center"
+                  className="btn btn-white btn-md d-inline-flex align-items-center"
                   data-bs-toggle="dropdown"
                 >
                   Status : {statusFilter || "All"}
@@ -516,7 +516,7 @@ const Brand = () => {
               <div className="dropdown">
                 <a
                   href="javascript:void(0);"
-                  className="dropdown-toggle btn btn-white btn-md d-inline-flex align-items-center"
+                  className="btn btn-white btn-md d-inline-flex align-items-center"
                   data-bs-toggle="dropdown"
                 >
                   Sort By : {sortOrder || "Latest"}

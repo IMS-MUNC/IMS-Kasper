@@ -35,6 +35,13 @@ const SubCategory = () => {
   const [errors, setErrors] = useState({});
   const nameRegex = /^[A-Za-z]{2,}$/;
 
+  // Edit form state variables to prevent direct mutation
+  const [editSubCategoryName, setEditSubCategoryName] = useState("");
+  const [editDescription, setEditDescription] = useState("");
+  const [editSelectedCategory, setEditSelectedCategory] = useState(null);
+  const [editStatus, setEditStatus] = useState(true);
+  const [isUpdating, setIsUpdating] = useState(false);
+
   // NEW STATE: track selected subcategories for bulk delete
   const [selectedSubCategories, setSelectedSubCategories] = useState([]);
   const [selectAll, setSelectAll] = useState(false);
@@ -245,27 +252,32 @@ const SubCategory = () => {
 
   const handleUpdate = async (e) => {
     e.preventDefault();
+
+    // Prevent multiple simultaneous operations
+    if (isUpdating) return;
+    setIsUpdating(true);
+
     let newErrors = {};
-    if (!nameRegex.test(editingSubCategory?.subCategoryName)) {
+    if (!nameRegex.test(editSubCategoryName)) {
       newErrors.subCategoryName =
         "Enter a valid subcategory name (letters only min 2 chars)";
     }
     setErrors(newErrors);
-    if (Object.keys(newErrors).length > 0) return;
+    if (Object.keys(newErrors).length > 0) {
+      setIsUpdating(false);
+      return;
+    }
 
     try {
       const token = localStorage.getItem("token")
-      const cleanName = sanitizeInput(editingSubCategory.subCategoryName);
-      const cleanDescription = sanitizeInput(editingSubCategory.description);
+      const cleanName = sanitizeInput(editSubCategoryName);
+      const cleanDescription = sanitizeInput(editDescription);
 
       const formData = new FormData();
       formData.append("subCategoryName", cleanName);
       formData.append("description", cleanDescription);
-      formData.append("status", editingSubCategory.status);
-      formData.append(
-        "categoryId",
-        editingSubCategory.category?._id || editingSubCategory.categoryId
-      );
+      formData.append("status", editStatus);
+      formData.append("categoryId", editSelectedCategory?.value || editingSubCategory.categoryId);
 
       if (images.length > 0) {
         images.forEach((file) => formData.append("images", file));
@@ -283,14 +295,44 @@ const SubCategory = () => {
       );
       toast.success("Subcategory updated successfully!");
 
-      // Force immediate cleanup before fetching data
-      forceCleanupModal();
-
-      fetchSubcategories();
+      // Close modal first
       closeEditModal();
+
+      // Clear editing state after modal is closed
+      setTimeout(() => {
+        setEditingSubCategory(null);
+        setEditSubCategoryName("");
+        setEditDescription("");
+        setEditSelectedCategory(null);
+        setEditStatus(true);
+        setImages([]);
+        setImagePreviews([]);
+        setErrors({});
+        setSelectedCategory(null);
+        setIsUpdating(false);
+
+        // Fetch updated data after state is cleared
+        fetchSubcategories();
+      }, 150);
     } catch (error) {
       toast.error(error.message || "Failed to update subcategory");
+      
+      // Close modal first
       closeEditModal();
+      
+      // Clear editing state even on error
+      setTimeout(() => {
+        setEditingSubCategory(null);
+        setEditSubCategoryName("");
+        setEditDescription("");
+        setEditSelectedCategory(null);
+        setEditStatus(true);
+        setImages([]);
+        setImagePreviews([]);
+        setErrors({});
+        setSelectedCategory(null);
+        setIsUpdating(false);
+      }, 150);
     }
   };
 
@@ -385,11 +427,18 @@ const SubCategory = () => {
   };
 
   const handleCancelEdit = () => {
-    // Clear editing state
+    // Clear editing state completely
     setEditingSubCategory(null);
+    setEditSubCategoryName("");
+    setEditDescription("");
+    setEditSelectedCategory(null);
+    setEditStatus(true);
     setImages([]);
     setImagePreviews([]);
     setErrors({});
+    
+    // Clear any selected category state that might interfere
+    setSelectedCategory(null);
 
     closeEditModal();
   };
@@ -638,10 +687,32 @@ const SubCategory = () => {
                         <td className="action-table-data">
                           <div className="edit-delete-action">
                             <a
-                              className="me-2 p-2"
+                              className={`me-2 p-2 ${isUpdating ? 'disabled' : ''}`}
                               data-bs-toggle="modal"
                               data-bs-target="#edit-category"
-                              onClick={() => setEditingSubCategory(subcat)}
+                              style={{ pointerEvents: isUpdating ? 'none' : 'auto', opacity: isUpdating ? 0.5 : 1 }}
+                              onClick={() => {
+                                if (isUpdating) return;
+                                // Set the editing subcategory for reference (read-only)
+                                setEditingSubCategory({
+                                  ...subcat,
+                                  category: subcat.category ? { ...subcat.category } : null,
+                                  images: subcat.images ? [...subcat.images] : []
+                                });
+                                
+                                // Populate form state variables
+                                setEditSubCategoryName(subcat.subCategoryName || "");
+                                setEditDescription(subcat.description || "");
+                                setEditSelectedCategory(
+                                  categories.find(cat => 
+                                    cat.value === (subcat.category?._id || subcat.categoryId)
+                                  ) || null
+                                );
+                                setEditStatus(subcat.status !== false); // Default to true if undefined
+                                setImages([]);
+                                setImagePreviews([]);
+                                setErrors({});
+                              }}
                             >
                               <TbEdit />
                             </a>
@@ -965,26 +1036,8 @@ const SubCategory = () => {
                       options={categories}
                       isSearchable
                       placeholder="Search or select category..."
-                      value={
-                        categories.find(
-                          (opt) =>
-                            opt.value ===
-                            (editingSubCategory?.category?._id ||
-                              editingSubCategory?.categoryId)
-                        ) || null
-                      }
-                      onChange={(selectedOption) =>
-                        setEditingSubCategory({
-                          ...editingSubCategory,
-                          categoryId: selectedOption.value,
-                          category: {
-                            ...editingSubCategory.category,
-                            _id: selectedOption.value,
-                            categoryCode: selectedOption.code,
-                            categoryName: selectedOption.label,
-                          },
-                        })
-                      }
+                      value={editSelectedCategory}
+                      onChange={(selectedOption) => setEditSelectedCategory(selectedOption)}
                     />
                   </div>
                   <div className="mb-3">
@@ -994,13 +1047,8 @@ const SubCategory = () => {
                     <input
                       type="text"
                       className="form-control"
-                      value={editingSubCategory?.subCategoryName || ""}
-                      onChange={(e) =>
-                        setEditingSubCategory({
-                          ...editingSubCategory,
-                          subCategoryName: e.target.value,
-                        })
-                      }
+                      value={editSubCategoryName}
+                      onChange={(e) => setEditSubCategoryName(e.target.value)}
                     />
                     {errors.subCategoryName && (
                       <p className="text-danger">{errors.subCategoryName}</p>
@@ -1013,14 +1061,7 @@ const SubCategory = () => {
                     <input
                       type="text"
                       className="form-control"
-                      value={
-                        categories.find(
-                          (opt) =>
-                            opt.value ===
-                            (editingSubCategory?.category?._id ||
-                              editingSubCategory?.categoryId)
-                        )?.code || ""
-                      }
+                      value={editSelectedCategory?.code || ""}
                       readOnly
                     />
                   </div>
@@ -1030,13 +1071,8 @@ const SubCategory = () => {
                     </label>
                     <textarea
                       className="form-control"
-                      value={editingSubCategory?.description || ""}
-                      onChange={(e) =>
-                        setEditingSubCategory({
-                          ...editingSubCategory,
-                          description: e.target.value,
-                        })
-                      }
+                      value={editDescription}
+                      onChange={(e) => setEditDescription(e.target.value)}
                     />
                   </div>
                   <div className="mb-0">
@@ -1046,13 +1082,8 @@ const SubCategory = () => {
                         type="checkbox"
                         id="user3"
                         className="check"
-                        checked={editingSubCategory?.status || false}
-                        onChange={(e) =>
-                          setEditingSubCategory({
-                            ...editingSubCategory,
-                            status: e.target.checked,
-                          })
-                        }
+                        checked={editStatus}
+                        onChange={(e) => setEditStatus(e.target.checked)}
                       />
                       <label htmlFor="user3" className="checktoggle" />
                     </div>
@@ -1066,8 +1097,8 @@ const SubCategory = () => {
                   >
                     Cancel
                   </button>
-                  <button type="submit" className="btn btn-primary">
-                    Save Changes
+                  <button type="submit" className="btn btn-primary" disabled={isUpdating}>
+                    {isUpdating ? 'Updating...' : 'Save Changes'}
                   </button>
                 </div>
               </form>
