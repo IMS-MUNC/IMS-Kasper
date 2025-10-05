@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { useDropzone } from "react-dropzone";
 import axios from "axios";
-import { useParams, useNavigate, Link } from "react-router-dom";
+import { useParams, useNavigate, Link, useLocation } from "react-router-dom";
 import BASE_URL from "../../../../pages/config/config";
 import { toast } from "react-toastify";
 import { useTranslation } from "react-i18next";
@@ -40,7 +40,11 @@ const sanitizeOptions = {
 const ProductEdit = () => {
   const { id } = useParams();
   const navigate = useNavigate();
+  const location = useLocation();
   const { t } = useTranslation();
+
+  
+
   // Declare steps and variantTabs before useState calls
   const steps = [
     t("descriptionAndMedia"),
@@ -836,7 +840,8 @@ if (data.variants && typeof data.variants === "object" && Object.keys(data.varia
         },
       });
       toast.success("Product updated successfully!");
-      navigate("/product");
+      const returnPath = location.state?.from || '/product';
+      navigate(returnPath);
     } catch (err) {
       console.log(err.response?.data);
       toast.error("Failed to update product");
@@ -965,8 +970,8 @@ if (data.variants && typeof data.variants === "object" && Object.keys(data.varia
           <div className="page-btn mt-0">
             <div className="d-flex gap-2">
               {/* <Link to="/product"></Link>{t("backToProduct")} */}
-              <Link to="/product">
-                <a className="btn btn-primary">Back to Product</a>
+              <Link to={location.state?.from || "/product"}>
+                <a className="btn btn-primary">Back to {location.state?.from == '/expired-products' ? "Expired Products" : location.state?.from == '/low-stocks' ? "Low Stocks" : "Product"}</a>
               </Link>
             </div>
           </div>

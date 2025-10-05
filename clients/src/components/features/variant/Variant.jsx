@@ -299,12 +299,76 @@ const Variant = ({ show, handleClose }) => {
   }, [selectedVariants, filteredVariants, currentPage, rowsPerPage]);
 
   const handleExportPDF = () => {
-    const table = tableRef.current;
-    if (!table) {
-      console.error("Table reference not found");
-      return;
-    }
-    html2canvas(table, { scale: 2 }).then((canvas) => {
+    // Create a temporary table without action columns for PDF export
+    const tempTable = document.createElement('table');
+    tempTable.className = 'table datatable';
+    tempTable.style.width = '100%';
+    tempTable.style.borderCollapse = 'collapse';
+    
+    // Create header without action column
+    const thead = document.createElement('thead');
+    thead.className = 'thead-light';
+    const headerRow = document.createElement('tr');
+    
+    const headers = ['Variant', 'Values', 'Created Date', 'Status'];
+    headers.forEach(header => {
+      const th = document.createElement('th');
+      th.textContent = header;
+      th.style.border = '1px solid #ddd';
+      th.style.padding = '8px';
+      th.style.backgroundColor = '#f8f9fa';
+      headerRow.appendChild(th);
+    });
+    
+    thead.appendChild(headerRow);
+    tempTable.appendChild(thead);
+    
+    // Create body with data rows (excluding action column)
+    const tbody = document.createElement('tbody');
+    filteredVariants.forEach(item => {
+      const row = document.createElement('tr');
+      
+      // Variant column
+      const variantCell = document.createElement('td');
+      variantCell.textContent = item.variant;
+      variantCell.style.border = '1px solid #ddd';
+      variantCell.style.padding = '8px';
+      row.appendChild(variantCell);
+      
+      // Values column
+      const valueCell = document.createElement('td');
+      valueCell.textContent = item.value;
+      valueCell.style.border = '1px solid #ddd';
+      valueCell.style.padding = '8px';
+      row.appendChild(valueCell);
+      
+      // Created Date column
+      const dateCell = document.createElement('td');
+      dateCell.textContent = dayjs(item.createdAt).format("DD MMM YYYY");
+      dateCell.style.border = '1px solid #ddd';
+      dateCell.style.padding = '8px';
+      row.appendChild(dateCell);
+      
+      // Status column
+      const statusCell = document.createElement('td');
+      statusCell.textContent = item.status ? "Active" : "Inactive";
+      statusCell.style.border = '1px solid #ddd';
+      statusCell.style.padding = '8px';
+      statusCell.style.color = item.status ? '#28a745' : '#dc3545';
+      statusCell.style.fontWeight = 'bold';
+      row.appendChild(statusCell);
+      
+      tbody.appendChild(row);
+    });
+    
+    tempTable.appendChild(tbody);
+    
+    // Temporarily add to DOM for html2canvas
+    tempTable.style.position = 'absolute';
+    tempTable.style.left = '-9999px';
+    document.body.appendChild(tempTable);
+    
+    html2canvas(tempTable, { scale: 2 }).then((canvas) => {
       const imgData = canvas.toDataURL("image/png");
       const pdf = new jsPDF("p", "mm", "a4");
       const imgWidth = 190;
@@ -321,9 +385,17 @@ const Variant = ({ show, handleClose }) => {
         heightLeft -= pageHeight;
       }
       pdf.save("variants.pdf");
+      
+      // Clean up temporary table
+      document.body.removeChild(tempTable);
     }).catch((error) => {
       console.error("Error generating PDF:", error);
       setError("Failed to generate PDF. Please try again.");
+      
+      // Clean up temporary table in case of error
+      if (document.body.contains(tempTable)) {
+        document.body.removeChild(tempTable);
+      }
     });
   };
 
@@ -331,7 +403,7 @@ const Variant = ({ show, handleClose }) => {
     const exportData = filteredVariants.map((item) => ({
       Variant: item.variant,
       Values: item.value,
-      "Created Date": dayjs(item.createdDate).format("DD MMM YYYY"),
+      "Created Date": dayjs(item.createdAt).format("DD MMM YYYY"),
       Status: item.status ? "Active" : "Inactive",
     }));
     const worksheet = XLSX.utils.json_to_sheet(exportData);
@@ -478,12 +550,12 @@ const Variant = ({ show, handleClose }) => {
             </div>
             <div className="table-dropdown my-xl-auto right-content">
               <div className="dropdown">
-                <Button
+                <a
                   className="btn btn-white btn-md d-inline-flex align-items-center"
                   data-bs-toggle="dropdown"
                 >
                   Sort By: {statusFilter.charAt(0).toUpperCase() + statusFilter.slice(1) || "Status"}
-                </Button>
+                </a>
                 <ul className="dropdown-menu dropdown-menu-end p-3">
                   <li>
                     <a

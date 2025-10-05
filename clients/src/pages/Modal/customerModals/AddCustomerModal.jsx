@@ -29,6 +29,9 @@ const AddCustomerModal = ({ onClose, onSuccess }) => {
   const [gstType, setGstType] = useState(""); // register/unregister
   const [gstStates, setGstStates] = useState([]); // states from API
   const [selectedGstState, setSelectedGstState] = useState(null);
+  const [gstLoading, setGstLoading] = useState(false);
+  const [validationErrors, setValidationErrors] = useState({});
+  const [isGstinVerified, setIsGstinVerified] = useState(false);
 
 
   const [form, setForm] = useState({
@@ -38,6 +41,7 @@ const AddCustomerModal = ({ onClose, onSuccess }) => {
     currency: "",
     website: "",
     notes: "",
+    gstin: "",
     billing: {
       name: "",
       address1: "",
@@ -142,6 +146,7 @@ const AddCustomerModal = ({ onClose, onSuccess }) => {
       // ifsc: /^[A-Za-z]{4}0[A-Za-z0-9]{6}$/, // Updated: Case-insensitive
       ifsc: /^[A-Z]{4}0[A-Z0-9]{6}$/, // Updated: Case-insensitive
       notes: /^[\w\s.,!?-]{0,500}$/,
+      gstin: /^[0-9A-Z]{15}$/,
       address1: /^[a-zA-Z0-9\s.,'-]{1,100}$/,
       address2: /^[a-zA-Z0-9\s.,'-]{0,100}$/,
     };
@@ -182,6 +187,8 @@ const AddCustomerModal = ({ onClose, onSuccess }) => {
           return "Please enter a valid IFSC code (e.g., ABCD0123456).";
         case "notes":
           return "Notes can only contain letters, numbers, spaces, and common punctuation (max 500 characters).";
+        case "gstin":
+          return "Please enter a valid GSTIN (15 alphanumeric characters).";
         case "name":
           return "Please enter a valid name (1-100 characters, letters and common punctuation only).";
         case "address1":
@@ -416,8 +423,10 @@ const AddCustomerModal = ({ onClose, onSuccess }) => {
     newErrors.gstType = gstType ? "" : "GST Type is required.";
     if (gstType === "register") {
       newErrors.gstState = selectedGstState ? "" : "GST State is required.";
+      newErrors.gstin = validateField("gstin", form.gstin);
     } else {
       newErrors.gstState = "";
+      newErrors.gstin = "";
     }
     newErrors.website = validateField("website", form.website);
     newErrors.notes = validateField("notes", form.notes);
@@ -471,6 +480,7 @@ const AddCustomerModal = ({ onClose, onSuccess }) => {
         status: form.status,
         gstType: gstType === "register" ? "Registered" : "Unregister",
         gstState: selectedGstState?.value || "N/A",
+        gstin: form.gstin || "",
       };
 
       const formData = new FormData();
@@ -501,6 +511,7 @@ const AddCustomerModal = ({ onClose, onSuccess }) => {
         currency: "",
         website: "",
         notes: "",
+        gstin: "",
         billing: {
           name: "",
           address1: "",
@@ -579,6 +590,32 @@ const AddCustomerModal = ({ onClose, onSuccess }) => {
       setSelectedGstState({ value: "N/A", label: "N/A" });
     } else {
       setSelectedGstState(null);
+    }
+  };
+
+  const handleVerifyGstin = async () => {
+    if (!form.gstin || !selectedGstState) {
+      toast.error("Please enter GSTIN and select state");
+      return;
+    }
+    setGstLoading(true);
+    try {
+      // Check if first 2 digits match selectedGstState.value
+      const gstinPrefix = form.gstin.substring(0, 2);
+      if (gstinPrefix === selectedGstState.value) {
+        setValidationErrors(prev => ({ ...prev, gstin: "" }));
+        setIsGstinVerified(true);
+        toast.success("GSTIN verified successfully");
+      } else {
+        setValidationErrors(prev => ({ ...prev, gstin: "GSTIN does not match the selected state" }));
+        setIsGstinVerified(false);
+        toast.error("GSTIN verification failed");
+      }
+    } catch (err) {
+      setIsGstinVerified(false);
+      toast.error("Verification failed");
+    } finally {
+      setGstLoading(false);
     }
   };
 
@@ -788,23 +825,53 @@ const AddCustomerModal = ({ onClose, onSuccess }) => {
                     </div>
 
                     {gstType === "register" && (
-                      <div className="col-lg-4 col-md-6">
-                        <div className="mb-3">
-                          <label className="form-label">State</label>
-                          <Select
-                            options={gstStates}
-                            value={selectedGstState}
-                            onChange={(option) => setSelectedGstState(option)}
-                            placeholder="Select State"
-                          />
-                          {errors.gstState && (
-                            <span className="text-danger fs-12">{errors.gstState}</span>
-                          )}
+                      <>
+                        <div className="col-lg-4 col-md-6">
+                          <div className="mb-3">
+                            <label className="form-label">State</label>
+                            <Select
+                              options={gstStates}
+                              value={selectedGstState}
+                              onChange={(option) => setSelectedGstState(option)}
+                              placeholder="Select State"
+                            />
+                            {errors.gstState && (
+                              <span className="text-danger fs-12">{errors.gstState}</span>
+                            )}
+                          </div>
                         </div>
-                      </div>
+                        <div className="col-lg-4 col-md-4 mt-4">
+                          <div className="mb-3">
+                            <div className="d-flex gap-2">
+                              <span className="form-label">GSTIN</span>
+                              <br />
+                              <input
+                                type="text"
+                                placeholder="Enter GSTIN"
+                                className="form-control"
+                                name="gstin"
+                                value={form.gstin}
+                                onChange={handleInputChange}
+                              />
+                              <button
+                                type="button"
+                                className="btn btn-outline-primary"
+                                onClick={handleVerifyGstin}
+                                disabled={!form.gstin || gstLoading || !selectedGstState}
+                              >
+                                {gstLoading ? 'Verifying...' : 'Verify'}
+                              </button>
+                            </div>
+                            {(errors.gstin || validationErrors.gstin) && (
+                              <span className="text-danger fs-12">{errors.gstin || validationErrors.gstin}</span>
+                            )}
+                          </div>
+                        </div>
+                      </>
                     )}
 
                   </div>
+
                   <div className="border-top my-2">
                     <div className="row gx-5">
                       <div className="col-md-6">
@@ -1142,8 +1209,8 @@ const AddCustomerModal = ({ onClose, onSuccess }) => {
             </div>
           </div>
         </div>
-      </div>
-    </div>
+      </div >
+    </div >
   );
 };
 

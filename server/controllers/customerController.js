@@ -57,11 +57,17 @@ exports.createCustomer = async (req, res) => {
     // 1️⃣ Upload images to Cloudinary
     let imageUrls = [];
     if (req.files && req.files.length > 0) {
-      const uploadPromises = req.files.map(file =>
-        cloudinary.uploader.upload(file.path, { folder: "customer_images" })
-      );
-      const uploaded = await Promise.all(uploadPromises);
-      imageUrls = uploaded.map(img => img.secure_url);
+      try {
+        const uploadPromises = req.files.map(file =>
+          cloudinary.uploader.upload(file.path, { folder: "customer_images" })
+        );
+        const uploaded = await Promise.all(uploadPromises);
+        imageUrls = uploaded.map(img => img.secure_url);
+      } catch (uploadErr) {
+        console.error("Image upload failed:", uploadErr);
+        // Proceed without images if upload fails
+        imageUrls = [];
+      }
     }
 
     // 2️⃣ Build customer data

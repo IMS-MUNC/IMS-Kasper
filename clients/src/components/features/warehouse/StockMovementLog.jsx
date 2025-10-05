@@ -2,9 +2,13 @@ import axios from "axios";
 import React, { useEffect, useState } from "react";
 import { IoIosArrowForward } from "react-icons/io";
 import BASE_URL from "../../../pages/config/config";
-import { TbEdit, TbRefresh, TbTrash } from "react-icons/tb";
-import PDF from "../../../assets/img/icons/pdf.svg";
-import EXCEL from "../../../assets/img/icons/excel.svg";
+import { TbEdit, TbRefresh, TbTrash, TbEye } from "react-icons/tb";
+import PDF from '../../../assets/img/icons/pdf.svg'
+import EXCEL from '../../../assets/img/icons/excel.svg'
+import html2canvas from "html2canvas";
+import jsPDF from "jspdf";
+import * as XLSX from "xlsx";
+import autoTable from "jspdf-autotable";
 
 function StockMovementLog() {
   const [activeTab, setActiveTab] = useState("All");
@@ -24,9 +28,11 @@ function StockMovementLog() {
           Authorization: `Bearer ${token}`,
         },
       });
-      // console.log("kasim ka error : ", res);
+
 
       setPurchases(res.data.purchases);
+      // console.log("new log data", res.data.purchases);
+
     } catch (error) {
       console.error("Error fetching purchases:", error);
     }
@@ -93,6 +99,7 @@ const filteredPurchases = purchases.filter((purchase) => {
     setSelectedStock(null);
   };
 
+
   const quantity = selectedStock?.products?.[0]?.product?.quantity
     ? parseInt(selectedStock.products[0].product.quantity)
     : 0;
@@ -108,6 +115,64 @@ const filteredPurchases = purchases.filter((purchase) => {
     (subtotal * sgst) / 100 +
     shippingCharges;
 
+  // Function to download PDF
+  const downloadPDF = () => {
+    const doc = new jsPDF();
+    doc.text("Stock Movement Log", 14, 20);
+
+    const tableColumn = [
+      "Product",
+      "Time",
+      "QTY",
+      "Movement Type",
+      "Source/Destination",
+      "Reference/Note",
+    ];
+    const tableRows = filteredPurchases.map((purchase) => [
+      purchase.products[0]?.product?.productName || "N/A",
+      formatDateTime(purchase.createdAt),
+      purchase.products[0]?.product?.quantity || "0",
+      purchase.status,
+      purchase.supplier
+        ? `${purchase.supplier.firstName} ${purchase.supplier.lastName} ${purchase.supplier.email}`
+        : "N/A",
+      purchase.referenceNumber || "N/A",
+    ]);
+
+    // Use autoTable directly
+    autoTable(doc, {
+      head: [tableColumn],
+      body: tableRows,
+      startY: 30,
+      theme: "grid",
+      headStyles: { fillColor: [100, 100, 100] },
+      styles: { fontSize: 10 },
+    });
+
+    doc.save("Stock_Movement_Log.pdf");
+  };
+
+  // Function to download Excel
+  const downloadExcel = () => {
+    const worksheetData = filteredPurchases.map((purchase) => ({
+      Product: purchase.products[0]?.product?.productName || "N/A",
+      Time: formatDateTime(purchase.createdAt),
+      Quantity: purchase.products[0]?.product?.quantity || 0,
+      "Movement Type": purchase.status,
+      "Source/Destination": purchase.supplier
+        ? `${purchase.supplier.firstName} ${purchase.supplier.lastName} ${purchase.supplier.email}`
+        : "N/A",
+      "Reference/Note": purchase.referenceNumber || "N/A",
+    }));
+
+    const worksheet = XLSX.utils.json_to_sheet(worksheetData);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, "Stock Movement Log");
+    XLSX.writeFile(workbook, "Stock_Movement_Log.xlsx");
+  };
+
+
+
   return (
     <div className="page-wrapper">
       <div className="content">
@@ -118,33 +183,16 @@ const filteredPurchases = purchases.filter((purchase) => {
           </div>
           <ul className="table-top-head low-stock-top-head">
             <li>
-              <a data-bs-toggle="tooltip" data-bs-placement="top" title="Pdf">
-                <img src={PDF} alt="pdf" />
-              </a>
+              <a data-bs-toggle="tooltip" data-bs-placement="top" title="Pdf" onClick={downloadPDF} ><img src={PDF} alt="pdf" /></a>
             </li>
             <li>
-              <a data-bs-toggle="tooltip" data-bs-placement="top" title="Excel">
-                <img src={EXCEL} alt="excel" />
-              </a>
+              <a data-bs-toggle="tooltip" data-bs-placement="top" title="Excel" onClick={downloadExcel} ><img src={EXCEL} alt="excel" /></a>
             </li>
             <li>
-              <a
-                data-bs-toggle="tooltip"
-                data-bs-placement="top"
-                title="Refresh"
-              >
-                <TbRefresh className="ti ti-refresh" />
-              </a>
+              <a data-bs-toggle="tooltip" data-bs-placement="top" title="Refresh" onClick={() => location.reload()}><TbRefresh className="ti ti-refresh" /></a>
             </li>
             {/* <li>
-              <a
-                data-bs-toggle="tooltip"
-                data-bs-placement="top"
-                title="Collapse"
-                id="collapse-header"
-              >
-                <i className="ti ti-chevron-up" />
-              </a>
+              <a data-bs-toggle="tooltip" data-bs-placement="top" title="Collapse" id="collapse-header"><i className="ti ti-chevron-up" /></a>
             </li> */}
             <li>
               {/* <a href="#" className="btn btn-secondary w-auto shadow-none" data-bs-toggle="modal" data-bs-target="#send-email"><i data-feather="mail" className="feather-mail" />Send Email</a> */}
@@ -152,6 +200,9 @@ const filteredPurchases = purchases.filter((purchase) => {
           </ul>
         </div>
         <div className="mb-4">
+
+
+
           <div className="tab-content" id="pills-tabContent">
             {/* low stock */}
             <div
@@ -164,93 +215,82 @@ const filteredPurchases = purchases.filter((purchase) => {
               <div className="card">
                 <div className="card-header d-flex align-items-center justify-content-between flex-wrap row-gap-3">
                   <div className="d-flex flex-wrap justify-content-between align-items-center mb-0">
-                    <ul
-                      className="nav nav-pills d-flex me-2 mb-0"
-                      id="pills-tab"
-                      role="tablist"
-                    >
+                    <ul className="nav nav-pills d-flex me-2 mb-0" id="pills-tab" role="tablist">
                       <li className="nav-item" role="presentation">
                         <button
-                          className={`nav-link${
-                            activeTab === "All" ? " active" : ""
-                          }`}
+                          className={`nav-link${activeTab === 'All' ? ' active' : ''}`}
                           id="pills-all-tab"
                           data-bs-toggle="pill"
                           data-bs-target="#pills-all"
                           type="button"
                           role="tab"
                           aria-controls="pills-all"
-                          aria-selected={activeTab === "All"}
-                          onClick={() => setActiveTab("All")}
+                          aria-selected={activeTab === 'All'}
+                          onClick={() => setActiveTab('All')}
                         >
                           All
                         </button>
                       </li>
                       <li className="nav-item" role="presentation">
                         <button
-                          className={`nav-link${
-                            activeTab === "Stock In" ? " active" : ""
-                          }`}
+                          className={`nav-link${activeTab === 'Stock In' ? ' active' : ''}`}
                           id="pills-stockin-tab"
                           data-bs-toggle="pill"
                           data-bs-target="#pills-stockin"
                           type="button"
                           role="tab"
                           aria-controls="pills-stockin"
-                          aria-selected={activeTab === "Stock In"}
-                          onClick={() => setActiveTab("Stock In")}
+                          aria-selected={activeTab === 'Stock In'}
+                          onClick={() => setActiveTab('Stock In')}
                         >
                           Stock In
                         </button>
                       </li>
                       <li className="nav-item" role="presentation">
                         <button
-                          className={`nav-link${
-                            activeTab === "Stock Out" ? " active" : ""
-                          }`}
+                          className={`nav-link${activeTab === 'Stock Out' ? ' active' : ''}`}
                           id="pills-stockout-tab"
                           data-bs-toggle="pill"
                           data-bs-target="#pills-stockout"
                           type="button"
                           role="tab"
                           aria-controls="pills-stockout"
-                          aria-selected={activeTab === "Stock Out"}
-                          onClick={() => setActiveTab("Stock Out")}
+                          aria-selected={activeTab === 'Stock Out'}
+                          onClick={() => setActiveTab('Stock Out')}
                         >
                           Stock Out
                         </button>
                       </li>
-                      {/*
-  <li className="nav-item" role="presentation">
-    <button
-      className={`nav-link${activeTab === 'Transfer' ? ' active' : ''}`}
-      id="pills-transfer-tab"
-      data-bs-toggle="pill"
-      data-bs-target="#pills-transfer"
-      type="button"
-      role="tab"
-      aria-controls="pills-transfer"
-      aria-selected={activeTab === 'Transfer'}
-      onClick={() => setActiveTab('Transfer')}
-    >
-      Transfer
-    </button>
-  </li>
-  <li className="nav-item" role="presentation">
-    <button
-      className={`nav-link${activeTab === 'Processing' ? ' active' : ''}`}
-      id="pills-processing-tab"
-      data-bs-toggle="pill"
-      data-bs-target="#pills-processing"
-      type="button"
-      role="tab"
-      aria-controls="pills-processing"
-      aria-selected={activeTab === 'Processing'}
-      onClick={() => setActiveTab('Processing')}
-    >
-      Processing
-    </button>
-  </li> */}
+                      <li className="nav-item" role="presentation">
+                        <button
+                          className={`nav-link${activeTab === 'Transfer' ? ' active' : ''}`}
+                          id="pills-transfer-tab"
+                          data-bs-toggle="pill"
+                          data-bs-target="#pills-transfer"
+                          type="button"
+                          role="tab"
+                          aria-controls="pills-transfer"
+                          aria-selected={activeTab === 'Transfer'}
+                          onClick={() => setActiveTab('Transfer')}
+                        >
+                          Transfer
+                        </button>
+                      </li>
+                      <li className="nav-item" role="presentation">
+                        <button
+                          className={`nav-link${activeTab === 'Processing' ? ' active' : ''}`}
+                          id="pills-processing-tab"
+                          data-bs-toggle="pill"
+                          data-bs-target="#pills-processing"
+                          type="button"
+                          role="tab"
+                          aria-controls="pills-processing"
+                          aria-selected={activeTab === 'Processing'}
+                          onClick={() => setActiveTab('Processing')}
+                        >
+                          Processing
+                        </button>
+                      </li>
                     </ul>
 
                     {/* <div className="notify d-flex bg-white p-1 px-2 border rounded">
@@ -262,34 +302,20 @@ const filteredPurchases = purchases.filter((purchase) => {
             </div> */}
                   </div>
                   <div className="d-flex table-dropdown my-xl-auto right-content align-items-center flex-wrap row-gap-3">
-                    <div className="dropdown me-2">
-                      <a
-                        className="dropdown-toggle btn btn-white btn-md d-inline-flex align-items-center"
-                        data-bs-toggle="dropdown"
-                      >
+                    {/* <div className="dropdown me-2">
+                      <a className="dropdown-toggle btn btn-white btn-md d-inline-flex align-items-center" data-bs-toggle="dropdown">
                         Warehouse
                       </a>
+                      <ul className="dropdown-menu  dropdown-menu-end p-3">
+                        <li>
+                          <a className="dropdown-item rounded-1">w1</a>
+                        </li>
+                        <li>
+                          <a className="dropdown-item rounded-1">w2</a>
+                        </li>
 
-                      <ul className="dropdown-menu dropdown-menu-end p-3">
-                        {warehouses && warehouses.length > 0 ? (
-                          warehouses.map((wh) => (
-                            <li key={wh._id}>
-                              <a className="dropdown-item rounded-1"
-                              onClick={() => setSelectedWarehouse(wh.warehouseName)}
-                              >
-                                {wh.warehouseName}
-                              </a>
-                            </li>
-                          ))
-                        ) : (
-                          <li>
-                            <span className="dropdown-item">
-                              No warehouse found
-                            </span>
-                          </li>
-                        )}
                       </ul>
-                    </div>
+                    </div> */}
                     {/* <div className="dropdown me-2">
                       <a  className="dropdown-toggle btn btn-white btn-md d-inline-flex align-items-center" data-bs-toggle="dropdown">
                         Store
@@ -352,37 +378,23 @@ const filteredPurchases = purchases.filter((purchase) => {
                       </thead>
                       <tbody>
                         {filteredPurchases.length > 0 ? (
-                          filteredPurchases.map((purchase) => (
-                            <tr
-                              key={purchase._id}
-                              onClick={() => handleCellClick(purchase)}
-                              style={{ cursor: "pointer" }}
-                            >
+                          filteredPurchases.map(purchase => (
+                            <tr key={purchase._id} onClick={() => handleCellClick(purchase)} style={{ cursor: "pointer" }}>
                               <td>
                                 <label className="checkboxs">
                                   <input type="checkbox" />
                                   <span className="checkmarks" />
                                 </label>
                               </td>
-                              <td>
-                                {" "}
-                                {purchase.products[0]?.product?.productName}
-                              </td>
+                              <td> {purchase.products[0]?.product?.productName}</td>
                               {/* <td>{product.store || 'N/A'}</td> */}
                               <td>{formatDateTime(purchase.createdAt)}</td>
                               <td onClick={() => handleCellClick(purchase)}>
                                 {purchase.products[0]?.product?.quantity}
                               </td>
-                              <td
-                                style={{
-                                  borderBottom: "1px solid #ddd",
-                                  padding: "8px",
-                                }}
-                              >
+                              <td style={{ borderBottom: "1px solid #ddd", padding: "8px" }}>
                                 {(() => {
-                                  const type = purchase.status
-                                    .trim()
-                                    .toLowerCase();
+                                  const type = purchase.status.trim().toLowerCase();
                                   let backgroundColor = "#D3D3D3";
                                   let textColor = "#000";
 
@@ -416,35 +428,17 @@ const filteredPurchases = purchases.filter((purchase) => {
                                 })()}
                               </td>
 
-                              <td>
-                                {purchase.supplier
-                                  ? `${purchase.supplier.firstName} ${purchase.supplier.lastName}`
-                                  : "N/A"}
-                              </td>
 
+                              <td>{purchase.supplier.firstName + " " + purchase.supplier.lastName + " " + purchase.supplier.email || "N/A"}</td>
                               <td> {purchase.referenceNumber || "N/A"}</td>
                               {/* <td>{product.quantityAlert} {product.unit}</td> */}
                               <td className="action-table-data">
                                 <div className="edit-delete-action">
-                                  <a
-                                    className="me-2 p-2"
-                                    data-bs-toggle="modal"
-                                    data-bs-target="#edit-stock"
-                                  >
-                                    <TbEdit
-                                      data-feather="edit"
-                                      className="feather-edit"
-                                    />
-                                  </a>
-                                  <a
-                                    data-bs-toggle="modal"
-                                    data-bs-target="#delete-modal"
-                                    className="p-2"
-                                  >
-                                    <TbTrash
-                                      data-feather="trash-2"
-                                      className="feather-trash-2"
-                                    />
+                                  {/* <a className="me-2 p-2" data-bs-toggle="modal" data-bs-target="#edit-stock">
+                                     <TbEdit data-feather="edit" className="feather-edit" /> 
+                                  </a>*/}
+                                  <a data-bs-toggle="modal" data-bs-target="#delete-modal" className="p-2" >
+                                    <TbEye data-feather="eye" className="feather-eye" />
                                   </a>
                                 </div>
                               </td>
@@ -452,11 +446,10 @@ const filteredPurchases = purchases.filter((purchase) => {
                           ))
                         ) : (
                           <tr>
-                            <td colSpan="9" className="text-center text-muted">
-                              No low stock products.
-                            </td>
+                            <td colSpan="9" className="text-center text-muted">No low stock products.</td>
                           </tr>
                         )}
+
                       </tbody>
                     </table>
                   </div>
@@ -464,25 +457,52 @@ const filteredPurchases = purchases.filter((purchase) => {
               </div>
               {/* /product list */}
             </div>
+
+
           </div>
         </div>
       </div>
       {isPopupOpen && selectedStock && (
         <div
+          // style={{
+          //   position: "fixed",
+          //   top: 10,
+          //   left: 0,
+          //   width: "100%",
+          //   height: "100%",
+          //   background: "rgba(0,0,0,0.5)",
+          //   display: "flex",
+          //   justifyContent: "center",
+          //   alignItems: "center",
+          //   // marginBottom: "20px"
+          //   // padding: "120px",
+          // }}
           style={{
             position: "absolute",
             top: 70,
             left: 0,
+
             width: "100%",
-            // height: "90%",
+            height: "90%", // Commented out: Reverted to original
             background: "rgba(0,0,0,0.5)",
             display: "flex",
             justifyContent: "center",
             alignItems: "center",
-            padding: "90px",
+            // padding: "90px",
+            zIndex: 1000, // Commented out: Reverted to original
+            padding: "200px", // Commented out: Reverted to original
           }}
         >
           <div
+            // style={{
+            //   backgroundColor: "#fff",
+            //   padding: "24px",
+            //   gap: "24px",
+            //   borderRadius: "8px",
+            //   maxWidth: "800px",
+            //   // maxHeight: "700px",
+            //   width: "95%",
+            // }}
             style={{
               backgroundColor: "#fff",
               padding: "24px",
@@ -490,6 +510,10 @@ const filteredPurchases = purchases.filter((purchase) => {
               borderRadius: "8px",
               maxWidth: "800px",
               width: "95%",
+              maxHeight: "90vh",
+              overflowY: "auto", // Commented out: Reverted to original
+              position: "relative",
+              // Commented out: Reverted to original
             }}
           >
             <div
@@ -563,26 +587,24 @@ const filteredPurchases = purchases.filter((purchase) => {
                   <span>Customer</span>
                   <br />
                   <span>
-                    <span>{selectedStock.supplier?.supplierName || "N/A"}</span>
+                    {/* <span>{selectedStock.supplier?.supplierName || "N/A"}</span> */}
+                    <span>{selectedStock.supplier.firstName + " " + selectedStock.supplier.lastName || "N/A"}</span>
                   </span>
                 </div>
                 <div>
                   <span>From Warehouse</span>
                   <br />
+                  {/* {console.log("NOLE ", selectedStock.products[0]?.product)
+                  } */}
                   <span>
+
                     {selectedStock.products[0]?.product?.warehouse
                       ?.warehouseName || "N/A"}
                   </span>
                 </div>
               </div>
               <div style={{ marginBottom: "30px" }}>
-                <span
-                  style={{
-                    fontSize: "16px",
-                    color: "#262626",
-                    fontWeight: "bold",
-                  }}
-                >
+                <span style={{ fontSize: "16px", color: "#262626", fontWeight: "bold" }}>
                   Products
                 </span>
                 <div
@@ -600,7 +622,7 @@ const filteredPurchases = purchases.filter((purchase) => {
                           backgroundColor: "#f5f5f5",
                           color: "#444",
                           textAlign: "left",
-                          fontWeight: "400",
+                          fontWeight: "400"
                         }}
                       >
                         <th style={{ padding: "10px" }}>
@@ -946,7 +968,7 @@ const filteredPurchases = purchases.filter((purchase) => {
     //               }}
     //               onClick={() => handleCellClick(purchase)}
     //             >
-    //               <td
+    //               <td 
     //                 style={{ padding: "10px" }}
     //               >
     //                 <input type="checkbox" />
@@ -969,7 +991,7 @@ const filteredPurchases = purchases.filter((purchase) => {
     //               </td>
     //               <td style={{ borderBottom: "1px solid #ddd", padding: "8px" }}>
     //                 {(() => {
-    //                   const type = purchase.status.trim().toLowerCase();
+    //                   const type = purchase.status.trim().toLowerCase(); 
     //                   let backgroundColor = "#D3D3D3";
     //                   let textColor = "#000";
 
