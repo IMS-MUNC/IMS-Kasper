@@ -36,6 +36,7 @@ function WarehouseDetails() {
   const [error, setError] = useState(null);
   const [sales, setSales] = useState([]);
   const [purchases, setPurchases] = useState([]);
+  const [stockHistory, setStockHistory] = useState([]);
   const [activeTabs, setActiveTabs] = useState({});
   const [showTooltip, setShowTooltip] = useState(false);
   const [showTooltips, setShowTooltips] = useState(false);
@@ -114,6 +115,28 @@ function WarehouseDetails() {
 
   useEffect(() => {
     fetchPurchases();
+  }, []);
+
+  // Fetch Stock Movement History
+  const fetchStockHistory = async () => {
+    // console.log("fetchStockHistory called - starting API request");
+    try {
+      const res = await axios.get(`${BASE_URL}/api/stock-history`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      // console.log("Stock History API response:", res.data);
+      // console.log("Stock History logs count:", res.data.logs?.length || 0);
+      setStockHistory(res.data.logs || []);
+    } catch (error) {
+      console.error("Error fetching stock history:", error);
+      setStockHistory([]);
+    }
+  };
+
+  useEffect(() => {
+    fetchStockHistory();
   }, []);
 
   // products fetching
@@ -398,8 +421,14 @@ function WarehouseDetails() {
       if (saleDate.getMonth() === month && saleDate.getFullYear() === year) {
         if (Array.isArray(sale.products)) {
           sale.products.forEach((p) => {
-            // ✅ Use correct quantity field
-            totalSold += p.saleQty || 0;
+            // ✅ Filter by warehouse - check if product belongs to current warehouse
+            const productId = typeof p.productId === 'object' ? p.productId._id : p.productId;
+            const productWarehouse = productToWarehouseMap[productId];
+            
+            if (productWarehouse === warehousesDetails?.warehouseName) {
+              // ✅ Use correct quantity field
+              totalSold += p.saleQty || 0;
+            }
           });
         }
       }
@@ -410,25 +439,44 @@ function WarehouseDetails() {
 
 
 
-  const purchasesItemsPerMonth = xLabels.map((label) => {
-    const [monthStr, yearStr] = label.split(" ");
-    const month = new Date(`${monthStr} 1, ${yearStr}`).getMonth();
-    const year = parseInt(yearStr);
-    let totalPurchased = 0;
-    purchases.forEach((purchase) => {
-      const purchaseDate = new Date(purchase.date || purchase.createdAt);
+  const purchasesItemsPerMonth = months.map((monthStr) => {
+    const month = new Date(`${monthStr} 1, ${currentYear}`).getMonth();
+    const year = currentYear;
+    let totalQuantityChanged = 0;
+    
+    // console.log(`Processing month: ${monthStr}, stockHistory length: ${stockHistory.length}`);
+    
+    stockHistory.forEach((stockEntry) => {
+      const stockDate = new Date(stockEntry.date);
       if (
-        purchaseDate.getMonth() === month &&
-        purchaseDate.getFullYear() === year
+        stockDate.getMonth() === month &&
+        stockDate.getFullYear() === year
       ) {
-        if (Array.isArray(purchase.products)) {
-          purchase.products.forEach((p) => {
-            totalPurchased += p.quantity || 0;
-          });
+        // Filter by warehouse - check if product belongs to current warehouse
+        if (stockEntry.product) {
+          const productId = typeof stockEntry.product === 'object' 
+            ? stockEntry.product._id 
+            : stockEntry.product;
+          
+          const productWarehouse = productToWarehouseMap[productId];
+          
+          // console.log(`Stock entry for ${monthStr}: productId=${productId}, warehouse=${productWarehouse}, currentWarehouse=${warehousesDetails?.warehouseName}, quantityChanged=${stockEntry.quantityChanged}`);
+          
+          if (productWarehouse === warehousesDetails?.warehouseName) {
+            // Use quantityChanged from stock history (positive for purchases, negative for sales/returns)
+            const quantityChanged = stockEntry.quantityChanged || 0;
+            // Only count positive quantities (purchases/stock in)
+            if (quantityChanged > 0) {
+              totalQuantityChanged += quantityChanged;
+              // console.log(`Added ${quantityChanged} to ${monthStr}, total now: ${totalQuantityChanged}`);
+            }
+          }
         }
       }
     });
-    return totalPurchased;
+    
+    // console.log(`Final total for ${monthStr}: ${totalQuantityChanged}`);
+    return totalQuantityChanged;
   });
 
 
