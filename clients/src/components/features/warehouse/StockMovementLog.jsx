@@ -15,6 +15,9 @@ function StockMovementLog() {
   const [isPopupOpen, setIsPopupOpen] = useState(false);
   const [selectedStock, setSelectedStock] = useState(null);
   const [purchases, setPurchases] = useState([]);
+  const [warehouses, setWarehouses] = useState([]);
+  const [selectedWarehouse, setSelectedWarehouse] = useState(null);
+
 
   const fetchPurchases = async () => {
     try {
@@ -39,14 +42,40 @@ function StockMovementLog() {
     fetchPurchases();
   }, []);
 
-  const filteredPurchases = purchases.filter((purchase) => {
-    if (activeTab === "All") return true;
-    if (activeTab === "Stock In") return purchase.status === "Received";
-    if (activeTab === "Stock Out") return purchase.status === "Ordered";
-    if (activeTab === "Transfer") return purchase.status === "Transfer";
-    if (activeTab === "Processing") return purchase.status === "Processing";
-    return true;
-  });
+  //fetch warehoouses
+  useEffect(() => {
+    const token = localStorage.getItem("token");
+    axios
+      .get(`${BASE_URL}/api/warehouse`, {
+        headers: { Authorization: `Bearer ${token}` },
+      })
+      .then((res) => setWarehouses(res.data.data))
+      .catch((err) => console.error(err));
+  }, []);
+
+
+const filteredPurchases = purchases.filter((purchase) => {
+  // Declare statusMatch first
+  let statusMatch = true; // default is true for "All" tab
+
+  // Check tab/status filter
+  const status = purchase.status?.toLowerCase();
+  if (activeTab === "Stock In") statusMatch = status === "received";
+  if (activeTab === "Stock Out") statusMatch = status === "ordered";
+
+  // Check warehouse filter
+  let warehouseMatch = true;
+  if (selectedWarehouse) {
+    warehouseMatch = purchase.products.some(
+      (p) => p.product?.warehouseName === selectedWarehouse
+    );
+  }
+
+  // Both must match
+  return statusMatch && warehouseMatch;
+});
+
+
 
   function formatDateTime(dateString) {
     const date = new Date(dateString);
@@ -176,7 +205,12 @@ function StockMovementLog() {
 
           <div className="tab-content" id="pills-tabContent">
             {/* low stock */}
-            <div className="tab-pane fade show active" id="pills-home" role="tabpanel" aria-labelledby="pills-home-tab">
+            <div
+              className="tab-pane fade show active"
+              id="pills-home"
+              role="tabpanel"
+              aria-labelledby="pills-home-tab"
+            >
               {/* /product list */}
               <div className="card">
                 <div className="card-header d-flex align-items-center justify-content-between flex-wrap row-gap-3">
@@ -444,7 +478,7 @@ function StockMovementLog() {
           //   // padding: "120px",
           // }}
           style={{
-            position: "fixed",
+            position: "absolute",
             top: 70,
             left: 0,
 

@@ -268,7 +268,8 @@ useEffect(() => {
   
 
   return (
-    <div>
+    <div className="page-wrapper">
+      <div className="content">
       {/* Breadcrumb Navigation */}
       <div style={{ padding: "20px", overflowY: "auto", height: "88vh" }}>
         <div
@@ -287,7 +288,7 @@ useEffect(() => {
               alignItems: "center",
             }}
           >
-            <span>Warehouse</span>
+            <span>Warehouses</span>
             <MdArrowForwardIos style={{ color: "#b0afafff" }} />
             <Link
               style={{ color: "#676767", textDecoration: "none" }}
@@ -1295,6 +1296,7 @@ useEffect(() => {
             <span>Selected</span>
           </div>
         </div>
+      </div>
       </div>
     </div>
   );

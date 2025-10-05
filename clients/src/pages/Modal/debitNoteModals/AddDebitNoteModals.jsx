@@ -78,26 +78,104 @@ const AddDebitNoteModals = ({ purchaseData, onReturnCreated }) => {
     });
 
 
-    // Fetch next debitNoteId when modal opens
+    // Function to reset form while preserving auto-filled data
+    const resetFormToDefaults = () => {
+        // Get current auto-filled values to preserve
+        const currentDate = new Date();
+        const day = String(currentDate.getDate()).padStart(2, '0');
+        const month = String(currentDate.getMonth() + 1).padStart(2, '0');
+        const year = currentDate.getFullYear();
+        const formattedDate = `${day}/${month}/${year}`;
+
+        // Reset to default state while preserving auto-filled data
+        setFormState(prev => ({
+            ...prev,
+            // Clear user-inputted fields
+            reason: "",
+            dueDate: '',
+            extraInfo: { notes: '', terms: '', bank: '' },
+            cgst: '',
+            sgst: '',
+            discount: '',
+            signature: '',
+            signatureName: '',
+            signatureImage: '',
+            // Preserve auto-filled fields
+            debitNoteDate: formattedDate,
+            returnDate: currentDate.toISOString().slice(0, 10),
+            status: 'Pending',
+            currency: 'USD',
+            enableTax: false,
+            roundOff: false,
+            // If there's purchaseData, preserve those fields, otherwise clear them
+            referenceNumber: purchaseData?.referenceNumber || "",
+            supplier: purchaseData?.supplier?._id || "",
+            products: purchaseData?.products || [],
+            purchase: purchaseData?._id || "",
+            billFrom: purchaseData?.billFrom || purchaseData?.supplier?._id || "",
+            billTo: purchaseData?.billTo || purchaseData?.supplier?._id || "",
+        }));
+    };
+
+    // Handle modal opening: reset form, fetch ID, and apply purchase data if available
     useEffect(() => {
-        const fetchNextId = async () => {
+        const handleModalOpen = async () => {
             try {
+                // First, reset the form to clear any previous data
+                resetFormToDefaults();
+                
+                // Fetch next debit note ID
                 const res = await axios.get(`${BASE_URL}/api/debit-notes/next-id`, {
                     headers: {
                         Authorization: `Bearer ${token}`,
                     },
                 });
-                setFormState(prev => ({ ...prev, debitNoteId: res.data.nextId }));
+                
+                // Set the fetched ID and apply purchase data if available
+                setFormState(prev => {
+                    const baseState = {
+                        ...prev,
+                        debitNoteId: res.data.nextId
+                    };
+                    
+                    // If there's purchase data, apply it while keeping the fresh date
+                    if (purchaseData) {
+                        return {
+                            ...baseState,
+                            referenceNumber: purchaseData.referenceNumber,
+                            supplier: purchaseData.supplier?._id || "",
+                            returnDate: new Date().toISOString().slice(0, 10),
+                            products: purchaseData.products || [],
+                            purchase: purchaseData._id,
+                            billFrom: purchaseData.billFrom || purchaseData.supplier?._id || "",
+                            billTo: purchaseData.billTo || purchaseData.supplier?._id || "",
+                        };
+                    }
+                    
+                    return baseState;
+                });
             } catch (err) {
-                // fallback: leave blank
+                // fallback: reset form and leave ID blank
+                resetFormToDefaults();
             }
         };
+        
+        const fetchNextId = handleModalOpen;
+
+        const handleModalClose = () => {
+            resetFormToDefaults();
+        };
+
         const modal = document.getElementById('add-return-debit-note');
         if (modal) {
             modal.addEventListener('show.bs.modal', fetchNextId);
-            return () => modal.removeEventListener('show.bs.modal', fetchNextId);
+            modal.addEventListener('hidden.bs.modal', handleModalClose);
+            return () => {
+                modal.removeEventListener('show.bs.modal', fetchNextId);
+                modal.removeEventListener('hidden.bs.modal', handleModalClose);
+            };
         }
-    }, []);
+    }, [purchaseData]);
 
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -148,35 +226,8 @@ const AddDebitNoteModals = ({ purchaseData, onReturnCreated }) => {
                 },
             });
             toast.success('Debit Note created!');
-         window.$('#add-return-debit-note').modal('hide'); // <-- auto close modal
-
-            setFormState({
-                referenceNumber: "",
-                supplier: "",
-                returnDate: "",
-                products: [],
-                reason: "",
-                debitNoteId: '',
-                debitNoteDate: '',
-                dueDate: '',
-                status: 'Pending',
-                currency: 'USD',
-                enableTax: false,
-                billFrom: '',
-                billTo: '',
-                extraInfo: { notes: '', terms: '', bank: '' },
-                amount: '',
-                cgst: '',
-                sgst: '',
-                discount: '',
-                roundOff: false,
-                total: '',
-                totalInWords: '',
-                signature: '',
-                signatureName: '',
-                signatureImage: '',
-                purchase: ''
-            });
+            window.$('#add-return-debit-note').modal('hide'); // <-- auto close modal
+            resetFormToDefaults(); // Reset form to defaults after successful submission
             if (onReturnCreated) onReturnCreated();
         } catch (err) {
             toast.error('Failed to create debit note');
@@ -188,28 +239,7 @@ const AddDebitNoteModals = ({ purchaseData, onReturnCreated }) => {
 
 
 
-    useEffect(() => {
-        if (purchaseData) {
-            // Format date as dd/mm/yyyy
-            const now = new Date();
-            const day = String(now.getDate()).padStart(2, '0');
-            const month = now.toLocaleString('default', { month: 'short' });
-            const year = now.getFullYear();
-            const formattedDate = `${day} ${month} ${year}`;
-            setFormState(prev => ({
-                ...prev,
-                referenceNumber: purchaseData.referenceNumber,
-                supplier: purchaseData.supplier?._id || "",
-                returnDate: now.toISOString().slice(0, 10),
-                debitNoteDate: formattedDate, // Set current date in dd mmm yyyy
-                products: purchaseData.products || [],
-                purchase: purchaseData._id, // ✅ Fix here
-                reason: "",
-                billFrom: purchaseData.billFrom || purchaseData.supplier?._id || "",
-                billTo: purchaseData.billTo || purchaseData.supplier?._id || "",   // <-- set shipping address object or _id
-            }));
-        }
-    }, [purchaseData]);
+
 
 
     const handleChange = (e) => {
@@ -511,7 +541,7 @@ const totalGST = totalValue ;
                     <form onSubmit={handleSubmit}>
                         <div className="modal-header">
                             <h5 className="modal-title">Add Debit Note</h5> <button type="button" className="btn-close"
-                                data-bs-dismiss="modal"></button>
+                                data-bs-dismiss="modal" onClick={resetFormToDefaults}></button>
                         </div>
                         <div className="modal-body">
                             <div className="card">
@@ -574,12 +604,12 @@ const totalGST = totalValue ;
                                                         <div className="row">
                                                             <div className="col-md-12">
                                                                 <div className="mb-3">
-                                                                    <div className="logo-image">
+                                                                    {/* <div className="logo-image">
                                                                         <img src="assets/img/invoice-logo.svg"
                                                                             className="invoice-logo-dark" alt="img" />
                                                                         <img src="assets/img/invoice-logo-white-2.svg"
                                                                             className="invoice-logo-white" alt="img" />
-                                                                    </div>
+                                                                    </div> */}
                                                                 </div>
                                                             </div>
                                                             <div className="col-md-6">
@@ -1036,8 +1066,8 @@ const totalGST = totalValue ;
 
                             </div>
                         </div>
-                        <div className="modal-footer">
-                            <button type="button" className="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                        <div className="modal-footer" style={{gap:'10px'}}>
+                            <button type="button" className="btn btn-secondary" data-bs-dismiss="modal" onClick={resetFormToDefaults}>Close</button>
                             <button type="submit" className="btn btn-primary" disabled={loading}>{loading ? 'Saving...' : 'Create New'}</button>
                         </div>
                     </form>

@@ -41,70 +41,7 @@ function WarehouseDetails() {
   const [showTooltips, setShowTooltips] = useState(false);
 const token = localStorage.getItem("token");
 
-  // LineChart Current year months
-  const currentYear = new Date().getFullYear();
-
-  const months = [
-    "Jan",
-    "Feb",
-    "Mar",
-    "Apr",
-    "May",
-    "Jun",
-    "Jul",
-    "Aug",
-    "Sep",
-    "Oct",
-    "Nov",
-    "Dec",
-  ];
-
-  const xLabels = months.map((m, i) => `${m} ${currentYear}`);
-
-  const soldItemsPerMonth = xLabels.map((label) => {
-    const [monthStr, yearStr] = label.split(" ");
-    const month = new Date(`${monthStr} 1, ${yearStr}`).getMonth();
-    const year = parseInt(yearStr);
-
-    let totalSold = 0;
-
-    sales.forEach((sale) => {
-      // ✅ Use correct date field (createdAt OR date)
-      const saleDate = new Date(sale.date || sale.createdAt);
-      if (saleDate.getMonth() === month && saleDate.getFullYear() === year) {
-        if (Array.isArray(sale.products)) {
-          sale.products.forEach((p) => {
-            // ✅ Use correct quantity field
-            totalSold += p.saleQty || p.quantity || p.qty || 0;
-          });
-        }
-      }
-    });
-
-    return totalSold;
-  });
-
-  const purchasesItemsPerMonth = xLabels.map((label) => {
-    const [monthStr, yearStr] = label.split(" ");
-    const month = new Date(`${monthStr} 1, ${yearStr}`).getMonth();
-    const year = parseInt(yearStr);
-    let totalPurchased = 0;
-    purchases.forEach((purchase) => {
-      const purchaseDate = new Date(purchase.date || purchase.createdAt);
-      if (
-        purchaseDate.getMonth() === month &&
-        purchaseDate.getFullYear() === year
-      ) {
-        if (Array.isArray(purchase.products)) {
-          purchase.products.forEach((p) => {
-            totalPurchased += p.purchaseQty || p.quantity || p.qty || 0;
-          });
-        }
-      }
-    });
-    return totalPurchased;
-  });
-
+ 
   const detailsWarehouses = useCallback(async () => {
     setLoading(true);
     try {
@@ -161,9 +98,11 @@ const token = localStorage.getItem("token");
           Authorization: `Bearer ${token}`,
         },
       });
+      console.log("Purchase API response:", res.data);
       setPurchases(res.data.purchases);
     } catch (error) {
       console.error("Error fetching purchases:", error);
+      setPurchases([])
     }
   };
 
@@ -173,28 +112,33 @@ const token = localStorage.getItem("token");
 
   // products fetching
 
-  useEffect(() => {
-    const fetchProducts = async () => {
-      try {
-        const res = await axios.get(`${BASE_URL}/api/products`,{
-          headers: {
-          Authorization: `Bearer ${token}`,
-        },
-        });
-        const productsArr = Array.isArray(res.data) ? res.data : [];
-        setProducts(productsArr);
-        // Initialize all to "general"
-        const initialTabs = productsArr.reduce((acc, product) => {
-          acc[product._id] = "general";
-          return acc;
-        }, {});
-        setActiveTabs(initialTabs);
-      } catch (err) {
-        console.error("Failed to fetch products", err);
-      }
-    };
-    fetchProducts();
-  }, []);
+useEffect(() => {
+  const fetchProducts = async () => {
+    try {
+      const res = await axios.get(`${BASE_URL}/api/products`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      console.log("Products API response:", res.data);
+
+      // ensure array
+      const productsArr = Array.isArray(res.data) 
+        ? res.data 
+        : res.data.products || [];
+
+      setProducts(productsArr);
+
+      const initialTabs = productsArr.reduce((acc, product) => {
+        acc[product._id] = "general";
+        return acc;
+      }, {});
+      setActiveTabs(initialTabs);
+    } catch (err) {
+      console.error("Failed to fetch products", err);
+    }
+  };
+  fetchProducts();
+}, []);
 
   //sales map for top selling products
   const salesMap = sales.reduce((acc, sale) => {
@@ -310,6 +254,18 @@ const token = localStorage.getItem("token");
     return sum + soldUnits * item.sellingPrice;
   }, 0);
 
+  // ✅ Calculate total stock value based on your formula:
+  //    (initialProduct * mrp) - (soldProduct * mrp)
+  //  => (initialStock - soldUnits) * mrp
+  const totalStockValue = filteredProducts.reduce((sum, item) => {
+    // const initialUnits = Number(item.initialStock) || 0;
+    const itemQuanatity = Number(item.quantity) || 0;
+    const soldUnits = Number(salesMap[item._id] || 0);
+    const mrp = Number(item.mrp ?? item.sellingPrice) || 0;
+    const remainingUnits = itemQuanatity - soldUnits;
+    return sum + remainingUnits * mrp;
+  }, 0);
+
   // total available items
   const totalItems = filteredProducts.reduce((sum, item) => {
     return sum + (item.quantity || 0);
@@ -329,6 +285,74 @@ const token = localStorage.getItem("token");
       setZones([]);
     }
   }, [warehousesDetails]);
+
+
+   // LineChart Current year months
+  const currentYear = new Date().getFullYear();
+
+  const months = [
+    "Jan",
+    "Feb",
+    "Mar",
+    "Apr",
+    "May",
+    "Jun",
+    "Jul",
+    "Aug",
+    "Sep",
+    "Oct",
+    "Nov",
+    "Dec",
+  ];
+
+  const xLabels = months.map((m, i) => `${m} ${currentYear}`);
+
+  const soldItemsPerMonth = xLabels.map((label) => {
+    const [monthStr, yearStr] = label.split(" ");
+    const month = new Date(`${monthStr} 1, ${yearStr}`).getMonth();
+    const year = parseInt(yearStr);
+
+    let totalSold = 0;
+
+    sales.forEach((sale) => {
+      // ✅ Use correct date field (createdAt OR date)
+      const saleDate = new Date(sale.date || sale.createdAt);
+      if (saleDate.getMonth() === month && saleDate.getFullYear() === year) {
+        if (Array.isArray(sale.products)) {
+          sale.products.forEach((p) => {
+            // ✅ Use correct quantity field
+            totalSold += p.saleQty || 0;
+          });
+        }
+      }
+    });
+
+    return totalSold;
+  });
+
+  
+
+  const purchasesItemsPerMonth = xLabels.map((label) => {
+    const [monthStr, yearStr] = label.split(" ");
+    const month = new Date(`${monthStr} 1, ${yearStr}`).getMonth();
+    const year = parseInt(yearStr);
+    let totalPurchased = 0;
+    purchases.forEach((purchase) => {
+      const purchaseDate = new Date(purchase.date || purchase.createdAt);
+      if (
+        purchaseDate.getMonth() === month &&
+        purchaseDate.getFullYear() === year
+      ) {
+        if (Array.isArray(purchase.products)) {
+          purchase.products.forEach((p) => {
+            totalPurchased += p.quantity || 0;
+          });
+        }
+      }
+    });
+    return totalPurchased;
+  });
+
 
   return (
   <div className="page-wrapper" >
@@ -361,7 +385,7 @@ const token = localStorage.getItem("token");
               gap: "10px", // Moved gap here to work with flex
             }}
           >
-            Warehouse <MdArrowForwardIos />{" "}
+            Warehouse <MdArrowForwardIos />
             <Link
               style={{ color: "#676767", textDecoration: "none" }}
               to={"/warehouse"}
@@ -382,7 +406,7 @@ const token = localStorage.getItem("token");
           </span>
         </div>
         <div>
-          <Link to="/Godown">
+          <Link to={`/Godown/${id}`}>
             <button
               style={{
                 backgroundColor: "#1368EC",
@@ -425,7 +449,7 @@ const token = localStorage.getItem("token");
             </span>
             <br />
             <span style={{ textAlign: "left" }}>
-              <b>₹{totalRevenue.toLocaleString("en-IN")}</b>
+              <b>₹{totalStockValue.toLocaleString("en-IN")}</b>
             </span>
           </div>
         </div>
@@ -658,7 +682,7 @@ const token = localStorage.getItem("token");
           <span
             style={{ color: "#262626", fontWeight: "500", fontSize: "16px" }}
           >
-            Storage
+            Stroage
           </span>
           <br />
           <div>
@@ -671,7 +695,7 @@ const token = localStorage.getItem("token");
             <span
               style={{ color: "#1368ec", fontWeight: "400", fontSize: "16px" }}
             >
-              {100 - ((totalItems / totalInitialItems) * 100 || 0).toFixed(2)} %
+              {parseFloat((100 - ((totalItems / totalInitialItems) * 100 || 0)).toFixed(2))}%
               Left
             </span>
           </div>
@@ -854,10 +878,10 @@ const token = localStorage.getItem("token");
                 // }}
               >
                 <th style={{ padding: "12px 24px", display: "flex", gap: "20px" }}>
-                  <input type="checkbox" />Product</th>
+                  {/* <input type="checkbox" /> */}Product</th> 
                 <th style={{ padding: "12px 24px" }}>SKU</th>
                 <th style={{ padding: "12px 24px" }}>MRP</th>
-                <th style={{ padding: "12px 24px" }}>Available QTY</th>
+                <th style={{ padding: "12px 24px" }}>Available Quantity</th>
                 <th style={{ padding: "12px 24px" }}>Unit Sold</th>
                 <th style={{ padding: "12px 24px" }}>Revenue</th>
               </tr>
@@ -883,7 +907,7 @@ const token = localStorage.getItem("token");
                           gap: "20px",
                         }}
                       >
-                        <input type="checkbox" />
+                        {/* <input type="checkbox" /> */}
                          <div style={{display:"flex",alignItems:"center",gap:"10px",width:"50px",justifyContent:"center",height:"50px",border:"1px solid #e6e6e6",borderRadius:"8px",padding:"5px"}}>
                           <img
                           src={item.images[0]?.url}
@@ -917,7 +941,7 @@ const token = localStorage.getItem("token");
                           borderBottom: "1px solid #e6e6e6",
                         }}
                       >
-                        {item.quantity} {item.unit}
+                        {item.quantity} {item.unit} 
                       </td>
                       <td
                         style={{
@@ -971,19 +995,19 @@ const token = localStorage.getItem("token");
               cursor: "pointer",
             }}
           >
-            <Link
+            {/* <Link
               
               to={`/Godown/${id}`}
               style={{ textDecoration: "none", color: "#1368EC" }}
             >
               View All <FaArrowRight />
-            </Link>
+            </Link> */}
           </span>
         </div>
 
         {/* Content - zone 1 */}
         {zones.length > 0 ? (
-          zones.slice(0,2).map((zone, idx) => (
+          zones.map((zone, idx) => (
             <>
               <div
                 key={idx}
@@ -1082,7 +1106,7 @@ const token = localStorage.getItem("token");
             }}
           >
             <span>Stock Movement history</span>
-            <div
+            {/* <div
               style={{
                 borderRadius: "4px",
                 border: "1px solid #e6e6e6",
@@ -1103,7 +1127,7 @@ const token = localStorage.getItem("token");
               >
                 <option value="Warehouse">Select Warehouse</option>
               </select>
-            </div>
+            </div> */}
           </div>
         </div>
 
@@ -1167,33 +1191,10 @@ const token = localStorage.getItem("token");
             >
               Stock Out
             </span>
-
-            <span
-              style={{
-                font: "Robot",
-                fontWeight: "400",
-                fontSize: "16px",
-                color: "#262626",
-                padding: "8px",
-              }}
-            >
-              Transfer
-            </span>
-            <span
-              style={{
-                font: "Robot",
-                fontWeight: "400",
-                fontSize: "16px",
-                color: "#262626",
-                padding: "8px",
-              }}
-            >
-              Processing
-            </span>
           </div>
 
           {/* three icon */}
-          <div style={{ display: "flex", gap: "16px", alignItems: "center" }}>
+          {/* <div style={{ display: "flex", gap: "16px", alignItems: "center" }}>
             <div
               style={{
                 display: "flex",
@@ -1218,7 +1219,7 @@ const token = localStorage.getItem("token");
             >
               <LuArrowUpDown />
             </div>
-          </div>
+          </div> */}
         </div>
 
         {/* Table */}
@@ -1261,6 +1262,7 @@ const token = localStorage.getItem("token");
             </thead>
 
             <tbody>
+              
               {filteredPurchases.slice(0, 5).map((purchase) => (
                 <tr key={purchase._id} style={{ cursor: "pointer" }}>
                   <td
@@ -1321,7 +1323,9 @@ const token = localStorage.getItem("token");
                       borderBottom: "1px solid #e6e6e6",
                     }}
                   >
-                    {purchase.products[0]?.product?.warehouse?.warehouseName}
+                     {purchase.supplier
+                                  ? `${purchase.supplier.firstName} ${purchase.supplier.lastName}`
+                                  : "N/A"}
                   </td>
                   <td
                     style={{

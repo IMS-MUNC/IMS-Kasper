@@ -1,10 +1,18 @@
 
 import React from 'react'
 import { TbCirclePlus, TbEdit, TbEye, TbTrash } from 'react-icons/tb'
+import { FaFileExcel, FaFilePdf } from 'react-icons/fa'
+import { GrFormPrevious } from 'react-icons/gr'
+import { MdNavigateNext } from 'react-icons/md'
 import AddDebitNoteModals from '../../../../pages/Modal/debitNoteModals/AddDebitNoteModals'
 import EditDebitNoteModals from '../../../../pages/Modal/debitNoteModals/EditDebitNoteModals'
 import BASE_URL from '../../../../pages/config/config';
 import axios from 'axios';
+import jsPDF from 'jspdf';
+import autoTable from 'jspdf-autotable';
+import * as XLSX from 'xlsx';
+import { toast } from 'react-toastify';
+import DeleteAlert from '../../../../utils/sweetAlert/DeleteAlert';
 
 const DebitNote = () => {
 
@@ -17,95 +25,371 @@ const DebitNote = () => {
     const [search, setSearch] = React.useState('');
     const [startDate, setStartDate] = React.useState('');
     const [endDate, setEndDate] = React.useState('');
+    const [selectedRows, setSelectedRows] = React.useState([]); // For row selection
 
-    // const fetchNotes = React.useCallback(() => {
-    //     setLoading(true);
-    //     const params = new URLSearchParams({
-    //         limit: 10,
-    //         page,
-    //         search: search.trim(),
-    //     });
-    //     if (startDate) params.append('startDate', startDate);
-    //     if (endDate) params.append('endDate', endDate);
-    //     fetch(`${BASE_URL}/api/debit-notes/getDebit?${params.toString()}`)
-    //         .then(res => res.json())
-    //         .then(data => {
-    //             if (Array.isArray(data.debitNotes)) {
-    //                 setDebitNotes(data.debitNotes);
-    //                 setTotalPages(data.totalPages || 1);
-    //             } else if (Array.isArray(data.data)) {
-    //                 setDebitNotes(data.data);
-    //                 setTotalPages(data.totalPages || 1);
-    //             } else {
-    //                 setDebitNotes([]);
-    //                 setTotalPages(1);
-    //             }
-    //         })
-    //         .finally(() => setLoading(false));
-    // }, [page, search, startDate, endDate]);
-const fetchNotes = React.useCallback(() => {
-  setLoading(true);
+    // File input ref for import functionality
+    const fileInputRef = React.useRef();
 
-  const token = localStorage.getItem("token"); // ✅ get token
+    const fetchNotes = React.useCallback(() => {
+        setLoading(true);
 
-  const params = new URLSearchParams({
-    limit: 10,
-    page,
-    search: search.trim(),
-  });
-  if (startDate) params.append("startDate", startDate);
-  if (endDate) params.append("endDate", endDate);
+        const token = localStorage.getItem("token"); // ✅ get token
 
-  fetch(`${BASE_URL}/api/debit-notes/getDebit?${params.toString()}`, {
-    headers: {
-      Authorization: `Bearer ${token}`, // ✅ token added
-    },
-  })
-    .then((res) => res.json())
-    .then((data) => {
-      if (Array.isArray(data.debitNotes)) {
-        setDebitNotes(data.debitNotes);
-        setTotalPages(data.totalPages || 1);
-      } else if (Array.isArray(data.data)) {
-        setDebitNotes(data.data);
-        setTotalPages(data.totalPages || 1);
-      } else {
-        setDebitNotes([]);
-        setTotalPages(1);
-      }
-    })
-    .catch((err) => {
-      console.error("Failed to fetch debit notes:", err);
-      setDebitNotes([]);
-    })
-    .finally(() => setLoading(false));
-}, [page, search, startDate, endDate, BASE_URL]);
+        const params = new URLSearchParams({
+            limit: 10,
+            page,
+            search: search.trim(),
+        });
+        if (startDate) params.append("startDate", startDate);
+        if (endDate) params.append("endDate", endDate);
+
+        fetch(`${BASE_URL}/api/debit-notes/getDebit?${params.toString()}`, {
+            headers: {
+                Authorization: `Bearer ${token}`, // ✅ token added
+            },
+        })
+            .then((res) => res.json())
+            .then((data) => {
+                if (Array.isArray(data.debitNotes)) {
+                    setDebitNotes(data.debitNotes);
+                    setTotalPages(data.totalPages || 1);
+                } else if (Array.isArray(data.data)) {
+                    setDebitNotes(data.data);
+                    setTotalPages(data.totalPages || 1);
+                } else {
+                    setDebitNotes([]);
+                    setTotalPages(1);
+                }
+            })
+            .catch((err) => {
+                console.error("Failed to fetch debit notes:", err);
+                setDebitNotes([]);
+            })
+            .finally(() => setLoading(false));
+    }, [page, search, startDate, endDate, BASE_URL]);
 
     React.useEffect(() => {
         fetchNotes();
     }, [fetchNotes]);
 
-    // Delete handler
     const handleDelete = async (id) => {
-        if (!window.confirm('Are you sure you want to delete this debit note?')) return;
-        try {
-                    const token = localStorage.getItem("token");
+        const confirmed = await DeleteAlert({
+            title: "Are you sure?",
+            text: "You won't be able to revert this!",
+            confirmButtonText: "Yes, delete it!"
+        });
+        if (!confirmed) return;
 
-            await axios.delete(`${BASE_URL}/api/debit-notes/${id}`,{
-                  headers: {
-                Authorization: `Bearer ${token}`,
-            },
+        const token = localStorage.getItem("token");
+        try {
+            await axios.delete(`${BASE_URL}/api/debit-notes/${id}`, {
+                headers: { Authorization: `Bearer ${token}` },
             });
-            setDebitNotes(notes => notes.filter(n => n._id !== id));
-        } catch (err) {
-            alert('Failed to delete');
+            toast.success("Debit note deleted successfully");
+            fetchNotes();
+        } catch (error) {
+            console.error("Error deleting debit note:", error);
+            toast.error("Failed to delete debit note");
         }
+    };
+
+    // Handle select all functionality
+    const handleSelectAll = (e) => {
+        const currentPageIds = debitNotes.map((note) => note._id);
+        if (e.target.checked) {
+            // Add all current page IDs to selected rows (avoid duplicates)
+            setSelectedRows((prev) => [...new Set([...prev, ...currentPageIds])]);
+        } else {
+            // Remove all current page IDs from selected rows
+            setSelectedRows((prev) => prev.filter((id) => !currentPageIds.includes(id)));
+        }
+    };
+
+    // Handle individual row selection
+    const handleSelectRow = (noteId) => {
+        setSelectedRows((prev) =>
+            prev.includes(noteId)
+                ? prev.filter((id) => id !== noteId)
+                : [...prev, noteId]
+        );
+    };
+
+    // Handle bulk delete
+    const handleBulkDelete = async () => {
+        if (selectedRows.length === 0) return;
+
+        const confirmed = await DeleteAlert({
+            title: 'Are you sure?',
+            text: `You won't be able to revert the deletion of ${selectedRows.length} debit note${selectedRows.length > 1 ? 's' : ''}!`,
+            confirmButtonText: 'Yes, delete them!'
+        });
+
+        if (!confirmed) return;
+
+        try {
+            const token = localStorage.getItem("token");
+            await Promise.all(
+                selectedRows.map((id) =>
+                    axios.delete(`${BASE_URL}/api/debit-notes/${id}`, {
+                        headers: { Authorization: `Bearer ${token}` },
+                    })
+                )
+            );
+            setSelectedRows([]);
+            toast.success(`${selectedRows.length} debit note${selectedRows.length > 1 ? 's' : ''} deleted successfully`);
+
+            // Check if we need to go to previous page
+            const remainingNotes = debitNotes.length - selectedRows.length;
+            if (remainingNotes === 0 && page > 1) {
+                setPage(page - 1);
+            } else {
+                fetchNotes();
+            }
+        } catch (error) {
+            console.error('Error deleting debit notes:', error);
+            toast.error('Failed to delete some debit notes');
+        }
+    };
+
+    // Export data to PDF (selected rows or all data)
+    const handleExportPDF = async () => {
+        try {
+            let dataToExport = [];
+
+            if (selectedRows.length > 0) {
+                // Export selected rows
+                dataToExport = debitNotes.filter((note) =>
+                    selectedRows.includes(note._id)
+                );
+            } else {
+                // Export all data by fetching from API without pagination
+                const token = localStorage.getItem("token");
+                const params = new URLSearchParams({
+                    limit: 10000, // Large limit to get all data
+                    search: search.trim(),
+                });
+                if (startDate) params.append("startDate", startDate);
+                if (endDate) params.append("endDate", endDate);
+
+                const res = await fetch(`${BASE_URL}/api/debit-notes/getDebit?${params.toString()}`, {
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                    },
+                });
+                const data = await res.json();
+                dataToExport = data.debitNotes || data.data || [];
+            }
+
+            if (!dataToExport.length) {
+                toast.error('No data to export');
+                return;
+            }
+
+            const doc = new jsPDF();
+
+            // Add title
+            doc.setFontSize(20);
+            doc.text('Debit Notes Report', 14, 22);
+
+            // Add export info
+            doc.setFontSize(12);
+            doc.text(`Generated on: ${new Date().toLocaleDateString()}`, 14, 32);
+            doc.text(`Total Records: ${dataToExport.length}`, 14, 40);
+
+            // Prepare table data
+            const tableData = dataToExport.map((note) => [
+                note.debitNoteId || note._id?.slice(-6) || 'N/A',
+                note.debitNoteDate ? new Date(note.debitNoteDate).toLocaleDateString() : '',
+                note.billTo?.name || note.billTo?.firstName || note.billTo || '-',
+                `$${(note.total || note.amount || 0).toFixed ? (note.total || note.amount || 0).toFixed(2) : (note.total || note.amount || 0)}`,
+                note.status || '-'
+            ]);
+
+            // Add table
+            autoTable(doc, {
+                head: [['ID', 'Date', 'Vendor', 'Amount', 'Status']],
+                body: tableData,
+                startY: 50,
+                styles: { fontSize: 8 },
+                headStyles: { fillColor: [41, 128, 185] },
+                alternateRowStyles: { fillColor: [245, 245, 245] }
+            });
+
+            const filename = selectedRows.length > 0 ? "selected_debit_notes.pdf" : "all_debit_notes.pdf";
+            doc.save(filename);
+
+            toast.success(`PDF exported successfully (${dataToExport.length} records)`);
+        } catch (error) {
+            console.error('Error exporting PDF:', error);
+            toast.error('Failed to export PDF');
+        }
+    };
+
+    // Export data to Excel (selected rows or all data)
+    const handleExportExcel = async () => {
+        try {
+            let dataToExport = [];
+
+            if (selectedRows.length > 0) {
+                // Export selected rows
+                dataToExport = debitNotes.filter((note) =>
+                    selectedRows.includes(note._id)
+                );
+            } else {
+                // Export all data by fetching from API without pagination
+                const token = localStorage.getItem("token");
+                const params = new URLSearchParams({
+                    limit: 10000, // Large limit to get all data
+                    search: search.trim(),
+                });
+                if (startDate) params.append("startDate", startDate);
+                if (endDate) params.append("endDate", endDate);
+
+                const res = await fetch(`${BASE_URL}/api/debit-notes/getDebit?${params.toString()}`, {
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                    },
+                });
+                const data = await res.json();
+                dataToExport = data.debitNotes || data.data || [];
+            }
+
+            if (!dataToExport.length) {
+                toast.error('No data to export');
+                return;
+            }
+
+            const rows = dataToExport.map((note) => ({
+                ID: note.debitNoteId || note._id?.slice(-6) || 'N/A',
+                Date: note.debitNoteDate ? new Date(note.debitNoteDate).toLocaleDateString() : '',
+                Vendor: note.billTo?.name || note.billTo?.firstName || note.billTo || '-',
+                Amount: (note.total || note.amount || 0).toFixed ? (note.total || note.amount || 0).toFixed(2) : (note.total || note.amount || 0),
+                Status: note.status || '-',
+                CGST: note.cgst || '0',
+                SGST: note.sgst || '0',
+                Discount: note.discount || '0',
+                'Created On': note.createdAt ? new Date(note.createdAt).toLocaleDateString() : '-'
+            }));
+
+            const ws = XLSX.utils.json_to_sheet(rows);
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, "Debit Notes");
+
+            const filename = selectedRows.length > 0 ? "selected_debit_notes.xlsx" : "all_debit_notes.xlsx";
+            XLSX.writeFile(wb, filename);
+
+            toast.success(`Excel exported successfully (${rows.length} records)`);
+        } catch (error) {
+            console.error('Error exporting Excel:', error);
+            toast.error('Failed to export Excel');
+        }
+    };
+
+    // Import functionality
+    const handleImportClick = () => {
+        fileInputRef.current?.click();
+    };
+
+    const handleImportExcel = async (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+
+        try {
+            const token = localStorage.getItem("token");
+            const reader = new FileReader();
+
+            reader.onload = async (event) => {
+                const data = new Uint8Array(event.target.result);
+                const workbook = XLSX.read(data, { type: 'array' });
+                const sheetName = workbook.SheetNames[0];
+                const worksheet = workbook.Sheets[sheetName];
+                const jsonData = XLSX.utils.sheet_to_json(worksheet);
+
+                if (!jsonData.length) {
+                    toast.error('No data found in the Excel file');
+                    return;
+                }
+
+                // Validate required columns
+                const requiredColumns = ['ID', 'Date', 'Vendor', 'Amount', 'Status'];
+                const firstRow = jsonData[0];
+                const missingColumns = requiredColumns.filter(col => !(col in firstRow));
+
+                if (missingColumns.length > 0) {
+                    toast.error(`Missing required columns: ${missingColumns.join(', ')}`);
+                    return;
+                }
+
+                const processedData = jsonData.map(row => ({
+                    debitNoteId: row.ID,
+                    debitNoteDate: row.Date,
+                    billTo: row.Vendor,
+                    total: row.Amount,
+                    status: row.Status,
+                    cgst: row.CGST || 0,
+                    sgst: row.SGST || 0,
+                    discount: row.Discount || 0,
+                }));
+
+                await axios.post(`${BASE_URL}/api/debit-notes/import`, {
+                    debitNotes: processedData
+                }, {
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    }
+                });
+
+                toast.success("Debit notes imported successfully!");
+                fetchNotes(); // Refresh the list
+            };
+
+            reader.readAsArrayBuffer(file);
+
+        } catch (error) {
+            console.error("Import error:", error);
+            toast.error("Error importing debit notes. Please check the file format.");
+        }
+
+        // Reset file input
+        e.target.value = '';
     };
 
     return (
         <div className="page-wrapper">
             {/* Start Content */}
             <div className="content content-two">
+
+                <div className="page-header">
+                    <div className="add-item d-flex">
+                        <div className="page-title">
+                            <h4 className="fw-bold">Debit Note</h4>
+                            <h6>Manage your debit note</h6>
+                        </div>
+                    </div>
+
+                    <div className="table-top-head me-2">
+                        <li>
+                            {selectedRows.length > 0 && (
+                                <button className="btn btn-danger me-2" onClick={handleBulkDelete}>
+                                    Delete ({selectedRows.length}) Selected
+                                </button>
+                            )}
+                        </li>
+                        <li onClick={handleExportPDF}><button type="button" className="icon-btn" title="Pdf"><FaFilePdf /></button></li>
+                        <li><label className="icon-btn m-0" title="Import Excel"><input type="file" accept=".xlsx, .xls" onChange={handleImportExcel} hidden /><FaFileExcel style={{ color: "green" }} /></label></li>
+                        <li onClick={handleExportExcel}><button type="button" className="icon-btn" title="Export Excel" ><FaFileExcel /></button></li>
+                    </div>
+
+
+                    <div>
+                        <button className="btn btn-primary" onClick={() => { setEditNote(null); }} data-bs-toggle="modal" data-bs-target="#add-return-debit-note">
+                            <TbCirclePlus /> Add Debit Note
+                        </button>
+                    </div>
+
+                </div>
+
                 {/* Filter/Search */}
                 <div className="mb-3 d-flex flex-wrap gap-2 justify-content-between align-items-center">
                     <div className="d-flex gap-2 align-items-center flex-wrap">
@@ -113,166 +397,167 @@ const fetchNotes = React.useCallback(() => {
                             type="text"
                             className="form-control"
                             style={{ width: 250, display: 'inline-block' }}
-                            placeholder="Search by Reference, ID, Vendor..."
+                            placeholder="Search by vendor, ID..."
                             value={search}
-                            onChange={e => { setSearch(e.target.value); setPage(1); }}
+                            onChange={(e) => setSearch(e.target.value)}
                         />
                         <input
                             type="date"
                             className="form-control"
-                            style={{ width: 160, display: 'inline-block' }}
+                            style={{ width: 150, display: 'inline-block' }}
                             value={startDate}
-                            onChange={e => { setStartDate(e.target.value); setPage(1); }}
-                            placeholder="Start Date"
+                            onChange={(e) => setStartDate(e.target.value)}
                         />
-                        <span>-</span>
                         <input
                             type="date"
                             className="form-control"
-                            style={{ width: 160, display: 'inline-block' }}
+                            style={{ width: 150, display: 'inline-block' }}
                             value={endDate}
-                            onChange={e => { setEndDate(e.target.value); setPage(1); }}
-                            placeholder="End Date"
+                            onChange={(e) => setEndDate(e.target.value)}
                         />
                     </div>
-                    <div>
-                        <button className="btn btn-primary" onClick={() => { setEditNote(null); }} data-bs-toggle="modal" data-bs-target="#add-return-debit-note">
-                            <TbCirclePlus /> Add Debit Note
-                        </button>
-                    </div>
                 </div>
-                <div className="table-responsive">
-                    <table className="table table-nowrap datatable">
-                        <thead>
-                            <tr>
-                                <th className="no-sort">
-                                    <div className="form-check form-check-md">
-                                        <input className="form-check-input" type="checkbox" id="select-all" />
-                                    </div>
-                                </th>
-                                <th className="no-sort">ID</th>
-                                <th>Date</th>
-                                <th>Vendor</th>
-                                <th>Amount</th>
-                                <th className="no-sort">Status</th>
-                                <th className="no-sort" />
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {loading ? (
-                                <tr><td colSpan="7">Loading...</td></tr>
-                            ) : debitNotes && debitNotes.length > 0 ? (
-                                debitNotes.map((note, idx) => (
-                                    <tr key={note._id || idx}>
-                                        <td>
-                                            <div className="form-check form-check-md">
-                                                <input className="form-check-input" type="checkbox" />
-                                            </div>
-                                        </td>
-                                        <td>
-                                            <a href="#view_notes" className="link-default" data-bs-toggle="modal"
-                                                data-bs-target="#view_notes" onClick={() => setSelectedNote(note)}>{note.debitNoteId || note._id}</a>
-                                        </td>
-                                        <td>{note.debitNoteDate ? new Date(note.debitNoteDate).toLocaleDateString() : ''}</td>
-                                        <td>{note.billTo?.name || note.billTo?.firstName || note.billTo || '-'}</td>
-                                        <td className="text-dark">{note.total || note.total || '-'}</td>
-                                        <td>{note.status}</td>
 
-                                        <td className="action-table-data">
-                                            <div className="edit-delete-action">
-                                                <a
-                                                    className="me-2 p-2" data-bs-toggle="modal"
-                                                    data-bs-target="#view_notes"
-                                                    onClick={() => setSelectedNote(note)}
-                                                >
-                                                    <TbEye />
-                                                </a>
-
-                                                <a
-                                                    className="me-2 p-2"
-                                                    data-bs-toggle="modal"
-                                                    data-bs-target="#edit_debit_note"
-                                                    onClick={() => setEditNote(note)}
-                                                >
-                                                    <TbEdit />
-                                                </a>
-
-                                                <a
-                                                    className="p-2"
-                                                    onClick={() => handleDelete(note._id)}
-                                                >
-                                                    <TbTrash />
-                                                </a>
-                                            </div>
-                                        </td>
+                {/* Table */}
+                <div className="card">
+                    <div className="card-body p-0">
+                        <div className="table-responsive">
+                            <table className="table datatable text-center align-middle">
+                                <thead className="thead-light text-center">
+                                    <tr>
+                                        <th><label className="checkboxs">
+                                            <input
+                                                type="checkbox"
+                                                checked={
+                                                    debitNotes.length > 0 &&
+                                                    debitNotes.every((note) => selectedRows.includes(note._id))
+                                                }
+                                                onChange={handleSelectAll}
+                                                ref={(input) => {
+                                                    if (input) {
+                                                        const currentPageIds = debitNotes.map((note) => note._id);
+                                                        const someSelected = currentPageIds.some((id) => selectedRows.includes(id));
+                                                        const allSelected = currentPageIds.length > 0 && currentPageIds.every((id) => selectedRows.includes(id));
+                                                        input.indeterminate = someSelected && !allSelected;
+                                                    }
+                                                }}
+                                            />
+                                            <span className="checkmarks" />
+                                        </label></th>
+                                        <th className="no-sort">ID</th>
+                                        <th>Date</th>
+                                        <th>Vendor</th>
+                                        <th>Amount</th>
+                                        <th className="no-sort">Status</th>
+                                        <th className="no-sort" />
                                     </tr>
-                                ))
-                            ) : (
-                                <tr><td colSpan="7">No debit notes found.</td></tr>
-                            )}
-                        </tbody>
-                    </table>
-                </div>
+                                </thead>
+                                <tbody>
+                                    {loading ? (
+                                        <tr><td colSpan="7">Loading...</td></tr>
+                                    ) : debitNotes && debitNotes.length > 0 ? (
+                                        debitNotes.map((note, idx) => (
+                                            <tr key={note._id || idx}>
+                                                <td><label className="checkboxs"><input
+                                                    type="checkbox"
+                                                    checked={selectedRows.includes(note._id)}
+                                                    onChange={() => handleSelectRow(note._id)}
+                                                /><span className="checkmarks" /></label></td>
+                                                <td>
+                                                    <a href="#view_notes" className="link-default" data-bs-toggle="modal"
+                                                        data-bs-target="#view_notes" onClick={() => setSelectedNote(note)}>{note.debitNoteId || note._id}</a>
+                                                </td>
+                                                <td>{note.debitNoteDate ? new Date(note.debitNoteDate).toLocaleDateString() : ''}</td>
+                                                <td>{note.billTo?.name || note.billTo?.firstName || note.billTo || '-'}</td>
+                                                <td className="text-dark">{note.total || note.total || '-'}</td>
+                                                <td>{note.status}</td>
 
-                {/* Pagination */}
-                <nav aria-label="Debit Note pagination" className="mt-3">
-                    <ul className="pagination justify-content-center">
-                        <li className={`page-item${page === 1 ? ' disabled' : ''}`}>
-                            <button className="page-link" onClick={() => setPage(page - 1)} disabled={page === 1}>&laquo; Prev</button>
-                        </li>
-                        {/* Always show first page */}
-                        <li className={`page-item${page === 1 ? ' active' : ''}`}>
-                            <button className="page-link" onClick={() => setPage(1)}>1</button>
-                        </li>
-                        {/* Show 2nd page if totalPages > 1 */}
-                        {totalPages > 1 && (
-                            <li className={`page-item${page === 2 ? ' active' : ''}`}>
-                                <button className="page-link" onClick={() => setPage(2)}>2</button>
-                            </li>
-                        )}
-                        {/* Show 3rd page if totalPages > 2 */}
-                        {totalPages > 2 && (
-                            <li className={`page-item${page === 3 ? ' active' : ''}`}>
-                                <button className="page-link" onClick={() => setPage(3)}>3</button>
-                            </li>
-                        )}
-                        {/* Ellipsis if more than 4 pages and not on 1-3 */}
-                        {totalPages > 4 && page > 3 && (
-                            <li className="page-item disabled"><span className="page-link">...</span></li>
-                        )}
-                        {/* Show current page if > 3 and not last 2 */}
-                        {totalPages > 4 && page > 3 && page < totalPages - 1 && (
-                            <li className="page-item active">
-                                <button className="page-link" onClick={() => setPage(page)}>{page}</button>
-                            </li>
-                        )}
-                        {/* Ellipsis before last page if needed */}
-                        {totalPages > 4 && page < totalPages - 2 && (
-                            <li className="page-item disabled"><span className="page-link">...</span></li>
-                        )}
-                        {/* Show last page if more than 3 */}
-                        {totalPages > 3 && (
-                            <li className={`page-item${page === totalPages ? ' active' : ''}`}>
-                                <button className="page-link" onClick={() => setPage(totalPages)}>{totalPages}</button>
-                            </li>
-                        )}
-                        <li className={`page-item${page === totalPages ? ' disabled' : ''}`}>
-                            <button className="page-link" onClick={() => setPage(page + 1)} disabled={page === totalPages}>Next &raquo;</button>
-                        </li>
-                    </ul>
-                </nav>
+                                                <td className="action-table-data">
+                                                    <div className="edit-delete-action">
+                                                        <a
+                                                            className="me-2 p-2" data-bs-toggle="modal"
+                                                            data-bs-target="#view_notes"
+                                                            onClick={() => setSelectedNote(note)}
+                                                        >
+                                                            <TbEye />
+                                                        </a>
 
-                {/* Add/Edit Modal: Pass editNote as prop for editing */}
-                <AddDebitNoteModals purchaseData={editNote} onReturnCreated={() => { setEditNote(null); fetchNotes(); }} />
+                                                        <a
+                                                            className="me-2 p-2"
+                                                            data-bs-toggle="modal"
+                                                            data-bs-target="#edit_debit_note"
+                                                            onClick={() => setEditNote(note)}
+                                                        >
+                                                            <TbEdit />
+                                                        </a>
 
-                {/* Edit Modal trigger (hidden, for modal compatibility) */}
-                <div className="modal fade" id="edit_debit_note" tabIndex="-1" aria-labelledby="editDebitNoteLabel" aria-hidden="true">
-                    <div className="modal-dialog modal-lg">
-                        <div className="modal-content">
-                            <EditDebitNoteModals noteData={editNote} onEditSuccess={() => { setEditNote(null); fetchNotes(); }} />
+                                                        <a
+                                                            className="p-2"
+                                                            onClick={() => handleDelete(note._id)}
+                                                        >
+                                                            <TbTrash />
+                                                        </a>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        ))
+                                    ) : (
+                                        <tr><td colSpan="7">No debit notes found</td></tr>
+                                    )}
+                                </tbody>
+                            </table>
                         </div>
+
+                        {/* Pagination controls */}
+                        <div
+                            className="d-flex justify-content-end gap-3"
+                            style={{ padding: "10px 20px" }}
+                        >
+
+                            <select
+                                className="form-select w-auto"
+                                value={page}
+                                onChange={e => { setPage(Number(e.target.value)); }}
+                            >
+                                {[10, 20, 50, 100].map(n => <option key={n} value={n}>{n} per page</option>)}
+                            </select>
+
+                            <span
+                                style={{
+                                    backgroundColor: "white",
+                                    boxShadow: "rgb(0 0 0 / 4%) 0px 3px 8px",
+                                    padding: "7px",
+                                    borderRadius: "5px",
+                                    border: "1px solid #e4e0e0ff",
+                                    color: "gray",
+                                }}
+                            >
+                                <span>Page {page} of {totalPages || 1}</span>
+
+                                {" "}
+                                <button
+                                    style={{
+                                        border: "none",
+                                        color: "grey",
+                                        backgroundColor: "white",
+                                    }}
+                                    onClick={() => setPage(page - 1)} disabled={page === 1}>
+                                    <GrFormPrevious />
+                                </button>{" "}
+                                <button
+                                    style={{ border: "none", backgroundColor: "white" }}
+                                    onClick={() => setPage(page + 1)} disabled={page === totalPages}>
+                                    <MdNavigateNext />
+                                </button>
+                            </span>
+                        </div>
+
                     </div>
                 </div>
+
+                {/* Modals - Moved outside card structure for proper positioning */}
+                <AddDebitNoteModals onReturnCreated={() => { setEditNote(null); fetchNotes(); }} />
+                <EditDebitNoteModals noteData={editNote} onEditSuccess={() => { setEditNote(null); fetchNotes(); }} />
 
                 {/* Modal to show all data for selected debit note */}
                 <div className="modal fade" id="view_notes" tabIndex="-1" aria-labelledby="viewNotesLabel" aria-hidden="true">
@@ -332,24 +617,27 @@ const fetchNotes = React.useCallback(() => {
                                                         </tr>
                                                     </thead>
                                                     <tbody>
-                                                        {selectedNote.products && selectedNote.products.length > 0 ? selectedNote.products.map((p, i) => (
-                                                            <tr key={i}>
-                                                                <td>{p.product?.productName || p.product?.name || p.product || '-'}</td>
-                                                                <td>{p.quantity}</td>
-                                                                <td>{p.returnQty}</td>
-                                                                <td>{p.unit}</td>
-                                                                <td>{p.purchasePrice}</td>
-                                                                <td>{p.discount}</td>
-                                                                <td>{p.tax}</td>
-                                                                <td>{p.totalCost || p.total}</td>
-                                                            </tr>
-                                                        )) : <tr><td colSpan="8">No products</td></tr>}
+                                                        {selectedNote.products && selectedNote.products.length > 0 ? (
+                                                            selectedNote.products.map((product, index) => (
+                                                                <tr key={index}>
+                                                                    <td>{product.productName || product.product?.productName || '-'}</td>
+                                                                    <td>{product.quantity || '-'}</td>
+                                                                    <td>{product.returnQuantity || '-'}</td>
+                                                                    <td>{product.unit || '-'}</td>
+                                                                    <td>{product.price || product.unitCost || '-'}</td>
+                                                                    <td>{product.discount || '-'}</td>
+                                                                    <td>{product.tax || '-'}</td>
+                                                                    <td>{product.total || product.totalCost || '-'}</td>
+                                                                </tr>
+                                                            ))
+                                                        ) : (
+                                                            <tr><td colSpan="8">No products found</td></tr>)}
                                                     </tbody>
                                                 </table>
                                             </div>
                                         </div>
                                     </div>
-                                ) : <div>No data</div>}
+                                ) : (<div>No data</div>)}
                             </div>
                         </div>
                     </div>

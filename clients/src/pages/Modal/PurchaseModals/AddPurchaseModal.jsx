@@ -52,13 +52,18 @@ const AddPurchaseModal = ({ onSuccess }) => {
   // console.log("Selected Supplier:", options);
   // console.log("Selected Supplier:", selectedSupplier);
   const token = localStorage.getItem("token");
-  useEffect(() => {
+
+  // Helper function to get today's date in DD/MM/YYYY format
+  const getTodaysDate = () => {
     const today = new Date();
     const day = String(today.getDate()).padStart(2, '0');
     const month = String(today.getMonth() + 1).padStart(2, '0');
     const year = today.getFullYear();
-    const formatted = `${day}/${month}/${year}`;
-    setPurchaseDate(formatted);
+    return `${day}/${month}/${year}`;
+  };
+
+  useEffect(() => {
+    setPurchaseDate(getTodaysDate());
   }, []);
 
   useEffect(() => {
@@ -106,6 +111,34 @@ const AddPurchaseModal = ({ onSuccess }) => {
     }, 400);
     return () => clearTimeout(delayDebounce);
   }, [searchTerm]);
+
+  // Add modal event listeners to clear form when modal is closed
+  useEffect(() => {
+    const modalElement = document.getElementById('add-purchase');
+    
+    const handleModalHidden = () => {
+      // Always reset form when modal is hidden to ensure clean state
+      resetForm();
+    };
+
+    const handleCloseClick = (e) => {
+      // Check if the clicked element is a close/cancel button
+      if (e.target.getAttribute('data-bs-dismiss') === 'modal' || 
+          e.target.closest('[data-bs-dismiss="modal"]')) {
+        resetForm();
+      }
+    };
+
+    if (modalElement) {
+      modalElement.addEventListener('hidden.bs.modal', handleModalHidden);
+      modalElement.addEventListener('click', handleCloseClick);
+      
+      return () => {
+        modalElement.removeEventListener('hidden.bs.modal', handleModalHidden);
+        modalElement.removeEventListener('click', handleCloseClick);
+      };
+    }
+  }, []); // Remove dependencies to prevent infinite re-renders
 
   const handleSelectProduct = (product) => {
     const alreadyExists = selectedProducts.some((p) => p._id === product._id);
@@ -213,27 +246,30 @@ const AddPurchaseModal = ({ onSuccess }) => {
 
   const resetForm = () => {
     setSelectedSupplier(null);
-    setReferenceNumber("");
+    // Don't reset referenceNumber as it's auto-generated
     setSearchTerm("");
     setSelectedProducts([]);
     setOrderTax(0);
     setOrderDiscount(0);
     setShippingCost(0);
+    setUnitName("");
+    setPurchaseDate(getTodaysDate()); // Set to today's date instead of clearing
     setStatus("");
     setDescription("");
-    setSelectedImages("");
-    setImagePreviews("");
+    setSelectedImages([]);
+    setImagePreviews([]);
+    setProducts([]); // Clear search results
 
-    setPaymentType(""),
-      setPaidAmount(""),
-      setDueAmount(""),
-      setDueDate(""),
-      setPaymentMethod(""),
-      setTransactionId(""),
-      setOnlineMod(""),
-      setTransactionDate(""),
-      setPaymentStatus("");
-    if (onSuccess) onSuccess();
+    // Reset payment fields - use proper default values
+    setPaymentType("Full");
+    setPaidAmount(0);
+    setDueAmount(0);
+    setDueDate("");
+    setPaymentMethod("");
+    setTransactionId("");
+    setOnlineMod("");
+    setTransactionDate("");
+    setPaymentStatus("");
   };
 
 
@@ -626,7 +662,7 @@ const AddPurchaseModal = ({ onSuccess }) => {
                                         type="number"
                                         className="form-control form-control-sm"
                                         style={{ width: "70px", textAlign: "center" }}
-                                        min="1"
+                                        minL="1"
                                         value={product.quantity || 1}
                                         onChange={(e) => {
                                           let val = parseInt(e.target.value, 10);
@@ -661,7 +697,7 @@ const AddPurchaseModal = ({ onSuccess }) => {
 
                                   <td>
                                     <input type="number" className="form-control form-control-sm" style={{ width: "90px" }}
-                                      min="0" value={price} onChange={(e) => {
+                                      min="1" value={price} onChange={(e) => {
                                         const val = parseFloat(e.target.value);
                                         setSelectedProducts((prev) =>
                                           prev.map((item, i) =>
@@ -678,6 +714,7 @@ const AddPurchaseModal = ({ onSuccess }) => {
                                     <div style={{ display: 'flex', alignItems: 'center' }}>
                                       <input type="number" className="form-control form-control-sm" style={{ width: "80px" }}
                                         value={product.discount}
+                                        min="0"
                                         onChange={(e) => {
                                           const val = parseFloat(e.target.value);
                                           setSelectedProducts((prev) =>
@@ -702,6 +739,7 @@ const AddPurchaseModal = ({ onSuccess }) => {
                                   </td>
                                   <td>
                                     <input type="number" className="form-control form-control-sm" style={{ width: "60px" }}
+                                      min="0"
                                       value={tax} onChange={(e) => {
                                         const val = parseFloat(e.target.value);
                                         setSelectedProducts((prev) =>
