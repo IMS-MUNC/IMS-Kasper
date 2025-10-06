@@ -266,70 +266,57 @@ function AllSuppliers() {
               )}
             </li>
             <li className="me-2">
-              <li
-                style={{ display: "flex", alignItems: "center", gap: "5px" }}
-                className="icon-btn"
-              >
-                {/* <label className="" title="">Export : </label> */}
+              
                 <button
+                data-bs-toggle="tooltip" data-bs-placement="top" title="Pdf"
                   type="button"
-                  title="Pdf"
-                  style={{
-                    backgroundColor: "white",
-                    display: "flex",
-                    alignItems: "center",
-                    border: "none",
-                  }}
+                  
+                  
+                    className="fs-20"
+                   style={{ backgroundColor: 'white', color: '', padding: '6px 6px', display: 'flex', alignItems: 'center', border: '1px solid #e8eaebff', cursor: 'pointer', borderRadius: '4px' }}
                   onClick={handlePdf}
                 >
                   <FaFilePdf style={{ color: "red" }} />
                 </button>
               </li>
-            </li>
-            <li className="me-2">
-              <li
-                style={{ display: "flex", alignItems: "center", gap: "5px" }}
-                className="icon-btn"
-              >
-                {/* <a data-bs-toggle="tooltip" data-bs-placement="top" title="Excel"><img src="assets/img/icons/excel.svg" alt="img" /></a> */}
+           
+            <li className="me-2">   
                 <button
+                data-bs-toggle="tooltip" data-bs-placement="top"
                   type="button"
                   title="Export Excel"
-                  style={{
-                    backgroundColor: "white",
-                    display: "flex",
-                    alignItems: "center",
-                    border: "none",
-                  }}
+                  className="fs-20"
+                    style={{ backgroundColor: 'white', color: '', padding: '6px 6px', display: 'flex', alignItems: 'center', border: '1px solid #e8eaebff', cursor: 'pointer', borderRadius: '4px' }}
                   onClick={handleExcel}
                 >
                   <FaFileExcel style={{ color: "green" }} />
                 </button>
-              </li>
             </li>
             <li className="me-2">
-              <li>
+              {/* <li> */}
                 <button
                   data-bs-toggle="tooltip"
                   data-bs-placement="top"
                   title="Refresh"
                   onClick={() => location.reload()}
                   className="fs-20"
-                  style={{
-                    backgroundColor: "white",
-                    color: "",
-                    padding: "5px 5px",
-                    display: "flex",
-                    alignItems: "center",
-                    border: "1px solid #e8eaebff",
-                    cursor: "pointer",
-                    borderRadius: "4px",
-                  }}
+                  // style={{
+                  //   backgroundColor: "white",
+                  //   color: "",
+                  //   padding: "5px 5px",
+                  //   display: "flex",
+                  //   alignItems: "center",
+                  //   border: "1px solid #e8eaebff",
+                  //   cursor: "pointer",
+                  //   borderRadius: "4px",
+                  // }}
+                   style={{ backgroundColor: 'white', color: '', padding: '6px 6px', display: 'flex', alignItems: 'center', border: '1px solid #e8eaebff', cursor: 'pointer', borderRadius: '4px' }}
+
                 >
                   <TbRefresh className="ti ti-refresh" />
                 </button>
               </li>
-            </li>
+            {/* </li> */}
             {/* <li className="me-2">
               <a data-bs-toggle="tooltip" data-bs-placement="top" title="Collapse" id="collapse-header"><i className="ti ti-chevron-up" /></a>
             </li> */}
@@ -339,7 +326,8 @@ function AllSuppliers() {
               onClick={() => {
                 setShowAddModal(true);
               }}
-              className="add-btn"
+              // className="add-btn"
+              className="btn btn-primary"
             >
               <TbCirclePlus />
               Add Supplier
@@ -365,10 +353,10 @@ function AllSuppliers() {
 
             <div className="dropdown">
               <a
-                className="dropdown-toggle btn btn-white btn-md d-inline-flex align-items-center"
+                className=" btn btn-white btn-md d-inline-flex align-items-center"
                 data-bs-toggle="dropdown"
               >
-                {selectedStatus || "Status"}
+                Sort by : {selectedStatus || "Status"}
               </a>
               <ul className="dropdown-menu  dropdown-menu-end p-3">
                 <li>
@@ -459,21 +447,22 @@ function AllSuppliers() {
                       <td>{supplier.supplierCode}</td>
                       <td>
                         <div className="d-flex align-items-center">
-                          {/* <a href="#" className="avatar avatar-md">
-                        <img src={supplier.image ? `/uploads/${supplier.image}` : "assets/img/supplier/supplier-01.png"} className="img-fluid rounded-2" alt="img" />
-                      </a> */}
-                          <a href="#" className="avatar avatar-md">
+                         
+                          <a href="#" className="">
+                           
+                            {supplier.images && supplier.images.length > 0 ? (
+                            <div className="avatar-placeholder rounded" style={{ width: "30px", height: "30px", overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                             <img
-                              src={
-                                supplier.images && supplier.images.length > 0
-                                  ? supplier.images[0].url
-                                  : "assets/img/supplier/supplier-01.png"
-                              }
-                              className="img-fluid rounded-2"
-                              alt={`${supplier.firstName?.charAt(0) || ""}${
-                                supplier.lastName?.charAt(0) || ""
-                              }`}
+                              src={supplier.images && supplier.images.length > 0 ? supplier.images[0].url : ""}
+                              
+                              style={{ width: "30px", height: "30px", objectFit: "cover", borderRadius: '' }}
                             />
+                            </div>
+                          ) : (
+                            <div className="avatar-placeholder rounded d-flex align-items-center justify-content-center" style={{ width: "30px", height: "30px", backgroundColor: '#6c757d', color: 'white', fontWeight: 'bold' }}>
+                              {supplier.firstName?.charAt(0).toUpperCase() || "N/A"}
+                            </div>
+                          )}
                           </a>
                           <div className="ms-2">
                             <p className="text-gray-9 mb-0">
