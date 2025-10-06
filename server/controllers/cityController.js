@@ -87,7 +87,7 @@ exports.bulkDeleteCity = async (req, res) => {
         .status(400)
         .json({ message: "Invalid or missing 'ids', array in request body" });
     }
-    await City.deleteMany({ _id: { $in: ids } });
+  const result =  await City.deleteMany({ _id: { $in: ids } });
     return res.status(200).json({message: `${result.deletedCount} cities deleted successfully`,
       deletedCount: result.deletedCount,})
   } catch (error) {

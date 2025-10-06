@@ -54,7 +54,7 @@ const PurchaseReport = () => {
     };
 
     return (
-        <div className="pagewrapper">
+        <div className="page-wrapper">
             <div className="content">
                 <div className="" style={{ marginTop: '70px', marginLeft: '100px' }}>
                     <h4>Purchase Report</h4>
