@@ -1,6 +1,6 @@
 
 import React from 'react'
-import { TbCirclePlus, TbEdit, TbEye, TbTrash } from 'react-icons/tb'
+import { TbCirclePlus, TbEdit, TbEye, TbTrash, TbRefresh } from 'react-icons/tb'
 import { FaFileExcel, FaFilePdf } from 'react-icons/fa'
 import { GrFormPrevious } from 'react-icons/gr'
 import { MdNavigateNext } from 'react-icons/md'
@@ -352,6 +352,16 @@ const DebitNote = () => {
         e.target.value = '';
     };
 
+
+// Reset filters
+  const resetFilters = () => {
+  setSearch('');
+  setStartDate('');
+  setEndDate('');
+  setSelectedRows([]);
+  setPage(1);
+};
+
     return (
         <div className="page-wrapper">
             {/* Start Content */}
@@ -412,6 +422,11 @@ const DebitNote = () => {
                             value={endDate}
                             onChange={(e) => setEndDate(e.target.value)}
                         />
+                        <div className="dropdown me-2">
+                            <a className="btn btn-white btn-md d-inline-flex align-items-center" onClick={resetFilters} style={{ cursor: 'pointer' }}>
+                                <TbRefresh className="me-1" /> Reset
+                            </a>
+                        </div>
                     </div>
                 </div>
 

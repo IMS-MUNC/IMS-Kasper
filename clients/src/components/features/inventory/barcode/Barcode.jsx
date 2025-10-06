@@ -877,7 +877,7 @@ function Barcode() {
                           <th>Qty</th>
                           <th>Rate</th>
                           <th>SKU</th>
-                          <th>Action</th>
+                          <th style={{textAlign:'center'}}>Action</th>
 
                           {/* <th className="text-center no-sort bg-secondary-transparent" /> */}
                         </tr>

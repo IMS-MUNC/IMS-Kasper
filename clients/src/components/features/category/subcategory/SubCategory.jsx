@@ -640,7 +640,6 @@ const SubCategory = () => {
                       </label>
                     </th>
                     <th>Category Code</th>
-                    <th>Image</th>
                     <th>Category</th>
                     <th>Sub Category</th>
                     <th>Description</th>
@@ -661,10 +660,11 @@ const SubCategory = () => {
                         </td>
                         <td>{subcat.category?.categoryCode}</td>
 
-                        <td>
+                        <td style={{ display: 'flex', alignItems: 'left', gap: '5px', justifyContent: 'center' }}>
+                          <div>
                           {subcat.images?.map((img, i) => (
                             <>
-                            <div style={{width:'25px', height:'25px', overflow:'hidden',borderRadius:'4px', display:'inline-block', justifyContent:'center', alignItems:'center', }}>
+                            <div style={{width:'30px', height:'30px', overflow:'hidden',borderRadius:'4px', display:'inline-block', justifyContent:'center', alignItems:'center', }}>
                               <img
                               key={i}
                               src={img}
@@ -674,9 +674,9 @@ const SubCategory = () => {
                             </div>
                             </>
                           ))}
-                        </td>
-
-                        <td>{subcat.category?.categoryName}</td>
+                          {subcat.category?.categoryName}
+                          </div>
+                          </td>
                         <td>{subcat.subCategoryName}</td>
                         <td>{subcat.description}</td>
                         {/* <td>

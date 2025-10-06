@@ -605,7 +605,7 @@ const Variant = ({ show, handleClose }) => {
                     <th>Values</th>
                     <th>Created Date</th>
                     <th>Status</th>
-                    <th className="no-sort" />
+                    <th style={{ textAlign: "center" }}>Actions</th>
                   </tr>
                 </thead>
                 <tbody>

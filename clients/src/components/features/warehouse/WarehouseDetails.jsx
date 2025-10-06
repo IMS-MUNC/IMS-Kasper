@@ -193,29 +193,35 @@ function WarehouseDetails() {
     return acc;
   }, {});
 
+  const getId = (ref) => {
+  if (!ref) return null;
+  if (typeof ref === 'string') return ref;
+  if (typeof ref === 'object') return ref._id || ref.id || null;
+  return null;
+};
+
   const filteredPurchases = purchases.filter((purchase) => {
-    // First filter by status (existing logic)
-    let statusMatch = true;
-    if (activeTab === "Stock In") statusMatch = purchase.status === "Received";
-    else if (activeTab === "Stock Out") statusMatch = purchase.status === "Ordered";
-    else if (activeTab === "Transfer") statusMatch = purchase.status === "Transfer";
-    else if (activeTab === "Processing") statusMatch = purchase.status === "Processing";
     
-    // Then filter by warehouse - check if any product in the purchase belongs to current warehouse
-    let warehouseMatch = false;
-    if (purchase.products && Array.isArray(purchase.products)) {
-      warehouseMatch = purchase.products.some((purchaseProduct) => {
-        const productId = typeof purchaseProduct.product === 'object' 
-          ? purchaseProduct.product._id 
-          : purchaseProduct.product;
-        
-        const productWarehouse = productToWarehouseMap[productId];
-        return productWarehouse === warehousesDetails?.warehouseName;
-      });
-    }
-    
-    return statusMatch && warehouseMatch;
+  let statusMatch = true;
+  if (activeTab === "Stock In") statusMatch = purchase.status === "Received";
+  else if (activeTab === "Stock Out") statusMatch = purchase.status === "Ordered";
+  else if (activeTab === "Transfer") statusMatch = purchase.status === "Transfer";
+  else if (activeTab === "Processing") statusMatch = purchase.status === "Processing";
+
+  if (!Array.isArray(purchase.products) || purchase.products.length === 0) {
+    return false;
+  }
+
+  const warehouseMatch = purchase.products.some((purchaseProduct) => {
+    const productId = getId(purchaseProduct?.product);
+    if (!productId) return false;
+
+    const productWarehouse = productToWarehouseMap[productId];
+    return productWarehouse === warehousesDetails?.warehouseName;
   });
+
+  return statusMatch && warehouseMatch;
+});
 
   // ✅ Get all products of this warehouse
 
@@ -408,34 +414,32 @@ function WarehouseDetails() {
 
   const xLabels = months.map((m, i) => `${m} ${currentYear}`);
 
-  const soldItemsPerMonth = xLabels.map((label) => {
-    const [monthStr, yearStr] = label.split(" ");
-    const month = new Date(`${monthStr} 1, ${yearStr}`).getMonth();
-    const year = parseInt(yearStr);
+ const soldItemsPerMonth = xLabels.map((label) => {
+  const [monthStr, yearStr] = label.split(" ");
+  const month = new Date(`${monthStr} 1, ${yearStr}`).getMonth();
+  const year = parseInt(yearStr);
 
-    let totalSold = 0;
+  let totalSold = 0;
 
-    sales.forEach((sale) => {
-      // ✅ Use correct date field (createdAt OR date)
-      const saleDate = new Date(sale.date || sale.createdAt);
-      if (saleDate.getMonth() === month && saleDate.getFullYear() === year) {
-        if (Array.isArray(sale.products)) {
-          sale.products.forEach((p) => {
-            // ✅ Filter by warehouse - check if product belongs to current warehouse
-            const productId = typeof p.productId === 'object' ? p.productId._id : p.productId;
-            const productWarehouse = productToWarehouseMap[productId];
-            
-            if (productWarehouse === warehousesDetails?.warehouseName) {
-              // ✅ Use correct quantity field
-              totalSold += p.saleQty || 0;
-            }
-          });
-        }
+  sales.forEach((sale) => {
+    const saleDate = new Date(sale.date || sale.createdAt);
+    if (saleDate.getMonth() === month && saleDate.getFullYear() === year) {
+      if (Array.isArray(sale.products)) {
+        sale.products.forEach((p) => {
+          const productId = getId(p?.productId);
+          if (!productId) return;
+
+          const productWarehouse = productToWarehouseMap[productId];
+          if (productWarehouse === warehousesDetails?.warehouseName) {
+            totalSold += p.saleQty || 0;
+          }
+        });
       }
-    });
-
-    return totalSold;
+    }
   });
+
+  return totalSold;
+});
 
 
 
@@ -529,7 +533,7 @@ function WarehouseDetails() {
                 }}
               >
                 <MdArrowForwardIos style={{ color: "#676767" }} />{" "}
-                {warehousesDetails?.warehouseName}
+                <span style={{fontWeight:'600', color:'black'}}>{warehousesDetails?.warehouseName}</span>
               </span>
             </div>
             <div>
@@ -835,9 +839,10 @@ function WarehouseDetails() {
                 height={250}
                 legend={false}
                 interactive={true}
-                formatValues={(value) =>
-                  `${((value / totalInitialItems) * 100).toFixed(0, 2)}%`
-                }
+                formatValues={(value) => {
+  if (!totalInitialItems) return "0%";
+  return `${Math.round((value / totalInitialItems) * 100)}%`;
+}}
                 strokeColor="#fff"
                 strokeWidth={4}
                 style={{
@@ -1134,7 +1139,7 @@ function WarehouseDetails() {
 
             {/* Content - zone 1 */}
             {zones.length > 0 ? (
-              zones.map((zone, idx) => (
+              zones.slice(0,2).map((zone, idx) => (
                 <>
                   <div
                     key={idx}

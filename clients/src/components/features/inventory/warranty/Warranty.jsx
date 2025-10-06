@@ -713,7 +713,7 @@ const Warranty = ({ show, handleClose }) => {
                     <th>To Date</th>
                     <th>Duration</th>
                     <th>Status</th>
-                    <th className="no-sort" />
+                    <th style={{textAlign:"center"}}>Actions</th>
                   </tr>
                 </thead>
                 <tbody>
