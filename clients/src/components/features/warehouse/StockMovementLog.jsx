@@ -9,6 +9,10 @@ import html2canvas from "html2canvas";
 import jsPDF from "jspdf";
 import * as XLSX from "xlsx";
 import autoTable from "jspdf-autotable";
+import { toast } from 'react-toastify';
+import DeleteAlert from "../../../utils/sweetAlert/DeleteAlert";
+import { GrFormPrevious } from "react-icons/gr";
+import { MdNavigateNext } from "react-icons/md";
 
 function StockMovementLog() {
   const [activeTab, setActiveTab] = useState("All");
@@ -17,13 +21,19 @@ function StockMovementLog() {
   const [purchases, setPurchases] = useState([]);
   const [warehouses, setWarehouses] = useState([]);
   const [selectedWarehouse, setSelectedWarehouse] = useState(null);
+  
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(10);
 
+  // === BULK DELETE STATE ===
+  const [selectedPurchases, setSelectedPurchases] = useState([]);
 
   const fetchPurchases = async () => {
     try {
       const token = localStorage.getItem("token");
 
-      const res = await axios.get(`${BASE_URL}/api/purchases`, {
+      const res = await axios.get(`${BASE_URL}/api/purchases?limit=100000000`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
@@ -53,6 +63,10 @@ function StockMovementLog() {
       .catch((err) => console.error(err));
   }, []);
 
+  // Reset current page when filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [activeTab, selectedWarehouse]);
 
 const filteredPurchases = purchases.filter((purchase) => {
   // Declare statusMatch first
@@ -75,7 +89,112 @@ const filteredPurchases = purchases.filter((purchase) => {
   return statusMatch && warehouseMatch;
 });
 
+// Pagination logic
+const totalItems = filteredPurchases.length;
+const totalPages = Math.ceil(totalItems / itemsPerPage);
+const startIndex = (currentPage - 1) * itemsPerPage;
+const endIndex = startIndex + itemsPerPage;
+const currentPageData = filteredPurchases.slice(startIndex, endIndex);
 
+// Pagination handlers
+const handlePageChange = (page) => {
+  setCurrentPage(page);
+};
+
+const handleItemsPerPageChange = (newItemsPerPage) => {
+  setItemsPerPage(newItemsPerPage);
+  setCurrentPage(1); // Reset to first page when changing items per page
+};
+
+const handlePrevPage = () => {
+  if (currentPage > 1) {
+    setCurrentPage(currentPage - 1);
+  }
+};
+
+const handleNextPage = () => {
+  if (currentPage < totalPages) {
+    setCurrentPage(currentPage + 1);
+  }
+};
+
+// === BULK DELETE HANDLERS ===
+const handleCheckboxChange = (id) => {
+  setSelectedPurchases((prev) =>
+    prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]
+  );
+};
+
+const handleSelectAll = (e) => {
+  if (e.target.checked) {
+    const allIds = currentPageData.map((item) => item._id); // current page data
+    setSelectedPurchases(allIds);
+  } else {
+    setSelectedPurchases([]);
+  }
+};
+
+// bulk delete functionality
+const handleBulkDelete = async () => {
+  if (selectedPurchases.length === 0) return;
+  
+  const confirmed = await DeleteAlert({
+    title: 'Delete Selected Purchases',
+    text: `Are you sure you want to delete ${selectedPurchases.length} selected purchase records?`,
+  });
+  
+  if (!confirmed) return;
+
+  try {
+    const token = localStorage.getItem("token");
+    await Promise.all(
+      selectedPurchases.map((id) => 
+        axios.delete(`${BASE_URL}/api/purchases/${id}`, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        })
+      )
+    );
+    toast.success("Selected purchases deleted successfully!");
+    setSelectedPurchases([]);
+    fetchPurchases(); // Reload data
+  } catch (err) {
+    console.error("Bulk delete error:", err);
+    toast.error("Failed to delete selected purchases");
+  }
+};
+
+// individual delete functionality
+const handleIndividualDelete = async (purchaseId, purchaseName) => {
+  const confirmed = await DeleteAlert({
+    title: 'Delete Purchase',
+    text: `Are you sure you want to delete the purchase "${purchaseName}"?`,
+  });
+  
+  if (!confirmed) return;
+
+  try {
+    const token = localStorage.getItem("token");
+    await axios.delete(`${BASE_URL}/api/purchases/${purchaseId}`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+    toast.success("Purchase deleted successfully!");
+    // Remove from selected items if it was selected
+    setSelectedPurchases((prev) => prev.filter((id) => id !== purchaseId));
+    fetchPurchases(); // Reload data
+  } catch (err) {
+    console.error("Delete error:", err);
+    toast.error("Failed to delete purchase");
+  }
+};
+
+// Clean up selected items when data changes
+useEffect(() => {
+  setSelectedPurchases((prev) => prev.filter((id) => currentPageData.some((d) => d._id === id)));
+}, [currentPageData]);
 
   function formatDateTime(dateString) {
     const date = new Date(dateString);
@@ -181,6 +300,21 @@ const filteredPurchases = purchases.filter((purchase) => {
             <h4 className="fw-bold">Stock Movement Log</h4>
             <h6>Manage your stocks Movements</h6>
           </div>
+          
+          {/* Delete Selected Button */}
+          {selectedPurchases.length > 0 && (
+            <div className="me-3" style={{marginTop: "-10px"}}>
+              <button 
+                className="btn btn-danger" 
+                onClick={handleBulkDelete}
+                title={`Delete ${selectedPurchases.length} selected items`}
+              >
+                <TbTrash className="me-1" />
+                Delete ({selectedPurchases.length}) Selected
+              </button>
+            </div>
+          )}
+          
           <ul className="table-top-head low-stock-top-head">
             <li>
               <a data-bs-toggle="tooltip" data-bs-placement="top" title="Pdf" onClick={downloadPDF} ><img src={PDF} alt="pdf" /></a>
@@ -261,7 +395,7 @@ const filteredPurchases = purchases.filter((purchase) => {
                           Stock Out
                         </button>
                       </li>
-                      <li className="nav-item" role="presentation">
+                      {/* <li className="nav-item" role="presentation">
                         <button
                           className={`nav-link${activeTab === 'Transfer' ? ' active' : ''}`}
                           id="pills-transfer-tab"
@@ -290,7 +424,7 @@ const filteredPurchases = purchases.filter((purchase) => {
                         >
                           Processing
                         </button>
-                      </li>
+                      </li> */}
                     </ul>
 
                     {/* <div className="notify d-flex bg-white p-1 px-2 border rounded">
@@ -363,7 +497,12 @@ const filteredPurchases = purchases.filter((purchase) => {
                         <tr>
                           <th className="no-sort">
                             <label className="checkboxs">
-                              <input type="checkbox" id="select-all" />
+                              <input 
+                                type="checkbox" 
+                                id="select-all" 
+                                checked={currentPageData.length > 0 && selectedPurchases.length === currentPageData.length}
+                                onChange={handleSelectAll}
+                              />
                               <span className="checkmarks" />
                             </label>
                           </th>
@@ -373,23 +512,27 @@ const filteredPurchases = purchases.filter((purchase) => {
                           <th>Movement Type</th>
                           <th>Source/Destination</th>
                           <th>Reference/Note</th>
-                          <th className="no-sort" />
+                          <th style={{textAlign:"center"}}>Action</th>
                         </tr>
                       </thead>
                       <tbody>
-                        {filteredPurchases.length > 0 ? (
-                          filteredPurchases.map(purchase => (
-                            <tr key={purchase._id} onClick={() => handleCellClick(purchase)} style={{ cursor: "pointer" }}>
-                              <td>
+                        {currentPageData.length > 0 ? (
+                          currentPageData.map(purchase => (
+                            <tr key={purchase._id} >
+                              <td onClick={(e) => e.stopPropagation()}>
                                 <label className="checkboxs">
-                                  <input type="checkbox" />
+                                  <input 
+                                    type="checkbox" 
+                                    checked={selectedPurchases.includes(purchase._id)}
+                                    onChange={() => handleCheckboxChange(purchase._id)}
+                                  />
                                   <span className="checkmarks" />
                                 </label>
                               </td>
                               <td> {purchase.products[0]?.product?.productName}</td>
                               {/* <td>{product.store || 'N/A'}</td> */}
                               <td>{formatDateTime(purchase.createdAt)}</td>
-                              <td onClick={() => handleCellClick(purchase)}>
+                              <td >
                                 {purchase.products[0]?.product?.quantity}
                               </td>
                               <td style={{ borderBottom: "1px solid #ddd", padding: "8px" }}>
@@ -433,25 +576,88 @@ const filteredPurchases = purchases.filter((purchase) => {
                               <td> {purchase.referenceNumber || "N/A"}</td>
                               {/* <td>{product.quantityAlert} {product.unit}</td> */}
                               <td className="action-table-data">
-                                <div className="edit-delete-action">
+                                <div className="edit-delete-action" style={{gap:"8px"}}>
                                   {/* <a className="me-2 p-2" data-bs-toggle="modal" data-bs-target="#edit-stock">
                                      <TbEdit data-feather="edit" className="feather-edit" /> 
                                   </a>*/}
-                                  <a data-bs-toggle="modal" data-bs-target="#delete-modal" className="p-2" >
+                                  <a data-bs-toggle="modal" data-bs-target="#delete-modal" className="p-2" onClick={() => handleCellClick(purchase)} >
                                     <TbEye data-feather="eye" className="feather-eye" />
                                   </a>
+                                  <a
+                              className="p-2"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleIndividualDelete(purchase._id, purchase.referenceNumber || `Purchase ${purchase._id.slice(-6)}`);
+                              }}
+                              style={{ cursor: 'pointer' }}
+                            >
+                              <TbTrash />
+                            </a>
                                 </div>
                               </td>
                             </tr>
                           ))
                         ) : (
                           <tr>
-                            <td colSpan="9" className="text-center text-muted">No low stock products.</td>
+                            <td colSpan="8" className="text-center text-muted">No stock movement data found.</td>
                           </tr>
                         )}
 
                       </tbody>
                     </table>
+                  </div>
+                  
+                  {/* pagination */}
+                  <div
+                    className="d-flex justify-content-end gap-3"
+                    style={{ padding: "10px 20px" }}
+                  >
+                    <select
+                      value={itemsPerPage}
+                      onChange={(e) => {
+                        setItemsPerPage(Number(e.target.value));
+                        setCurrentPage(1);
+                      }}
+                      className="form-select w-auto"
+                    >
+                      <option value={10}>10 Per Page</option>
+                      <option value={25}>25 Per Page</option>
+                      <option value={50}>50 Per Page</option>
+                      <option value={100}>100 Per Page</option>
+                    </select>
+
+                    <span
+                      style={{
+                        backgroundColor: "white",
+                        boxShadow: "rgb(0 0 0 / 4%) 0px 3px 8px",
+                        padding: "7px",
+                        borderRadius: "5px",
+                        border: "1px solid #e4e0e0ff",
+                        color: "gray",
+                      }}
+                    >
+                      {totalItems === 0
+                        ? "0 of 0"
+                        : `${(currentPage - 1) * itemsPerPage + 1}-${Math.min(currentPage * itemsPerPage, totalItems)} of ${totalItems}`}
+                      <button
+                        style={{
+                          border: "none",
+                          color: "grey",
+                          backgroundColor: "white",
+                        }}
+                        onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
+                        disabled={currentPage === 1}
+                      >
+                        <GrFormPrevious />
+                      </button>
+                      <button
+                        style={{ border: "none", backgroundColor: "white" }}
+                        onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
+                        disabled={currentPage === totalPages}
+                      >
+                        <MdNavigateNext />
+                      </button>
+                    </span>
                   </div>
                 </div>
               </div>
@@ -479,11 +685,11 @@ const filteredPurchases = purchases.filter((purchase) => {
           // }}
           style={{
             position: "absolute",
-            top: 70,
+            top: 0,
             left: 0,
 
             width: "100%",
-            height: "90%", // Commented out: Reverted to original
+            height: "100vh", // Commented out: Reverted to original
             background: "rgba(0,0,0,0.5)",
             display: "flex",
             justifyContent: "center",
@@ -510,7 +716,7 @@ const filteredPurchases = purchases.filter((purchase) => {
               borderRadius: "8px",
               maxWidth: "800px",
               width: "95%",
-              maxHeight: "90vh",
+              maxHeight: "95vh",
               overflowY: "auto", // Commented out: Reverted to original
               position: "relative",
               // Commented out: Reverted to original
@@ -625,9 +831,7 @@ const filteredPurchases = purchases.filter((purchase) => {
                           fontWeight: "400"
                         }}
                       >
-                        <th style={{ padding: "10px" }}>
-                          <input type="checkbox" />
-                        </th>
+                        
                         <th style={{ padding: "10px" }}>Product</th>
                         <th style={{ padding: "10px" }}>SKU</th>
                         <th style={{ padding: "10px" }}>Quantity</th>
@@ -637,9 +841,7 @@ const filteredPurchases = purchases.filter((purchase) => {
                     </thead>
                     <tbody>
                       <tr style={{ borderBottom: "1px solid #e6e6e6" }}>
-                        <td style={{ padding: "10px" }}>
-                          <input type="checkbox" />
-                        </td>
+                        
                         <td style={{ padding: "10px" }}>
                           {selectedStock.products[0]?.product?.productName}
                         </td>

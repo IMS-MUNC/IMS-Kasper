@@ -16,6 +16,9 @@ router.put("/:id/update-rack",authMiddleware, ctrl.updateRack);
 
 router.patch("/:id/toggle-favorite", authMiddleware, ctrl.toggleFavoriteWarehouse);
 
+// === Product assignment routes ===
+router.put("/:id/zone/:zone/cell/:cellIndex", authMiddleware, ctrl.zoneproducts);
+router.delete("/:id/zone/:zone/cell/:cellIndex/remove", authMiddleware, ctrl.removeitem);
 
 // === CRUD ===
 router.post("/",authMiddleware, ctrl.createWarehouse);

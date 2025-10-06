@@ -1353,6 +1353,7 @@ function AddWarehouse() {
     setCountry("");
     setState("");
     setPinCode("");
+    navigate("/warehouse");
   }
 
   // Retrieve token
@@ -1785,7 +1786,7 @@ function AddWarehouse() {
     <div
       style={{
         fontFamily: "Arial, sans-serif",
-        padding: "100px",
+        padding: "15px",
         backgroundColor: "#F9FAFB",
         minHeight: "100vh",
         marginTop: "-20px"
@@ -1808,28 +1809,6 @@ function AddWarehouse() {
           Warehouse layout imported successfully!
         </div>
       )}
-
-      <div
-        style={{
-          color: "#6B7280",
-          display: "flex",
-          gap: "12px",
-          fontWeight: "500",
-          fontSize: "14px",
-          marginBottom: "20px",
-        }}
-      >
-        <Link
-          to="/warehouse"
-          style={{ color: "#1F2937", textDecoration: "none" }}
-        >
-          <span>Warehouse</span>
-        </Link>
-        <span>
-          <MdArrowForwardIos style={{ color: "#9CA3AF" }} />
-        </span>
-        <span style={{ color: "#1F2937" }}>Add Warehouse</span>
-      </div>
 
       <form onSubmit={handleSubmit}>
         <div
