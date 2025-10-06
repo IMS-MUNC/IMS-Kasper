@@ -394,7 +394,7 @@
 // export default CreditNote
 
 import React, { useState } from "react";
-import { TbEdit, TbEye, TbTrash } from "react-icons/tb";
+import { TbEdit, TbEye, TbTrash, TbRefresh } from "react-icons/tb";
 import AddCreditNoteModals  from '../../../../pages/Modal/debitNoteModals/AddDebitNoteModals'
  import EditCreditNoteModals  from '../../../../pages/Modal/debitNoteModals/EditDebitNoteModals'
  import BASE_URL from '../../../../pages/config/config';
@@ -412,8 +412,8 @@ const CreditNote = () => {
   const [search, setSearch] = React.useState("");
   const [startDate, setStartDate] = React.useState("");
   const [endDate, setEndDate] = React.useState("");
- const [limit, setLimit] = React.useState(10);
-   const [pages, setPages] = useState(1);
+  const [limit, setLimit] = React.useState(10);
+  const [pages, setPages] = useState(1);
 
 
 
@@ -504,6 +504,15 @@ const downloadPDF = (elementId) => {
       });
   }, []);
 
+// Reset filters
+  const resetFilters = () => {
+  setSearch('');
+  setStartDate('');
+  setEndDate('');
+  setPage(1);
+};
+
+
   return (
       <div className="page-wrapper">
           {/* Start Content */}
@@ -533,7 +542,7 @@ const downloadPDF = (elementId) => {
                           }}
                           placeholder="Start Date"
                       />
-                      <span>-</span>
+                      
                       <input
                           type="date"
                           className="form-control"
@@ -545,6 +554,11 @@ const downloadPDF = (elementId) => {
                           }}
                           placeholder="End Date"
                       />
+                      <div className="dropdown me-2">
+                                                  <a className="btn btn-white btn-md d-inline-flex align-items-center" onClick={resetFilters} style={{ cursor: 'pointer' }}>
+                                                      <TbRefresh className="me-1" /> Reset
+                                                  </a>
+                                              </div>
                   </div>
               </div>
 
@@ -569,7 +583,7 @@ const downloadPDF = (elementId) => {
                               <th>HSN</th>
                               <th>Amount</th>
                               <th>Status</th>
-                              <th />
+                              <th style={{ textAlign: "center" }}>Action</th>
                           </tr>
                       </thead>
                                             <tbody>
@@ -665,8 +679,8 @@ const downloadPDF = (elementId) => {
                                                       }
                                                       alt={note.sale.customer?.name || "-"}
                                                       style={{
-                                                          width: 32,
-                                                          height: 32,
+                                                          width: "30px",
+                                                          height: "30px",
                                                           borderRadius: "50%",
                                                           objectFit: "cover",
                                                           marginRight: 6,

@@ -148,7 +148,7 @@ function Warehouse() {
             <span>
               <MdArrowForwardIos style={{ color: "#b0afafff" }} />
             </span>
-            <span>All Warehouse </span>
+            <span style={{fontWeight:'600', color:'black'}}>All Warehouse </span>
           </div>
 
           {/* Add Warehouse */}
@@ -524,7 +524,9 @@ function Warehouse() {
                                   fontWeight: "bold",
                                 }}
                               />
+                              <Link to={`/WarehouseDetails/${fav._id}`}>
                               {fav.warehouseName}
+                              </Link>
                             </span>
                           </div>
                           <div
