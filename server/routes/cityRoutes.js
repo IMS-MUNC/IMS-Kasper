@@ -17,6 +17,6 @@ router.put("/cities/:id",authMiddleware, cityController.updateCity);
 
 // Delete
 router.delete("/cities/:id", authMiddleware, cityController.deleteCity);
-router.post("/cities/bulk-delete", authMiddleware, cityController.bulkDeleteCity);
+router.post("/bulk-delete", authMiddleware, cityController.bulkDeleteCity);
 
 module.exports = router;

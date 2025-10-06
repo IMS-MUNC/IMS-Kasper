@@ -49,8 +49,11 @@ const balanceSheetRoutes = require("./routes/balanceSheetRoutes.js");
 const posSaleRoutes = require('./routes/posSaleRoutes.js');
 const invoiceSettingsRoutes = require('./routes/invoiceSettings');
 const creditNoteRoutes = require('./routes/creditNoteRoutes');
+
 const expenseRoutes = require('./routes/expenseRoutes.js')
 const GstRoutes = require("./routes/gstRoutes.js")
+const stockRoutes = require('./routes/stockRoutes');
+
 
 
 const http = require('http');
@@ -153,7 +156,7 @@ app.use('/api/invoice-settings', invoiceSettingsRoutes);
 //expenseReport api
 app.use("/api/expenses", expenseRoutes);
 app.use('/api/credit-notes', creditNoteRoutes);
-
+app.use('/api/stock', stockRoutes);
 
 
 app.use(express.json());

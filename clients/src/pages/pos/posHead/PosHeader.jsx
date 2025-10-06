@@ -6,6 +6,8 @@ import { TbCalculator, TbCash, TbChartInfographic, TbMaximize, TbPrinter, TbProg
 import Mundc from "../../../assets/img/logo/munclogotm.png"
 import { toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
+import BASE_URL from '../../config/config';
+import axios from 'axios';
 
 const PosHeader = () => {
   const { openMenus, toggleMenu, mobileOpen, handleMobileToggle, handleLinkClick } = useSidebar();
@@ -17,6 +19,7 @@ const PosHeader = () => {
   // fetch company details
   useEffect(() => {
     const fetchCompanyDetails = async () => {
+      const token = localStorage.getItem("token");
       try {
         const res = await axios.get(`${BASE_URL}/api/companyprofile/get`, {
           headers: {
@@ -25,9 +28,10 @@ const PosHeader = () => {
         })
         if (res.status === 200) {
           setCompanyImages(res.data.data)
-          console.log("res.data", res.data.data)
+          // console.log("res.data from pos header", res.data.data)
         }
-      } catch (error) {
+      } catch (error) {    
+  console.error("API fetch error:", error.response ? error.response.data : error.message);
         toast.error("Unable to find company details", {
           position: 'top-center'
         })
@@ -35,20 +39,30 @@ const PosHeader = () => {
     }
     fetchCompanyDetails();
   }, []);
+  console.log("Token:", token)
+console.log("Fetching from:", `${BASE_URL}/api/companyprofile/get`)
+
   return (
     <div className="header pos-header">
+      {companyImages ? (
+        <>
       {/* Logo */}
       <div className="header-left active">
         <a href="index.html" className="logo logo-normal">
-          <img src={Mundc} alt="Img" />
+          <img
+  style={{ height: "35px", width: "35px" }}
+  src={isDarkMode ? companyImages?.companyDarkLogo : companyImages?.companyLogo}
+  alt="company logo"
+/>
+
         </a>
         <a href="index.html" className="logo logo-white">
           {/* <img src="assets/img/logo-white.svg" alt="Img" /> */}
-          <img src={Mundc} alt="Img" />
+          <img  src={isDarkMode ? companyImages?.companyDarkLogo : companyImages?.companyLogo || "No Image"} className="full-logo" alt="Full Logo" />
         </a>
         <a href="index.html" className="logo-small">
           {/* <img src="assets/img/logo-small.png" alt="Img" /> */}
-          <img src={Mundc} alt="Img" />
+          {/* <img src={Mundc} alt="Img" /> */}
         </a>
       </div>
       {/* /Logo */}
@@ -131,6 +145,9 @@ const PosHeader = () => {
       {/* Profile */}
 
       {/* /Mobile Menu */}
+      </>
+      ):(
+      <p>"No Company Logo Image"</p>)}
     </div>
 
   )

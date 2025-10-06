@@ -10,6 +10,8 @@ import { getTotalStockValue } from '../../../utils/getTotalStockValue';
 import axios from 'axios';  
 import Graph from '../../Graph';
 import BASE_URL from '../../../pages/config/config'
+import PaymentStatusChart from '../graph/PaymentStatusChart';
+import SalesGraph from '../graph/SalesGraph';
 
 const AdminDashboard = () => {
     // Helper to get absolute loss value
@@ -985,7 +987,7 @@ useEffect(() => {
                                                 sale.products && sale.products.length > 0 ? sale.products.map((product, idx) => (
                                                     <tr key={sale._id + '-' + idx}>
                                                         <td>{sale.saleDate ? new Date(sale.saleDate).toLocaleDateString() : '-'}</td>
-                                                        <td>
+                                                        {/* <td>
                                                             <div className="d-flex align-items-center file-name-icon">
                                                                 <a href="" className="avatar avatar-md">
                                                                     <img src={sale.customer?.image || NoImg} className="img-fluid" alt="img" />
@@ -993,6 +995,23 @@ useEffect(() => {
                                                                 <div className="ms-2">
                                                                     <h6><a href="" className="fw-bold">{sale.customer?.name || '-'}</a></h6>
                                                                 </div>
+                                                            </div>
+                                                        </td> */}
+                                                        <td>
+                                                            <div className="d-flex align-items-center me-2">
+                                                                {sale.customer?.images?.[0] ? (
+                                                                    <img
+                                                                        className="me-2"
+                                                                        style={{ width: 32, height: 32, objectFit: "cover", borderRadius: 4 }}
+                                                                        src={sale.customer.images[0]?.url || sale.customer.images[0]}
+                                                                        alt={sale.customer?.name || "User"}
+                                                                    />
+                                                                ) : (
+                                                                    <div className="me-2 d-flex align-items-center justify-content-center" style={{ width: 32, height: 32, borderRadius: 4, backgroundColor: "#007bff", color: "#fff", fontSize: "14px", fontWeight: "bold", textTransform: "uppercase", opacity: 0.8 }}>
+                                                                        {sale.customer?.name?.charAt(0) || "U"}
+                                                                    </div>
+                                                                )}
+                                                                <h6 className='text-capitalize'>{sale.customer?.name || "-"}</h6>
                                                             </div>
                                                         </td>
                                                         {/* <td>
@@ -1157,6 +1176,9 @@ useEffect(() => {
                         </div>
                     </div>
                 </div>
+                    {/* <div className="col-lg-8 col-md-12 mb-4">
+                        <div className="card shadow-sm">
+                            <div className="card-header bg-primary text-white"> Product Wise Sales (Bar Graph) </div> <div className="card-body"> <SalesGraph token={token} filterStatus={""} filterPaymentStatus={""} fromDate={""} toDate={""} sortBy={"Recently Added"} /> </div> </div> </div> <div className="col-lg-4 col-md-12 mb-4"> <div className="card shadow-sm"> <div className="card-header bg-success text-white"> Payment Status Distribution </div> <div className="card-body"> <PaymentStatusChart token={token} fromDate={""} toDate={""} /> </div> </div> </div> </div>  <div className="row"> <div className="col-md-4"> <div className="card shadow-sm mb-3"> <div className="card-body text-center"> <h5>Total Sales</h5> <h3 className="text-success">₹ 2,45,000</h3> </div> </div> </div> <div className="col-md-4"> <div className="card shadow-sm mb-3"> <div className="card-body text-center"> <h5>Pending Payments</h5> <h3 className="text-danger">₹ 75,000</h3> </div> </div> </div> <div className="col-md-4"> <div className="card shadow-sm mb-3"> <div className="card-body text-center"> <h5>Completed Orders</h5> <h3 className="text-primary">320</h3> </div> </div> </div> </div> */} 
 {/* upcomming exprie product */}
                 <div className="row">
                     <div className="col-xxl-12 col-xl-7 col-sm-12 col-12 d-flex">
@@ -1509,7 +1531,29 @@ useEffect(() => {
                                                     {recentSales.length > 0 ? recentSales.map(sale => (
                                                         <tr key={sale._id}>
                                                             <td>{sale.saleDate ? new Date(sale.saleDate).toLocaleDateString() : '-'}</td>
-                                                            <td>
+                                                             <td>
+                                                            <div className="d-flex align-items-center me-2">
+                                                                {sale.customer?.images?.[0] ? (
+                                                                    <img
+                                                                        className="me-2"
+                                                                        style={{ width: 32, height: 32, objectFit: "cover", borderRadius: 4 }}
+                                                                        src={sale.customer.images[0]?.url || sale.customer.images[0]}
+                                                                        alt={sale.customer?.name || "User"}
+                                                                    />
+                                                                ) : (
+                                                                    <div className="me-2 d-flex align-items-center justify-content-center" style={{ width: 32, height: 32, borderRadius: 4, backgroundColor: "#007bff", color: "#fff", fontSize: "14px", fontWeight: "bold", textTransform: "uppercase", opacity: 0.8 }}>
+                                                                        {sale.customer?.name?.charAt(0) || "U"}
+                                                                    </div>
+                                                                )}
+                                                                {/* <h6 className='text-capitalize'>{sale.customer?.name || "-"}</h6> */}
+                                                                    <div className="ms-2">
+                                                                        <h6><a href="" className="fw-bold">{sale.customer?.name || '-'}</a></h6>
+                                                                        <span className="fs-13 text-orange">{sale.referenceNumber || '-'}</span>
+                                                                    </div>
+                                                            </div>
+                                                        </td>
+                                                           
+                                                            {/* <td>
                                                                 <div className="d-flex align-items-center file-name-icon">
                                                                     <a href="" className="avatar avatar-md d-flex align-items-center justify-content-center rounded-circle text-white"
                                                                     >
@@ -1534,10 +1578,10 @@ useEffect(() => {
                                                                         <span className="fs-13 text-orange">{sale.referenceNumber || '-'}</span>
                                                                     </div>
                                                                 </div>
-                                                            </td>
-                                                            <td><span className={`badge badge-xs d-inline-flex align-items-center ${sale.status === 'Completed' ? 'badge-success' : sale.status === 'Draft' ? 'badge-pink' : 'badge-warning'}`}><i className="ti ti-circle-filled fs-5 me-1" />{sale.status}</span></td>
+                                                            </td> */}
+                                                            <td><span className={`badge badge-xs d-inline-flex align-items-center ${sale.status === 'Completed' ? 'badge-success' : sale.status === 'Draft' ? 'badge-pink' : 'badge-success'}`}><i className="ti ti-circle-filled fs-5 me-1" />{sale.status}</span></td>
                                                             <td className="fs-16 fw-bold text-gray-9">₹{sale.grandTotal || '-'}</td>
-                                                            <td>{sale.referenceNumber || '-'}</td>
+                                                            {/* <td>{sale.referenceNumber || '-'}</td> */}
                                                         </tr>
                                                     )) : (
                                                         <tr>
@@ -1567,7 +1611,7 @@ useEffect(() => {
                                                             <tr>
                                                                 <td>{new Date(purchase.purchaseDate).toLocaleDateString()}</td>
 
-                                                                <td>
+                                                                 <td>
                                                                     <div className="d-flex align-items-center file-name-icon">
                                                                         <a href="" className="avatar avatar-md">
                                                                             <img src={sale.customer?.image || "assets/img/customer/customer16.jpg"} className="img-fluid" alt="img" />
@@ -1577,7 +1621,29 @@ useEffect(() => {
                                                                             <span className="fs-13 text-orange">{purchase.referenceNumber || '-'}</span>
                                                                         </div>
                                                                     </div>
-                                                                </td>
+                                                                </td> 
+                                                                {/* <td>
+                                                                    <div className="d-flex align-items-center">
+
+                                                                        <a href="#" className="avatar avatar-md">
+                                                                            <img
+                                                                             
+                                                                                src={
+                                                                                    purchase.supplier?.image
+                                                                                        ? purchase.supplier.image
+                                                                                        : "assets/img/supplier/supplier-01.png"
+                                                                                }
+                                                                                className="img-fluid rounded-2"
+                                                                                alt={`${purchase.firstName?.charAt(0) || ""}${purchase.lastName?.charAt(0) || ""}`}
+                                                                            />
+                                                                        </a>
+                                                                        <div className="ms-2">
+                                                                            <h6><a href="" className="fw-bold">{purchase.supplier ? `${purchase.supplier.firstName} ${purchase.supplier.lastName}` : 'N/A'}</a></h6>
+                                                                            <span className="fs-13 text-orange">{purchase.referenceNumber || '-'}</span>
+                                                                        </div>
+                                     
+                                                                    </div>
+                                                                </td> */}
                                                                 <td><span
                                                                     className="badge badge-success badge-xs d-inline-flex align-items-center"><i
                                                                         className="ti ti-circle-filled fs-5 me-1" />{purchase.status}</span>

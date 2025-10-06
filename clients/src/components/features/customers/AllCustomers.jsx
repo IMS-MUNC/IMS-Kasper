@@ -23,6 +23,7 @@ import { toast } from "react-toastify";
 import jsPDF from "jspdf";
 import "jspdf-autotable";
 import { autoTable } from "jspdf-autotable";
+import * as XLSX from "xlsx";
 import DeleteAlert from "../../../utils/sweetAlert/DeleteAlert";
 
 function formatAddress(billing) {
@@ -69,6 +70,7 @@ function AllCustomers({ onClose }) {
     warehouse: "",
     expiration: "",
   });
+    const [selectedStatus, setSelectedStatus] = useState("");
 
 
   useEffect(() => {
@@ -89,7 +91,7 @@ function AllCustomers({ onClose }) {
       );
       setSelectAll(allCurrentPageSelected);
     }
-  }, [selectedCustomers, customers, currentPage, itemsPerPage, search, filters]);
+  }, [selectedCustomers, customers, currentPage, itemsPerPage, search, filters, selectedStatus]);
 
   // const fetchCustomers = async () => {
   //   try {
@@ -236,7 +238,8 @@ function AllCustomers({ onClose }) {
       (!filters.category || c.category === filters.category) &&
       (!filters.stockLevel || c.stockLevel === filters.stockLevel) &&
       (!filters.warehouse || c.warehouse === filters.warehouse) &&
-      (!filters.expiration || c.expiration === filters.expiration)
+      (!filters.expiration || c.expiration === filters.expiration) &&
+      (selectedStatus === "" || (selectedStatus === "Active" && c.status === true) || (selectedStatus === "Inactive" && c.status === false))
     );
   });
   // Original filter logic
@@ -325,6 +328,35 @@ function AllCustomers({ onClose }) {
       toast.error("Failed to generate PDF.");
     }
   };
+  const handleExcel = () => {
+    try {
+      const tableColumn = ["#", "Name", "Phone", "Email", "Address", "Total Orders", "Total Spent", "Status"];
+
+      const tableRows = customers.map((c, i) => [
+        i + 1,
+        c.name || "N/A",
+        c.phone || "N/A",
+        c.email || "N/A",
+        formatAddress(c.billing) || "N/A",
+        `${customerStats[c._id]?.orderCount || 0} times`,
+        `Rs. ${(customerStats[c._id]?.totalAmount || 0).toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
+        c.status == true ? 'Active' : 'Inactive',
+      ]);
+
+      const data = [tableColumn, ...tableRows];
+
+      const worksheet = XLSX.utils.aoa_to_sheet(data);
+
+      const workbook = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(workbook, worksheet, "Customers");
+
+      XLSX.writeFile(workbook, "customers.xlsx");
+      // toast.success("Excel file exported successfully!");
+    } catch (error) {
+      console.error("Error generating Excel:", error);
+      toast.error("Failed to generate Excel.");
+    }
+  };
 
   // NEW: Memoized calculation for selected customer's sales data
   // NEW: Memoized calculation for selected customer's sales data
@@ -389,6 +421,18 @@ function AllCustomers({ onClose }) {
               <li>
                 <a data-bs-toggle="tooltip" data-bs-placement="top" title="Pdf" onClick={handleDownloadPDF}><FaFilePdf style={{ color: "red", fontSize: '20px' }} /></a>
               </li>
+              <li className="me-2">   
+                              <button
+                              data-bs-toggle="tooltip" data-bs-placement="top"
+                                type="button"
+                                title="Export Excel"
+                                className="fs-20"
+                                  style={{ backgroundColor: 'white', color: '', padding: '6px 6px', display: 'flex', alignItems: 'center', border: '1px solid #e8eaebff', cursor: 'pointer', borderRadius: '4px' }}
+                                onClick={handleExcel}
+                              >
+                                <FaFileExcel style={{ color: "green" }} />
+                              </button>
+                          </li>
               <li>
                 <button data-bs-toggle="tooltip" data-bs-placement="top" title="Refresh"
                   onClick={() => location.reload()}
@@ -437,6 +481,41 @@ function AllCustomers({ onClose }) {
               </li>
             </ul>
           </div> */}
+           <div className="dropdown">
+              <a
+                className="btn btn-white btn-md d-inline-flex align-items-center"
+                data-bs-toggle="dropdown"
+              >
+                Sort by : {selectedStatus || "Status"}
+                {/* Status */}
+              </a>
+              <ul className="dropdown-menu  dropdown-menu-end p-3">
+                <li>
+                  <button
+                    className="dropdown-item rounded-1"
+                    onClick={() => setSelectedStatus("")}
+                  >
+                    All
+                  </button>
+                </li>
+                <li>
+                  <button
+                    className="dropdown-item rounded-1"
+                    onClick={() => setSelectedStatus("Active")}
+                  >
+                    Active
+                  </button>
+                </li>
+                <li>
+                  <button
+                    className="dropdown-item rounded-1"
+                    onClick={() => setSelectedStatus("Inactive")}
+                  >
+                    Inactive
+                  </button>
+                </li>
+              </ul>
+            </div>
             </div>
           </div>
           <div className="card-body p-0">
@@ -480,24 +559,18 @@ function AllCustomers({ onClose }) {
                       </td>
                       <td className="" onClick={() => handleCustomerClick(customer)} style={{}}>
                         <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-                          {/* <img
-                    src="https://via.placeholder.com/32"
-                    alt={customer.name?.charAt(0)}
-
-                    className="rounded-circle"
-                    width="32"
-                    height="32"
-                  /> */}
+                          
                           {customer.images && customer.images.length > 0 ? (
+                            <div className="" style={{ width: "30px", height: "30px", overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                             <img
                               src={customer.images && customer.images.length > 0 ? customer.images[0] : ""}
                               className="rounded"
-                              width="32"
-                              height="32"
+                              style={{ width: "30px", height: "30px", objectFit: "cover" }}
                             // onError={(e) => { e.target.src = "https://via.placeholder.com/32"; }} // Fallback on error
                             />
+                            </div>
                           ) : (
-                            <div className="avatar-placeholder rounded d-flex align-items-center justify-content-center" style={{ width: 32, height: 32, backgroundColor: '#6c757d', color: 'white', fontWeight: 'bold' }}>
+                            <div className="avatar-placeholder rounded d-flex align-items-center justify-content-center" style={{ width: "30px", height: "30px", backgroundColor: '#6c757d', color: 'white', fontWeight: 'bold' }}>
                               {customer.name ? customer.name.charAt(0).toUpperCase() : 'N/A'}
                             </div>
                           )}

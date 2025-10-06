@@ -891,29 +891,33 @@ const Users = () => {
                             <span
                               href="javascript:void(0);"
                               className="avatar avatar-md me-2 no-underline"
-                              style={{
-                                width: "36px",
-                                height: "36px",
-                                borderRadius: "50%",
-                              }}
+                              style={{width:'25px', height:'25px', overflow:'hidden',borderRadius:'4px', display:'inline-block', justifyContent:'center', alignItems:'center', }}
                             >
                               {user.profileImage && user.profileImage.url ? (
+                                <>
+                                <div style={{width:'25px', height:'25px', overflow:'hidden',borderRadius:'4px', display:'inline-block', justifyContent:'center', alignItems:'center', }}>
                                 <img
                                   src={user.profileImage.url}
                                   alt="Profile"
                                   style={{
-                                    width: "36px",
-                                    height: "36px",
-                                    borderRadius: "50%",
+                                    width: "100%",
+                                    height: "100%",
+                                    objectFit:"cover"
                                   }}
                                 />
+                                </div>
+                                </>
                               ) : (
                                 <div
                                   className=" text-white  d-flex justify-content-center align-items-center"
                                   style={{
-                                    width: "36px",
-                                    height: "36px",
-                                    borderRadius: "50%",
+                                    width: "25px",
+                                    height: "25px",
+                                    overflow:"hidden",
+                                    borderRadius: "4px",
+                                    display:"inline-block",
+                                    justifyContent:'center',
+                                    alignItems:'center',
                                     border: "1px solid #E6E6E6",
                                     textDecoration: "none",
                                   }}

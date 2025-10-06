@@ -15,29 +15,36 @@ function parseDDMMYYYY(dateStr) {
 
 exports.createPurchase = async (req, res) => {
     try {
-        const {
-            supplier,
-            purchaseDate,
-            referenceNumber,
-            products,
-            orderTax,
-            orderDiscount,
-            shippingCost,
-            grandTotal,
-            status,
-            description,
-
-            // Payment fields
-            paymentType,
-            paymentStatus,
-            paidAmount,
-            dueAmount,
-            dueDate,
-            paymentMethod,
-            transactionId,
-            transactionDate,
-            onlineMethod
-        } = req.body;
+    const {
+      supplier,
+      purchaseDate,
+      referenceNumber,
+      products,
+      orderTax,
+      orderDiscount,
+      shippingCost,
+      grandTotal,
+      status,
+      description,
+      // --- Purchase Summary ---
+      subTotal,
+      discountAmount,
+      taxableValue,
+      taxAmount,
+      cgst,
+      sgst,
+      totalItemCost,
+      // Payment fields
+      paymentType,
+      paymentStatus,
+      paidAmount,
+      dueAmount,
+      dueDate,
+      paymentMethod,
+      transactionId,
+      transactionDate,
+      onlineMethod
+    } = req.body;
 
         // ✅ Validate required fields
         if (
@@ -67,7 +74,9 @@ exports.createPurchase = async (req, res) => {
         purchasePrice,
         returnQty,
         discount = 0,
-        discountType = 'Fixed',
+        // discountType = 'Fixed',
+          discountType: discountType,
+          subTotal=0,
         discountAmount = 0,
         tax = 0,
         taxAmount = 0,
@@ -117,6 +126,7 @@ exports.createPurchase = async (req, res) => {
         purchasePrice,
         discount,
         discountType,
+        subTotal,
         discountAmount: calcDiscountAmount,
         tax,
         taxAmount,
@@ -152,6 +162,14 @@ exports.createPurchase = async (req, res) => {
       grandTotal,
       status,
       description,
+      // --- Purchase Summary ---
+      subTotal,
+      discountAmount,
+      taxableValue,
+      taxAmount,
+      cgst,
+      sgst,
+      totalItemCost,
       image: imageUrls,
       payment: {
         paymentType,
@@ -299,9 +317,9 @@ exports.getAllPurchases = async (req, res) => {
 
         const purchases = await Purchase.find(query)
             // .populate("supplier", "firstName lastName email phone")
-                .populate("supplier", "supplierCode firstName lastName companyName companyWebsite businessType gstin email phone billing shipping status bank images")
-
+            .populate("supplier", "supplierCode firstName lastName companyName companyWebsite businessType gstin email phone billing shipping status bank images")
             .populate("products.product")
+            .populate({ path: "debitNotes", populate: { path: "products.product" } })
             .sort({ createdAt: -1 })
             .skip((pageNum - 1) * limitNum)
             .limit(limitNum);
@@ -941,11 +959,12 @@ exports.getPurchaseReport = async (req, res) => {
     const totalRecords = await Purchase.countDocuments(query);
 
     const purchases = await Purchase.find(query)
-      .populate("supplier", "firstName lastName")
-      .populate("products.product", "productName")
-      .sort({ createdAt: -1 })
-      .skip((pageNum - 1) * limitNum)
-      .limit(limitNum);
+  .populate("supplier", "firstName lastName")
+  .populate("products.product", "productName")
+  .populate({ path: "debitNotes", populate: { path: "products.product" } })
+  .sort({ createdAt: -1 })
+  .skip((pageNum - 1) * limitNum)
+  .limit(limitNum);
 
     // Totals
     let totalPurchase = totalRecords;

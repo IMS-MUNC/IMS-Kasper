@@ -10,6 +10,6 @@ router.get('/states/country/:countryId',authMiddleware, stateController.getState
 
 router.put("/:id",authMiddleware, stateController.updateState);
 router.delete("/:id", authMiddleware, stateController.deleteState);
-router.post("/states/bulk-delete", authMiddleware, stateController.bulkDeleteState);
+router.post("/bulk-delete", authMiddleware, stateController.bulkDeleteState);
 
 module.exports = router;

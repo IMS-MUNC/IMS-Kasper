@@ -48,10 +48,23 @@ exports.createProductReturn = async (req, res) => {
         const price = Number(p.purchasePrice) || 0;
         const discount = Number(p.discount) || 0;
         const tax = Number(p.tax) || 0;
-
-        const baseAmount = returnQty * price - discount;
-        const taxAmount = (baseAmount * tax) / 100;
-        const total = baseAmount + taxAmount;
+        const discountType = p.discountType || '';
+        const subTotal = returnQty * price;
+        // let discountAmount = 0;
+        // if (discountType === 'Percentage') {
+        //   discountAmount = (subTotal * discount) / 100;
+        // } else {
+        //   discountAmount = discount;
+        // }
+          let discountAmount = 0;
+    if (p.discountType === 'Percentage') {
+      discountAmount = (subTotal * discount) / 100;
+    } else {
+      discountAmount = discount * returnQty;
+    }
+        const taxableValue = subTotal - discountAmount;
+        const taxAmount = (taxableValue * tax) / 100;
+        const total = taxableValue + taxAmount;
 
         finalProducts.push({
           product: p.productId || p._id,
@@ -60,6 +73,9 @@ exports.createProductReturn = async (req, res) => {
           unit: p.unit || '',
           purchasePrice: price,
           discount,
+          discountType,
+          discountAmount,
+          subTotal,
           tax,
           taxAmount,
           unitCost: price,
@@ -74,6 +90,9 @@ exports.createProductReturn = async (req, res) => {
           discount,
           tax,
           taxAmount,
+          subTotal,
+          discountType,
+          discountAmount,
           unitCost: price,
           totalCost: total,
           quantityReturned: returnQty,
@@ -85,36 +104,39 @@ exports.createProductReturn = async (req, res) => {
 
     // 4. Fetch purchase details for reference number, supplier, etc.
     let relatedPurchase = null;
+    let relatedPurchasePopulated = null;
     if (cleanBody.purchase) {
-      relatedPurchase = await Purchase.findById(cleanBody.purchase)
-        .populate("supplier", "name") // assuming supplier is a ref
+      // Fetch populated for read-only fields
+      relatedPurchasePopulated = await Purchase.findById(cleanBody.purchase)
+        .populate("supplier", "name")
         .populate("products.product", "name");
 
-      if (!relatedPurchase) {
+      if (!relatedPurchasePopulated) {
         return res.status(404).json({ message: "Purchase not found" });
       }
 
       // Add purchase fields to debit note if not sent from frontend
       if (!cleanBody.referenceNumber) {
-        cleanBody.referenceNumber = relatedPurchase.referenceNumber;
+        cleanBody.referenceNumber = relatedPurchasePopulated.referenceNumber;
       }
-
 
       // If billFrom is not set, set it from purchase, and also attach supplierName
       if (!cleanBody.billFrom) {
-        cleanBody.billFrom = relatedPurchase.billFrom;
+        cleanBody.billFrom = relatedPurchasePopulated.billFrom;
         // Attach supplierName to the address if possible
-        if (cleanBody.billFrom && relatedPurchase.supplier && relatedPurchase.supplier.name) {
-          // If billFrom is an object, add supplierName
+        if (cleanBody.billFrom && relatedPurchasePopulated.supplier && relatedPurchasePopulated.supplier.name) {
           if (typeof cleanBody.billFrom === 'object' && !Array.isArray(cleanBody.billFrom)) {
-            cleanBody.billFrom.supplierName = relatedPurchase.supplier.name;
+            cleanBody.billFrom.supplierName = relatedPurchasePopulated.supplier.name;
           }
         }
       }
 
       if (!cleanBody.billTo) {
-        cleanBody.billTo = relatedPurchase.billTo;
+        cleanBody.billTo = relatedPurchasePopulated.billTo;
       }
+
+      // Fetch the actual document for updating/saving
+      relatedPurchase = await Purchase.findById(cleanBody.purchase);
     }
 
     // 4. Create debit note
@@ -144,7 +166,23 @@ exports.createProductReturn = async (req, res) => {
       items: cleanBody.items,
     });
 
+
     await debitNote.save();
+
+    // 5. Link this debit note to the related purchase by referenceNumber (if not already linked)
+    if (cleanBody.referenceNumber) {
+      // Find the purchase by referenceNumber
+      const purchaseDoc = await Purchase.findOne({ referenceNumber: cleanBody.referenceNumber });
+      if (purchaseDoc) {
+        // Add a 'debitNotes' array if not present
+        if (!purchaseDoc.debitNotes) purchaseDoc.debitNotes = [];
+        // Only add if not already present
+        if (!purchaseDoc.debitNotes.some(id => id.toString() === debitNote._id.toString())) {
+          purchaseDoc.debitNotes.push(debitNote._id);
+          await purchaseDoc.save();
+        }
+      }
+    }
 
     // 6. Update Purchase (reduce quantity, increase returnQty)
     if (relatedPurchase) {

@@ -498,14 +498,13 @@ const Country = () => {
                   </tr>
                 </thead>
                 <tbody>
-                  {finalCountries.length > 0 ? (
+                  {paginatedCountries.length > 0 ? (
                     paginatedCountries.map((country) => (
                       <tr key={country._id} style={{ textAlign: 'center' }}>
                         <td>
                           <label className="checkboxs">
                             <input type="checkbox" checked={
-                              paginatedCountries.length > 0 &&
-                              paginatedCountries.every((c) => selectedCountries.includes(c._id))
+                             selectedCountries.includes(country._id)
                             }
                               onChange={(e) => {
                                 if (e.target.checked) {

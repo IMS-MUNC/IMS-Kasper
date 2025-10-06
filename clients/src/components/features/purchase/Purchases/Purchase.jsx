@@ -551,6 +551,28 @@ const token = localStorage.getItem("token");
 
 
 
+    // State to track expanded debit note for each purchase
+  const [expandedDebitNote, setExpandedDebitNote] = useState({});
+
+  // Toggle expand/collapse for a debit note row
+  const handleToggleDebitNote = (purchaseId, debitNoteId) => {
+    setExpandedDebitNote(prev => {
+      // If already expanded, collapse
+      if (prev[purchaseId] === debitNoteId) {
+        return { ...prev, [purchaseId]: null };
+      }
+      // Expand this debit note
+      return { ...prev, [purchaseId]: debitNoteId };
+    });
+  };
+
+  //  const [expandedRow, setExpandedRow] = useState(null);
+  //   // const navigate = useNavigate();
+  
+  //   const toggleExpand = (saleId) => {
+  //     setExpandedRow(expandedRow === saleId ? null : saleId);
+  //   };
+  
 
   
 
@@ -683,6 +705,7 @@ const token = localStorage.getItem("token");
                       <span className="checkmarks" /></label></th>
                     <th>Supplier</th>
                     <th>Reference</th>
+                    <th>Debit Note</th>
                     <th>Date</th>
                     <th>Products</th>
                     <th>Qyt</th>
@@ -695,7 +718,7 @@ const token = localStorage.getItem("token");
                     <th>Unit cost</th>
                     <th>Total cost</th>
                     <th>Status</th>
-                     <th>Created By</th>
+                    <th>Created By</th>
                     <th>Updated By</th>
                     <th>Action</th>
                   </tr>
@@ -705,23 +728,112 @@ const token = localStorage.getItem("token");
                     <tr><td colSpan="16" className="text-center">No purchases found.</td></tr>
                   ) : (
                     purchases.map((purchase) => (
+                       <React.Fragment key={purchase._id}>
                       <tr key={purchase._id}>
                         <td><label className="checkboxs"><input
-                            type="checkbox"
-                            checked={selectedRows.includes(purchase._id)}
-                            onChange={() => handleSelectRow(purchase._id)}
-                          /><span className="checkmarks" /></label></td>
+                          type="checkbox"
+                          checked={selectedRows.includes(purchase._id)}
+                          onChange={() => handleSelectRow(purchase._id)}
+                        /><span className="checkmarks" /></label></td>
                         <td className="text-capitalize">{purchase.supplier ? `${purchase.supplier.firstName} ${purchase.supplier.lastName}` : "N/A"}</td>
                         <td>{purchase.referenceNumber}</td>
+                        <td>
+  {Array.isArray(purchase.debitNotes) && purchase.debitNotes.length > 0 ? (
+    <>
+      <span
+        key={purchase.debitNotes[0]._id}
+        className="badge bg-info text-light me-1"
+        style={{ cursor: "pointer" }}
+  onClick={() => handleToggleDebitNote(purchase._id, purchase.debitNotes[0]._id)}
+      >
+        {purchase.debitNotes[0].debitNoteId}
+      </span>
+
+      {purchase.debitNotes.length > 1 && (
+        <span
+          className="badge bg-secondary text-light"
+          style={{ cursor: "pointer" }}
+          title={purchase.debitNotes.slice(1).map(n => n.debitNoteId).join(", ")} 
+          onClick={() => handleToggleDebitNote(purchase._id, purchase.debitNotes[0]._id)}
+        >
+          +{purchase.debitNotes.length - 1} more
+        </span>
+      )}
+    </>
+  ) : (
+    "N/A"
+  )}
+</td>
                         <td>{new Date(purchase.purchaseDate).toLocaleDateString()}</td>
                         <td>
                           <ul>{purchase.products.map((p, idx) => (
-                            <li key={idx}>{p.product?.productName} 
-                            {/* - {p.quantity} × {settings.currencySymbol}{convertCurrency(p.purchasePrice)} */}
+                            <li key={idx}>{p.product?.productName}
+                              {/* - {p.quantity} × {settings.currencySymbol}{convertCurrency(p.purchasePrice)} */}
                             </li>
                           ))}</ul>
                         </td>
-                        <td><ul>{purchase.products.map((p, idx) => (<li key={idx}>{p.quantity} {p.unit}</li>))}</ul></td>
+                        <td>
+                          <ul>
+                            {purchase.products.map((p, idx) => (
+                              <li key={idx}>
+                                {p.quantity} {p.unit}
+                              </li>
+                            ))}
+                          </ul>
+                        </td>
+
+                        <td>
+                          <ul>
+                            {purchase.products.map((p, idx) => (
+                              <li key={idx}>{p.purchasePrice}</li>
+                            ))}
+                          </ul>
+                        </td>
+
+                        <td>
+                          <ul>
+                            {purchase.products.map((p, idx) => (
+                              <li key={idx}>{p.discount}<span className="ms-1">{p.discountType === "Percentage" ? "%" : "₹"}</span></li>
+                            ))}
+                          </ul>
+                        </td>
+
+                        <td>
+                          <ul>
+                            {purchase.products.map((p, idx) => (
+                              <li key={idx}>{p.tax} %</li>
+                            ))}
+                          </ul>
+                        </td>
+
+                        <td>
+                          <ul>
+                            {purchase.products.map((p, idx) => (
+                              <li key={idx}>{p.taxAmount || ((p.afterDiscount * p.tax) / 100 || 0)}</li>
+                            ))}
+                          </ul>
+                        </td>
+
+                        <td>{purchase.shippingCost}</td>
+                        <td>{purchase.orderTax}</td>
+
+                        <td>
+                          <ul>
+                            {purchase.products.map((p, idx) => (
+                              <li key={idx}>{p.unitCost}</li>
+                            ))}
+                          </ul>
+                        </td>
+
+                        <td>
+                          <ul>
+                            {purchase.products.map((p, idx) => (
+                              <li key={idx}>{p.totalCost}</li>
+                            ))}
+                          </ul>
+                        </td>
+
+                        {/* <td><ul>{purchase.products.map((p, idx) => (<li key={idx}>{p.quantity} {p.unit}</li>))}</ul></td>
                         <td><ul>{purchase.products.map((p, idx) => (<li key={idx}>{settings.currencySymbol}{convertCurrency(p.purchasePrice)}</li>))}</ul></td>
                         <td><ul>{purchase.products.map((p, idx) => (<li key={idx}>{settings.currencySymbol}{convertCurrency(p.discount)}</li>))}</ul></td>
                         <td><ul>{purchase.products.map((p, idx) => (<li key={idx}>{p.tax} %</li>))}</ul></td>
@@ -729,28 +841,27 @@ const token = localStorage.getItem("token");
                         <td>{settings.currencySymbol}{convertCurrency(purchase.shippingCost)}</td>
                         <td>{settings.currencySymbol}{convertCurrency(purchase.orderTax)}</td>
                         <td><ul>{purchase.products.map((p, idx) => (<li key={idx}>{settings.currencySymbol}{convertCurrency(p.unitCost)}</li>))}</ul></td>
-                        <td><ul>{purchase.products.map((p, idx) => (<li key={idx}>{settings.currencySymbol}{convertCurrency(p.totalCost)}</li>))}</ul></td>
+                        <td><ul>{purchase.products.map((p, idx) => (<li key={idx}>{settings.currencySymbol}{convertCurrency(p.totalCost)}</li>))}</ul></td> */}
                         <td>
                           {/* <span className={`badge ${purchase.status === "Pending" ? "bg-warning" : "bg-success"}`}>{purchase.status}</span> */}
-                           <span
-    className={`badge ${
-      purchase.status === "Pending"
-        ? "bg-warning text-dark" // Yellow badge with dark text
-        : purchase.status === "Received"
-        ? "bg-success" // Green badge
-        : purchase.status === "Ordered"
-        ? "bg-primary" // Blue badge
-        : "bg-secondary" // Fallback if none match
-    }`}
-  >
-    {purchase.status}
-  </span>
-                          </td>
-                         <td>{purchase.createdBy ? `${purchase.createdBy.name}` : '--'}</td>
-                       <td>{purchase.updatedBy ? `${purchase.updatedBy.name} ` : '--'}</td>
-                          <td class="action-item">
+                          <span
+                            className={`badge ${purchase.status === "Pending"
+                                ? "bg-warning text-dark" // Yellow badge with dark text
+                                : purchase.status === "Received"
+                                  ? "bg-success" // Green badge
+                                  : purchase.status === "Ordered"
+                                    ? "bg-primary" // Blue badge
+                                    : "bg-secondary" // Fallback if none match
+                              }`}
+                          >
+                            {purchase.status}
+                          </span>
+                        </td>
+                        <td>{purchase.createdBy ? `${purchase.createdBy.name}` : '--'}</td>
+                        <td>{purchase.updatedBy ? `${purchase.updatedBy.name} ` : '--'}</td>
+                        <td class="action-item">
                           <a href="" data-bs-toggle="dropdown">
-                            <TbDots/>
+                            <TbDots />
                           </a>
                           <ul class="dropdown-menu">
                             <li>
@@ -772,64 +883,255 @@ const token = localStorage.getItem("token");
                             </li>
                           </ul>
                         </td>
-                        {/* <td className="action-table-data">
 
-                          <div className="edit-delete-action">
-                            <a className="me-2 p-2" data-bs-toggle="modal" data-bs-target="#edit-purchase" onClick={() => handleEditClick(purchase)}><TbEdit /></a>
-                            <a className="me-2 p-2" data-bs-toggle="modal" data-bs-target="#view-purchase" onClick={() => setViewPurchaseId(purchase._id)}><TbEye /></a>
-                            <a className="p-2"><TbTrash /></a>
-                          </div>
-                        </td> */}
+
+                     {/* {(purchase.debitNotes && purchase.debitNotes.length > 0 && (
+                        <tr key={purchase._id + '-debitnotes'}>
+                          <td colSpan={18} style={{ background: '#f9f9f9', padding: 0 }}>
+                            <div style={{ padding: '8px 0' }}>
+                              <b>Debit Notes:</b>
+                              {purchase.debitNotes.map((dn) => (
+                                <span key={dn._id} style={{ marginLeft: 12, marginRight: 12 }}>
+                                  <a
+                                    href="#"
+                                    style={{ color: '#007bff', textDecoration: 'underline', cursor: 'pointer' }}
+                                    onClick={e => {
+                                      e.preventDefault();
+                                      handleToggleDebitNote(purchase._id, dn._id);
+                                    }}
+                                  >
+                                    {dn.debitNoteId || dn._id}
+                                  </a>
+                                  {expandedDebitNote[purchase._id] === dn._id && (
+                                    <div style={{ marginTop: 8, border: '1px solid #ddd', borderRadius: 4, background: '#fff', padding: 12 }}>
+                                      <div><b>Date:</b> {dn.debitNoteDate ? new Date(dn.debitNoteDate).toLocaleDateString() : ''}</div>
+                                      <div><b>Status:</b> {dn.status}</div>
+                                      <div><b>Total:</b> {settings.currencySymbol}{convertCurrency(dn.total)}</div>
+                                      <div><b>Products:</b>
+                                        <ul style={{ marginBottom: 0 }}>
+                                          {dn.products && dn.products.map((prod, idx) => (
+                                            <li key={prod._id || idx}>
+                                              {prod.product?.productName || ''} | Qty: {prod.returnQty} | Price: {settings.currencySymbol}{convertCurrency(prod.purchasePrice)}
+                                            </li>
+                                          ))}
+                                        </ul>
+                                      </div>
+                                      <div><b>Note:</b> {dn.extraInfo?.notes || '-'}</div>
+                                    </div>
+                                  )}
+                                </span>
+                              ))}
+                            </div>
+                          </td>
+                        </tr>
+                          )
+                    )}  */}
+ {/* {purchase.debitNotes && purchase.debitNotes.length > 0 && (
+  <tr key={purchase._id + '-debitnotes'}>
+    <td colSpan={18} style={{ background: '#f9f9f9', padding: 0 }}>
+      <div style={{ padding: '8px 0' }}>
+        <b>Debit Notes:</b>
+        <table className="table table-bordered mt-2 mb-0">
+          <thead>
+            <tr>
+              <th>Debit Note ID</th>
+              <th>Date</th>
+              <th>Status</th>
+              <th>Total</th>
+              <th>Products</th>
+              <th>Note</th>
+            </tr>
+          </thead>
+          <tbody>
+            {purchase.debitNotes.map((dn) => (
+              <tr key={dn._id}>
+                <td>
+                  <a
+                    href="#"
+                    style={{ color: '#007bff', textDecoration: 'underline', cursor: 'pointer' }}
+                    onClick={(e) => {
+                      e.preventDefault();
+                      handleToggleDebitNote(purchase._id, dn._id);
+                    }}
+                  >
+                    {dn.debitNoteId || dn._id}
+                  </a>
+                </td>
+                <td>{dn.debitNoteDate ? new Date(dn.debitNoteDate).toLocaleDateString() : ''}</td>
+                <td>{dn.status}</td>
+                <td>
+                  {settings.currencySymbol}
+                  {dn.total}
+                </td>
+                <td>
+                  {expandedDebitNote[purchase._id] === dn._id && dn.products && (
+                    <ul className="mb-0">
+                      {dn.products.map((prod, idx) => (
+                        <li key={prod._id || idx}>
+                          {prod.product?.productName || ''} | Qty: {prod.returnQty} | Price: {settings.currencySymbol}
+                          {prod.purchasePrice}
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </td>
+                <td>{dn.extraInfo?.notes || '-'}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </td>
+  </tr>
+)}  */}
+
+                                 {/* {expandedDebitNote[purchase._id] === dn._id && dn.products && */}
+         
                       </tr>
+                       {Array.isArray(purchase.debitNotes) && purchase.debitNotes.length > 0 && expandedDebitNote[purchase._id] && (
+            <tr>
+              <td colSpan="16" style={{ background: "#f9f9f9" }}>
+                <div style={{ fontWeight: 600, marginBottom: 6 }}>
+                  Debit Notes (Returns)
+                </div>
+                <table className="table table-sm table-bordered mb-0">
+                  <thead className="table-light">
+                    <tr>
+                      <th>Debit Note ID</th>
+                      <th>Date</th>
+                       <th>Product</th>
+                      <th>Qty</th>
+                      <th>Unit</th>
+                      <th>Purchase Price</th>
+                      <th>Discount</th>
+                      <th>Discount Type</th>
+                      <th>Discount Amount</th>
+                      <th>Tax (%)</th>
+                      <th>Tax Amount</th>
+                      <th>Unit Cost</th>
+                      <th>Total Cost</th>
+                      <th>SubTotal</th>
+                    </tr>
+                  </thead>
+                 
+                       <tbody>
+                        {purchase.debitNotes.map((note) =>
+                          note.products?.length > 0 ? (
+                            note.products.map((prod, idx) => (
+                              <tr key={`${note._id}-${idx}`}>
+                                <td>{note.debitNoteId}</td>
+                                <td>
+                                  {note.createdAt
+                                    ? new Date(note.createdAt).toLocaleDateString()
+                                    : "-"}
+                                </td>
+                                <td>
+                                  <div className="d-flex align-items-center">
+                                    {prod.product?.images?.[0]?.url ? (
+                                      <img
+                                        src={prod.product.images[0].url}
+                                        alt={prod.product?.productName || "Product"}
+                                        style={{
+                                          width: 28,
+                                          height: 28,
+                                          objectFit: "cover",
+                                          borderRadius: 4,
+                                          marginRight: 6,
+                                        }}
+                                      />
+                                    ) : (
+                                      <div
+                                        style={{
+                                          width: 28,
+                                          height: 28,
+                                          background: "#e9ecef",
+                                          borderRadius: 4,
+                                          marginRight: 6,
+                                        }}
+                                      />
+                                    )}
+                                    <span>{prod.product?.productName || "-"}</span>
+                                  </div>
+                                </td>
+                                <td>{prod.returnQty || prod.quantity || "-"}</td>
+                                <td>{prod.Unit || "-"}</td>
+                                <td>{prod.purchasePrice || "-"}</td>
+                                <td>{prod.discount || "-"}</td>
+                                <td>{prod.discountType || "-"}</td>
+                                <td>{prod.discountAmount || "-"}</td>
+                                <td>{prod.tax || "-"}</td>
+                                <td>{prod.taxAmount || "-"}</td>
+                                <td>{prod.lineTotal ? `₹${prod.lineTotal}` : "-"}</td>
+                              </tr>
+                            ))
+                          ) : (
+                            <tr key={`${note._id}-empty`}>
+                              <td>{note.creditNoteId}</td>
+                              <td>
+                                {note.createdAt
+                                  ? new Date(note.createdAt).toLocaleDateString()
+                                  : "-"}
+                              </td>
+                              <td colSpan="4">No returned products</td>
+                            </tr>
+                          )
+                        )}
+                      </tbody> 
+                    </table>
+                  </td>
+                </tr>
+              )}
+              </React.Fragment>
+
                     ))
                   )}
                 </tbody>
               </table>
             </div>
 
-              {/* Pagination controls */}
-                        <div
-                          className="d-flex justify-content-end gap-3"
-                          style={{ padding: "10px 20px" }}
-                        >
-            
-                          <select
-                            className="form-select w-auto"
-                            value={page}
-                            onChange={e => { totalPages(Number(e.target.value)); }}
-                          >
-                            {[10, 20, 50, 100].map(n => <option key={n} value={n}>{n} per page</option>)}
-                          </select>
-            
-                          <span
-                            style={{
-                              backgroundColor: "white",
-                              boxShadow: "rgb(0 0 0 / 4%) 0px 3px 8px",
-                              padding: "7px",
-                              borderRadius: "5px",
-                              border: "1px solid #e4e0e0ff",
-                              color: "gray",
-                            }}
-                          >
-                            <span>Page {page} of {totalPages || 1}</span>
-            
-                            {" "}
-                            <button
-                              style={{
-                                border: "none",
-                                color: "grey",
-                                backgroundColor: "white",
-                              }}
-                             onClick={() => handlePageChange(page - 1)} disabled={page === 1}>
-                              <GrFormPrevious />
-                            </button>{" "}
-                            <button
-                              style={{ border: "none", backgroundColor: "white" }}
-                              onClick={() => handlePageChange(page + 1)} disabled={page === totalPages}>
-                              <MdNavigateNext />
-                            </button>
-                          </span>
-                        </div>
+            {/* Pagination controls */}
+            <div
+              className="d-flex justify-content-end gap-3"
+              style={{ padding: "10px 20px" }}
+            >
+
+              <select
+                className="form-select w-auto"
+                value={page}
+                onChange={e => { totalPages(Number(e.target.value)); }}
+              >
+                {[10, 20, 50, 100].map(n => <option key={n} value={n}>{n} per page</option>)}
+              </select>
+
+              <span
+                style={{
+                  backgroundColor: "white",
+                  boxShadow: "rgb(0 0 0 / 4%) 0px 3px 8px",
+                  padding: "7px",
+                  borderRadius: "5px",
+                  border: "1px solid #e4e0e0ff",
+                  color: "gray",
+                }}
+              >
+                <span>Page {page} of {totalPages || 1}</span>
+
+                {" "}
+                <button
+                  style={{
+                    border: "none",
+                    color: "grey",
+                    backgroundColor: "white",
+                  }}
+                  onClick={() => handlePageChange(page - 1)} disabled={page === 1}>
+                  <GrFormPrevious />
+                </button>{" "}
+                <button
+                  style={{ border: "none", backgroundColor: "white" }}
+                  onClick={() => handlePageChange(page + 1)} disabled={page === totalPages}>
+                  <MdNavigateNext />
+                </button>
+              </span>
+            </div>
 
             {/* <div className="d-flex justify-content-between align-items-center p-2 mb-0">
               <div>Page {page} of {totalPages}</div>
