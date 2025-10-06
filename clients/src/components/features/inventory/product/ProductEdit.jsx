@@ -43,7 +43,7 @@ const ProductEdit = () => {
   const location = useLocation();
   const { t } = useTranslation();
 
-  
+
 
   // Declare steps and variantTabs before useState calls
   const steps = [
@@ -134,17 +134,17 @@ const ProductEdit = () => {
   const [supplierId, setSupplierId] = useState(null);
   const [warehouseId, setWarehouseId] = useState(null);
 
-    //    const [variants, setVariants] = useState([
-    //   { selectedVariant: "", selectedValue: "", valueDropdown: [] },
-    // ]);
+  //    const [variants, setVariants] = useState([
+  //   { selectedVariant: "", selectedValue: "", valueDropdown: [] },
+  // ]);
 
-    const [variants, setVariants] = useState([
-  { selectedVariant: "", selectedValue: [], valueDropdown: [] },
-]);
-  
-    const [variantDropdown, setVariantDropdown] = useState([]);
-  
-  
+  const [variants, setVariants] = useState([
+    { selectedVariant: "", selectedValue: [], valueDropdown: [] },
+  ]);
+
+  const [variantDropdown, setVariantDropdown] = useState([]);
+
+
 
   // Image state
   const [images, setImages] = useState([]);
@@ -215,34 +215,34 @@ const ProductEdit = () => {
           if (hsnOption) setSelectedHSN(hsnOption);
         }
 
-       
+
 
         // --- VARIANTS PATCH ---
-if (data.variants && typeof data.variants === "object" && Object.keys(data.variants).length > 0) {
-  const token = localStorage.getItem("token");
-  Promise.all(
-    Object.entries(data.variants).map(async ([variantName, values]) => {
-      // Fetch valueDropdown for this variant
-      let valueDropdown = [];
-      try {
-        const res = await fetch(`${BASE_URL}/api/variant-attributes/values/${encodeURIComponent(variantName)}`, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-        const data = await res.json();
-        valueDropdown = Array.isArray(data)
-          ? data.flatMap(val => typeof val === 'string' ? val.split(',').map(v => v.trim()).filter(Boolean) : [])
-          : [];
-      } catch (err) {}
-      return {
-        selectedVariant: variantName,
-        selectedValue: Array.isArray(values) ? values : [values],
-        valueDropdown,
-      };
-    })
-  ).then(variantArr => setVariants(variantArr));
-} else {
-  setVariants([{ selectedVariant: "", selectedValue: [], valueDropdown: [] }]);
-}
+        if (data.variants && typeof data.variants === "object" && Object.keys(data.variants).length > 0) {
+          const token = localStorage.getItem("token");
+          Promise.all(
+            Object.entries(data.variants).map(async ([variantName, values]) => {
+              // Fetch valueDropdown for this variant
+              let valueDropdown = [];
+              try {
+                const res = await fetch(`${BASE_URL}/api/variant-attributes/values/${encodeURIComponent(variantName)}`, {
+                  headers: { Authorization: `Bearer ${token}` },
+                });
+                const data = await res.json();
+                valueDropdown = Array.isArray(data)
+                  ? data.flatMap(val => typeof val === 'string' ? val.split(',').map(v => v.trim()).filter(Boolean) : [])
+                  : [];
+              } catch (err) { }
+              return {
+                selectedVariant: variantName,
+                selectedValue: Array.isArray(values) ? values : [values],
+                valueDropdown,
+              };
+            })
+          ).then(variantArr => setVariants(variantArr));
+        } else {
+          setVariants([{ selectedVariant: "", selectedValue: [], valueDropdown: [] }]);
+        }
 
         if (data.images && data.images.length > 0) {
           const existingImages = data.images.map((img) => ({
@@ -263,7 +263,7 @@ if (data.variants && typeof data.variants === "object" && Object.keys(data.varia
     fetchProduct();
   }, [id, optionsHsn]);
 
-   // ✅ Fetch all active variants for dropdown
+  // ✅ Fetch all active variants for dropdown
   useEffect(() => {
     const token = localStorage.getItem("token");
     if (!token) return;
@@ -338,7 +338,7 @@ if (data.variants && typeof data.variants === "object" && Object.keys(data.varia
           // label: category.categoryName,
         }));
         setCategories(options);
-      } catch (error) {}
+      } catch (error) { }
     };
     const fetchBrands = async () => {
       try {
@@ -353,7 +353,7 @@ if (data.variants && typeof data.variants === "object" && Object.keys(data.varia
           // label: brand.brandName,
         }));
         setBrandOptions(options);
-      } catch (error) {}
+      } catch (error) { }
     };
     const fetchUnits = async () => {
       try {
@@ -375,7 +375,7 @@ if (data.variants && typeof data.variants === "object" && Object.keys(data.varia
           // label: `${unit.unitsName} (${unit.shortName})`,
         }));
         setUnitsOptions(options);
-      } catch (error) {}
+      } catch (error) { }
     };
 
     // const fetchSuppliers = async () => {
@@ -397,8 +397,8 @@ if (data.variants && typeof data.variants === "object" && Object.keys(data.varia
     //     setOptions(options);
     //   } catch (error) {}
     // };
-    
-    
+
+
     const fetchWarehouses = async () => {
       try {
         const token = localStorage.getItem("token");
@@ -415,7 +415,7 @@ if (data.variants && typeof data.variants === "object" && Object.keys(data.varia
           }));
           setOptionsWare(options);
         }
-      } catch (error) {}
+      } catch (error) { }
     };
     const fetchHSN = async () => {
       try {
@@ -437,7 +437,7 @@ if (data.variants && typeof data.variants === "object" && Object.keys(data.varia
           }));
           setOptionsHsn(options);
         }
-      } catch (error) {}
+      } catch (error) { }
     };
 
     fetchCategories();
@@ -656,7 +656,9 @@ if (data.variants && typeof data.variants === "object" && Object.keys(data.varia
         formData.taxType &&
         formData.tax &&
         formData.discountType &&
-        formData.discountValue &&
+        // formData.discountValue &&
+        // !errors.discountValue &&
+        (formData.discountValue !== undefined && formData.discountValue !== "") &&
         !errors.discountValue &&
         formData.quantityAlert &&
         !errors.quantityAlert
@@ -671,7 +673,14 @@ if (data.variants && typeof data.variants === "object" && Object.keys(data.varia
       );
     }
     if (step === 3) {
-      return formData.variants[activeTab]?.length > 0;
+      // return formData.variants[activeTab]?.length > 0;
+      return (
+        formData.variants &&
+        Object.keys(formData.variants).length > 0 &&
+        Object.values(formData.variants).every(
+          (vals) => Array.isArray(vals) && vals.length > 0
+        )
+      );
     }
     return true;
   };
@@ -813,11 +822,11 @@ if (data.variants && typeof data.variants === "object" && Object.keys(data.varia
     if (formData.expirationDate)
       formPayload.append("expirationDate", formData.expirationDate);
     formPayload.append("hsn", selectedHSN?.value || "");
-    
+
     // if (formData.variants && Object.keys(formData.variants).length > 0)
     //   formPayload.append("variants", JSON.stringify(formData.variants));
     if (formData.variants && Object.keys(formData.variants).length > 0)
-  formPayload.append("variants", JSON.stringify(formData.variants));
+      formPayload.append("variants", JSON.stringify(formData.variants));
     // append new images only
     images.forEach((imgFile) => {
       if (imgFile instanceof File) {
@@ -848,7 +857,6 @@ if (data.variants && typeof data.variants === "object" && Object.keys(data.varia
     }
   };
 
-  if (loading) return <p>Loading...</p>;
 
   // remove image
   const handleRemoveImage = async (file) => {
@@ -870,66 +878,80 @@ if (data.variants && typeof data.variants === "object" && Object.keys(data.varia
   };
 
 
-  
- 
-    // Fetch all active variants for dropdown
-    // useEffect(() => {
-    //   const token = localStorage.getItem("token");
-    //   if (!token) return;
-  
-    //   fetch(`${BASE_URL}/api/variant-attributes/active-variants`, {
-    //     headers: { Authorization: `Bearer ${token}` },
-    //   })
-    //     .then(res => res.json())
-    //     .then(data => setVariantDropdown(data))
-    //     .catch(err => console.error("Error fetching variant dropdown:", err));
-    // }, []);
-  
-    // Handle variant change per row
-    const handleVariantChange = (index, value) => {
-      const token = localStorage.getItem("token");
-      setVariants(prev =>
-        prev.map((v, i) =>
-          i === index ? { ...v, selectedVariant: value, selectedValue: "", valueDropdown: [] } : v
-        )
-      );
-  
-      if (!value || !token) return;
-  
-      fetch(`${BASE_URL}/api/variant-attributes/values/${encodeURIComponent(value)}`, {
-        headers: { Authorization: `Bearer ${token}` },
-      })
-        .then(res => res.json())
-        .then(data => {
-          let values = [];
-          data.forEach(val => {
-            if (typeof val === "string") {
-              values.push(...val.split(",").map(v => v.trim()).filter(Boolean));
-            }
-          });
-          setVariants(prev =>
-            prev.map((v, i) => (i === index ? { ...v, valueDropdown: values } : v))
-          );
-        })
-        .catch(err => console.error("Error fetching value dropdown:", err));
-    };
-  
-    const handleValueChange = (index, value) => {
-      setVariants(prev =>
-        prev.map((v, i) => (i === index ? { ...v, selectedValue: value } : v))
-      );
-    };
-  
-    const handleAddVariant = () => {
-      setVariants(prev => [...prev, { selectedVariant: "", selectedValue: "", valueDropdown: [] }]);
-    };
-  
-    const handleRemoveVariant = index => {
-      if (variants.length > 1) {
-        setVariants(prev => prev.filter((_, i) => i !== index));
-      }
-    };
 
+
+  // Fetch all active variants for dropdown
+  // useEffect(() => {
+  //   const token = localStorage.getItem("token");
+  //   if (!token) return;
+
+  //   fetch(`${BASE_URL}/api/variant-attributes/active-variants`, {
+  //     headers: { Authorization: `Bearer ${token}` },
+  //   })
+  //     .then(res => res.json())
+  //     .then(data => setVariantDropdown(data))
+  //     .catch(err => console.error("Error fetching variant dropdown:", err));
+  // }, []);
+
+  // Handle variant change per row
+  const handleVariantChange = (index, value) => {
+    const token = localStorage.getItem("token");
+    setVariants(prev =>
+      prev.map((v, i) =>
+        i === index ? { ...v, selectedVariant: value.trim(), selectedValue: "", valueDropdown: [] } : v
+      )
+    );
+
+    if (!value || !token) return;
+
+    fetch(`${BASE_URL}/api/variant-attributes/values/${encodeURIComponent(value)}`, {
+      headers: { Authorization: `Bearer ${token}` },
+    })
+      .then(res => res.json())
+      .then(data => {
+        let values = [];
+        data.forEach(val => {
+          if (typeof val === "string") {
+            values.push(...val.split(",").map(v => v.trim()).filter(Boolean));
+          }
+        });
+        setVariants(prev =>
+          prev.map((v, i) => (i === index ? { ...v, valueDropdown: values } : v))
+        );
+      })
+      .catch(err => console.error("Error fetching value dropdown:", err));
+  };
+
+  const handleValueChange = (index, value) => {
+    setVariants(prev =>
+      prev.map((v, i) => (i === index ? { ...v, selectedValue: value } : v))
+    );
+  };
+
+  const handleAddVariant = () => {
+    setVariants(prev => [...prev, { selectedVariant: "", selectedValue: "", valueDropdown: [] }]);
+  };
+
+  const handleRemoveVariant = index => {
+    if (variants.length > 1) {
+      setVariants(prev => prev.filter((_, i) => i !== index));
+    }
+  };
+
+  useEffect(() => {
+    if (variants && variants.length > 0) {
+      const updatedVariants = variants.reduce((acc, v) => {
+        if (v.selectedVariant && v.selectedValue?.length > 0) {
+          acc[v.selectedVariant.trim()] = v.selectedValue;
+        }
+        return acc;
+      }, {});
+      setFormData((prev) => ({ ...prev, variants: updatedVariants }))
+    }
+  }, [variants]);
+  console.log("Variants state:", variants);
+  console.log("FormData variants:", formData.variants);
+  if (loading) return <p>Loading...</p>;
   return (
     <div className="page-wrapper mt-4">
       <div className="content">
@@ -988,28 +1010,26 @@ if (data.variants && typeof data.variants === "object" && Object.keys(data.varia
             return (
               <div key={index} className="step-wrapper">
                 <div
-                  className={`circle ${
-                    isComplete
-                      ? "complete"
-                      : isIncomplete
+                  className={`circle ${isComplete
+                    ? "complete"
+                    : isIncomplete
                       ? "incomplete"
                       : isActive
-                      ? "active"
-                      : ""
-                  }`}
+                        ? "active"
+                        : ""
+                    }`}
                 >
                   {index + 1}
                 </div>
                 <div className="step-text">{label}</div>
                 {index < steps.length - 1 && (
                   <div
-                    className={`progress-line ${
-                      status === "complete"
-                        ? "line-complete"
-                        : status === "incomplete"
+                    className={`progress-line ${status === "complete"
+                      ? "line-complete"
+                      : status === "incomplete"
                         ? "line-incomplete"
                         : "line-pending"
-                    }`}
+                      }`}
                   />
                 )}
               </div>
@@ -1069,9 +1089,8 @@ if (data.variants && typeof data.variants === "object" && Object.keys(data.varia
                       <input
                         type="text"
                         name="productName"
-                        className={`form-control ${
-                          errors.productName ? "is-invalid" : ""
-                        }`} // Commented out: Validation class
+                        className={`form-control ${errors.productName ? "is-invalid" : ""
+                          }`} // Commented out: Validation class
                         // className="form-control"
                         value={formData.productName}
                         onChange={handleChange}
@@ -1198,9 +1217,8 @@ if (data.variants && typeof data.variants === "object" && Object.keys(data.varia
                         <input
                           type="text"
                           name="sku"
-                          className={`form-control ${
-                            errors.sku ? "is-invalid" : ""
-                          }`} // Commented out: Validation class
+                          className={`form-control ${errors.sku ? "is-invalid" : ""
+                            }`} // Commented out: Validation class
                           // className="form-control"
                           value={formData.sku}
                           onChange={(e) =>
@@ -1412,9 +1430,8 @@ if (data.variants && typeof data.variants === "object" && Object.keys(data.varia
                           <label className="form-label">{t("leadTime")}</label>
                           <input
                             type="number"
-                            className={`form-control ${
-                              errors.leadTime ? "is-invalid" : ""
-                            }`} // Commented out: Validation class
+                            className={`form-control ${errors.leadTime ? "is-invalid" : ""
+                              }`} // Commented out: Validation class
                             // className="form-control"
                             placeholder={t("enterLeadTime")}
                             name="leadTime"
@@ -1434,9 +1451,8 @@ if (data.variants && typeof data.variants === "object" && Object.keys(data.varia
                           </label>
                           <input
                             type="number"
-                            className={`form-control ${
-                              errors.reorderLevel ? "is-invalid" : ""
-                            }`}
+                            className={`form-control ${errors.reorderLevel ? "is-invalid" : ""
+                              }`}
                             // className="form-control"
                             placeholder={t("enterReorderLevel")}
                             name="reorderLevel"
@@ -1456,9 +1472,8 @@ if (data.variants && typeof data.variants === "object" && Object.keys(data.varia
                           </label>
                           <input
                             type="number"
-                            className={`form-control ${
-                              errors.initialStock ? "is-invalid" : ""
-                            }`}
+                            className={`form-control ${errors.initialStock ? "is-invalid" : ""
+                              }`}
                             // className="form-control"
                             placeholder={t("enterInitialStock")}
                             name="initialStock"
@@ -1559,9 +1574,8 @@ if (data.variants && typeof data.variants === "object" && Object.keys(data.varia
                             </label>
                             <input
                               type="text"
-                              className={`form-control ${
-                                errors.serialNumber ? "is-invalid" : ""
-                              }`}
+                              className={`form-control ${errors.serialNumber ? "is-invalid" : ""
+                                }`}
                               // className="form-control"
                               placeholder={t("enterSerialNumber")}
                               name="serialNumber"
@@ -1582,9 +1596,8 @@ if (data.variants && typeof data.variants === "object" && Object.keys(data.varia
                             <label className="form-label">{t("batchNo")}</label>
                             <input
                               type="text"
-                              className={`form-control ${
-                                errors.batchNumber ? "is-invalid" : ""
-                              }`}
+                              className={`form-control ${errors.batchNumber ? "is-invalid" : ""
+                                }`}
                               // className="form-control"
                               placeholder={t("enterBatchNumber")}
                               name="batchNumber"
@@ -1668,17 +1681,15 @@ if (data.variants && typeof data.variants === "object" && Object.keys(data.varia
                     </label>
                     <input
                       type="number"
-                      className={`form-control ${
-                        errors[field.name] ? "is-invalid" : ""
-                      }`} // Commented out: Validation class
+                      className={`form-control ${errors[field.name] ? "is-invalid" : ""
+                        }`} // Commented out: Validation class
                       // className="form-control"
                       name={field.name}
                       value={formData[field.name] || ""}
                       onChange={handleChange}
                       placeholder={t(
-                        `enter${
-                          field.name.charAt(0).toUpperCase() +
-                          field.name.slice(1)
+                        `enter${field.name.charAt(0).toUpperCase() +
+                        field.name.slice(1)
                         }`
                       )}
                     />
@@ -1697,9 +1708,8 @@ if (data.variants && typeof data.variants === "object" && Object.keys(data.varia
                   </label>
                   <input
                     type="number"
-                    className={`form-control ${
-                      errors.quantity ? "is-invalid" : ""
-                    }`}
+                    className={`form-control ${errors.quantity ? "is-invalid" : ""
+                      }`}
                     // className="form-control"
                     name="quantity"
                     value={formData.quantity}
@@ -1785,9 +1795,8 @@ if (data.variants && typeof data.variants === "object" && Object.keys(data.varia
                   </label>
                   <input
                     type="number"
-                    className={`form-control ${
-                      errors.discountValue ? "is-invalid" : ""
-                    }`}
+                    className={`form-control ${errors.discountValue ? "is-invalid" : ""
+                      }`}
                     // className="form-control"
                     name="discountValue"
                     value={formData.discountValue}
@@ -1808,9 +1817,8 @@ if (data.variants && typeof data.variants === "object" && Object.keys(data.varia
                   </label>
                   <input
                     type="number"
-                    className={`form-control ${
-                      errors.quantityAlert ? "is-invalid" : ""
-                    }`} // Commented out: Validation class
+                    className={`form-control ${errors.quantityAlert ? "is-invalid" : ""
+                      }`} // Commented out: Validation class
                     // className="form-control"
                     name="quantityAlert"
                     value={formData.quantityAlert}
@@ -1848,7 +1856,7 @@ if (data.variants && typeof data.variants === "object" && Object.keys(data.varia
                       <img
                         src={file.url || file.preview}
                         className="img-thumbnail"
-                        style={{ height: 100, width:100, objectFit: "cover" }}
+                        style={{ height: 100, width: 100, objectFit: "cover" }}
                       />
                       <button
                         type="button"
@@ -1860,8 +1868,8 @@ if (data.variants && typeof data.variants === "object" && Object.keys(data.varia
                           borderRadius: "50%",
                           backgroundColor: "red",
                           color: "white",
-                          width:'20px',
-                          height:'20px'
+                          width: '20px',
+                          height: '20px'
                         }}
                         onClick={() => handleRemoveImage(file)}
                       >
@@ -1875,9 +1883,8 @@ if (data.variants && typeof data.variants === "object" && Object.keys(data.varia
                   <label>{t("description")}</label>
                   <textarea
                     name="description"
-                    className={`form-control ${
-                      errors.description ? "is-invalid" : ""
-                    }`}
+                    className={`form-control ${errors.description ? "is-invalid" : ""
+                      }`}
                     // className="form-control"
                     maxLength={300}
                     value={formData.description}
@@ -1895,9 +1902,8 @@ if (data.variants && typeof data.variants === "object" && Object.keys(data.varia
                     <input
                       type="text"
                       name="seoTitle"
-                      className={`form-control ${
-                        errors.seoTitle ? "is-invalid" : ""
-                      }`} // Commented out: Validation class
+                      className={`form-control ${errors.seoTitle ? "is-invalid" : ""
+                        }`} // Commented out: Validation class
                       // className="form-control"
                       value={formData.seoTitle || ""}
                       onChange={handleChange}
@@ -1914,9 +1920,8 @@ if (data.variants && typeof data.variants === "object" && Object.keys(data.varia
                     <input
                       type="text"
                       name="seoDescription"
-                      className={`form-control ${
-                        errors.seoDescription ? "is-invalid" : ""
-                      }`}
+                      className={`form-control ${errors.seoDescription ? "is-invalid" : ""
+                        }`}
                       // className="form-control"
                       value={formData.seoDescription || ""}
                       onChange={handleChange}
@@ -1936,60 +1941,61 @@ if (data.variants && typeof data.variants === "object" && Object.keys(data.varia
             {step === 3 && (
               <>
 
-                 <div className="card mt-4">
-      <div className="card-body">
-        {variants.map((variant, index) => (
-          <div className="row mb-3" key={index}>
-            <div className="col-md-5">
-              <label className="form-label">Variant</label>
-              <select
-                className="form-select"
-                value={variant.selectedVariant}
-                onChange={e => handleVariantChange(index, e.target.value)}
-              >
-                <option value="">Select Variant</option>
-                {variantDropdown.map((v, idx) => (
-                  <option key={idx} value={v}>{v}</option>
-                ))}
-              </select>
-            </div>
-            <div className="col-md-5">
-              <label className="form-label">Value</label>
-              <select
-                className="form-select"
-                value={variant.selectedValue}
-                onChange={e => handleValueChange(index, e.target.value)}
-                disabled={!variant.selectedVariant}
-              >
-                <option value="">Select Value</option>
-                {variant.valueDropdown.map((val, idx) => (
-                  <option key={idx} value={val}>{val}</option>
-                ))}
-              </select>
-            </div>
-            <div className="col-md-2 d-flex align-items-end">
-              {variants.length > 1 && (
-                <button
-                  type="button"
-                  className="btn btn-danger"
-                  onClick={() => handleRemoveVariant(index)}
-                >
-                  ×
-                </button>
-              )}
-            </div>
-          </div>
-        ))}
+                <div className="card mt-4">
+                  <div className="card-body">
+                    {variants.map((variant, index) => (
+                      <div className="row mb-3" key={index}>
+                        <div className="col-md-5">
+                          <label className="form-label">Variant</label>
+                          <select
+                            className="form-select"
+                            value={variant.selectedVariant}
+                            onChange={e => handleVariantChange(index, e.target.value)}
+                          >
+                            <option value="">Select Variant</option>
+                            {variantDropdown.map((v, idx) => (
+                              <option key={idx} value={v}>{v}</option>
+                            ))}
+                          </select>
+                        </div>
+                        <div className="col-md-5">
+                          <label className="form-label">Value</label>
+                          <select
+                            className="form-select"
+                            // value={variant.selectedValue}
+                            value={variant.selectedValue[0] || ""}
+                            onChange={e => handleValueChange(index, [e.target.value])}
+                            disabled={!variant.selectedVariant}
+                          >
+                            <option value="">Select Value</option>
+                            {variant.valueDropdown.map((val, idx) => (
+                              <option key={idx} value={val}>{val}</option>
+                            ))}
+                          </select>
+                        </div>
+                        <div className="col-md-2 d-flex align-items-end">
+                          {variants.length > 1 && (
+                            <button
+                              type="button"
+                              className="btn btn-danger"
+                              onClick={() => handleRemoveVariant(index)}
+                            >
+                              ×
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                    ))}
 
-        <button
-          type="button"
-          className="btn btn-outline-primary"
-          onClick={handleAddVariant}
-        >
-          + Add another variant
-        </button>
-      </div>
-    </div>
+                    <button
+                      type="button"
+                      className="btn btn-outline-primary"
+                      onClick={handleAddVariant}
+                    >
+                      + Add another variant
+                    </button>
+                  </div>
+                </div>
 
 
 
