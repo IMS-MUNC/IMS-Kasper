@@ -186,7 +186,8 @@ const Login = () => {
       navigate("/dashboard");
     } catch (error) {
       console.error("Login Error:", error);
-
+      //reset loading here if login fails
+      setLoading(false);
       if (error.response?.data?.message) {
         toast.error(error.response.data.message);
       } else {

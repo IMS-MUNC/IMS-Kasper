@@ -78,7 +78,7 @@ exports.createUser = async (req, res) => {
 // GET ALL USERS
 exports.getAllUsers = async (req, res) => {
   try {
-    const users = await User.find().populate("role");
+    const users = await User.find().populate("role").sort({createdAt:-1});
     res.status(200).json(users);
   } catch (error) {
     console.error("Error fetching users:", error);

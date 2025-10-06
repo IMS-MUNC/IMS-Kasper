@@ -13,6 +13,7 @@ import autoTable from "jspdf-autotable";
 import Swal from "sweetalert2";
 import * as XLSX from "xlsx";
 import { saveAs } from "file-saver";
+import DeleteAlert from "../../../utils/sweetAlert/DeleteAlert";
 
 const City = () => {
   const [countries, setCountries] = useState([]);
@@ -311,7 +312,7 @@ const City = () => {
     if (!confirmed) return;
     try {
       const token = localStorage.getItem("token");
-      await axios.post(`${BASE_URL}/api/cities/bulk-delete`, {
+      await axios.post(`${BASE_URL}/api/city/bulk-delete`, {
         ids: selectedCities,
       }, {
         headers: {

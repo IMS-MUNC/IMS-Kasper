@@ -24,5 +24,5 @@ router.delete("/:id",authMiddleware, deleteCountry);
 
 router.post('/import',authMiddleware, bulkImportCountries);
 
-router.post("/countries/bulk-delete", authMiddleware, bulkDeleteCountry);
+router.post("/bulk-delete", authMiddleware, bulkDeleteCountry);
 module.exports = router;
