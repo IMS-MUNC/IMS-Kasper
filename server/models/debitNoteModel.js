@@ -15,13 +15,17 @@ const DebitNoteSchema = new mongoose.Schema({
       product: { type: mongoose.Schema.Types.ObjectId, ref: 'Product' },
       quantity: Number,
       unit: String,
-        returnQty: Number, // ✅ Add this line
+      returnQty: Number, // ✅ Add this line
       purchasePrice: Number,
       discount: Number,
-      tax: Number,
       taxAmount: { type: Number, default: 0 },
+       discountType: { type: String, default: "" },
+      discountAmount: { type: Number, default: 0 },
       unitCost: Number,
       totalCost: Number,
+      tax: { type: Number, default: 0 },
+      taxAmount: { type: Number, default: 0 },
+      subTotal: { type: Number, default: 0 },
     },
   ],
   extraInfo: {
@@ -36,6 +40,8 @@ const DebitNoteSchema = new mongoose.Schema({
   roundOff: Boolean,
   total: Number,
   totalInWords: String,
+        taxableAmount: { type: Number, default: 0 },
+  taxAmount: { type: Number, default: 0 },
   signature: String,
   signatureName: String,
   signatureImage: String,
