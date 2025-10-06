@@ -572,65 +572,65 @@ const downloadPDF = (elementId) => {
                               <th />
                           </tr>
                       </thead>
-                                            <tbody>
-                                                    {loading ? (
-                                                            <tr>
-                                                                    <td colSpan="8">Loading...</td>
-                                                            </tr>
-                                                    ) : creditNotes && creditNotes.length > 0 ? (
-                                                            creditNotes
-                                                                .filter(note => {
-                                                                    // Search filter (reference, id, customer)
-                                                                    const searchLower = search.toLowerCase();
-                                                                    const refMatch = (note.referenceNumber || '').toLowerCase().includes(searchLower);
-                                                                    const idMatch = (note.creditNoteId || note._id || '').toLowerCase().includes(searchLower);
-                                                                    const customerMatch = (
-                                                                        note.sale?.customer?.name?.toLowerCase().includes(searchLower) ||
-                                                                        note.billFrom?.name?.toLowerCase().includes(searchLower) ||
-                                                                        note.billTo?.name?.toLowerCase().includes(searchLower) ||
-                                                                        note.billFrom?.email?.toLowerCase().includes(searchLower) ||
-                                                                        note.billTo?.email?.toLowerCase().includes(searchLower)
-                                                                    );
-                                                                    // Date filter
-                                                                    let dateOk = true;
-                                                                    if (startDate) {
-                                                                        const noteDate = note.creditNoteDate ? new Date(note.creditNoteDate) : null;
-                                                                        if (!noteDate || noteDate < new Date(startDate)) dateOk = false;
-                                                                    }
-                                                                    if (endDate) {
-                                                                        const noteDate = note.creditNoteDate ? new Date(note.creditNoteDate) : null;
-                                                                        if (!noteDate || noteDate > new Date(endDate + 'T23:59:59')) dateOk = false;
-                                                                    }
-                                                                    return (
-                                                                        (!search || refMatch || idMatch || customerMatch) && dateOk
-                                                                    );
-                                                                })
-                                                                .map((note, idx) => (
-                                                                    <tr key={note._id || idx}>
-                                      <td>
-                                          <div className="form-check form-check-md">
-                                              <input className="form-check-input" type="checkbox" />
-                                          </div>
-                                      </td>
-                                      <td>
-                                          <a
-                                              href="#view_notes"
-                                              className="link-default"
-                                              data-bs-toggle="modal"
-                                              data-bs-target="#view_notes"
-                                              onClick={() => setSelectedNote(note)}
-                                          >
-                                              {note.creditNoteId || note._id}
-                                          </a>
-                                      </td>
-                                      <td>
-                                          {note.creditNoteDate
-                                              ? new Date(note.creditNoteDate).toLocaleDateString()
-                                              : note.date
-                                                  ? new Date(note.date).toLocaleDateString()
-                                                  : ""}
-                                      </td>
-                                      {/* <td>
+                      <tbody>
+                          {loading ? (
+                              <tr>
+                                  <td colSpan="8">Loading...</td>
+                              </tr>
+                          ) : creditNotes && creditNotes.length > 0 ? (
+                              creditNotes
+                                  .filter(note => {
+                                      // Search filter (reference, id, customer)
+                                      const searchLower = search.toLowerCase();
+                                      const refMatch = (note.referenceNumber || '').toLowerCase().includes(searchLower);
+                                      const idMatch = (note.creditNoteId || note._id || '').toLowerCase().includes(searchLower);
+                                      const customerMatch = (
+                                          note.sale?.customer?.name?.toLowerCase().includes(searchLower) ||
+                                          note.billFrom?.name?.toLowerCase().includes(searchLower) ||
+                                          note.billTo?.name?.toLowerCase().includes(searchLower) ||
+                                          note.billFrom?.email?.toLowerCase().includes(searchLower) ||
+                                          note.billTo?.email?.toLowerCase().includes(searchLower)
+                                      );
+                                      // Date filter
+                                      let dateOk = true;
+                                      if (startDate) {
+                                          const noteDate = note.creditNoteDate ? new Date(note.creditNoteDate) : null;
+                                          if (!noteDate || noteDate < new Date(startDate)) dateOk = false;
+                                      }
+                                      if (endDate) {
+                                          const noteDate = note.creditNoteDate ? new Date(note.creditNoteDate) : null;
+                                          if (!noteDate || noteDate > new Date(endDate + 'T23:59:59')) dateOk = false;
+                                      }
+                                      return (
+                                          (!search || refMatch || idMatch || customerMatch) && dateOk
+                                      );
+                                  })
+                                  .map((note, idx) => (
+                                      <tr key={note._id || idx}>
+                                          <td>
+                                              <div className="form-check form-check-md">
+                                                  <input className="form-check-input" type="checkbox" />
+                                              </div>
+                                          </td>
+                                          <td>
+                                              <a
+                                                  href="#view_notes"
+                                                  className="link-default"
+                                                  data-bs-toggle="modal"
+                                                  data-bs-target="#view_notes"
+                                                  onClick={() => setSelectedNote(note)}
+                                              >
+                                                  {note.creditNoteId || note._id}
+                                              </a>
+                                          </td>
+                                          <td>
+                                              {note.creditNoteDate
+                                                  ? new Date(note.creditNoteDate).toLocaleDateString()
+                                                  : note.date
+                                                      ? new Date(note.date).toLocaleDateString()
+                                                      : ""}
+                                          </td>
+                                          {/* <td>
                       {note.sale?.customer?.images?.[0] && (
                         <img
                           src={
@@ -655,128 +655,128 @@ const downloadPDF = (elementId) => {
                         note.billTo?.email ||
                         "-"}
                     </td> */}
-                                      <td>
-                                          <div className="d-flex align-items-center me-2">
-                                              {note.sale?.customer?.images?.[0] ? (
-                                                  <img
-                                                      src={
-                                                          note.sale.customer.images[0]?.url ||
-                                                          note.sale.customer.images[0]
-                                                      }
-                                                      alt={note.sale.customer?.name || "-"}
-                                                      style={{
-                                                          width: 32,
-                                                          height: 32,
-                                                          borderRadius: "50%",
-                                                          objectFit: "cover",
-                                                          marginRight: 6,
-                                                      }}
-                                                  />
-                                              ) : (
-                                                  <div
-                                                      className="me-2 d-flex align-items-center justify-content-center"
-                                                      style={{
-                                                          width: 32,
-                                                          height: 32,
-                                                          borderRadius: "50%",
-                                                          backgroundColor: "#007bff",
-                                                          color: "#fff",
-                                                          fontSize: "14px",
-                                                          fontWeight: "bold",
-                                                          textTransform: "uppercase",
-                                                          opacity: 0.8,
-                                                          marginRight: 6,
-                                                      }}
-                                                  >
-                                                      {note.sale?.customer?.name?.charAt(0) ||
-                                                          note.billFrom?.name?.charAt(0) ||
-                                                          note.billTo?.name?.charAt(0) ||
-                                                          note.billFrom?.email?.charAt(0) ||
-                                                          note.billTo?.email?.charAt(0) ||
-                                                          "U"}
-                                                  </div>
-                                              )}
+                                          <td>
+                                              <div className="d-flex align-items-center me-2">
+                                                  {note.sale?.customer?.images?.[0] ? (
+                                                      <img
+                                                          src={
+                                                              note.sale.customer.images[0]?.url ||
+                                                              note.sale.customer.images[0]
+                                                          }
+                                                          alt={note.sale.customer?.name || "-"}
+                                                          style={{
+                                                              width: 32,
+                                                              height: 32,
+                                                              borderRadius: "50%",
+                                                              objectFit: "cover",
+                                                              marginRight: 6,
+                                                          }}
+                                                      />
+                                                  ) : (
+                                                      <div
+                                                          className="me-2 d-flex align-items-center justify-content-center"
+                                                          style={{
+                                                              width: 32,
+                                                              height: 32,
+                                                              borderRadius: "50%",
+                                                              backgroundColor: "#007bff",
+                                                              color: "#fff",
+                                                              fontSize: "14px",
+                                                              fontWeight: "bold",
+                                                              textTransform: "uppercase",
+                                                              opacity: 0.8,
+                                                              marginRight: 6,
+                                                          }}
+                                                      >
+                                                          {note.sale?.customer?.name?.charAt(0) ||
+                                                              note.billFrom?.name?.charAt(0) ||
+                                                              note.billTo?.name?.charAt(0) ||
+                                                              note.billFrom?.email?.charAt(0) ||
+                                                              note.billTo?.email?.charAt(0) ||
+                                                              "U"}
+                                                      </div>
+                                                  )}
 
-                                              <span>
-                                                  {note.sale?.customer?.name ||
-                                                      note.billFrom?.name ||
-                                                      note.billTo?.name ||
-                                                      note.billFrom?.email ||
-                                                      note.billTo?.email ||
-                                                      "-"}
-                                              </span>
-                                          </div>
-                                      </td>
+                                                  <span>
+                                                      {note.sale?.customer?.name ||
+                                                          note.billFrom?.name ||
+                                                          note.billTo?.name ||
+                                                          note.billFrom?.email ||
+                                                          note.billTo?.email ||
+                                                          "-"}
+                                                  </span>
+                                              </div>
+                                          </td>
 
-                                      <td>
+                                          <td>
 
-                                          {note.products && note.products.length > 0 ? (
-                                              note.products.map((product, idx) => (
-                                                  <div key={idx} className="d-flex align-items-center">
-                                                      {product.productId?.images?.[0]?.url && (
-                                                          <img src={product.productId.images[0].url} alt="Product" style={{ width: 30, height: 30, marginRight: 8 }} />
-                                                      )}
-                                                      <span>
-                                                          {product.productId?.productName || product.productName || "N/A"}
+                                              {note.products && note.products.length > 0 ? (
+                                                  note.products.map((product, idx) => (
+                                                      <div key={idx} className="d-flex align-items-center">
+                                                          {product.productId?.images?.[0]?.url && (
+                                                              <img src={product.productId.images[0].url} alt="Product" style={{ width: 30, height: 30, marginRight: 8 }} />
+                                                          )}
+                                                          <span>
+                                                              {product.productId?.productName || product.productName || "N/A"}
 
-                                                          {/* <span style={{ color: "#888", fontSize: "12px", marginLeft: 4 }}>
+                                                              {/* <span style={{ color: "#888", fontSize: "12px", marginLeft: 4 }}>
             (HSN: {product.hsnCode})
           </span> */}
 
-                                                      </span>
-                                                  </div>
-                                              ))
-                                          ) : (
-                                              <span className="text-muted">-</span>
-                                          )}
-                                      </td>
+                                                          </span>
+                                                      </div>
+                                                  ))
+                                              ) : (
+                                                  <span className="text-muted">-</span>
+                                              )}
+                                          </td>
 
-                                      <td>
+                                          <td>
 
-                                          {note.products && note.products.length > 0 ? (
-                                              note.products.map((product, idx) => (
-                                                  <div key={idx} className="d-flex align-items-center">
+                                              {note.products && note.products.length > 0 ? (
+                                                  note.products.map((product, idx) => (
+                                                      <div key={idx} className="d-flex align-items-center">
 
-                                                      {product.hsnCode}
-                                                  </div>
-                                              ))
-                                          ) : (
-                                              <span className="text-muted">-</span>
-                                          )}
-                                      </td>
+                                                          {product.hsnCode}
+                                                      </div>
+                                                  ))
+                                              ) : (
+                                                  <span className="text-muted">-</span>
+                                              )}
+                                          </td>
 
 
-                                      <td>{note.total || note.amount || note.grandTotal || "-"}</td>
+                                          <td>{note.total || note.amount || note.grandTotal || "-"}</td>
 
-                                      <td>{note.status || "-"}</td>
-                                      <td className="action-table-data">
-                                          <div className="edit-delete-action">
-                                              <a
-                                                  className="me-2 p-2"
-                                                  data-bs-toggle="modal"
-                                                  data-bs-target="#view_notes"
-                                                  onClick={() => setSelectedNote(note)}
-                                              >
-                                                  <TbEye />
-                                              </a>
-                                              <a
-                                                  className="me-2 p-2"
-                                                  data-bs-toggle="modal"
-                                                  data-bs-target="#edit_credit_note"
-                                                  onClick={() => setEditNote(note)}
-                                              >
-                                                  <TbEdit />
-                                              </a>
-                                              <a
-                                                  className="p-2"
-                                                  onClick={() => handleDelete(note._id)}
-                                              >
-                                                  <TbTrash />
-                                              </a>
-                                          </div>
-                                      </td>
-                                  </tr>
-                              ))
+                                          <td>{note.status || "-"}</td>
+                                          <td className="action-table-data">
+                                              <div className="edit-delete-action">
+                                                  <a
+                                                      className="me-2 p-2"
+                                                      data-bs-toggle="modal"
+                                                      data-bs-target="#view_notes"
+                                                      onClick={() => setSelectedNote(note)}
+                                                  >
+                                                      <TbEye />
+                                                  </a>
+                                                  <a
+                                                      className="me-2 p-2"
+                                                      data-bs-toggle="modal"
+                                                      data-bs-target="#edit_credit_note"
+                                                      onClick={() => setEditNote(note)}
+                                                  >
+                                                      <TbEdit />
+                                                  </a>
+                                                  <a
+                                                      className="p-2"
+                                                      onClick={() => handleDelete(note._id)}
+                                                  >
+                                                      <TbTrash />
+                                                  </a>
+                                              </div>
+                                          </td>
+                                      </tr>
+                                  ))
                           ) : (
                               <tr>
                                   <td colSpan="8">No credit notes found.</td>

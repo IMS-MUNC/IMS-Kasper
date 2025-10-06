@@ -756,7 +756,7 @@ React.useEffect(() => {
 // const summary = calculateBillSummary(selectedProducts); // yaha selectedProducts aapka product list hai
 
 
-// validation and Sanitization
+// validation and seniotiozation
 
   // Error state for validation
   const [formErrors, setFormErrors] = useState({});
