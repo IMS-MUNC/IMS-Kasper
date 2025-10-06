@@ -296,17 +296,16 @@ const isPathActive = (path) => {
 			>
 				{/* Logo and Profile */}
 				<div className="sidebar-logo active">
-					<a href="/dashboard" className="logo logo-normal" >
-						{/* <img src={Logo} alt="Img" /> */}
-						 <img src={isDarkMode ? companyImages?.companyDarkLogo : companyImages?.companyLogo} className="compact-logo" alt="Logo" />
-					</a>
-					<a href="/dashboard" className="logo logo-white" >
-						{/* <img src={Logo} alt="Img" /> */}
-						<img  src={isDarkMode ? companyImages?.companyDarkLogo : companyImages?.companyLogo} className="full-logo" alt="Full Logo" />
-					</a>
-					<a href="/dashboard" className="logo-small" style={{ padding: '5 25px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-						 <img src={companyImages?.companyDarkLogo} class="compact-logo" alt="Compact Footer Logo" />
-					</a>
+					{/* <a href="/dashboard" className="logo logo-normal" style={{ padding: '0 10px', height: '40px', width: 'auto', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+						 <img src={isDarkMode ? companyImages?.companyDarkLogo : companyImages?.companyLogo} className="compact-logo" alt="Logo" style={{height: "65px"}}/>
+					</a> */}
+					  <Link to="/home" className="logo logo-normal">
+						 <img src={isDarkMode ? companyImages?.companyDarkLogo : companyImages?.companyLogo}  alt="Logo" />
+							  </Link>
+				
+					<Link href="/dashboard" className="logo-small">
+						 <img src={companyImages?.companyIcon} class="compact-logo" alt="Compact Footer Logo" />
+					</Link>
 					<a
 						id="toggle_btn"
 						href="#"
