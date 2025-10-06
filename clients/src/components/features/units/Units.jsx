@@ -386,7 +386,7 @@ const Units = () => {
                   className="btn btn-white btn-md d-inline-flex align-items-center"
                   data-bs-toggle="dropdown"
                 >
-                  Sort by : {selectedStatus || "Status"}
+                  Sort by : {selectedStatus || "All Status"}
                 </a>
                 <ul className="dropdown-menu  dropdown-menu-end p-3">
                   <li>
@@ -395,7 +395,7 @@ const Units = () => {
                       className="dropdown-item rounded-1"
                       onClick={() => setSelectedStatus("")}
                     >
-                      All
+                      All Status
                     </button>
                   </li>
                   <li>

@@ -223,6 +223,7 @@ const Login = () => {
                       value={formData.email}
                       onChange={handleChange}
                       className="form-control border-end-0"
+                      placeholder='Enter your email'
                       required
                     />
                     <span className="input-group-text border-start-0">
@@ -242,6 +243,7 @@ const Login = () => {
                       onChange={handleChange}
                       className="pass-input form-control border-end-0"
                       required
+                      placeholder='Enter your password'
                     />
                     <span
                       className="input-group-text border-start-0 cursor-pointer"

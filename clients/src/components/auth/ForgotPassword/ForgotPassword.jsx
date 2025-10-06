@@ -84,7 +84,7 @@ const handleVerifyOtp = async (e) => {
                             <div className="mb-3">
                                 <label className="form-label">Email <span className="text-danger"> *</span></label>
                                 <div className="input-group">
-                                    <input type="email"  className="form-control border-end-0"       value={email}
+                                    <input type="email"  className="form-control border-end-0" placeholder="Enter your email"      value={email}
           onChange={(e) => setEmail(e.target.value)}
           required/>
                                     <span className="input-group-text border-start-0">

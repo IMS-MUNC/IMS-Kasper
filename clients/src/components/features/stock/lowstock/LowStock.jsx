@@ -635,7 +635,7 @@ const LowStock = () => {
                   <div className="d-flex table-dropdown my-xl-auto right-content align-items-center flex-wrap row-gap-3">
                     <div className="dropdown me-2">
                       <a className="btn btn-white btn-md d-inline-flex align-items-center" data-bs-toggle="dropdown">
-                        Sort by : {selectedWarehouse || 'Warehouse'}
+                        Sort by : {selectedWarehouse || 'All Warehouse'}
                       </a>
                       <ul className="dropdown-menu dropdown-menu-end p-3" style={{ maxHeight: '200px', overflowY: 'auto' }}>
                         <li>
@@ -652,7 +652,7 @@ const LowStock = () => {
                     </div>
                     <div className="dropdown me-2">
                       <a className="btn btn-white btn-md d-inline-flex align-items-center" data-bs-toggle="dropdown">
-                        Sort by : {selectedCategory || 'Category'}
+                        Sort by : {selectedCategory || 'All Category'}
                       </a>
                       <ul className="dropdown-menu dropdown-menu-end p-3" style={{ maxHeight: '200px', overflowY: 'auto' }}>
                         <li>
@@ -667,11 +667,7 @@ const LowStock = () => {
                         ))}
                       </ul>
                     </div>
-                    <div className="dropdown me-2">
-                      <a className="btn btn-white btn-md d-inline-flex align-items-center" onClick={resetFilters}>
-                        <TbRefresh className="me-1" /> Reset
-                      </a>
-                    </div>
+                    
                   </div>
                 </div>
                 <div className="card-body p-0">
@@ -828,8 +824,8 @@ const LowStock = () => {
                   </div>
                   <div className="d-flex table-dropdown my-xl-auto right-content align-items-center flex-wrap row-gap-3">
                     <div className="dropdown me-2">
-                      <a className="dropdown-toggle btn btn-white btn-md d-inline-flex align-items-center" data-bs-toggle="dropdown">
-                        {selectedWarehouse || 'Warehouse'}
+                      <a className="btn btn-white btn-md d-inline-flex align-items-center" data-bs-toggle="dropdown">
+                        Sort by : {selectedWarehouse || 'All Warehouse'}
                       </a>
                       <ul className="dropdown-menu dropdown-menu-end p-3" style={{ maxHeight: '200px', overflowY: 'auto' }}>
                         {warehouses.map(warehouse => (
@@ -842,8 +838,8 @@ const LowStock = () => {
                       </ul>
                     </div>
                     <div className="dropdown me-2">
-                      <a className="dropdown-toggle btn btn-white btn-md d-inline-flex align-items-center" data-bs-toggle="dropdown">
-                        {selectedCategory || 'Category'}
+                      <a className="btn btn-white btn-md d-inline-flex align-items-center" data-bs-toggle="dropdown">
+                        Sort by : {selectedCategory || 'All Category'}
                       </a>
                       <ul className="dropdown-menu dropdown-menu-end p-3" style={{ maxHeight: '200px', overflowY: 'auto' }}>
                         {categories.map(category => (
@@ -855,11 +851,7 @@ const LowStock = () => {
                         ))}
                       </ul>
                     </div>
-                    <div className="dropdown me-2">
-                      <a className="btn btn-white btn-md d-inline-flex align-items-center" onClick={handleReset}>
-                        <TbRefresh className="me-1" /> Reset
-                      </a>
-                    </div>
+                    
                   </div>
                 </div>
                 <div className="card-body p-0">

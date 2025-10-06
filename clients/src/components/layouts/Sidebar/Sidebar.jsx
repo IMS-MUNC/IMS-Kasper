@@ -296,7 +296,7 @@ const isPathActive = (path) => {
 			>
 				{/* Logo and Profile */}
 				<div className="sidebar-logo active">
-					<a href="/dashboard" className="logo logo-normal" style={{ padding: '0 10px', height: '40px', width: 'auto', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+					<a href="/dashboard" className="logo logo-normal" >
 						{/* <img src={Logo} alt="Img" /> */}
 						 <img src={isDarkMode ? companyImages?.companyDarkLogo : companyImages?.companyLogo} className="compact-logo" alt="Logo" />
 					</a>
@@ -304,9 +304,9 @@ const isPathActive = (path) => {
 						{/* <img src={Logo} alt="Img" /> */}
 						<img  src={isDarkMode ? companyImages?.companyDarkLogo : companyImages?.companyLogo} className="full-logo" alt="Full Logo" />
 					</a>
-					{/* <a href="/dashboard" className="logo-small" style={{ padding: '0 10px', height: '40px', width: '40px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-						 <img src={companyImages?.companyIcon} class="compact-logo" alt="Compact Footer Logo" />
-					</a> */}
+					<a href="/dashboard" className="logo-small" style={{ padding: '5 25px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+						 <img src={companyImages?.companyDarkLogo} class="compact-logo" alt="Compact Footer Logo" />
+					</a>
 					<a
 						id="toggle_btn"
 						href="#"

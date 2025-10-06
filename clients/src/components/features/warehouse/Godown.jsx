@@ -48,7 +48,7 @@ function Godown() {
           Authorization: `Bearer ${token}`,
         },
       });
-      console.log("Warehouse Details:", res.data.warehouse);
+      // console.log("Warehouse Details:", res.data.warehouse);
 
       setWarehousesDetails(res.data.warehouse);
       // Set blocks data from warehouse response
@@ -74,7 +74,7 @@ function Godown() {
           Authorization: `Bearer ${token}`,
         },
       }); // <- endpoint
-      console.log("Warehouseserer:", res.data.data);
+      // console.log("Warehouseserer:", res.data.data);
 
       setWarehouses(res.data.data); // backend: { success, data }
     } catch (err) {
@@ -109,7 +109,7 @@ function Godown() {
   const formRef = useRef(null);
   const handlePopup = (cell, zone) => {
     try {
-      console.log('handlePopup called with:', { cell, zone, currentPopupState: popup });
+      // console.log('handlePopup called with:', { cell, zone, currentPopupState: popup });
       
       // Safety checks for cell and zone parameters
       if (!cell || !zone) {
@@ -118,14 +118,14 @@ function Godown() {
       }
       
       const cellName = cell.name || cell;
-      console.log('Setting selectedItem to:', { zone: zone, grid: cellName });
+      // console.log('Setting selectedItem to:', { zone: zone, grid: cellName });
       
       setSelectedItem({ zone: zone, grid: cellName });
       setSearchQuery(''); // Clear search query when opening popup
       setShowDropdown(false); // Hide dropdown when opening popup
       setPopup(!popup);
       
-      console.log('handlePopup completed successfully');
+      // console.log('handlePopup completed successfully');
     } catch (error) {
       console.error('Error in handlePopup:', error);
     }
@@ -163,14 +163,14 @@ function Godown() {
         const token = localStorage.getItem("token");
 
         // Fetch products filtered by warehouse ID
-        console.log("Fetching products for warehouse ID:", id); // Debug log
+        // console.log("Fetching products for warehouse ID:", id); // Debug log
         const res = await axios.get(`${BASE_URL}/api/products?warehouse=${id}`, {
           headers: {
             Authorization: `Bearer ${token}`,
           },
         });
-        console.log("API Response:", res.data); // Debug log
-        console.log("Products array:", res.data.products); // Debug log
+        // console.log("API Response:", res.data); // Debug log
+        // console.log("Products array:", res.data.products); // Debug log
         const products = res.data.products || res.data; // Handle both response formats
         setProducts(products);
         setAllProducts(products); // Store all products
@@ -191,8 +191,8 @@ function Godown() {
 
   // Product search functionality
   const handleProductSearch = (query) => {
-    console.log("Search query:", query); // Debug log
-    console.log("All products:", allProducts); // Debug log
+    // console.log("Search query:", query); // Debug log
+    // console.log("All products:", allProducts); // Debug log
     setSearchQuery(query);
     setProductSearchQuery(query);
 
@@ -229,47 +229,47 @@ function Godown() {
       );
     });
 
-    console.log("Filtered products:", filteredProducts); // Debug log
+    // console.log("Filtered products:", filteredProducts); // Debug log
     setProducts(filteredProducts);
     setSearchResults(filteredProducts);  // ✅ update dropdown
     setShowDropdown(true);
-    console.log("Dropdown should show:", true, "Results count:", filteredProducts.length); // Debug log
+    // console.log("Dropdown should show:", true, "Results count:", filteredProducts.length); // Debug log
   };
 
   // Function to get assigned products for the selected cell
   const getAssignedProducts = () => {
     try {
-      console.log('getAssignedProducts called with selectedItem:', selectedItem);
-      console.log('blocks data:', blocks);
+      // console.log('getAssignedProducts called with selectedItem:', selectedItem);
+      // console.log('blocks data:', blocks);
       
       // Safety checks for all required data
       if (!selectedItem || !selectedItem.zone || !selectedItem.grid) {
-        console.log('Missing selectedItem data, returning empty array');
+        // console.log('Missing selectedItem data, returning empty array');
         return [];
       }
       
       if (!blocks || !Array.isArray(blocks) || blocks.length === 0) {
-        console.log('Missing or invalid blocks data, returning empty array');
+        // console.log('Missing or invalid blocks data, returning empty array');
         return [];
       }
 
       const zoneData = blocks.find(block => block && block.zone === selectedItem.zone);
-      console.log('Found zoneData:', zoneData);
+      // console.log('Found zoneData:', zoneData);
       if (!zoneData) {
         console.log('No zone data found, returning empty array');
         return [];
       }
 
       const cellData = zoneData.cells?.find(cell => cell && cell.name === selectedItem.grid);
-      console.log('Found cellData:', cellData);
+      // console.log('Found cellData:', cellData);
       if (!cellData) {
-        console.log('No cell data found, returning empty array');
+        // console.log('No cell data found, returning empty array');
         return [];
       }
 
       // Get items array (which contains only productId)
       const items = Array.isArray(cellData.items) ? cellData.items : [];
-      console.log('Raw items from cell:', items);
+      // console.log('Raw items from cell:', items);
       
       // Check if items already have full product details (new format)
       // or need to be enriched from the products array (legacy format)
@@ -311,7 +311,7 @@ function Godown() {
         }
       });
       
-      console.log('Enriched items:', enrichedItems);
+      // console.log('Enriched items:', enrichedItems);
       return enrichedItems;
     } catch (error) {
       console.error('Error in getAssignedProducts:', error);
@@ -410,7 +410,7 @@ function Godown() {
   // Component to display assigned products
   const AssignedProductsDisplay = () => {
     try {
-      console.log('AssignedProductsDisplay rendering...');
+      // console.log('AssignedProductsDisplay rendering...');
       const assignedProducts = getAssignedProducts();
       
       // Only show "no products" message if there are no assigned products AND no staged products
@@ -448,7 +448,7 @@ function Godown() {
           <div style={{ maxHeight: "300px", overflowY: "auto" }}>
           {assignedProducts.map((item, index) => {
             // Debug: Log the exact structure of each item
-            console.log(`Assigned product ${index}:`, item);
+            // console.log(`Assigned product ${index}:`, item);
             
             return (
               <div
@@ -532,7 +532,7 @@ function Godown() {
         }];
       });
       
-      console.log("Product added to staging area:", selectedProduct.productName);
+      // console.log("Product added to staging area:", selectedProduct.productName);
       
     } catch (error) {
       console.error("Error adding product to staging area:", error);
@@ -591,8 +591,8 @@ function Godown() {
                 });
               });
               
-              console.log("Product successfully assigned to cell:", stagedProduct.targetZone, stagedProduct.targetGrid);
-              console.log("Added item details:", addedItem);
+              // console.log("Product successfully assigned to cell:", stagedProduct.targetZone, stagedProduct.targetGrid);
+              // console.log("Added item details:", addedItem);
             }
           }
         } else {
@@ -608,7 +608,7 @@ function Godown() {
           );
           
           if (updateResponse.data.success) {
-            console.log("Product successfully assigned to warehouse");
+            // console.log("Product successfully assigned to warehouse");
           }
         }
         
@@ -632,7 +632,7 @@ function Godown() {
       
       // Clear staging area after successful assignment
       setStagedProducts([]);
-      console.log("All staged products have been assigned successfully");
+      // console.log("All staged products have been assigned successfully");
       
       // Close the popup after successful assignment
       setPopup(false);
@@ -650,7 +650,7 @@ function Godown() {
         setStagedProducts(prevStaged => 
           prevStaged.filter(product => product._id !== productToRemove._id)
         );
-        console.log("Product removed from staging area:", productToRemove.productName);
+        // console.log("Product removed from staging area:", productToRemove.productName);
       } else {
         // Remove from assigned products (from specific cell)
         const token = localStorage.getItem("token");
@@ -664,12 +664,12 @@ function Godown() {
             // Get the product ID - it could be in productId field or _id field
             const productId = productToRemove.productId || productToRemove._id;
             
-            console.log("=== REMOVE PRODUCT DEBUG ===");
-            console.log("Product to remove details:", productToRemove);
-            console.log("Extracted productId:", productId, "Type:", typeof productId);
-            console.log("Zone:", selectedItem.zone, "Grid:", selectedItem.grid, "CellIndex:", cellIndex);
-            console.log("Request URL:", `${BASE_URL}/api/warehouse/${id}/zone/${selectedItem.zone}/cell/${cellIndex}/remove`);
-            console.log("Request data:", { productId });
+            // console.log("=== REMOVE PRODUCT DEBUG ===");
+            // console.log("Product to remove details:", productToRemove);
+            // console.log("Extracted productId:", productId, "Type:", typeof productId);
+            // console.log("Zone:", selectedItem.zone, "Grid:", selectedItem.grid, "CellIndex:", cellIndex);
+            // console.log("Request URL:", `${BASE_URL}/api/warehouse/${id}/zone/${selectedItem.zone}/cell/${cellIndex}/remove`);
+            // console.log("Request data:", { productId });
             
             // Validate that we have productId
             if (!productId) {
@@ -692,17 +692,17 @@ function Godown() {
               }
             );
             
-            console.log("=== REMOVE RESPONSE ===");
-            console.log("Response status:", removeResponse.status);
-            console.log("Response data:", removeResponse.data);
-            console.log("Response headers:", removeResponse.headers);
+            // console.log("=== REMOVE RESPONSE ===");
+            // console.log("Response status:", removeResponse.status);
+            // console.log("Response data:", removeResponse.data);
+            // console.log("Response headers:", removeResponse.headers);
             
             if (removeResponse.status === 200) {
-              console.log("✅ Product successfully removed from cell:", selectedItem.zone, selectedItem.grid);
-              console.log("Refreshing warehouse data...");
+              // console.log("✅ Product successfully removed from cell:", selectedItem.zone, selectedItem.grid);
+              // console.log("Refreshing warehouse data...");
               // Refresh warehouse data from server to ensure consistency
               await fetchWarehouseDetails();
-              console.log("✅ Warehouse data refreshed");
+              // console.log("✅ Warehouse data refreshed");
             } else {
               console.error("❌ Failed to remove product from database:", removeResponse.data);
             }
@@ -873,7 +873,7 @@ function Godown() {
               <span
                 style={{
                   fontFamily: "Roboto",
-                  fontWeight: "400",
+                  fontWeight: "600",
                   fontSize: "14px",
                   color: "#262626",
                 }}

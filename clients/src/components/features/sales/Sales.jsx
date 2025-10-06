@@ -524,7 +524,6 @@ const handleExportExcel = () => {
 <td>
   {Array.isArray(sale.creditNotes) && sale.creditNotes.length > 0 ? (
     <>
-      {/* पहला CreditNote full ID दिखे */}
       <span
         key={sale.creditNotes[0]._id}
         className="badge bg-info text-light me-1"
@@ -859,7 +858,7 @@ const handleExportExcel = () => {
 
           </div>
         </div>
-        <SalesDashboard />
+        {/* <SalesDashboard /> */}
       </div>
       {showModal && editSale && (
         <EditSalesModal
