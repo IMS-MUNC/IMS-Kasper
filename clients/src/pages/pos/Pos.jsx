@@ -3289,7 +3289,7 @@ const handleSubmit = async (e) => {
                 </div>
                 </div>
                 <div style={{width:'100%'}}>
-                <div>Email Id <span style={{color:'red'}}>*</span></div>
+                <div>Email Id</div>
                 <div style={{display:'flex',justifyContent:'space-between',padding:'10px 15px',backgroundColor:'#F9FAFB',borderRadius:'10px',border:'1px solid #E6E6E6',width:'100%',marginTop:'5px'}}>
                   <input type="email" placeholder='Enter Email Id' style={{border:'none',outline:'none',width:'100%',backgroundColor:'#F9FAFB'}} name="email" value={form.email} onChange={handleInputChange} />
                 </div>

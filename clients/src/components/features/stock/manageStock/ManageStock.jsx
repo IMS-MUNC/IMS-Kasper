@@ -38,7 +38,7 @@ const Stock = () => {
           </div>
         </div>
         {/* Totals Card */}
-        {/* <div className="row mb-3">
+         <div className="row mb-3">
           <div className="col-md-3">
             <div className="card text-center">
               <div className="card-body">
@@ -105,7 +105,7 @@ const Stock = () => {
               </div>
             </div>
           </div>
-        </div> */}
+        </div> 
         <div className="card">
           <div className="card-body p-0">
             {loading ? (

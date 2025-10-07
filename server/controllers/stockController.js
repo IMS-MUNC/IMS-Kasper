@@ -106,39 +106,43 @@ exports.getStockSummary = async (req, res) => {
             }
             totalSaleReturn += saleReturn;
 
-            // Stock in/out calculation
-            const baseProductQty =
-                typeof product.quantity === 'number' ? product.quantity : 0;
-            const stockIn = baseProductQty + totalPurchased - debitNoteReturn;
-            const stockOut = saleQty - saleReturn;
+            // Stock in/out calculation (corrected)
+            const baseProductQty = typeof product.quantity === 'number' ? product.quantity : 0;
+            const stockIn = baseProductQty + totalPurchased;
+            const stockOut = saleQty;
             const purchaseReturn = totalPurchaseReturn + debitNoteReturn;
-            const currentStock = stockIn - stockOut - purchaseReturn + saleReturn;
+            const saleReturnQty = saleReturn;
+            // Current stock: stockIn - stockOut - purchaseReturn + saleReturn
+            const currentStock = stockIn - stockOut - purchaseReturn + saleReturnQty;
 
             // Profit/Loss
             const profit = salesAmount - purchaseAmount;
-            // Latest purchase price
-            const allProductPurchases = purchases
-                .map((purchase) =>
-                    purchase.products.find(
+            // Latest purchase price (from most recent purchase with valid price)
+            let availablePrice = null;
+            if (purchases.length > 0) {
+                let latestDate = null;
+                let latestPrice = null;
+                purchases.forEach(purchase => {
+                    const prod = purchase.products.find(
                         (p) => p.product.toString() === product._id.toString()
-                    )
-                )
-                .filter(Boolean);
-
-            let availablePrice = 0;
-            if (allProductPurchases.length > 0) {
-                availablePrice =
-                    allProductPurchases[allProductPurchases.length - 1].purchasePrice || 0;
+                    );
+                    if (prod && prod.purchasePrice && purchase.purchaseDate) {
+                        const date = new Date(purchase.purchaseDate);
+                        if (!latestDate || date > latestDate) {
+                            latestDate = date;
+                            latestPrice = prod.purchasePrice;
+                        }
+                    }
+                });
+                if (latestPrice !== null && latestPrice !== undefined) {
+                    availablePrice = latestPrice;
+                }
             }
 
             totalProfit += profit;
             totalPurchaseAmount += purchaseAmount;
             totalSalesAmount += salesAmount;
             totalAvailableStockValue += (currentStock * availablePrice);
-
-            console.log(
-                `Product: ${product.productName} | Sold: ${saleQty} | Sale Return: ${saleReturn} | StockOut: ${stockOut}`
-            );
 
             summary.push({
                 product: product.productName,

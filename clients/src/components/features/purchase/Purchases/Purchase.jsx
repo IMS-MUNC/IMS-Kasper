@@ -29,6 +29,35 @@ const Purchase = () => {
 
     const [selectedReturnData, setSelectedReturnData] = useState(null);
 
+
+    const isFullyReturned = (purchase) => {
+        if (!Array.isArray(purchase.products) || purchase.products.length === 0) return false;
+        return purchase.products.every(prod => {
+          let totalReturnedQty = 0;
+          if (Array.isArray(purchase.debitNotes)) {
+            purchase.debitNotes.forEach(note => {
+              if (Array.isArray(note.products)) {
+                note.products.forEach(retProd => {
+                  const prodId = prod.product?._id || prod.product?._id || prod._id;
+                  const retProdId = retProd.product?._id || retProd.productId || retProd._id;
+                  if (prodId && retProdId && prodId === retProdId) {
+                    totalReturnedQty += Number(retProd.returnQty || 0);
+                  }
+                });
+              }
+            });
+          }
+          return Number(prod.quantity || 0) <= totalReturnedQty;
+        });
+      };
+    
+         const handleConvertToReturn = (purchase) => {
+          if (isFullyReturned(purchase)) return;
+          setSelectedReturnData(purchase);
+          const returnModal = new window.bootstrap.Modal(document.getElementById("add-return-debit-note"));
+          returnModal.show();
+        };
+
 // Export all table data to Excel
   // const handleExportExcel = () => {
   //   if (!purchases.length) return;
@@ -415,11 +444,11 @@ const handleExportPDF = async () => {
   };
 
   
-    const handleConvertToReturn = (purchase) => {
-      setSelectedReturnData(purchase);
-      const returnModal = new window.bootstrap.Modal(document.getElementById("add-return-debit-note"));
-      returnModal.show();
-    };
+    // const handleConvertToReturn = (purchase) => {
+    //   setSelectedReturnData(purchase);
+    //   const returnModal = new window.bootstrap.Modal(document.getElementById("add-return-debit-note"));
+    //   returnModal.show();
+    // };
 
    
 
@@ -728,164 +757,162 @@ const token = localStorage.getItem("token");
                     <tr><td colSpan="16" className="text-center">No purchases found.</td></tr>
                   ) : (
                     purchases.map((purchase) => (
-                       <React.Fragment key={purchase._id}>
-                      <tr key={purchase._id}>
-                        <td><label className="checkboxs"><input
-                          type="checkbox"
-                          checked={selectedRows.includes(purchase._id)}
-                          onChange={() => handleSelectRow(purchase._id)}
-                        /><span className="checkmarks" /></label></td>
-                        <td className="text-capitalize">{purchase.supplier ? `${purchase.supplier.firstName} ${purchase.supplier.lastName}` : "N/A"}</td>
-                        <td>{purchase.referenceNumber}</td>
-                        <td>
-  {Array.isArray(purchase.debitNotes) && purchase.debitNotes.length > 0 ? (
-    <>
-      <span
-        key={purchase.debitNotes[0]._id}
-        className="badge bg-info text-light me-1"
-        style={{ cursor: "pointer" }}
-  onClick={() => handleToggleDebitNote(purchase._id, purchase.debitNotes[0]._id)}
-      >
-        {purchase.debitNotes[0].debitNoteId}
-      </span>
+                      <React.Fragment key={purchase._id}>
+                        <tr key={purchase._id}>
+                          <td><label className="checkboxs"><input
+                            type="checkbox"
+                            checked={selectedRows.includes(purchase._id)}
+                            onChange={() => handleSelectRow(purchase._id)}
+                          /><span className="checkmarks" /></label></td>
+                          <td className="text-capitalize">{purchase.supplier ? `${purchase.supplier.firstName} ${purchase.supplier.lastName}` : "N/A"}</td>
+                          <td>{purchase.referenceNumber}</td>
+                          <td>
+                            {Array.isArray(purchase.debitNotes) && purchase.debitNotes.length > 0 ? (
+                              <>
+                                <span
+                                  key={purchase.debitNotes[0]._id}
+                                  className="badge bg-info text-light me-1"
+                                  style={{ cursor: "pointer" }}
+                                  onClick={() => handleToggleDebitNote(purchase._id, purchase.debitNotes[0]._id)}
+                                >
+                                  {purchase.debitNotes[0].debitNoteId}
+                                </span>
 
-      {purchase.debitNotes.length > 1 && (
-        <span
-          className="badge bg-secondary text-light"
-          style={{ cursor: "pointer" }}
-          title={purchase.debitNotes.slice(1).map(n => n.debitNoteId).join(", ")} 
-          onClick={() => handleToggleDebitNote(purchase._id, purchase.debitNotes[0]._id)}
-        >
-          +{purchase.debitNotes.length - 1} more
-        </span>
-      )}
-    </>
-  ) : (
-    "N/A"
-  )}
-</td>
-                        <td>{new Date(purchase.purchaseDate).toLocaleDateString()}</td>
-                        <td>
-                          <ul>{purchase.products.map((p, idx) => (
-                            <li key={idx}>{p.product?.productName}
-                              {/* - {p.quantity} × {settings.currencySymbol}{convertCurrency(p.purchasePrice)} */}
-                            </li>
-                          ))}</ul>
-                        </td>
-                        <td>
-                          <ul>
-                            {purchase.products.map((p, idx) => (
-                              <li key={idx}>
-                                {p.quantity} {p.unit}
+                                {purchase.debitNotes.length > 1 && (
+                                  <span
+                                    className="badge bg-secondary text-light"
+                                    style={{ cursor: "pointer" }}
+                                    title={purchase.debitNotes.slice(1).map(n => n.debitNoteId).join(", ")}
+                                    onClick={() => handleToggleDebitNote(purchase._id, purchase.debitNotes[0]._id)}
+                                  >
+                                    +{purchase.debitNotes.length - 1} more
+                                  </span>
+                                )}
+                              </>
+                            ) : (
+                              "N/A"
+                            )}
+                          </td>
+                          <td>{new Date(purchase.purchaseDate).toLocaleDateString()}</td>
+                          <td>
+                            <ul>{purchase.products.map((p, idx) => (
+                              <li key={idx}>{p.product?.productName}
+                                {/* - {p.quantity} × {settings.currencySymbol}{convertCurrency(p.purchasePrice)} */}
                               </li>
-                            ))}
-                          </ul>
-                        </td>
+                            ))}</ul>
+                          </td>
+                          <td>
+                            <ul>
+                              {purchase.products.map((p, idx) => (
+                                <li key={idx}>
+                                  {p.quantity} {p.unit}
+                                </li>
+                              ))}
+                            </ul>
+                          </td>
 
-                        <td>
-                          <ul>
-                            {purchase.products.map((p, idx) => (
-                              <li key={idx}>{p.purchasePrice}</li>
-                            ))}
-                          </ul>
-                        </td>
+                          <td>
+                            <ul>
+                              {purchase.products.map((p, idx) => (
+                                <li key={idx}>{p.purchasePrice}</li>
+                              ))}
+                            </ul>
+                          </td>
 
-                        <td>
-                          <ul>
-                            {purchase.products.map((p, idx) => (
-                              <li key={idx}>{p.discount}<span className="ms-1">{p.discountType === "Percentage" ? "%" : "₹"}</span></li>
-                            ))}
-                          </ul>
-                        </td>
+                          <td>
+                            <ul>
+                              {purchase.products.map((p, idx) => (
+                                <li key={idx}>{p.discount}<span className="ms-1">{p.discountType === "Percentage" ? "%" : "₹"}</span></li>
+                              ))}
+                            </ul>
+                          </td>
 
-                        <td>
-                          <ul>
-                            {purchase.products.map((p, idx) => (
-                              <li key={idx}>{p.tax} %</li>
-                            ))}
-                          </ul>
-                        </td>
+                          <td>
+                            <ul>
+                              {purchase.products.map((p, idx) => (
+                                <li key={idx}>{p.tax} %</li>
+                              ))}
+                            </ul>
+                          </td>
 
-                        <td>
-                          <ul>
-                            {purchase.products.map((p, idx) => (
-                              <li key={idx}>{p.taxAmount || ((p.afterDiscount * p.tax) / 100 || 0)}</li>
-                            ))}
-                          </ul>
-                        </td>
+                          <td>
+                            <ul>
+                              {purchase.products.map((p, idx) => (
+                                <li key={idx}>{p.taxAmount || ((p.afterDiscount * p.tax) / 100 || 0)}</li>
+                              ))}
+                            </ul>
+                          </td>
 
-                        <td>{purchase.shippingCost}</td>
-                        <td>{purchase.orderTax}</td>
+                          <td>{purchase.shippingCost}</td>
+                          <td>{purchase.orderTax}</td>
 
-                        <td>
-                          <ul>
-                            {purchase.products.map((p, idx) => (
-                              <li key={idx}>{p.unitCost}</li>
-                            ))}
-                          </ul>
-                        </td>
+                          <td>
+                            <ul>
+                              {purchase.products.map((p, idx) => (
+                                <li key={idx}>{p.unitCost}</li>
+                              ))}
+                            </ul>
+                          </td>
 
-                        <td>
-                          <ul>
-                            {purchase.products.map((p, idx) => (
-                              <li key={idx}>{p.totalCost}</li>
-                            ))}
-                          </ul>
-                        </td>
+                          <td>
+                            <ul>
+                              {purchase.products.map((p, idx) => (
+                                <li key={idx}>{p.totalCost}</li>
+                              ))}
+                            </ul>
+                          </td>
 
-                        {/* <td><ul>{purchase.products.map((p, idx) => (<li key={idx}>{p.quantity} {p.unit}</li>))}</ul></td>
-                        <td><ul>{purchase.products.map((p, idx) => (<li key={idx}>{settings.currencySymbol}{convertCurrency(p.purchasePrice)}</li>))}</ul></td>
-                        <td><ul>{purchase.products.map((p, idx) => (<li key={idx}>{settings.currencySymbol}{convertCurrency(p.discount)}</li>))}</ul></td>
-                        <td><ul>{purchase.products.map((p, idx) => (<li key={idx}>{p.tax} %</li>))}</ul></td>
-                        <td><ul>{purchase.products.map((p, idx) => (<li key={idx}>{settings.currencySymbol}{convertCurrency(p.taxAmount || ((p.afterDiscount * p.tax) / 100 || 0))}</li>))}</ul></td>
-                        <td>{settings.currencySymbol}{convertCurrency(purchase.shippingCost)}</td>
-                        <td>{settings.currencySymbol}{convertCurrency(purchase.orderTax)}</td>
-                        <td><ul>{purchase.products.map((p, idx) => (<li key={idx}>{settings.currencySymbol}{convertCurrency(p.unitCost)}</li>))}</ul></td>
-                        <td><ul>{purchase.products.map((p, idx) => (<li key={idx}>{settings.currencySymbol}{convertCurrency(p.totalCost)}</li>))}</ul></td> */}
-                        <td>
-                          {/* <span className={`badge ${purchase.status === "Pending" ? "bg-warning" : "bg-success"}`}>{purchase.status}</span> */}
-                          <span
-                            className={`badge ${purchase.status === "Pending"
+
+                          <td>
+                            {/* <span className={`badge ${purchase.status === "Pending" ? "bg-warning" : "bg-success"}`}>{purchase.status}</span> */}
+                            <span
+                              className={`badge ${purchase.status === "Pending"
                                 ? "bg-warning text-dark" // Yellow badge with dark text
                                 : purchase.status === "Received"
                                   ? "bg-success" // Green badge
                                   : purchase.status === "Ordered"
                                     ? "bg-primary" // Blue badge
                                     : "bg-secondary" // Fallback if none match
-                              }`}
-                          >
-                            {purchase.status}
-                          </span>
-                        </td>
-                        <td>{purchase.createdBy ? `${purchase.createdBy.name}` : '--'}</td>
-                        <td>{purchase.updatedBy ? `${purchase.updatedBy.name} ` : '--'}</td>
-                        <td class="action-item">
-                          <a href="" data-bs-toggle="dropdown">
-                            <TbDots />
-                          </a>
-                          <ul class="dropdown-menu">
-                            <li>
-                              <a class="dropdown-item d-flex align-items-center" onClick={() => handleEditClick(purchase)}><TbEdit className="me-2" />Edit</a>
-                            </li>
-                            <li>
-                              <a className="dropdown-item d-flex align-items-center" onClick={() => handleDeletePurchase(purchase._id, purchase.referenceNumber)}><TbTrash className="me-2" />Delete</a>
-                            </li>
-                            {/* <li>
+                                }`}
+                            >
+                              {purchase.status}
+                            </span>
+                          </td>
+                          <td>{purchase.createdBy ? `${purchase.createdBy.name}` : '--'}</td>
+                          <td>{purchase.updatedBy ? `${purchase.updatedBy.name} ` : '--'}</td>
+                          <td class="action-item">
+                            <a href="" data-bs-toggle="dropdown">
+                              <TbDots />
+                            </a>
+                            <ul class="dropdown-menu">
+                              <li>
+                                <a class="dropdown-item d-flex align-items-center" onClick={() => handleEditClick(purchase)}><TbEdit className="me-2" />Edit</a>
+                              </li>
+                              <li>
+                                <a className="dropdown-item d-flex align-items-center" onClick={() => handleDeletePurchase(purchase._id, purchase.referenceNumber)}><TbTrash className="me-2" />Delete</a>
+                              </li>
+                              {/* <li>
                               <a  class="dropdown-item d-flex align-items-center" onClick={() => setViewPurchaseId(purchase._id)}><TbEye class="isax isax-send-2 me-2"/>View </a>
                             </li> */}
-                            <li>
-                              {/* <a href="" class="dropdown-item d-flex align-items-center"><i class="isax isax-document-download me-2"></i>Download Invoices as PDF</a> */}
-                            </li>
-                            <li>
-                              <a className="dropdown-item d-flex align-items-center" onClick={() => handleConvertToReturn(purchase)}><i className="isax isax-convert me-2"></i>Convert to Purchase Return</a>
-                            </li>
-                            <li>
-                            </li>
-                          </ul>
-                        </td>
+                              <li>
+                                {/* <a href="" class="dropdown-item d-flex align-items-center"><i class="isax isax-document-download me-2"></i>Download Invoices as PDF</a> */}
+                              </li>
+                              <li>
+                                <a
+                                  className="dropdown-item d-flex align-items-center"
+   onClick={() => !isFullyReturned(purchase) && handleConvertToReturn(purchase)}
+                                style={isFullyReturned(purchase) ? { pointerEvents: 'none', opacity: 0.5 } : {}}
+                                >
+                                  <i className="isax isax-convert me-2"></i>Convert to Purchase Return
+                                </a>
+                              </li>
+                              <li>
+                              </li>
+                            </ul>
+                          </td>
 
 
-                     {/* {(purchase.debitNotes && purchase.debitNotes.length > 0 && (
+                          {/* {(purchase.debitNotes && purchase.debitNotes.length > 0 && (
                         <tr key={purchase._id + '-debitnotes'}>
                           <td colSpan={18} style={{ background: '#f9f9f9', padding: 0 }}>
                             <div style={{ padding: '8px 0' }}>
@@ -926,7 +953,7 @@ const token = localStorage.getItem("token");
                         </tr>
                           )
                     )}  */}
- {/* {purchase.debitNotes && purchase.debitNotes.length > 0 && (
+                          {/* {purchase.debitNotes && purchase.debitNotes.length > 0 && (
   <tr key={purchase._id + '-debitnotes'}>
     <td colSpan={18} style={{ background: '#f9f9f9', padding: 0 }}>
       <div style={{ padding: '8px 0' }}>
@@ -985,103 +1012,103 @@ const token = localStorage.getItem("token");
   </tr>
 )}  */}
 
-                                 {/* {expandedDebitNote[purchase._id] === dn._id && dn.products && */}
-         
-                      </tr>
-                       {Array.isArray(purchase.debitNotes) && purchase.debitNotes.length > 0 && expandedDebitNote[purchase._id] && (
-            <tr>
-              <td colSpan="16" style={{ background: "#f9f9f9" }}>
-                <div style={{ fontWeight: 600, marginBottom: 6 }}>
-                  Debit Notes (Returns)
-                </div>
-                <table className="table table-sm table-bordered mb-0">
-                  <thead className="table-light">
-                    <tr>
-                      <th>Debit Note ID</th>
-                      <th>Date</th>
-                       <th>Product</th>
-                      <th>Qty</th>
-                      <th>Unit</th>
-                      <th>Purchase Price</th>
-                      <th>Discount</th>
-                      <th>Discount Type</th>
-                      <th>Discount Amount</th>
-                      <th>Tax (%)</th>
-                      <th>Tax Amount</th>
-                      <th>Unit Cost</th>
-                      <th>Total Cost</th>
-                      <th>SubTotal</th>
-                    </tr>
-                  </thead>
-                 
-                       <tbody>
-                        {purchase.debitNotes.map((note) =>
-                          note.products?.length > 0 ? (
-                            note.products.map((prod, idx) => (
-                              <tr key={`${note._id}-${idx}`}>
-                                <td>{note.debitNoteId}</td>
-                                <td>
-                                  {note.createdAt
-                                    ? new Date(note.createdAt).toLocaleDateString()
-                                    : "-"}
-                                </td>
-                                <td>
-                                  <div className="d-flex align-items-center">
-                                    {prod.product?.images?.[0]?.url ? (
-                                      <img
-                                        src={prod.product.images[0].url}
-                                        alt={prod.product?.productName || "Product"}
-                                        style={{
-                                          width: 28,
-                                          height: 28,
-                                          objectFit: "cover",
-                                          borderRadius: 4,
-                                          marginRight: 6,
-                                        }}
-                                      />
+                          {/* {expandedDebitNote[purchase._id] === dn._id && dn.products && */}
+
+                        </tr>
+                        {Array.isArray(purchase.debitNotes) && purchase.debitNotes.length > 0 && expandedDebitNote[purchase._id] && (
+                          <tr>
+                            <td colSpan="16" style={{ background: "#f9f9f9" }}>
+                              <div style={{ fontWeight: 600, marginBottom: 6 }}>
+                                Debit Notes (Returns)
+                              </div>
+                              <table className="table table-sm table-bordered mb-0">
+                                <thead className="table-light">
+                                  <tr>
+                                    <th>Debit Note ID</th>
+                                    <th>Date</th>
+                                    <th>Product</th>
+                                    <th>Qty</th>
+                                    <th>Unit</th>
+                                    <th>Purchase Price</th>
+                                    <th>Discount</th>
+                                    <th>Discount Type</th>
+                                    <th>Discount Amount</th>
+                                    <th>Tax (%)</th>
+                                    <th>Tax Amount</th>
+                                    <th>Unit Cost</th>
+                                    <th>Total Cost</th>
+                                    <th>SubTotal</th>
+                                  </tr>
+                                </thead>
+
+                                <tbody>
+                                  {purchase.debitNotes.map((note) =>
+                                    note.products?.length > 0 ? (
+                                      note.products.map((prod, idx) => (
+                                        <tr key={`${note._id}-${idx}`}>
+                                          <td>{note.debitNoteId}</td>
+                                          <td>
+                                            {note.createdAt
+                                              ? new Date(note.createdAt).toLocaleDateString()
+                                              : "-"}
+                                          </td>
+                                          <td>
+                                            <div className="d-flex align-items-center">
+                                              {prod.product?.images?.[0]?.url ? (
+                                                <img
+                                                  src={prod.product.images[0].url}
+                                                  alt={prod.product?.productName || "Product"}
+                                                  style={{
+                                                    width: 28,
+                                                    height: 28,
+                                                    objectFit: "cover",
+                                                    borderRadius: 4,
+                                                    marginRight: 6,
+                                                  }}
+                                                />
+                                              ) : (
+                                                <div
+                                                  style={{
+                                                    width: 28,
+                                                    height: 28,
+                                                    background: "#e9ecef",
+                                                    borderRadius: 4,
+                                                    marginRight: 6,
+                                                  }}
+                                                />
+                                              )}
+                                              <span>{prod.product?.productName || "-"}</span>
+                                            </div>
+                                          </td>
+                                          <td>{prod.returnQty || prod.quantity || "-"}</td>
+                                          <td>{prod.Unit || "-"}</td>
+                                          <td>{prod.purchasePrice || "-"}</td>
+                                          <td>{prod.discount || "-"}</td>
+                                          <td>{prod.discountType || "-"}</td>
+                                          <td>{prod.discountAmount || "-"}</td>
+                                          <td>{prod.tax || "-"}</td>
+                                          <td>{prod.taxAmount || "-"}</td>
+                                          <td>{prod.lineTotal ? `₹${prod.lineTotal}` : "-"}</td>
+                                        </tr>
+                                      ))
                                     ) : (
-                                      <div
-                                        style={{
-                                          width: 28,
-                                          height: 28,
-                                          background: "#e9ecef",
-                                          borderRadius: 4,
-                                          marginRight: 6,
-                                        }}
-                                      />
-                                    )}
-                                    <span>{prod.product?.productName || "-"}</span>
-                                  </div>
-                                </td>
-                                <td>{prod.returnQty || prod.quantity || "-"}</td>
-                                <td>{prod.Unit || "-"}</td>
-                                <td>{prod.purchasePrice || "-"}</td>
-                                <td>{prod.discount || "-"}</td>
-                                <td>{prod.discountType || "-"}</td>
-                                <td>{prod.discountAmount || "-"}</td>
-                                <td>{prod.tax || "-"}</td>
-                                <td>{prod.taxAmount || "-"}</td>
-                                <td>{prod.lineTotal ? `₹${prod.lineTotal}` : "-"}</td>
-                              </tr>
-                            ))
-                          ) : (
-                            <tr key={`${note._id}-empty`}>
-                              <td>{note.creditNoteId}</td>
-                              <td>
-                                {note.createdAt
-                                  ? new Date(note.createdAt).toLocaleDateString()
-                                  : "-"}
-                              </td>
-                              <td colSpan="4">No returned products</td>
-                            </tr>
-                          )
+                                      <tr key={`${note._id}-empty`}>
+                                        <td>{note.creditNoteId}</td>
+                                        <td>
+                                          {note.createdAt
+                                            ? new Date(note.createdAt).toLocaleDateString()
+                                            : "-"}
+                                        </td>
+                                        <td colSpan="4">No returned products</td>
+                                      </tr>
+                                    )
+                                  )}
+                                </tbody>
+                              </table>
+                            </td>
+                          </tr>
                         )}
-                      </tbody> 
-                    </table>
-                  </td>
-                </tr>
-              )}
-              </React.Fragment>
+                      </React.Fragment>
 
                     ))
                   )}

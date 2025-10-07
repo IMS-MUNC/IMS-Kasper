@@ -1,6 +1,6 @@
 
 import React from 'react'
-import { TbCirclePlus, TbEdit, TbEye, TbTrash, TbRefresh } from 'react-icons/tb'
+import { TbCirclePlus, TbEdit, TbEye, TbTrash } from 'react-icons/tb'
 import { FaFileExcel, FaFilePdf } from 'react-icons/fa'
 import { GrFormPrevious } from 'react-icons/gr'
 import { MdNavigateNext } from 'react-icons/md'
@@ -352,16 +352,6 @@ const DebitNote = () => {
         e.target.value = '';
     };
 
-
-// Reset filters
-  const resetFilters = () => {
-  setSearch('');
-  setStartDate('');
-  setEndDate('');
-  setSelectedRows([]);
-  setPage(1);
-};
-
     return (
         <div className="page-wrapper">
             {/* Start Content */}
@@ -422,11 +412,6 @@ const DebitNote = () => {
                             value={endDate}
                             onChange={(e) => setEndDate(e.target.value)}
                         />
-                        <div className="dropdown me-2">
-                            <a className="btn btn-white btn-md d-inline-flex align-items-center" onClick={resetFilters} style={{ cursor: 'pointer' }}>
-                                <TbRefresh className="me-1" /> Reset
-                            </a>
-                        </div>
                     </div>
                 </div>
 
@@ -457,10 +442,8 @@ const DebitNote = () => {
                                             <span className="checkmarks" />
                                         </label></th>
                                         <th className="">ID</th>
-                                        <th>Reference No.</th>
-                                        <th>Supplier</th>
+                                           <th>Supplier</th>
                                         <th>Products</th>
-                                        <th>Return Qty</th>
                                         <th>Date</th>
                                         <th>Amount</th>
                                         <th className="">Status</th>
@@ -478,43 +461,36 @@ const DebitNote = () => {
                                                     checked={selectedRows.includes(note._id)}
                                                     onChange={() => handleSelectRow(note._id)}
                                                 /><span className="checkmarks" /></label></td>
-                                                                                                <td>
-                                                                                                        <a href="#view_notes" className="link-default" data-bs-toggle="modal" data-bs-target="#view_notes">
-                                                                                                                {note.debitNoteId || note._id}
-                                                                                                        </a>
-                                                                                                </td>
-                                                                                                <td>{note.purchase?.referenceNumber || '-'}</td>
-                                                                                                <td>{note.billTo?.name || note.billTo?.firstName || note.billTo || '-'}</td>
-                                                                                                                                                                                                <td>
-                                                                                                                                                                                                    {note.products && note.products.length > 0 ? (
-                                                                                                                                                                                                        <ul style={{ listStyle: 'none', padding: 0, margin: 0 }}>
-                                                                                                                                                                                                            {note.products.map((product, idx) => (
-                                                                                                                                                                                                                <li key={idx} style={{ display: 'flex', alignItems: 'center', marginBottom: 2 }}>
-                                                                                                                                                                                                                    {product.product?.images?.[0]?.url && (
-                                                                                                                                                                                                                        <img
-                                                                                                                                                                                                                            src={product.product.images[0].url}
-                                                                                                                                                                                                                            alt={product.product.productName || 'Product'}
-                                                                                                                                                                                                                            style={{ width: 24, height: 24, objectFit: 'cover', marginRight: 4, borderRadius: 3 }}
-                                                                                                                                                                                                                        />
-                                                                                                                                                                                                                    )}
-                                                                                                                                                                                                                    <span style={{ minWidth: 120, display: 'inline-block' }}>{product.product?.productName || product.productName || '-'}</span>
-                                                                                                                                                                                                                </li>
-                                                                                                                                                                                                            ))}
-                                                                                                                                                                                                        </ul>
-                                                                                                                                                                                                    ) : <span className="text-muted">-</span>}
-                                                                                                                                                                                                </td>
-                                                                                                                                                                                                <td>
-                                                                                                                                                                                                    {note.products && note.products.length > 0 ? (
-                                                                                                                                                                                                        <ul style={{ listStyle: 'none', padding: 0, margin: 0 }}>
-                                                                                                                                                                                                            {note.products.map((product, idx) => (
-                                                                                                                                                                                                                <li key={idx} style={{ marginBottom: 2 }}>
-                                                                                                                                                                                                                    {product.returnQty ?? '-'}
-                                                                                                                                                                                                                </li>
-                                                                                                                                                                                                            ))}
-                                                                                                                                                                                                        </ul>
-                                                                                                                                                                                                    ) : <span className="text-muted">-</span>}
-                                                                                                                                                                                                </td>
-                                                                                                <td>{note.debitNoteDate ? new Date(note.debitNoteDate).toLocaleDateString() : ''}</td>
+                                                <td>
+                                                    <a href="#view_notes" className="link-default" data-bs-toggle="modal" data-bs-target="#view_notes"
+
+                                                    //  onClick={() => setSelectedNote(note)}
+                                                    >
+                                                        {note.debitNoteId || note._id}
+                                                    </a>
+                                                </td>
+                                              <td>{note.billTo?.name || note.billTo?.firstName || note.billTo || '-'}</td>
+   <td>
+
+                                              {note.products && note.products.length > 0 ? (
+                                                  note.products.map((product, idx) => (
+                                                      <div key={idx} className="d-flex align-items-center">
+                                                          {product.products?.images?.[0]?.url && (
+                                                              <img src={product.products.images[0].url} alt="Product" style={{ width: 30, height: 30, marginRight: 8 }} />
+                                                          )}
+                                                          <span>
+                                                              {product.products?.productName || product.productName || "N/A"}
+                                                              {/* <span style={{ color: "#888", fontSize: "12px", marginLeft: 4 }}>
+            (HSN: {product.hsnCode})
+          </span> */}
+
+                                                          </span>
+                                                      </div>
+                                                  ))
+                                              ) : (
+                                                  <span className="text-muted">-</span>
+                                              )}
+                                          </td>                                                <td>{note.debitNoteDate ? new Date(note.debitNoteDate).toLocaleDateString() : ''}</td>
                                                 <td className="text-dark">{note.total || note.total || '-'}</td>
                                                 <td>{note.status}</td>
 
@@ -666,16 +642,7 @@ const DebitNote = () => {
                                                         {selectedNote.products && selectedNote.products.length > 0 ? (
                                                             selectedNote.products.map((product, index) => (
                                                                 <tr key={index}>
-                                                                    <td>
-                                                                        {product.product?.images?.[0]?.url && (
-                                                                            <img
-                                                                                src={product.product.images[0].url}
-                                                                                alt={product.product.productName || 'Product'}
-                                                                                style={{ width: 32, height: 32, objectFit: "cover", marginRight: 8, borderRadius: 4 }}
-                                                                            />
-                                                                        )}
-                                                                        {product.product?.productName || product.productName || '-'}
-                                                                    </td>
+                                                                    <td>{product.productName || product.product?.productName || '-'}</td>
                                                                     <td>{product.quantity || '-'}</td>
                                                                     <td>{product.returnQuantity || '-'}</td>
                                                                     <td>{product.unit || '-'}</td>

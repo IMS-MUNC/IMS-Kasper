@@ -147,11 +147,6 @@ exports.getAllProducts = async (req, res) => {
     if (req.query.category) filter.category = req.query.category;
     if (req.query.subcategory) filter.subcategory = req.query.subcategory;
     if (req.query.hsn) filter.hsn = req.query.hsn;
-    if (req.query.warehouse) filter.warehouse = req.query.warehouse;
-
-    // Debug logging
-    console.log("getAllProducts - Query params:", req.query);
-    console.log("getAllProducts - Filter object:", filter);
 
     // Optional: add text search for productName
     if (req.query.search) {
@@ -167,34 +162,8 @@ exports.getAllProducts = async (req, res) => {
       .populate("warehouse")
       .sort({ createdAt: -1 });
 
-    console.log(`getAllProducts - Found ${products.length} products`);
-    console.log("getAllProducts - First few products warehouse info:", 
-      products.slice(0, 3).map(p => ({ 
-        id: p._id, 
-        name: p.productName, 
-        warehouse: p.warehouse ? p.warehouse._id || p.warehouse : 'No warehouse' 
-      }))
-    );
-
-    // If no products found for specific warehouse, try without warehouse filter
-    let productsToProcess = products;
-    if (products.length === 0 && req.query.warehouse) {
-      console.log("No products found for warehouse, fetching all products as fallback");
-      const { warehouse, ...filterWithoutWarehouse } = filter;
-      const allProducts = await Product.find(filterWithoutWarehouse)
-        .populate("brand")
-        .populate("category")
-        .populate("subcategory")
-        .populate("hsn")
-        .populate("warehouse")
-        .sort({ createdAt: -1 });
-      
-      console.log(`getAllProducts - Fallback found ${allProducts.length} total products`);
-      productsToProcess = allProducts;
-    }
-
     // Ensure hsnCode, warehouseName are always present for frontend
-    const productsWithDetails = productsToProcess.map(prod => {
+    const productsWithDetails = products.map(prod => {
       let hsnCode = "";
       if (prod.hsn) {
         if (typeof prod.hsn === "object" && prod.hsn !== null) {

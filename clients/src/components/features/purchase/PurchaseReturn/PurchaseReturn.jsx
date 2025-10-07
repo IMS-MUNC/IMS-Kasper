@@ -3,6 +3,16 @@ import React, { useEffect, useState } from 'react'
 import BASE_URL from '../../../../pages/config/config';
 
 const PurchaseReturn = () => {
+   
+ <a
+                                className="dropdown-item d-flex align-items-center"
+                                onClick={() => !isFullyReturned(purchase) && handleConvertToReturn(purchase)}
+                                style={isFullyReturned(purchase) ? { pointerEvents: 'none', opacity: 0.5 } : {}}
+                              >
+                                <i className="isax isax-convert me-2"></i>Convert to Purchase Return
+                              </a>
+
+  // ============== Fetch Debit Notes ==============
 
   const [debitNotes, setDebitNotes] = useState([]);
   const [search, setSearch] = useState("");
