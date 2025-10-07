@@ -20,6 +20,7 @@ router.delete('/:id',authMiddleware, invoiceController.deleteInvoice);
 router.get('/print/:invoiceId',authMiddleware, invoiceController.printSalesInvoice);
 // Download PDF
 router.get('/pdf/:invoiceId', authMiddleware,invoiceController.downloadSalesInvoicePDF);
+router.post("/bulk-delete", authMiddleware, invoiceController.bulkDeleteInvoice);
 
 
 module.exports = router;

@@ -328,3 +328,21 @@ exports.deleteInvoice = async (req, res) => {
         res.status(500).json({ message: error.message });
     }
 };
+
+exports.bulkDeleteInvoice = async (req, res) => {
+  try {
+    const { ids } = req.body;
+    if (!ids || !Array.isArray(ids)) {
+      return res
+        .status(400)
+        .json({ message: "Invalid or missing 'ids', array in request body" });
+    }
+  const result =  await Invoice.deleteMany({ _id: { $in: ids } });
+    return res.status(200).json({message: `${result.deletedCount} invoices deleted successfully`,
+      deletedCount: result.deletedCount,})
+  } catch (error) {
+    res
+      .status(500)
+      .json({ message: "Bulk delete failed", error: error.message });
+  }
+};
