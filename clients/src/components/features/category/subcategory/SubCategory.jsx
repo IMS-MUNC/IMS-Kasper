@@ -12,10 +12,10 @@ import axios from "axios";
 import { GrFormPrevious } from "react-icons/gr";
 import { MdNavigateNext } from "react-icons/md";
 
-import jsPDF from 'jspdf';
-import autoTable from 'jspdf-autotable';
-import Papa from 'papaparse';
-import * as XLSX from 'xlsx';
+import jsPDF from "jspdf";
+import autoTable from "jspdf-autotable";
+import Papa from "papaparse";
+import * as XLSX from "xlsx";
 
 const SubCategory = () => {
   const [categories, setCategories] = useState([]);
@@ -81,19 +81,20 @@ const SubCategory = () => {
 
   const handleImageChange = (e) => {
     const files = Array.from(e.target.files);
+
+    // Cleanup old URLs
+    imagePreviews.forEach((url) => URL.revokeObjectURL(url));
     setImages(files);
 
     const previews = files.map((file) => URL.createObjectURL(file));
+    setImages(files);
     setImagePreviews(previews);
   };
-
 
   // 👉 Handle single checkbox toggle
   const handleCheckboxChange = (id) => {
     setSelectedSubCategories((prev) =>
-      prev.includes(id)
-        ? prev.filter((subId) => subId !== id)
-        : [...prev, id]
+      prev.includes(id) ? prev.filter((subId) => subId !== id) : [...prev, id]
     );
   };
 
@@ -114,7 +115,9 @@ const SubCategory = () => {
       return;
     }
 
-    if (!window.confirm("Are you sure you want to delete selected subcategories?")) {
+    if (
+      !window.confirm("Are you sure you want to delete selected subcategories?")
+    ) {
       return;
     }
 
@@ -137,9 +140,14 @@ const SubCategory = () => {
       if (error.response?.status === 401) {
         toast.error("Unauthorized: Please login again");
       } else if (error.response?.status === 403) {
-        toast.error("Forbidden: You don't have permission to delete subcategories");
+        toast.error(
+          "Forbidden: You don't have permission to delete subcategories"
+        );
       } else {
-        toast.error(error.response?.data?.message || "Failed to delete selected subcategories");
+        toast.error(
+          error.response?.data?.message ||
+            "Failed to delete selected subcategories"
+        );
       }
     }
   };
@@ -155,7 +163,7 @@ const SubCategory = () => {
     if (Object.keys(newErrors).length > 0) return;
 
     try {
-      const token = localStorage.getItem("token")
+      const token = localStorage.getItem("token");
       if (!selectedCategory || !subCategoryName || !description) {
         toast.error("Please fill in all required fields.");
         return;
@@ -269,7 +277,7 @@ const SubCategory = () => {
     }
 
     try {
-      const token = localStorage.getItem("token")
+      const token = localStorage.getItem("token");
       const cleanName = sanitizeInput(editSubCategoryName);
       const cleanDescription = sanitizeInput(editDescription);
 
@@ -277,12 +285,14 @@ const SubCategory = () => {
       formData.append("subCategoryName", cleanName);
       formData.append("description", cleanDescription);
       formData.append("status", editStatus);
-      formData.append("categoryId", editSelectedCategory?.value || editingSubCategory.categoryId);
+      formData.append(
+        "categoryId",
+        editSelectedCategory?.value || editingSubCategory.categoryId
+      );
 
       if (images.length > 0) {
         images.forEach((file) => formData.append("images", file));
       }
-
 
       const res = await axios.put(
         `${BASE_URL}/api/subcategory/subcategory/${editingSubCategory._id}`,
@@ -316,10 +326,10 @@ const SubCategory = () => {
       }, 150);
     } catch (error) {
       toast.error(error.message || "Failed to update subcategory");
-      
+
       // Close modal first
       closeEditModal();
-      
+
       // Clear editing state even on error
       setTimeout(() => {
         setEditingSubCategory(null);
@@ -341,13 +351,14 @@ const SubCategory = () => {
       return;
     }
     try {
-      const token = localStorage.getItem("token")
+      const token = localStorage.getItem("token");
       const res = await axios.delete(
-        `${BASE_URL}/api/subcategory/subcategories/${id}`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      }
+        `${BASE_URL}/api/subcategory/subcategories/${id}`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
       );
       toast.success(res.data.message || "Subcategory deleted successfully");
       fetchSubcategories();
@@ -361,26 +372,26 @@ const SubCategory = () => {
   // Enhanced modal cleanup functions for Bootstrap 5
   const forceCleanupModal = () => {
     // Remove ALL modal backdrops (in case there are multiple)
-    const backdrops = document.querySelectorAll('.modal-backdrop');
-    backdrops.forEach(backdrop => backdrop.remove());
+    const backdrops = document.querySelectorAll(".modal-backdrop");
+    backdrops.forEach((backdrop) => backdrop.remove());
 
     // Remove modal-open class and reset body styles
-    document.body.classList.remove('modal-open');
-    document.body.style.overflow = '';
-    document.body.style.paddingRight = '';
-    document.body.style.marginRight = '';
+    document.body.classList.remove("modal-open");
+    document.body.style.overflow = "";
+    document.body.style.paddingRight = "";
+    document.body.style.marginRight = "";
 
     // Remove any Bootstrap 5 specific classes
-    document.body.classList.remove('modal-backdrop');
-    document.documentElement.style.overflow = '';
+    document.body.classList.remove("modal-backdrop");
+    document.documentElement.style.overflow = "";
 
     // Force remove any lingering modal states
-    const modals = document.querySelectorAll('.modal.show');
-    modals.forEach(modal => {
-      modal.classList.remove('show');
-      modal.style.display = 'none';
-      modal.setAttribute('aria-hidden', 'true');
-      modal.removeAttribute('aria-modal');
+    const modals = document.querySelectorAll(".modal.show");
+    modals.forEach((modal) => {
+      modal.classList.remove("show");
+      modal.style.display = "none";
+      modal.setAttribute("aria-hidden", "true");
+      modal.removeAttribute("aria-modal");
     });
   };
 
@@ -399,17 +410,13 @@ const SubCategory = () => {
   };
 
   const closeEditModal = () => {
-    // Close modal immediately  
+    // Close modal immediately
     const modal = window.$("#edit-category");
     modal.modal("hide");
 
-    // Force immediate cleanup
-    forceCleanupModal();
-
-    // Additional cleanup after animation
-    setTimeout(() => {
-      forceCleanupModal();
-    }, 100);
+    window.$("#edit-category").modal("hide");
+    document.body.classList.remove("modal-open");
+    document.querySelectorAll(".modal-backdrop").forEach((el) => el.remove());
   };
 
   // Cancel handlers for modals
@@ -436,7 +443,7 @@ const SubCategory = () => {
     setImages([]);
     setImagePreviews([]);
     setErrors({});
-    
+
     // Clear any selected category state that might interfere
     setSelectedCategory(null);
 
@@ -477,8 +484,7 @@ const SubCategory = () => {
     });
 
     doc.save("sub-categories.pdf");
-  }
-
+  };
 
   //csv upload--------------------------------------------------------------------------------------------------------------------------------------------------
 
@@ -491,12 +497,14 @@ const SubCategory = () => {
     ];
     const csvRows = [
       tableHeader.join(","),
-      ...subcategories.map((e) => [
-        e.category?.categoryCode,
-        e.category?.categoryName,
-        e.subCategoryName,
-        e.description,
-      ].join(",")),
+      ...subcategories.map((e) =>
+        [
+          e.category?.categoryCode,
+          e.category?.categoryName,
+          e.subCategoryName,
+          e.description,
+        ].join(",")
+      ),
     ];
     const csvContent = "data:text/csv;charset=utf-8," + csvRows.join("\n");
 
@@ -507,7 +515,7 @@ const SubCategory = () => {
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
-  }
+  };
 
   //excel export--------------------------------------------------------------------------------------------------------------------------------------------------
 
@@ -515,11 +523,13 @@ const SubCategory = () => {
     // Prepare data for Excel export
     const excelData = subcategories.map((subcategory) => ({
       "Category Code": subcategory.category?.categoryCode || "",
-      "Category": subcategory.category?.categoryName || "",
+      Category: subcategory.category?.categoryName || "",
       "Sub Category": subcategory.subCategoryName || "",
-      "Description": subcategory.description || "",
-      "Status": subcategory.status ? "Active" : "Inactive",
-      "Created On": subcategory.createdAt ? new Date(subcategory.createdAt).toLocaleDateString() : "",
+      Description: subcategory.description || "",
+      Status: subcategory.status ? "Active" : "Inactive",
+      "Created On": subcategory.createdAt
+        ? new Date(subcategory.createdAt).toLocaleDateString()
+        : "",
     }));
 
     // Create a new workbook and worksheet
@@ -544,7 +554,6 @@ const SubCategory = () => {
     XLSX.writeFile(workbook, "sub-categories.xlsx");
   };
 
-
   return (
     <div className="page-wrapper">
       <div className="content">
@@ -566,24 +575,47 @@ const SubCategory = () => {
                 >
                   Delete ({selectedSubCategories.length}) Selected
                 </button>
-              )}</li>
-            <li style={{ display: "flex", alignItems: "center", gap: '5px' }} className="icon-btn">
-              <label className="" title="">Export : </label>
-              <button onClick={handlePdf} title="Download PDF" style={{
-                backgroundColor: "white",
-                display: "flex",
-                alignItems: "center",
-                border: "none",
-              }}><FaFilePdf className="fs-20" style={{ color: "red" }} /></button>
-              <button onClick={handleExcel} title="Download Excel" style={{
-                backgroundColor: "white",
-                display: "flex",
-                alignItems: "center",
-                border: "none",
-              }}><FaFileExcel className="fs-20" style={{ color: "orange" }} /></button>
+              )}
             </li>
-            <li style={{ display: "flex", alignItems: "center", gap: '5px' }} className="icon-btn">
-              <label className="" title="">Import : </label>
+            <li
+              style={{ display: "flex", alignItems: "center", gap: "5px" }}
+              className="icon-btn"
+            >
+              <label className="" title="">
+                Export :{" "}
+              </label>
+              <button
+                onClick={handlePdf}
+                title="Download PDF"
+                style={{
+                  backgroundColor: "white",
+                  display: "flex",
+                  alignItems: "center",
+                  border: "none",
+                }}
+              >
+                <FaFilePdf className="fs-20" style={{ color: "red" }} />
+              </button>
+              <button
+                onClick={handleExcel}
+                title="Download Excel"
+                style={{
+                  backgroundColor: "white",
+                  display: "flex",
+                  alignItems: "center",
+                  border: "none",
+                }}
+              >
+                <FaFileExcel className="fs-20" style={{ color: "orange" }} />
+              </button>
+            </li>
+            <li
+              style={{ display: "flex", alignItems: "center", gap: "5px" }}
+              className="icon-btn"
+            >
+              <label className="" title="">
+                Import :{" "}
+              </label>
               <label className="" title="Import Excel">
                 <input type="file" accept=".xlsx, .xls" hidden />
                 <FaFileExcel style={{ color: "green" }} />
@@ -596,7 +628,6 @@ const SubCategory = () => {
             </li> */}
           </div>
           <div className="page-btn d-flex gap-2">
-
             <a
               href="#"
               className="btn btn-primary"
@@ -625,8 +656,7 @@ const SubCategory = () => {
                 </span>
               </div>
             </div>
-            <div className="d-flex table-dropdown my-xl-auto right-content align-items-center flex-wrap row-gap-3">
-            </div>
+            <div className="d-flex table-dropdown my-xl-auto right-content align-items-center flex-wrap row-gap-3"></div>
           </div>
           <div className="card-body p-0">
             <div className="table-responsive">
@@ -635,7 +665,12 @@ const SubCategory = () => {
                   <tr style={{ textAlign: "center" }}>
                     <th className="no-sort">
                       <label className="checkboxs">
-                        <input type="checkbox" id="select-all" checked={selectAll} onChange={handleSelectAll} />
+                        <input
+                          type="checkbox"
+                          id="select-all"
+                          checked={selectAll}
+                          onChange={handleSelectAll}
+                        />
                         <span className="checkmarks" />
                       </label>
                     </th>
@@ -653,31 +688,71 @@ const SubCategory = () => {
                       <tr key={subcat._id} style={{ textAlign: "center" }}>
                         <td>
                           <label className="checkboxs">
-                            <input type="checkbox" checked={selectedSubCategories.includes(subcat._id)}
-                              onChange={() => handleCheckboxChange(subcat._id)} />
+                            <input
+                              type="checkbox"
+                              checked={selectedSubCategories.includes(
+                                subcat._id
+                              )}
+                              onChange={() => handleCheckboxChange(subcat._id)}
+                            />
                             <span className="checkmarks" />
                           </label>
                         </td>
                         <td>{subcat.category?.categoryCode}</td>
 
-                        <td style={{ display: 'flex', alignItems: 'left', gap: '5px', justifyContent: 'center' }}>
+                        <td
+                          style={{
+                            display: "flex",
+                            alignItems: "center",
+                            gap: "8px",
+                            justifyContent: "center",
+                          }}
+                        >
+                          <td>{subcat.category?.categoryName}</td>
+                        </td>
+                        <td>
                           <div>
-                          {subcat.images?.map((img, i) => (
-                            <>
-                            <div style={{width:'30px', height:'30px', overflow:'hidden',borderRadius:'4px', display:'inline-block', justifyContent:'center', alignItems:'center', }}>
-                              <img
-                              key={i}
-                              src={img}
-                              alt="subcat-img"
-                              style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-                            />
-                            </div>
-                            </>
-                          ))}
-                          {subcat.category?.categoryName}
+                            {subcat.images?.map((img, i) => (
+                              <>
+                                <div
+                                  style={{
+                                    width: "30px",
+                                    height: "30px",
+                                    overflow: "hidden",
+                                    borderRadius: "4px",
+                                    display: "inline-block",
+                                    justifyContent: "center",
+                                    alignItems: "center",
+                                  }}
+                                >
+                                  <img
+                                    key={i}
+                                    src={img}
+                                    alt="subcat-img"
+                                    style={{
+                                      width: "100%",
+                                      height: "100%",
+                                      objectFit: "cover",
+                                    }}
+                                  />
+                                </div>
+                              </>
+                            ))}
+                            <span
+                              title={subcat.subCategoryName}
+                              style={{
+                                fontSize: "14px",
+                                whiteSpace: "nowrap",
+                                textOverflow: "ellipsis",
+                                overflow: "hidden",
+                                maxWidth: "80px", // controls cutoff width
+                                display: "inline-block",  
+                              }}
+                            >
+                            {subcat.subCategoryName?.length > 6 ? `${subcat.subCategoryName.slice(0,6)}...`:subcat.subCategoryName}
+                            </span>
                           </div>
-                          </td>
-                        <td>{subcat.subCategoryName}</td>
+                        </td>
                         <td>{subcat.description}</td>
                         {/* <td>
                           <span className="badge bg-success fw-medium fs-10">
@@ -687,25 +762,39 @@ const SubCategory = () => {
                         <td className="action-table-data">
                           <div className="edit-delete-action">
                             <a
-                              className={`me-2 p-2 ${isUpdating ? 'disabled' : ''}`}
+                              className={`me-2 p-2 ${
+                                isUpdating ? "disabled" : ""
+                              }`}
                               data-bs-toggle="modal"
                               data-bs-target="#edit-category"
-                              style={{ pointerEvents: isUpdating ? 'none' : 'auto', opacity: isUpdating ? 0.5 : 1 }}
+                              style={{
+                                pointerEvents: isUpdating ? "none" : "auto",
+                                opacity: isUpdating ? 0.5 : 1,
+                              }}
                               onClick={() => {
                                 if (isUpdating) return;
                                 // Set the editing subcategory for reference (read-only)
                                 setEditingSubCategory({
                                   ...subcat,
-                                  category: subcat.category ? { ...subcat.category } : null,
-                                  images: subcat.images ? [...subcat.images] : []
+                                  category: subcat.category
+                                    ? { ...subcat.category }
+                                    : null,
+                                  images: subcat.images
+                                    ? [...subcat.images]
+                                    : [],
                                 });
-                                
+
                                 // Populate form state variables
-                                setEditSubCategoryName(subcat.subCategoryName || "");
+                                setEditSubCategoryName(
+                                  subcat.subCategoryName || ""
+                                );
                                 setEditDescription(subcat.description || "");
                                 setEditSelectedCategory(
-                                  categories.find(cat => 
-                                    cat.value === (subcat.category?._id || subcat.categoryId)
+                                  categories.find(
+                                    (cat) =>
+                                      cat.value ===
+                                      (subcat.category?._id ||
+                                        subcat.categoryId)
                                   ) || null
                                 );
                                 setEditStatus(subcat.status !== false); // Default to true if undefined
@@ -766,9 +855,9 @@ const SubCategory = () => {
                 {filteredSubCategories.length === 0
                   ? "0 of 0"
                   : `${(currentPage - 1) * itemsPerPage + 1}-${Math.min(
-                    currentPage * itemsPerPage,
-                    filteredSubCategories.length
-                  )} of ${filteredSubCategories.length}`}
+                      currentPage * itemsPerPage,
+                      filteredSubCategories.length
+                    )} of ${filteredSubCategories.length}`}
                 <button
                   style={{
                     border: "none",
@@ -889,7 +978,9 @@ const SubCategory = () => {
                       value={subCategoryName}
                       onChange={(e) => setSubCategoryName(e.target.value)}
                     />
-                    {errors.subCategoryName && (<p className="text-danger">{errors.subCategoryName}</p>)}
+                    {errors.subCategoryName && (
+                      <p className="text-danger">{errors.subCategoryName}</p>
+                    )}
                   </div>
                   <div className="mb-3">
                     <label className="form-label">
@@ -982,19 +1073,20 @@ const SubCategory = () => {
                             )}
                             {(images.length > 0 ||
                               editingSubCategory?.images?.length > 0) && (
-                                <a style={{ marginTop: '-100px' }}
-                                  href="javascript:void(0);"
-                                  onClick={() => {
-                                    setImages([]);
-                                    setEditingSubCategory({
-                                      ...editingSubCategory,
-                                      images: [],
-                                    });
-                                  }}
-                                >
-                                  <FiXSquare className="x-square-add image-close remove-product fs-12 text-white bg-danger rounded-1" />
-                                </a>
-                              )}
+                              <a
+                                style={{ marginTop: "-100px" }}
+                                href="javascript:void(0);"
+                                onClick={() => {
+                                  setImages([]);
+                                  setEditingSubCategory({
+                                    ...editingSubCategory,
+                                    images: [],
+                                  });
+                                }}
+                              >
+                                <FiXSquare className="x-square-add image-close remove-product fs-12 text-white bg-danger rounded-1" />
+                              </a>
+                            )}
                           </div>
                           <div className="mb-0">
                             <input
@@ -1037,7 +1129,9 @@ const SubCategory = () => {
                       isSearchable
                       placeholder="Search or select category..."
                       value={editSelectedCategory}
-                      onChange={(selectedOption) => setEditSelectedCategory(selectedOption)}
+                      onChange={(selectedOption) =>
+                        setEditSelectedCategory(selectedOption)
+                      }
                     />
                   </div>
                   <div className="mb-3">
@@ -1097,8 +1191,12 @@ const SubCategory = () => {
                   >
                     Cancel
                   </button>
-                  <button type="submit" className="btn btn-primary" disabled={isUpdating}>
-                    {isUpdating ? 'Updating...' : 'Save Changes'}
+                  <button
+                    type="submit"
+                    className="btn btn-primary"
+                    disabled={isUpdating}
+                  >
+                    {isUpdating ? "Updating..." : "Save Changes"}
                   </button>
                 </div>
               </form>

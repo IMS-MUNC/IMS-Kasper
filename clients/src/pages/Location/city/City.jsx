@@ -187,6 +187,8 @@ const City = () => {
   }));
 
   const handleDelete = async (id) => {
+     const confirmed = await DeleteAlert({});
+    if (!confirmed) return;
     try {
       await axios.delete(`${BASE_URL}/api/city/cities/${id}`, {
         headers: {

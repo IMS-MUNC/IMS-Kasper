@@ -13,6 +13,10 @@ import Swal from "sweetalert2";
 import { sanitizeInput } from "../../../utils/sanitize.js";
 import { GrFormPrevious } from "react-icons/gr";
 import { MdNavigateNext } from "react-icons/md";
+import "../../features/units/Units.css"
+
+
+
 const Units = () => {
   const [unitData, setUnitData] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
@@ -31,7 +35,7 @@ const Units = () => {
 
 
   const unitNameRegex = /^[A-Za-z\s]{2,50}$/;
-  const shortNameRegex = /^[A-Za-z]{1,10}$/;
+  const shortNameRegex = /^[A-Za-z ]{1,10}$/;
 
   // Function to reset form fields
   const resetForm = () => {
