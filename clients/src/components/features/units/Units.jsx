@@ -28,6 +28,8 @@ const Units = () => {
   const [shortName, setShortName] = useState("");
   const [status, setStatus] = useState(true); // true = Active
   const [errors, setErrors] = useState({})
+  const [isAdding, setIsAdding] = useState(false);
+
 
   // === START BULK DELETE STATE CHANGES ===
   // const [selectedUnits, setSelectedUnits] = useState([]);
@@ -69,6 +71,7 @@ const Units = () => {
     };
 
     try {
+      setIsAdding(true);
       const token = localStorage.getItem("token");
       await axios.post(`${BASE_URL}/api/unit/units`, formData, {
         headers: {
@@ -83,6 +86,8 @@ const Units = () => {
     } catch (error) {
       console.error("Error creating unit:", error);
       toast.error("Failed to create unit.");
+    }finally{
+      setIsAdding(false)
     }
   };
 
@@ -641,9 +646,25 @@ const Units = () => {
                 >
                   Cancel
                 </button>
-                <button type="submit" className="btn btn-primary">
-                  Add Unit
-                </button>
+                <button
+  type="submit"
+  className="btn btn-primary"
+  disabled={isAdding} // 🔹 disable while loading
+>
+  {isAdding ? (
+    <>
+      <span
+        className="spinner-border spinner-border-sm me-2"
+        role="status"
+        aria-hidden="true"
+      ></span>
+      Adding Unit...
+    </>
+  ) : (
+    "Add Unit"
+  )}
+</button>
+
               </div>
             </form>
           </div>

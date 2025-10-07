@@ -31,6 +31,7 @@ const SubCategory = () => {
   const [images, setImages] = useState([]);
   const [imagePreviews, setImagePreviews] = useState([]);
   const [editingSubCategory, setEditingSubCategory] = useState(null);
+   const [isAdding, setIsAdding] = useState(false);
 
   const [errors, setErrors] = useState({});
   const nameRegex = /^[A-Za-z]{2,}$/;
@@ -163,6 +164,7 @@ const SubCategory = () => {
     if (Object.keys(newErrors).length > 0) return;
 
     try {
+      setIsAdding(true)
       const token = localStorage.getItem("token");
       if (!selectedCategory || !subCategoryName || !description) {
         toast.error("Please fill in all required fields.");
@@ -219,6 +221,8 @@ const SubCategory = () => {
       console.error("Submit Error:", error);
       toast.error(error.message || "Failed to add subcategory");
       closeAddModal();
+    }finally{
+      setIsAdding(false)
     }
   };
 
@@ -723,6 +727,7 @@ const SubCategory = () => {
                                     display: "inline-block",
                                     justifyContent: "center",
                                     alignItems: "center",
+                                    marginRight:'10px'
                                   }}
                                 >
                                   <img
@@ -1015,8 +1020,19 @@ const SubCategory = () => {
                   >
                     Cancel
                   </button>
-                  <button type="submit" className="btn btn-primary">
-                    Add Sub Category
+                  <button type="submit" className="btn btn-primary" disabled={isAdding}>
+                    {
+                      isAdding ? (
+                      <>
+      <span
+        className="spinner-border spinner-border-sm me-2"
+        role="status"
+        aria-hidden="true"
+      ></span>
+      Adding Sub Category...
+    </>
+                      ): ("Add Sub Category")
+                    }
                   </button>
                 </div>
               </form>

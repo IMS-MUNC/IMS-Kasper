@@ -21,4 +21,5 @@ router.put('/:id', authMiddleware, salesController.updateSale);
 router.delete('/:id', authMiddleware, salesController.deleteSale);
 
 
+
 module.exports = router;
