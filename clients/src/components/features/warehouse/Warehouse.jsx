@@ -9,7 +9,6 @@ import Polygon from "../../../assets/images/Polygon-2.png";
 import Poly from "../../../assets/images/Polygon-1.png";
 import Polygont from "../../../assets/images/Polygon3.png";
 import Polygo from "../../../assets/images/Polygon4.png";
-import AddWarehouseModal from "../../../pages/Modal/warehouse/AddWarehouseModal";
 import axios from "axios";
 
 function Warehouse() {
@@ -244,10 +243,10 @@ function Warehouse() {
                           alt="Polygon"
                           style={{
                             position: "absolute",
-                            bottom: "0",
-                            left: "auto",
-                            top: "auto",
-                            right: "0",
+                            bottom: "auto",
+                            left: "0",
+                            top: "0",
+                            right: "auto",
                             width: "100%",
                             height: "50px",
                             zIndex: "0",
@@ -259,9 +258,9 @@ function Warehouse() {
                           alt="Polygon"
                           style={{
                             position: "absolute",
-                            bottom: "auto",
+                            bottom: "0",
                             left: "0",
-                            top: "0",
+                            top: "auto",
                             right: "auto",
                             width: "100%",
                             height: "50px",
@@ -363,6 +362,7 @@ function Warehouse() {
                         >
                           {/* Address */}
                           <div>
+                            <Link to={`/WarehouseDetails/${item._id}`}>
                             <p style={{ margin: "0", fontWeight: "500" }}>
                               {/* Delhi - Ram Prashad */}
                               {item?.city}
@@ -375,6 +375,7 @@ function Warehouse() {
                             <span style={{ marginLeft: "4px", fontSize: "16px", color: "#676767" }}>
                               Stock Valuation
                             </span>
+                            </Link>
                           </div>
 
                           {/* Arrow */}
@@ -437,6 +438,8 @@ function Warehouse() {
                           alignItems: "flex-start",
                           height: "150px",
                           position: "relative",
+                          marginBottom: "30px",
+                          overflow: "hidden",
                         }}
                       >
                         
@@ -509,11 +512,13 @@ function Warehouse() {
                         >
                           <div
                             style={{
-                              backgroundColor: "#f1f1f1",
+                              backgroundColor: "#fff",
                               border: "1px solid #e6e6e6",
                               borderRadius: "8px",
                               padding: "10px",
                               alignItems: "center",
+                              position: "relative",
+                              overflow: "hidden",
                             }}
                           >
                             <span>
@@ -535,6 +540,8 @@ function Warehouse() {
                               backgroundColor: "#f1f1f1",
                               borderRadius: "8px",
                               width: "fit-content",
+                              position: "relative",
+                              overflow: "hidden",
                             }}
                           >
                             <FaHeart
@@ -557,9 +564,11 @@ function Warehouse() {
                             display: "flex",
                             justifyContent: "space-between",
                             alignItems: "flex-end",
+                            
                           }}
                         >
                           <div>
+                            <Link to={`/WarehouseDetails/${fav._id}`}>
                             <p style={{ margin: "0", fontWeight: "500" }}>
                               {fav.city} - {fav.warehouseOwner}
                             </p>
@@ -569,6 +578,7 @@ function Warehouse() {
                             <span style={{ marginLeft: "4px", fontSize: "16px", color: "#676767" }}>
                               Stock Valuation
                             </span>
+                            </Link>
                           </div>
                           <div>
                             <Link to={`/WarehouseDetails/${fav._id}`}>

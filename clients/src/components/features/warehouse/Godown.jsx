@@ -899,7 +899,7 @@ function Godown() {
                 alignItems: "center",
                 display: "flex",
                 backgroundColor: "white",
-                width: "100%",
+                width: "80%",
                 gap: "19px",
                 justifyContent: "space-between",
                 padding: "4px 16px",
@@ -925,6 +925,7 @@ function Godown() {
                     border: "none",
                     outline: "none",
                     backgroundColor: "white",
+                    width: "100%",
                   }}
                 />
               </div>
@@ -941,9 +942,11 @@ function Godown() {
             <div
               style={{
                 backgroundColor: "#fff",
-                padding: "8px 16px",
+                padding: "0px 16px",
                 border: "1px solid #e6e6e6",
                 borderRadius: "8px",
+                width: "20%",
+                
               }}
             >
               <select

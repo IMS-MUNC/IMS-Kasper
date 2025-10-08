@@ -1863,7 +1863,7 @@ function AddWarehouse() {
                       display: "block",
                     }}
                   >
-                    Warehouse Name
+                    Warehouse Name <span className="text-danger">*</span>
                   </label>
                   <input
                     type="text"
