@@ -13,6 +13,10 @@ import Swal from "sweetalert2";
 import { sanitizeInput } from "../../../utils/sanitize.js";
 import { GrFormPrevious } from "react-icons/gr";
 import { MdNavigateNext } from "react-icons/md";
+import "../../features/units/Units.css"
+
+
+
 const Units = () => {
   const [unitData, setUnitData] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
@@ -24,6 +28,8 @@ const Units = () => {
   const [shortName, setShortName] = useState("");
   const [status, setStatus] = useState(true); // true = Active
   const [errors, setErrors] = useState({})
+  const [isAdding, setIsAdding] = useState(false);
+
 
   // === START BULK DELETE STATE CHANGES ===
   // const [selectedUnits, setSelectedUnits] = useState([]);
@@ -31,7 +37,7 @@ const Units = () => {
 
 
   const unitNameRegex = /^[A-Za-z\s]{2,50}$/;
-  const shortNameRegex = /^[A-Za-z]{1,10}$/;
+  const shortNameRegex = /^[A-Za-z ]{1,10}$/;
 
   // Function to reset form fields
   const resetForm = () => {
@@ -65,6 +71,7 @@ const Units = () => {
     };
 
     try {
+      setIsAdding(true);
       const token = localStorage.getItem("token");
       await axios.post(`${BASE_URL}/api/unit/units`, formData, {
         headers: {
@@ -79,6 +86,8 @@ const Units = () => {
     } catch (error) {
       console.error("Error creating unit:", error);
       toast.error("Failed to create unit.");
+    }finally{
+      setIsAdding(false)
     }
   };
 
@@ -637,9 +646,25 @@ const Units = () => {
                 >
                   Cancel
                 </button>
-                <button type="submit" className="btn btn-primary">
-                  Add Unit
-                </button>
+                <button
+  type="submit"
+  className="btn btn-primary"
+  disabled={isAdding} // 🔹 disable while loading
+>
+  {isAdding ? (
+    <>
+      <span
+        className="spinner-border spinner-border-sm me-2"
+        role="status"
+        aria-hidden="true"
+      ></span>
+      Adding Unit...
+    </>
+  ) : (
+    "Add Unit"
+  )}
+</button>
+
               </div>
             </form>
           </div>

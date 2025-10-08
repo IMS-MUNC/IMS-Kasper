@@ -687,7 +687,7 @@ const LowStock = () => {
                             </label>
                           </th>
                           <th>Warehouse</th>
-                          <th>Supplier</th>
+                          {/* <th>Supplier</th> */}
                           <th>Product Name</th>
                           <th>Category</th>
                           <th>SKU</th>
@@ -712,7 +712,7 @@ const LowStock = () => {
                               </td>
                               <td>{product.warehouseName || product.warehouse || 'N/A'}</td>
                               {/* <td>{product.store || 'N/A'}</td> */}
-                              <td>{product.supplierName || 'N/A'}</td>
+                              {/* <td>{product.supplierName || 'N/A'}</td> */}
                               <td>
                                 <div className="d-flex align-items-center">
                                   <a className="avatar avatar-md me-2">

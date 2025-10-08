@@ -1,8 +1,12 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState, useRef } from 'react';
+import { useReactToPrint } from "react-to-print";
 import axios from 'axios';
 import { useParams, useNavigate } from 'react-router-dom';
 import BASE_URL from '../../../pages/config/config';
 import Logo from "../../../assets/img/logo/munclogotm.png";
+import "../../../styles/PrintInvoice.css"
+import jsPDF from "jspdf";
+import html2canvas from "html2canvas";
 
 function formatShipping(shipping) {
   if (!shipping) return '';
@@ -17,8 +21,8 @@ function formatShipping(shipping) {
 }
 
 const Invoice = () => {
+    const printRef = useRef(null);
     const token = localStorage.getItem("token");
-
     const { invoiceId } = useParams();
     const navigate = useNavigate();
     const [sale, setSale] = useState(null);
@@ -38,6 +42,11 @@ const Invoice = () => {
         cin: "",
         companydescription: "",
     });
+    const handleReactPrint = useReactToPrint({
+  contentRef: printRef, // ✅ new API
+  documentTitle: sale ? `Invoice_${sale.invoiceId}` : "Invoice",
+  copyStyles: true,
+});
     
 // Calculation helpers (copied from AddSalesModal.jsx for consistency)
 const [summary, setSummary] = useState({
@@ -99,7 +108,7 @@ const handlePrintInvoice = useCallback(async () => {
             return;
         }
         try {
-            const res = await axios.get(`${BASE_URL}/api/sales/print/${sale.invoiceId}`, {
+            const res = await axios.get(`${BASE_URL}/api/invoice/print/${invoiceId}`, {
                 headers: { Authorization: `Bearer ${token}` },
             });
 
@@ -114,34 +123,34 @@ const handlePrintInvoice = useCallback(async () => {
     }, [sale, token]);
 
   // 🔧 Function: Download Invoice PDF
-  const handleDownloadPDF = useCallback(async () => {
-        if (!sale || !sale.invoiceId) {
-            alert("Invoice not loaded.");
-            return;
-        }
-        try {
-            const res = await axios.get(
-                `${BASE_URL}/api/invoice/pdf/${sale.invoiceId}`,
-                {
-                    headers: { Authorization: `Bearer ${token}` },
-                    responseType: "blob",
-                }
-            );
+//   const handleDownloadPDF = useCallback(async () => {
+//         if (!sale || !sale.invoiceId) {
+//             alert("Invoice not loaded.");
+//             return;
+//         }
+//         try {
+//             const res = await axios.get(
+//                 `${BASE_URL}/api/invoice/pdf/${sale.invoiceId}`,
+//                 {
+//                     headers: { Authorization: `Bearer ${token}` },
+//                     responseType: "blob",
+//                 }
+//             );
 
-            const url = window.URL.createObjectURL(new Blob([res.data], { type: "application/pdf" }));
-            const link = document.createElement("a");
-            link.href = url;
-            link.setAttribute("download", `Invoice_${sale.invoiceId}.pdf`);
-            document.body.appendChild(link);
-            link.click();
-            setTimeout(() => {
-                window.URL.revokeObjectURL(url);
-                link.remove();
-            }, 100);
-        } catch (err) {
-            alert("Failed to download PDF.");
-        }
-    }, [sale, token]);
+//             const url = window.URL.createObjectURL(new Blob([res.data], { type: "application/pdf" }));
+//             const link = document.createElement("a");
+//             link.href = url;
+//             link.setAttribute("download", `Invoice_${sale.invoiceId}.pdf`);
+//             document.body.appendChild(link);
+//             link.click();
+//             setTimeout(() => {
+//                 window.URL.revokeObjectURL(url);
+//                 link.remove();
+//             }, 100);
+//         } catch (err) {
+//             alert("Failed to download PDF.");
+//         }
+//     }, [sale, token]);
 
     // useEffect(() => {
     //     const fetchInvoice = async () => {
@@ -341,6 +350,40 @@ function getProductRowCalculation(item) {
     };
 }
 
+const handleDownloadPDF = async () => {
+  const element = printRef.current;
+  const canvas = await html2canvas(element, {
+    scale: 2, // better quality
+    useCORS: true,
+  });
+
+  const imgData = canvas.toDataURL("image/png");
+  const pdf = new jsPDF("p", "pt", "a4");
+
+  const imgWidth = 595; // A4 width in points
+  const pageHeight = 842;
+  const imgHeight = (canvas.height * imgWidth) / canvas.width;
+
+  let heightLeft = imgHeight;
+  let position = 0;
+
+  pdf.addImage(imgData, "PNG", 0, position, imgWidth, imgHeight);
+  heightLeft -= pageHeight;
+
+  while (heightLeft > 0) {
+    position = heightLeft - imgHeight;
+    pdf.addPage();
+    pdf.addImage(imgData, "PNG", 0, position, imgWidth, imgHeight);
+    heightLeft -= pageHeight;
+  }
+
+  pdf.save(`Invoice_${sale.invoiceId || "Download"}.pdf`);
+};
+
+
+console.log("printRef.current:", printRef.current);
+if (!printRef.current) alert("Nothing to print - ref is null");
+
 
  
     return (
@@ -353,7 +396,7 @@ function getProductRowCalculation(item) {
                         </div>
                     </div>
                     <ul className="table-top-head">
-                        <li>
+                        {/* <li>
                             <a data-bs-toggle="tooltip" data-bs-placement="top" title="Pdf"><img src="assets/img/icons/pdf.svg" alt="img" /></a>
                         </li>
                         <li>
@@ -361,7 +404,7 @@ function getProductRowCalculation(item) {
                         </li>
                         <li>
                             <a data-bs-toggle="tooltip" data-bs-placement="top" title="Collapse" id="collapse-header"><i className="ti ti-chevron-up" /></a>
-                        </li>
+                        </li> */}
                     </ul>
                     <div className="page-btn">
                         <a className="btn btn-primary" onClick={() => navigate(-1)}><i data-feather="arrow-left" className="me-2" />Back to Invoices</a>
@@ -369,7 +412,7 @@ function getProductRowCalculation(item) {
                 </div>
                 {/* Invoices */}
                 <div className="card">
-                    <div className="card-body">
+                    <div className="card-body" ref={printRef}>
                         <div className="row justify-content-between align-items-center border-bottom mb-3">
                             <div className="col-md-6">
                                 <div className="mb-2">
@@ -446,6 +489,7 @@ function getProductRowCalculation(item) {
                                     </thead>
                                     <tbody>
                                         {sale.products?.map((item, idx) => {
+                                            console.log('dfsale', sale)
                                             // const saleQty = item.saleQty || item.quantity || 1;
                                             // const price = item.sellingPrice || 0;
                                             // const discount = item.discount || 0;
@@ -649,7 +693,7 @@ function getProductRowCalculation(item) {
       {/* Print Invoice */}
       <button
         className="btn btn-primary d-flex justify-content-center align-items-center me-2"
-        onClick={handlePrintInvoice}
+        onClick={handleReactPrint}
       >
         <i className="ti ti-printer me-2" /> Print Invoice
       </button>

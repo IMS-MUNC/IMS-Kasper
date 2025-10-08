@@ -2,6 +2,7 @@
 const mongoose = require("mongoose");
 const Invoice = require("../models/invoiceModel");
 const Sales = require("../models/salesModel");
+const Customer = require("../models/customerModel")
 
 
 // Print invoice from getSales
@@ -153,13 +154,33 @@ exports.getAllInvoice = async (req, res) => {
         if (startDate && endDate) {
             query.saleDate = { $gte: new Date(startDate), $lte: new Date(endDate) };
         }
+        // if (search) {
+        //     query.$or = [
+        //         { invoiceId: { $regex: search, $options: "i" } },
+        //         { description: { $regex: search, $options: "i" } },
+        //         { notes: { $regex: search, $options: "i" } }
+        //     ];
+        // }
         if (search) {
-            query.$or = [
-                { invoiceId: { $regex: search, $options: "i" } },
-                { description: { $regex: search, $options: "i" } },
-                { notes: { $regex: search, $options: "i" } }
-            ];
-        }
+  // Find customer IDs that match the search term
+  const matchingCustomers = await Customer.find({
+    name: { $regex: search, $options: "i" }, // ✅ fixed
+  }).distinct("_id");
+
+  // Find matching sales by referenceNumber (Sale No)
+  const matchingSales = await Sales.find({
+    referenceNumber: { $regex: search, $options: "i" }, // ✅ fixed
+  }).distinct("invoiceId");
+
+  query.$or = [
+    { invoiceId: { $regex: search, $options: "i" } },
+    { description: { $regex: search, $options: "i" } },
+    { notes: { $regex: search, $options: "i" } },
+    { customer: { $in: matchingCustomers } },
+    { invoiceId: { $in: matchingSales } },
+  ];
+}
+
 
         // Count total
         const total = await Invoice.countDocuments(query);
