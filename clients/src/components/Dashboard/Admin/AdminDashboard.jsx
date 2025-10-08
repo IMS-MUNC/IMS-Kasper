@@ -7,7 +7,7 @@ import { TbAlertTriangle, TbBox, TbBrandPocket, TbChartPie, TbFileText, TbGift, 
 import { FaLayerGroup } from 'react-icons/fa';
 import { FcExpired } from 'react-icons/fc';
 import { getTotalStockValue } from '../../../utils/getTotalStockValue';
-import axios from 'axios';  
+import axios from 'axios';
 import Graph from '../../Graph';
 import BASE_URL from '../../../pages/config/config'
 import PaymentStatusChart from '../graph/PaymentStatusChart';
@@ -19,38 +19,38 @@ const AdminDashboard = () => {
         const profit = getProfit();
         return profit < 0 ? Math.abs(profit) : 0;
     };
-   
-        useEffect(() => {
-            const fetchProducts = async () => {
-                try {
-                    const token = localStorage.getItem("token");
-                    const res = await axios.get('/api/products',{
-                           headers: {
-        Authorization: `Bearer ${token}`,
-      },
+
+    useEffect(() => {
+        const fetchProducts = async () => {
+            try {
+                const token = localStorage.getItem("token");
+                const res = await axios.get('/api/products', {
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                    },
+                });
+                const products = res.data || [];
+                // Use same logic as ExpriedProduct.jsx
+                const expired = products.filter(product => {
+                    const expiryArr = product.variants?.get?.('Expire') || product.variants?.['Expire'];
+                    if (!expiryArr || expiryArr.length === 0) return false;
+                    return expiryArr.some(dateStr => {
+                        const [day, month, year] = dateStr.split('-').map(Number);
+                        if (!day || !month || !year) return false;
+                        const expDate = new Date(year, month - 1, day);
+                        const today = new Date();
+                        return expDate < today;
                     });
-                    const products = res.data || [];
-                    // Use same logic as ExpriedProduct.jsx
-                    const expired = products.filter(product => {
-                        const expiryArr = product.variants?.get?.('Expiry') || product.variants?.['Expiry'];
-                        if (!expiryArr || expiryArr.length === 0) return false;
-                        return expiryArr.some(dateStr => {
-                            const [day, month, year] = dateStr.split('-').map(Number);
-                            if (!day || !month || !year) return false;
-                            const expDate = new Date(year, month - 1, day);
-                            const today = new Date();
-                            return expDate < today;
-                        });
-                    });
-                    setExpiredProducts(expired);
-                } catch (err) {
-                    setExpiredProducts([]);
-                } finally {
-                    setExpiredLoading(false);
-                }
-            };
-            fetchProducts();
-        }, []);
+                });
+                setExpiredProducts(expired);
+            } catch (err) {
+                setExpiredProducts([]);
+            } finally {
+                setExpiredLoading(false);
+            }
+        };
+        fetchProducts();
+    }, []);
     // Profit/Loss calculation based on price and quantity
     const getProfit = () => {
         // Calculate total purchase cost
@@ -104,25 +104,25 @@ const AdminDashboard = () => {
     const [totalDebitNoteCount, setTotalDebitNoteCount] = useState(0);
     const [totalExpensesAmount, setTotalExpensesAmount] = useState(0);
     const [totalExpensesCount, setTotalExpensesCount] = useState(0);
-      const [products, setProducts] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [warned, setWarned] = useState(false);
+    const [products, setProducts] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const [warned, setWarned] = useState(false);
 
     const [allSales, setAllSales] = useState([]);
     const [allPurchases, setAllPurchases] = useState([]);
-    console.log("All Sales:", allPurchases);
+    // console.log("All Sales:", allPurchases);
     const [allSalesReturns, setAllSalesReturns] = useState([]);
     const [allPurchaseReturns, setAllPurchaseReturns] = useState([]);
 
-    console.log("Total Stock Value:", totalStockValue);
-    console.log("Total Purchase Amount:", totalPurchaseAmount);
-    console.log("Total Return Amount:", totalReturnAmount);
-    console.log("Low Stock Products:", invoiceDueCount);
-    console.log("AM",totalDebitNoteAmount)
-    console.log("C",totalDebitNoteCount)
+    // console.log("Total Stock Value:", totalStockValue);
+    // console.log("Total Purchase Amount:", totalPurchaseAmount);
+    // console.log("Total Return Amount:", totalReturnAmount);
+    // console.log("Low Stock Products:", invoiceDueCount);
+    // console.log("AM",totalDebitNoteAmount)
+    // console.log("C",totalDebitNoteCount)
 
 
-        // Top Selling Products (by sale quantity)
+    // Top Selling Products (by sale quantity)
     const topSellingProducts = (() => {
         const productSales = {};
         recentSales.forEach(sale => {
@@ -136,477 +136,477 @@ const AdminDashboard = () => {
             .slice(0, 5)
             .map(([name, qty]) => ({ name, qty }));
     })();
-    
-      
 
-  useEffect(() => {
-    const fetchProducts = async () => {
-      try {
-        const res = await axios.get('/api/products',{
-               headers: {
-        Authorization: `Bearer ${token}`,
-      },
-        });
-        setProducts(res.data);
-      } catch (err) {
-        setProducts([]);
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchProducts();
-  }, []);
 
-  useEffect(() => {
-    if (!loading && products.length > 0 && !warned) {
-      const today = new Date();
-      const tenDaysLater = new Date(today);
-      tenDaysLater.setDate(today.getDate() + 10);
-      const soonToExpire = products.filter(product => {
-        const expiryArr = product.variants?.get?.('Expiry') || product.variants?.['Expiry'];
-        if (!expiryArr || expiryArr.length === 0) return false;
-        return expiryArr.some(dateStr => {
-          // Accept formats like '30-08-2025'
-          const [day, month, year] = dateStr.split('-').map(Number);
-          if (!day || !month || !year) return false;
-          const expDate = new Date(year, month - 1, day);
-          return expDate >= today && expDate <= tenDaysLater;
-        });
-      });
-      if (soonToExpire.length > 0) {
-        window.toast && window.toast.warn('Some products are expiring within 10 days!');
-        setWarned(true);
-      }
-    }
-  }, [loading, products, warned]);
+
+    useEffect(() => {
+        const fetchProducts = async () => {
+            try {
+                const res = await axios.get('/api/products', {
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                    },
+                });
+                setProducts(res.data);
+            } catch (err) {
+                setProducts([]);
+            } finally {
+                setLoading(false);
+            }
+        };
+        fetchProducts();
+    }, []);
+
+    useEffect(() => {
+        if (!loading && products.length > 0 && !warned) {
+            const today = new Date();
+            const tenDaysLater = new Date(today);
+            tenDaysLater.setDate(today.getDate() + 10);
+            const soonToExpire = products.filter(product => {
+                const expiryArr = product.variants?.get?.('Expire') || product.variants?.['Expire'];
+                if (!expiryArr || expiryArr.length === 0) return false;
+                return expiryArr.some(dateStr => {
+                    // Accept formats like '30-08-2025'
+                    const [day, month, year] = dateStr.split('-').map(Number);
+                    if (!day || !month || !year) return false;
+                    const expDate = new Date(year, month - 1, day);
+                    return expDate >= today && expDate <= tenDaysLater;
+                });
+            });
+            if (soonToExpire.length > 0) {
+                window.toast && window.toast.warn('Some products are expiring within 10 days!');
+                setWarned(true);
+            }
+        }
+    }, [loading, products, warned]);
 
     // Expired products state
-        const [expiredProducts, setExpiredProducts] = useState([]);
-        const [expiredLoading, setExpiredLoading] = useState(true);
+    const [expiredProducts, setExpiredProducts] = useState([]);
+    const [expiredLoading, setExpiredLoading] = useState(true);
 
-        useEffect(() => {
-            const token = localStorage.getItem("token");
-                // Fetch all products and filter for expiry within next 10 days (same as ExpriedProduct.jsx)
-                fetch(`${BASE_URL}/api/products`,{
-                       headers: {
-        Authorization: `Bearer ${token}`,
-      },
-                })
-                    .then(res => res.json())
-                    .then(data => {
-                        const today = new Date();
-                        const tenDaysLater = new Date();
-                        tenDaysLater.setDate(today.getDate() + 10);
-                        const soonToExpire = Array.isArray(data)
-                            ? data.filter(product => {
-                                const expiryArr = product.variants?.get?.('Expiry') || product.variants?.['Expiry'];
-                                if (!expiryArr || expiryArr.length === 0) return false;
-                                return expiryArr.some(dateStr => {
-                                    const [day, month, year] = dateStr.split('-').map(Number);
-                                    if (!day || !month || !year) return false;
-                                    const expDate = new Date(year, month - 1, day);
-                                    return expDate >= today && expDate <= tenDaysLater;
-                                });
-                            })
-                            : [];
-                        setExpiredProducts(soonToExpire);
-                        setExpiredLoading(false);
-                    })
-                    .catch(() => {
-                        setExpiredProducts([]);
-                        setExpiredLoading(false);
-                    });
-            }, []);
-
-        // // Upcoming expiry products (next 10 days)
-        // const [upcomingExpiryProducts, setUpcomingExpiryProducts] = useState([]);
-
-        // useEffect(() => {
-        //     fetch(`${BASE_URL}/api/products/upcoming-expiry`)
-        //         .then(res => res.json())
-        //         .then(data => {
-        //             setUpcomingExpiryProducts(Array.isArray(data) ? data : []);
-        //         });
-        // }, []);
-
-        useEffect(() => {
-  const token = localStorage.getItem("token");
-
-  const authHeaders = {
-    Authorization: `Bearer ${token}`, // ✅ token added
-  };
-
-  // Fetch recent purchases
-  fetch(`${BASE_URL}/api/purchases?limit=5&sort=desc`, { headers: authHeaders })
-    .then((res) => res.json())
-    .then((data) => {
-      setRecentPurchases(Array.isArray(data.purchases) ? data.purchases : []);
-    });
-
-  // Fetch debit note summary
-  fetch(`${BASE_URL}/api/debit-notes/summary`, { headers: authHeaders })
-    .then((res) => res.json())
-    .then((data) => {
-      setTotalDebitNoteAmount(data.totalAmount || 0);
-      setTotalDebitNoteCount(data.totalCount || 0);
-    });
-
-  // Fetch expenses summary
-  fetch(`${BASE_URL}/api/expenses/summary`, { headers: authHeaders })
-    .then((res) => res.json())
-    .then((data) => {
-      setTotalExpensesAmount(data.totalAmount || 0);
-      setTotalExpensesCount(data.totalCount || 0);
-    });
-
-//   // Fetch invoices
-//   fetch(`${BASE_URL}/api/invoice/allinvoice`, { headers: authHeaders })
-//     .then((res) => res.json())
-//     .then((data) => {
-//       const invoices = Array.isArray(data.invoices) ? data.invoices : [];
-//       let totalDue = 0;
-//       let dueCount = 0;
-//       invoices.forEach((row) => {
-//         const inv = row.invoice || {};
-//         const sale = row.sale || {};
-//         const due = Number(inv.dueAmount || sale.dueAmount || 0);
-//         if (due > 0) dueCount++;
-//         totalDue += due;
-//       });
-//       setTotalInvoiceDue(totalDue);
-//       setInvoiceDueCount(dueCount);
-//       if (typeof data.lastMonthDueCount === "number" && data.lastMonthDueCount > 0) {
-//         setInvoiceDueGrowth(
-//           Math.round(((dueCount - data.lastMonthDueCount) / data.lastMonthDueCount) * 100)
-//         );
-//       } else {
-//         setInvoiceDueGrowth(0);
-//       }
-//     });
-
-  // Fetch purchase returns
-  fetch(`${BASE_URL}/api/purchase-returns?limit=1000000`, { headers: authHeaders })
-    .then((res) => res.json())
-    .then((data) => {
-      const returns = data.returns || [];
-      const totalReturnValue = returns.reduce((acc, ret) => acc + (ret.grandTotal || 0), 0);
-      setTotalPurchaseReturnValue(totalReturnValue);
-    });
-
-  // Fetch suppliers
-  fetch(`${BASE_URL}/api/suppliers`, { headers: authHeaders })
-    .then((res) => res.json())
-    .then((data) => setTotalSupplier(Array.isArray(data) ? data.length : 0));
-
-  // Fetch customers
-  fetch(`${BASE_URL}/api/customers`, { headers: authHeaders })
-    .then((res) => res.json())
-    .then((data) => setTotalCustomer(Array.isArray(data) ? data.length : 0));
-
-  // Fetch purchases & returns summary
-  fetch(`${BASE_URL}/api/purchases/report`, { headers: authHeaders })
-    .then((res) => res.json())
-    .then((data) => {
-      setTotalPurchaseAmount(data?.totals?.purchase || 0);
-      setTotalReturnAmount(data?.totals?.return || 0);
-    });
-
-  // Fetch stock value
-  getTotalStockValue().then((val) => setTotalStockValue(val));
-
-  // Fetch low stock products
-  fetch(`${BASE_URL}/api/products?limit=1000000`, { headers: authHeaders })
-    .then((res) => res.json())
-    .then((data) => {
-      const allProducts = data.products || data || [];
-      const lowStock = allProducts
-        .map((p) => {
-          let availableQty = 0;
-          if (typeof p.availableQty === "number") {
-            availableQty = p.availableQty;
-          } else {
-            const quantity = Number(p.quantity ?? 0);
-            let newQuantitySum = 0;
-            if (Array.isArray(p.newQuantity)) {
-              newQuantitySum = p.newQuantity.reduce((acc, n) => {
-                const num = Number(n);
-                return acc + (isNaN(num) ? 0 : num);
-              }, 0);
-            } else if (typeof p.newQuantity === "number") {
-              newQuantitySum = Number(p.newQuantity);
-            }
-            availableQty = quantity + newQuantitySum;
-          }
-          return { ...p, availableQty };
+    useEffect(() => {
+        const token = localStorage.getItem("token");
+        // Fetch all products and filter for expiry within next 10 days (same as ExpriedProduct.jsx)
+        fetch(`${BASE_URL}/api/products`, {
+            headers: {
+                Authorization: `Bearer ${token}`,
+            },
         })
-        .filter(
-          (p) =>
-            typeof p.quantityAlert === "number" &&
-            p.availableQty <= p.quantityAlert &&
-            p.availableQty > 0
-        );
-      setLowStockProducts(lowStock.slice(0, 5));
-    });
+            .then(res => res.json())
+            .then(data => {
+                const today = new Date();
+                const tenDaysLater = new Date();
+                tenDaysLater.setDate(today.getDate() + 10);
+                const soonToExpire = Array.isArray(data)
+                    ? data.filter(product => {
+                        const expiryArr = product.variants?.get?.('Expiry') || product.variants?.['Expiry'];
+                        if (!expiryArr || expiryArr.length === 0) return false;
+                        return expiryArr.some(dateStr => {
+                            const [day, month, year] = dateStr.split('-').map(Number);
+                            if (!day || !month || !year) return false;
+                            const expDate = new Date(year, month - 1, day);
+                            return expDate >= today && expDate <= tenDaysLater;
+                        });
+                    })
+                    : [];
+                setExpiredProducts(soonToExpire);
+                setExpiredLoading(false);
+            })
+            .catch(() => {
+                setExpiredProducts([]);
+                setExpiredLoading(false);
+            });
+    }, []);
 
-  // Fetch recent sales
-  fetch(`${BASE_URL}/api/sales?limit=5&sort=desc`, { headers: authHeaders })
-    .then((res) => res.json())
-    .then((data) => {
-      setRecentSales((data.sales || []).slice(0, 5));
-      const totalValue = (data.sales || []).reduce((acc, sale) => acc + (sale.grandTotal || 0), 0);
-      setTotalSaleValue(totalValue);
-    });
+    // // Upcoming expiry products (next 10 days)
+    // const [upcomingExpiryProducts, setUpcomingExpiryProducts] = useState([]);
 
-  // Fetch sales return value
-  fetch(`${BASE_URL}/api/sales-returns?limit=1000000`, { headers: authHeaders })
-    .then((res) => res.json())
-    .then((data) => {
-      const returns = data.returns || [];
-      const totalReturnValue = returns.reduce((acc, ret) => acc + (ret.grandTotal || 0), 0);
-      setTotalSalesReturnValue(totalReturnValue);
-    });
-}, [BASE_URL]);
+    // useEffect(() => {
+    //     fetch(`${BASE_URL}/api/products/upcoming-expiry`)
+    //         .then(res => res.json())
+    //         .then(data => {
+    //             setUpcomingExpiryProducts(Array.isArray(data) ? data : []);
+    //         });
+    // }, []);
 
+    useEffect(() => {
+        const token = localStorage.getItem("token");
 
-// ...existing code...
+        const authHeaders = {
+            Authorization: `Bearer ${token}`, // ✅ token added
+        };
 
-// ...existing code...
+        // Fetch recent purchases
+        fetch(`${BASE_URL}/api/purchases?limit=5&sort=desc`, { headers: authHeaders })
+            .then((res) => res.json())
+            .then((data) => {
+                setRecentPurchases(Array.isArray(data.purchases) ? data.purchases : []);
+            });
 
-// const [invoiceCount, setInvoiceCount] = useState(0);
+        // Fetch debit note summary
+        fetch(`${BASE_URL}/api/debit-notes/summary`, { headers: authHeaders })
+            .then((res) => res.json())
+            .then((data) => {
+                setTotalDebitNoteAmount(data.totalAmount || 0);
+                setTotalDebitNoteCount(data.totalCount || 0);
+            });
 
-// useEffect(() => {
-//   const token = localStorage.getItem("token");
-//   const authHeaders = {
-//     Authorization: `Bearer ${token}`,
-//   };
+        // Fetch expenses summary
+        fetch(`${BASE_URL}/api/expenses/summary`, { headers: authHeaders })
+            .then((res) => res.json())
+            .then((data) => {
+                setTotalExpensesAmount(data.totalAmount || 0);
+                setTotalExpensesCount(data.totalCount || 0);
+            });
 
-//   // Helper to fetch all paginated invoices
-//   const fetchAllInvoices = async () => {
-//     let allInvoices = [];
-//     let page = 1;
-//     let hasMore = true;
+        //   // Fetch invoices
+        //   fetch(`${BASE_URL}/api/invoice/allinvoice`, { headers: authHeaders })
+        //     .then((res) => res.json())
+        //     .then((data) => {
+        //       const invoices = Array.isArray(data.invoices) ? data.invoices : [];
+        //       let totalDue = 0;
+        //       let dueCount = 0;
+        //       invoices.forEach((row) => {
+        //         const inv = row.invoice || {};
+        //         const sale = row.sale || {};
+        //         const due = Number(inv.dueAmount || sale.dueAmount || 0);
+        //         if (due > 0) dueCount++;
+        //         totalDue += due;
+        //       });
+        //       setTotalInvoiceDue(totalDue);
+        //       setInvoiceDueCount(dueCount);
+        //       if (typeof data.lastMonthDueCount === "number" && data.lastMonthDueCount > 0) {
+        //         setInvoiceDueGrowth(
+        //           Math.round(((dueCount - data.lastMonthDueCount) / data.lastMonthDueCount) * 100)
+        //         );
+        //       } else {
+        //         setInvoiceDueGrowth(0);
+        //       }
+        //     });
 
-//     while (hasMore) {
-//       const res = await fetch(`${BASE_URL}/api/invoice/allinvoice?page=${page}&limit=100`, { headers: authHeaders });
-//       const data = await res.json();
-//       const invoices = Array.isArray(data.invoices) ? data.invoices : [];
-//       allInvoices = allInvoices.concat(invoices);
+        // Fetch purchase returns
+        fetch(`${BASE_URL}/api/purchase-returns?limit=1000000`, { headers: authHeaders })
+            .then((res) => res.json())
+            .then((data) => {
+                const returns = data.returns || [];
+                const totalReturnValue = returns.reduce((acc, ret) => acc + (ret.grandTotal || 0), 0);
+                setTotalPurchaseReturnValue(totalReturnValue);
+            });
 
-//       // If less than limit, no more pages
-//       hasMore = invoices.length === 100;
-//       page += 1;
-//     }
+        // Fetch suppliers
+        fetch(`${BASE_URL}/api/suppliers`, { headers: authHeaders })
+            .then((res) => res.json())
+            .then((data) => setTotalSupplier(Array.isArray(data) ? data.length : 0));
 
-//     setInvoiceCount(allInvoices.length);
+        // Fetch customers
+        fetch(`${BASE_URL}/api/customers`, { headers: authHeaders })
+            .then((res) => res.json())
+            .then((data) => setTotalCustomer(Array.isArray(data) ? data.length : 0));
 
-//     let totalDue = 0;
-//     allInvoices.forEach((row) => {
-//       const inv = row.invoice || {};
-//       const sale = row.sale || {};
-//       const due = Number(inv.dueAmount || sale.dueAmount || 0);
-//       totalDue += due;
-//     });
-//     setTotalInvoiceDue(totalDue);
-//   };
+        // Fetch purchases & returns summary
+        fetch(`${BASE_URL}/api/purchases/report`, { headers: authHeaders })
+            .then((res) => res.json())
+            .then((data) => {
+                setTotalPurchaseAmount(data?.totals?.purchase || 0);
+                setTotalReturnAmount(data?.totals?.return || 0);
+            });
 
-//   fetchAllInvoices();
-// }, [BASE_URL]);
+        // Fetch stock value
+        getTotalStockValue().then((val) => setTotalStockValue(val));
 
-// ...existing code...
+        // Fetch low stock products
+        fetch(`${BASE_URL}/api/products?limit=1000000`, { headers: authHeaders })
+            .then((res) => res.json())
+            .then((data) => {
+                const allProducts = data.products || data || [];
+                const lowStock = allProducts
+                    .map((p) => {
+                        let availableQty = 0;
+                        if (typeof p.availableQty === "number") {
+                            availableQty = p.availableQty;
+                        } else {
+                            const quantity = Number(p.quantity ?? 0);
+                            let newQuantitySum = 0;
+                            if (Array.isArray(p.newQuantity)) {
+                                newQuantitySum = p.newQuantity.reduce((acc, n) => {
+                                    const num = Number(n);
+                                    return acc + (isNaN(num) ? 0 : num);
+                                }, 0);
+                            } else if (typeof p.newQuantity === "number") {
+                                newQuantitySum = Number(p.newQuantity);
+                            }
+                            availableQty = quantity + newQuantitySum;
+                        }
+                        return { ...p, availableQty };
+                    })
+                    .filter(
+                        (p) =>
+                            typeof p.quantityAlert === "number" &&
+                            p.availableQty <= p.quantityAlert &&
+                            p.availableQty > 0
+                    );
+                setLowStockProducts(lowStock.slice(0, 5));
+            });
 
+        // Fetch recent sales
+        fetch(`${BASE_URL}/api/sales?limit=5&sort=desc`, { headers: authHeaders })
+            .then((res) => res.json())
+            .then((data) => {
+                setRecentSales((data.sales || []).slice(0, 5));
+                const totalValue = (data.sales || []).reduce((acc, sale) => acc + (sale.grandTotal || 0), 0);
+                setTotalSaleValue(totalValue);
+            });
 
-
-// ...existing code...
-
-const [invoiceCount, setInvoiceCount] = useState(0);
-// const [totalInvoiceDue, setTotalInvoiceDue] = useState(0);
-const [totalInvoicePaid, setTotalInvoicePaid] = useState(0);
-
-useEffect(() => {
-  const token = localStorage.getItem("token");
-  const authHeaders = {
-    Authorization: `Bearer ${token}`,
-  };
-
-  // Helper to fetch all paginated invoices and sum paid/due
-  const fetchAllInvoices = async () => {
-    let allInvoices = [];
-    let page = 1;
-    let hasMore = true;
-
-    let totalDue = 0;
-    let totalPaid = 0;
-
-    while (hasMore) {
-      const res = await fetch(`${BASE_URL}/api/invoice/allinvoice?page=${page}&limit=100`, { headers: authHeaders });
-      const data = await res.json();
-      const invoices = Array.isArray(data.invoices) ? data.invoices : [];
-      allInvoices = allInvoices.concat(invoices);
-
-      invoices.forEach((row) => {
-        const inv = row.invoice || {};
-        const sale = row.sale || {};
-        totalDue += Number(inv.dueAmount || sale.dueAmount || 0);
-        totalPaid += Number(inv.paidAmount || sale.paidAmount || 0);
-      });
-
-      hasMore = invoices.length === 100;
-      page += 1;
-    }
-
-    setInvoiceCount(allInvoices.length);
-    setTotalInvoiceDue(totalDue);
-    setTotalInvoicePaid(totalPaid);
-  };
-
-  fetchAllInvoices();
-}, [BASE_URL]);
-
-console.log("count", invoiceCount);
-console.log("due", totalInvoiceDue);
-console.log("paid", totalInvoicePaid);
-
-const [totalCreditNoteAmount, setTotalCreditNoteAmount] = useState(0);
-
-useEffect(() => {
-  const token = localStorage.getItem("token");
-  const authHeaders = {
-    Authorization: `Bearer ${token}`,
-  };
-
-  // Fetch all credit notes and sum their amounts
-  fetch(`${BASE_URL}/api/credit-notes/all`, { headers: authHeaders })
-    .then((res) => res.json())
-    .then((data) => {
-      // Use data.data as per CreditNote.jsx
-      const notes = Array.isArray(data.data) ? data.data : [];
-      const totalCredit = notes.reduce(
-        (acc, note) => acc + (Number(note.total) || Number(note.amount) || Number(note.grandTotal) || 0),
-        0
-      );
-      setTotalCreditNoteAmount(totalCredit);
-    })
-    .catch(() => setTotalCreditNoteAmount(0));
-}, [BASE_URL]);
-
-// console.log("Total Credit Note Amount:", totalCreditNoteAmount);
-const fetchData = async (url) => {
-  const token = localStorage.getItem("token");
-  try {
-    const res = await fetch(url, {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    });
-    if (!res.ok) {
-      // Log the error and return an empty object
-      console.error(`Failed to fetch: ${url} (${res.status})`);
-      return {};
-    }
-    const contentType = res.headers.get("content-type");
-    if (contentType && contentType.includes("application/json")) {
-      return await res.json();
-    } else {
-      // Log the error and return an empty object
-      console.error("Response is not JSON for", url);
-      return {};
-    }
-  } catch (err) {
-    console.error(err);
-    return {};
-  }
-};
+        // Fetch sales return value
+        fetch(`${BASE_URL}/api/sales-returns?limit=1000000`, { headers: authHeaders })
+            .then((res) => res.json())
+            .then((data) => {
+                const returns = data.returns || [];
+                const totalReturnValue = returns.reduce((acc, ret) => acc + (ret.grandTotal || 0), 0);
+                setTotalSalesReturnValue(totalReturnValue);
+            });
+    }, [BASE_URL]);
 
 
+    // ...existing code...
 
-// Example usage for sales returns (match route to backend)
-const fetchSalesReturns = async () => {
-  const url = `${BASE_URL}/api/sales/returns`; // Ensure this matches your backend route
-  const data = await fetchData(url);
-  setAllSalesReturns(Array.isArray(data) ? data : []);
-};
+    // ...existing code...
 
-// Example usage for purchase returns (match route to backend)
-const fetchPurchaseReturns = async () => {
-  const url = `${BASE_URL}/api/purchases/returns`; // Ensure this matches your backend route
-  const data = await fetchData(url);
-  setAllPurchaseReturns(Array.isArray(data) ? data : []);
-};
+    // const [invoiceCount, setInvoiceCount] = useState(0);
 
-// ...existing code...
+    // useEffect(() => {
+    //   const token = localStorage.getItem("token");
+    //   const authHeaders = {
+    //     Authorization: `Bearer ${token}`,
+    //   };
 
-// 🔹 fetch all sales
-const fetchSales = async () => {
-  const data = await fetchData(`${BASE_URL}/api/sales?limit=1000000`,{
-     headers: {
-        Authorization: `Bearer ${token}`,
-      },
-  });
+    //   // Helper to fetch all paginated invoices
+    //   const fetchAllInvoices = async () => {
+    //     let allInvoices = [];
+    //     let page = 1;
+    //     let hasMore = true;
 
-  const sales = data.sales || [];
-  setAllSales(sales);
-  setRecentSales(sales.slice(0, 5));
-  setTotalSaleValue(sales.reduce((acc, sale) => acc + (sale.grandTotal || 0), 0));
-};
+    //     while (hasMore) {
+    //       const res = await fetch(`${BASE_URL}/api/invoice/allinvoice?page=${page}&limit=100`, { headers: authHeaders });
+    //       const data = await res.json();
+    //       const invoices = Array.isArray(data.invoices) ? data.invoices : [];
+    //       allInvoices = allInvoices.concat(invoices);
 
-// 🔹 fetch all purchases
-const fetchPurchases = async () => {
-  const data = await fetchData(`${BASE_URL}/api/purchases?limit=1000000`,{
-     headers: {
-        Authorization: `Bearer ${token}`,
-      },
-  });
-  setAllPurchases(data.purchases || []);
-};
+    //       // If less than limit, no more pages
+    //       hasMore = invoices.length === 100;
+    //       page += 1;
+    //     }
 
-// 🔹 fetch all sales returns
-// const fetchSalesReturns = async () => {
-//     const data = await fetchData(`${BASE_URL}/api/sales-returns?limit=1000000`);
-//     const returns = Array.isArray(data.returns) ? data.returns : [];
-//     setAllSalesReturns(returns);
-//     const totalReturnValue = returns.length > 0
-//         ? returns.map(ret => Number(ret.grandTotal) || 0).reduce((acc, val) => acc + val, 0)
-//         : 0;
-//     setTotalSalesReturnValue(totalReturnValue);
-// };
+    //     setInvoiceCount(allInvoices.length);
 
-// 🔹 fetch all purchase returns
-// const fetchPurchaseReturns = async () => {
-// //   const data = await fetchData(`${BASE_URL}/api/purchase-returns?limit=1000000`);
-// const data= await fetchData(`${BASE_URL}/api/purchases/returns?limit=1000000`);
-//   setAllPurchaseReturns(data.returns || []);
-// };
+    //     let totalDue = 0;
+    //     allInvoices.forEach((row) => {
+    //       const inv = row.invoice || {};
+    //       const sale = row.sale || {};
+    //       const due = Number(inv.dueAmount || sale.dueAmount || 0);
+    //       totalDue += due;
+    //     });
+    //     setTotalInvoiceDue(totalDue);
+    //   };
 
-// 🔹 useEffect
-useEffect(() => {
-  fetchSales();
-  fetchPurchases();
-  fetchSalesReturns();
-  fetchPurchaseReturns();
-}, []);
+    //   fetchAllInvoices();
+    // }, [BASE_URL]);
 
-// Calculate total purchase and return values from allPurchases and allPurchaseReturns
-useEffect(() => {
-  if (allPurchases.length > 0) {
-    setTotalPurchaseAmount(
-      allPurchases.reduce((acc, purchase) => acc + (purchase.grandTotal || 0), 0)
-    );
-  }
+    // ...existing code...
 
-  if (allPurchaseReturns.length > 0) {
-    setTotalReturnAmount(
-      allPurchaseReturns.reduce((acc, ret) => acc + (ret.grandTotal || 0), 0)
-    );
-  }
-}, [allPurchases, allPurchaseReturns]);
+
+
+    // ...existing code...
+
+    const [invoiceCount, setInvoiceCount] = useState(0);
+    // const [totalInvoiceDue, setTotalInvoiceDue] = useState(0);
+    const [totalInvoicePaid, setTotalInvoicePaid] = useState(0);
+
+    useEffect(() => {
+        const token = localStorage.getItem("token");
+        const authHeaders = {
+            Authorization: `Bearer ${token}`,
+        };
+
+        // Helper to fetch all paginated invoices and sum paid/due
+        const fetchAllInvoices = async () => {
+            let allInvoices = [];
+            let page = 1;
+            let hasMore = true;
+
+            let totalDue = 0;
+            let totalPaid = 0;
+
+            while (hasMore) {
+                const res = await fetch(`${BASE_URL}/api/invoice/allinvoice?page=${page}&limit=100`, { headers: authHeaders });
+                const data = await res.json();
+                const invoices = Array.isArray(data.invoices) ? data.invoices : [];
+                allInvoices = allInvoices.concat(invoices);
+
+                invoices.forEach((row) => {
+                    const inv = row.invoice || {};
+                    const sale = row.sale || {};
+                    totalDue += Number(inv.dueAmount || sale.dueAmount || 0);
+                    totalPaid += Number(inv.paidAmount || sale.paidAmount || 0);
+                });
+
+                hasMore = invoices.length === 100;
+                page += 1;
+            }
+
+            setInvoiceCount(allInvoices.length);
+            setTotalInvoiceDue(totalDue);
+            setTotalInvoicePaid(totalPaid);
+        };
+
+        fetchAllInvoices();
+    }, [BASE_URL]);
+
+    // console.log("count", invoiceCount);
+    // console.log("due", totalInvoiceDue);
+    // console.log("paid", totalInvoicePaid);
+
+    const [totalCreditNoteAmount, setTotalCreditNoteAmount] = useState(0);
+
+    useEffect(() => {
+        const token = localStorage.getItem("token");
+        const authHeaders = {
+            Authorization: `Bearer ${token}`,
+        };
+
+        // Fetch all credit notes and sum their amounts
+        fetch(`${BASE_URL}/api/credit-notes/all`, { headers: authHeaders })
+            .then((res) => res.json())
+            .then((data) => {
+                // Use data.data as per CreditNote.jsx
+                const notes = Array.isArray(data.data) ? data.data : [];
+                const totalCredit = notes.reduce(
+                    (acc, note) => acc + (Number(note.total) || Number(note.amount) || Number(note.grandTotal) || 0),
+                    0
+                );
+                setTotalCreditNoteAmount(totalCredit);
+            })
+            .catch(() => setTotalCreditNoteAmount(0));
+    }, [BASE_URL]);
+
+    // console.log("Total Credit Note Amount:", totalCreditNoteAmount);
+    const fetchData = async (url) => {
+        const token = localStorage.getItem("token");
+        try {
+            const res = await fetch(url, {
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                },
+            });
+            if (!res.ok) {
+                // Log the error and return an empty object
+                console.error(`Failed to fetch: ${url} (${res.status})`);
+                return {};
+            }
+            const contentType = res.headers.get("content-type");
+            if (contentType && contentType.includes("application/json")) {
+                return await res.json();
+            } else {
+                // Log the error and return an empty object
+                console.error("Response is not JSON for", url);
+                return {};
+            }
+        } catch (err) {
+            console.error(err);
+            return {};
+        }
+    };
+
+
+
+    // Example usage for sales returns (match route to backend)
+    const fetchSalesReturns = async () => {
+        const url = `${BASE_URL}/api/sales/returns`; // Ensure this matches your backend route
+        const data = await fetchData(url);
+        setAllSalesReturns(Array.isArray(data) ? data : []);
+    };
+
+    // Example usage for purchase returns (match route to backend)
+    const fetchPurchaseReturns = async () => {
+        const url = `${BASE_URL}/api/purchases/returns`; // Ensure this matches your backend route
+        const data = await fetchData(url);
+        setAllPurchaseReturns(Array.isArray(data) ? data : []);
+    };
+
+    // ...existing code...
+
+    // 🔹 fetch all sales
+    const fetchSales = async () => {
+        const data = await fetchData(`${BASE_URL}/api/sales?limit=1000000`, {
+            headers: {
+                Authorization: `Bearer ${token}`,
+            },
+        });
+
+        const sales = data.sales || [];
+        setAllSales(sales);
+        setRecentSales(sales.slice(0, 5));
+        setTotalSaleValue(sales.reduce((acc, sale) => acc + (sale.grandTotal || 0), 0));
+    };
+
+    // 🔹 fetch all purchases
+    const fetchPurchases = async () => {
+        const data = await fetchData(`${BASE_URL}/api/purchases?limit=1000000`, {
+            headers: {
+                Authorization: `Bearer ${token}`,
+            },
+        });
+        setAllPurchases(data.purchases || []);
+    };
+
+    // 🔹 fetch all sales returns
+    // const fetchSalesReturns = async () => {
+    //     const data = await fetchData(`${BASE_URL}/api/sales-returns?limit=1000000`);
+    //     const returns = Array.isArray(data.returns) ? data.returns : [];
+    //     setAllSalesReturns(returns);
+    //     const totalReturnValue = returns.length > 0
+    //         ? returns.map(ret => Number(ret.grandTotal) || 0).reduce((acc, val) => acc + val, 0)
+    //         : 0;
+    //     setTotalSalesReturnValue(totalReturnValue);
+    // };
+
+    // 🔹 fetch all purchase returns
+    // const fetchPurchaseReturns = async () => {
+    // //   const data = await fetchData(`${BASE_URL}/api/purchase-returns?limit=1000000`);
+    // const data= await fetchData(`${BASE_URL}/api/purchases/returns?limit=1000000`);
+    //   setAllPurchaseReturns(data.returns || []);
+    // };
+
+    // 🔹 useEffect
+    useEffect(() => {
+        fetchSales();
+        fetchPurchases();
+        fetchSalesReturns();
+        fetchPurchaseReturns();
+    }, []);
+
+    // Calculate total purchase and return values from allPurchases and allPurchaseReturns
+    useEffect(() => {
+        if (allPurchases.length > 0) {
+            setTotalPurchaseAmount(
+                allPurchases.reduce((acc, purchase) => acc + (purchase.grandTotal || 0), 0)
+            );
+        }
+
+        if (allPurchaseReturns.length > 0) {
+            setTotalReturnAmount(
+                allPurchaseReturns.reduce((acc, ret) => acc + (ret.grandTotal || 0), 0)
+            );
+        }
+    }, [allPurchases, allPurchaseReturns]);
 
 
 
     return (
         <div className="page-wrapper">
             <div className="content">
-                    
-                    {/* Upcoming Expiry Products (Next 10 Days)
+
+                {/* Upcoming Expiry Products (Next 10 Days)
                     <div className="row">
                         <div className="col-12">
                             <div className="card mb-4">
@@ -630,8 +630,11 @@ useEffect(() => {
                             </div>
                         </div>
                     </div> */}
+
+                {/* welcome & search bar */}
                 <div className="d-flex align-items-center justify-content-between flex-wrap gap-3 mb-2">
 
+                    {/* welcome greetings */}
                     <div className="mb-3">
                         <h1 className="mb-1">Welcome,    {userObj?.firstName || 'User'} {userObj?.lastName || ''}</h1>
                         {/* <p className="fw-medium">You have <span className="text-primary fw-bold">200+</span> Orders, Today</p> */}
@@ -650,13 +653,18 @@ useEffect(() => {
                             </ul>
                         </div> */}
                     </div>
+
+                    {/* search bar */}
                     <div className="input-icon-start position-relative mb-3">
                         <span className="input-icon-addon fs-16 text-gray-9">
                             <i className="ti ti-calendar" />
                         </span>
                         <input type="text" className="form-control date-range bookingrange" placeholder="Search Product" />
                     </div>
+
                 </div>
+
+                {/* alert notification section */}
                 <div className="alert bg-orange-transparent alert-dismissible fade show mb-4">
                     <div style={{ overflowX: 'auto', whiteSpace: 'nowrap', maxWidth: '100%' }}>
                         {lowStockProducts.length > 0 ? lowStockProducts.map((prod, idx) => (
@@ -672,6 +680,8 @@ useEffect(() => {
                     </div>
                     <button type="button" className="btn-close text-gray-9 fs-14" data-bs-dismiss="alert" aria-label="Close"><i className="ti ti-x" /></button>
                 </div>
+
+                {/* total amounts */}
                 <div className="row">
                     {/* Invoice Due */}
                     {/* <div className="col-xl-3 col-sm-6 col-12 d-flex">
@@ -763,6 +773,8 @@ useEffect(() => {
                         </div>
                     </div>
                 </div>
+
+                {/* total stats */}
                 <div className="row">
                     {/* Profit */}
                     <div className="col-xl-3 col-sm-6 col-12 d-flex">
@@ -859,9 +871,14 @@ useEffect(() => {
                     </div>
                     {/* /Returns */}
                 </div>
+
+                {/* Purchase & Sales aanalysis, Recent sales, overall information */}
                 <div className="row">
-                    {/* Sales & Purchase Graphs */}
+
+                    {/* Purchase & Sales aanalysis Graphs */}
                     <div className="row">
+                        
+                        {/* Purchase aanalysis Graphs */}
                         <div className="col-md-6">
                             <div className="card mb-4">
                                 <div className="card-header">Purchase Analytics</div>
@@ -883,6 +900,8 @@ useEffect(() => {
                                 </div>
                             </div>
                         </div>
+
+                        {/* Sales aanalysis Graphs */}
                         <div className="col-md-6">
                             <div className="card mb-4">
                                 <div className="card-header">Sales Analytics</div>
@@ -904,7 +923,9 @@ useEffect(() => {
                                 </div>
                             </div>
                         </div>
+
                     </div>
+
                     {/* <div className="col-xxl-8 col-xl-7 col-sm-12 col-12 d-flex">
                         <div className="card flex-fill">
                             <div className="card-header d-flex justify-content-between align-items-center">
@@ -942,7 +963,8 @@ useEffect(() => {
                             </div>
                         </div>
                     </div> */}
-                       {/* Recent Sales */}
+
+                    {/* Recent Sales */}
                     <div className="col-xxl-8 col-xl-7 col-sm-12 col-12 d-flex">
                         <div className="card flex-fill">
                             <div className="card-header d-flex justify-content-between align-items-center flex-wrap gap-3">
@@ -1081,9 +1103,8 @@ useEffect(() => {
                             </div>
                         </div>
                     </div>
-                    {/* /Recent Sales */}
-                    {/* /Sales & Purchase */}
-                    {/* Top Selling Products */}
+
+                    {/* overall information, customers overview */}
                     <div className="col-xxl-4 col-xl-5 d-flex">
                         <div className="card flex-fill">
                             <div className="card-header">
@@ -1176,10 +1197,15 @@ useEffect(() => {
                         </div>
                     </div>
                 </div>
-                    {/* <div className="col-lg-8 col-md-12 mb-4">
+
+                {/* <div className="col-lg-8 col-md-12 mb-4">
                         <div className="card shadow-sm">
-                            <div className="card-header bg-primary text-white"> Product Wise Sales (Bar Graph) </div> <div className="card-body"> <SalesGraph token={token} filterStatus={""} filterPaymentStatus={""} fromDate={""} toDate={""} sortBy={"Recently Added"} /> </div> </div> </div> <div className="col-lg-4 col-md-12 mb-4"> <div className="card shadow-sm"> <div className="card-header bg-success text-white"> Payment Status Distribution </div> <div className="card-body"> <PaymentStatusChart token={token} fromDate={""} toDate={""} /> </div> </div> </div> </div>  <div className="row"> <div className="col-md-4"> <div className="card shadow-sm mb-3"> <div className="card-body text-center"> <h5>Total Sales</h5> <h3 className="text-success">₹ 2,45,000</h3> </div> </div> </div> <div className="col-md-4"> <div className="card shadow-sm mb-3"> <div className="card-body text-center"> <h5>Pending Payments</h5> <h3 className="text-danger">₹ 75,000</h3> </div> </div> </div> <div className="col-md-4"> <div className="card shadow-sm mb-3"> <div className="card-body text-center"> <h5>Completed Orders</h5> <h3 className="text-primary">320</h3> </div> </div> </div> </div> */} 
-{/* upcomming exprie product */}
+                            <div className="card-header bg-primary text-white"> Product Wise Sales (Bar Graph) </div> <div className="card-body"> <SalesGraph token={token} filterStatus={""} filterPaymentStatus={""} fromDate={""} toDate={""} sortBy={"Recently Added"} /> </div> </div> </div> <div className="col-lg-4 col-md-12 mb-4"> <div className="card shadow-sm"> <div className="card-header bg-success text-white"> Payment Status Distribution </div> <div className="card-body"> <PaymentStatusChart token={token} fromDate={""} toDate={""} /> </div> </div> </div> </div>  <div className="row"> <div className="col-md-4"> <div className="card shadow-sm mb-3"> <div className="card-body text-center"> <h5>Total Sales</h5> <h3 className="text-success">₹ 2,45,000</h3> </div> </div> </div> <div className="col-md-4"> <div className="card shadow-sm mb-3"> <div className="card-body text-center"> <h5>Pending Payments</h5> <h3 className="text-danger">₹ 75,000</h3> </div> </div> </div> <div className="col-md-4"> <div className="card shadow-sm mb-3"> <div className="card-body text-center"> <h5>Completed Orders</h5> <h3 className="text-primary">320</h3> </div> 
+                            </div> 
+                        </div> 
+                </div> */}
+
+                {/* upcomming exprie product */}
                 <div className="row">
                     <div className="col-xxl-12 col-xl-7 col-sm-12 col-12 d-flex">
                         <div className="card flex-fill">
@@ -1273,8 +1299,9 @@ useEffect(() => {
                     {/* /Recent Sales */}
                 </div>
 
-{/* top selling , low stock */}
+                {/* top selling , low stock, recent transactions */}
                 <div className="row">
+
                     {/* Top Selling Products */}
                     <div className="col-xxl-4 col-md-6 d-flex">
                         <div className="card flex-fill">
@@ -1367,7 +1394,7 @@ useEffect(() => {
 </div> */}
                         </div>
                     </div>
-                    {/* /Top Selling Products */}
+
                     {/* Low Stock Products */}
                     <div className="col-xxl-4 col-md-6 d-flex">
                         <div className="card flex-fill">
@@ -1402,7 +1429,7 @@ useEffect(() => {
                             </div>
                         </div>
                     </div>
-                    {/* /Low Stock Products */}
+                    
                     {/* Recent Sales */}
                     {/* <div className="col-xxl-4 col-md-12 d-flex">
                         <div className="card flex-fill">
@@ -1494,6 +1521,8 @@ useEffect(() => {
                         </div>
                     </div> */}
                     {/* /Recent Sales */}
+
+                    {/* Recent Transactions */}
                     <div className="col-xl-4 col-sm-12 col-12 d-flex">
                         <div className="card flex-fill">
                             <div className="card-header d-flex align-items-center justify-content-between flex-wrap gap-3">
@@ -1531,28 +1560,28 @@ useEffect(() => {
                                                     {recentSales.length > 0 ? recentSales.map(sale => (
                                                         <tr key={sale._id}>
                                                             <td>{sale.saleDate ? new Date(sale.saleDate).toLocaleDateString() : '-'}</td>
-                                                             <td>
-                                                            <div className="d-flex align-items-center me-2">
-                                                                {sale.customer?.images?.[0] ? (
-                                                                    <img
-                                                                        className="me-2"
-                                                                        style={{ width: 32, height: 32, objectFit: "cover", borderRadius: 4 }}
-                                                                        src={sale.customer.images[0]?.url || sale.customer.images[0]}
-                                                                        alt={sale.customer?.name || "User"}
-                                                                    />
-                                                                ) : (
-                                                                    <div className="me-2 d-flex align-items-center justify-content-center" style={{ width: 32, height: 32, borderRadius: 4, backgroundColor: "#007bff", color: "#fff", fontSize: "14px", fontWeight: "bold", textTransform: "uppercase", opacity: 0.8 }}>
-                                                                        {sale.customer?.name?.charAt(0) || "U"}
-                                                                    </div>
-                                                                )}
-                                                                {/* <h6 className='text-capitalize'>{sale.customer?.name || "-"}</h6> */}
+                                                            <td>
+                                                                <div className="d-flex align-items-center me-2">
+                                                                    {sale.customer?.images?.[0] ? (
+                                                                        <img
+                                                                            className="me-2"
+                                                                            style={{ width: 32, height: 32, objectFit: "cover", borderRadius: 4 }}
+                                                                            src={sale.customer.images[0]?.url || sale.customer.images[0]}
+                                                                            alt={sale.customer?.name || "User"}
+                                                                        />
+                                                                    ) : (
+                                                                        <div className="me-2 d-flex align-items-center justify-content-center" style={{ width: 32, height: 32, borderRadius: 4, backgroundColor: "#007bff", color: "#fff", fontSize: "14px", fontWeight: "bold", textTransform: "uppercase", opacity: 0.8 }}>
+                                                                            {sale.customer?.name?.charAt(0) || "U"}
+                                                                        </div>
+                                                                    )}
+                                                                    {/* <h6 className='text-capitalize'>{sale.customer?.name || "-"}</h6> */}
                                                                     <div className="ms-2">
                                                                         <h6><a href="" className="fw-bold">{sale.customer?.name || '-'}</a></h6>
                                                                         <span className="fs-13 text-orange">{sale.referenceNumber || '-'}</span>
                                                                     </div>
-                                                            </div>
-                                                        </td>
-                                                           
+                                                                </div>
+                                                            </td>
+
                                                             {/* <td>
                                                                 <div className="d-flex align-items-center file-name-icon">
                                                                     <a href="" className="avatar avatar-md d-flex align-items-center justify-content-center rounded-circle text-white"
@@ -1611,7 +1640,7 @@ useEffect(() => {
                                                             <tr>
                                                                 <td>{new Date(purchase.purchaseDate).toLocaleDateString()}</td>
 
-                                                                 <td>
+                                                                <td>
                                                                     <div className="d-flex align-items-center file-name-icon">
                                                                         <a href="" className="avatar avatar-md">
                                                                             <img src={sale.customer?.image || "assets/img/customer/customer16.jpg"} className="img-fluid" alt="img" />
@@ -1621,7 +1650,7 @@ useEffect(() => {
                                                                             <span className="fs-13 text-orange">{purchase.referenceNumber || '-'}</span>
                                                                         </div>
                                                                     </div>
-                                                                </td> 
+                                                                </td>
                                                                 {/* <td>
                                                                     <div className="d-flex align-items-center">
 
@@ -1712,7 +1741,7 @@ useEffect(() => {
                         </div>
                     </div>
                 </div>
-                
+
                 <div className="row">
 
                     {/* Recent Transactions */}
