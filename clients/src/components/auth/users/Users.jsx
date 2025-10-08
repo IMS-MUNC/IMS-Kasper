@@ -1118,13 +1118,13 @@ const Users = () => {
         {/* /product list */}
 
         {/* Add User */}
-        <div className="modal" id="add-user">
+        <div className="modal usermdl" id="add-user">
           <div
-            className="modal-dialog modal-dialog-centered"
+            className="modal-dialog modal-dialog-centered usermdl-dialog"
             style={{ maxWidth: "970px" }}
           >
             <div
-              className="modal-content"
+              className="modal-content usermdl-content"
               style={{
                 padding: "10px",
               }}
@@ -1478,7 +1478,7 @@ const Users = () => {
                               name="phone"
                               value={phone}
                               onChange={(e) => setPhone(e.target.value)}
-                              placeholder="Enter your 10 digit number"
+                              placeholder="Enter 10 digit number"
                               required
                             />
                             {errors.phone && <p style={{ color: 'red', fontSize: '12px' }}>{errors.phone}</p>}
@@ -1933,12 +1933,12 @@ const Users = () => {
       /> */}
 
         {/* Edit User */}
-        <div className="modal" id="edit-user">
+        <div className="modal usermdl" id="edit-user">
           <div
-            className="modal-dialog modal-dialog-centered"
+            className="modal-dialog modal-dialog-centered usermdl-dialog"
             style={{ maxWidth: "970px" }}
           >
-            <div className="modal-content" style={{ padding: "10px" }}>
+            <div className="modal-content usermdl-content" style={{ padding: "10px" }}>
               <div className="page-wrapper-new p-0 pb-5">
                 <div className="">
                   <div className="page-title">

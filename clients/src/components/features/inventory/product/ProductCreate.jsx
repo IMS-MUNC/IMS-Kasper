@@ -113,71 +113,113 @@ const ProductForm = () => {
     setFormData((prev) => ({ ...prev, [key]: sanitizedValue }));
   };
 
-  const validateStep = () => {
-    if (step === 0) {
-      return formData.productName;
+ const validateStep = () => {
+  const errors = {};
+  let isValid = true;
+
+  if (step === 0) {
+    // Step 0: Basic Info
+    if (!formData.productName || !validationPatterns.productName.test(formData.productName)) {
+      errors.productName = formData.productName ? t("invalidProductName") : t("fieldRequired");
     }
-    if (step === 1) {
-      return formData.purchasePrice;
+    if (!formData.sku || !validationPatterns.sku.test(formData.sku)) {
+      errors.sku = formData.sku ? t("invalidSKUFormat") : t("fieldRequired");
     }
-    if (step === 2) {
-      return formData.description;
+    if (!selectedCategory) {
+      errors.category = t("fieldRequired");
     }
-    // if (step === 3) {
-    //   // Check if at least one variant has both name and value
-    //   return variants.some(variant => variant.variantName && variant.variantValue);
+    if (!selectedsubCategory) {
+      errors.subCategory = t("fieldRequired");
+    }
+    if (!formData.store) {
+      errors.store = t("fieldRequired");
+    }
+    if (!selectedWarehouse) {
+      errors.warehouse = t("fieldRequired");
+    }
+    if (!selectedHSN) {
+      errors.hsn = t("fieldRequired");
+    }
+    if (formData.isAdvanced) {
+      if (!formData.leadTime || !validationPatterns.leadTime.test(formData.leadTime)) {
+        errors.leadTime = formData.leadTime ? t("invalidLeadTimeFormat") : t("fieldRequired");
+      }
+      if (!formData.reorderLevel || !validationPatterns.reorderLevel.test(formData.reorderLevel)) {
+        errors.reorderLevel = formData.reorderLevel ? t("invalidReorderLevelFormat") : t("fieldRequired");
+      }
+      if (!formData.initialStock || !validationPatterns.initialStock.test(formData.initialStock)) {
+        errors.initialStock = formData.initialStock ? t("invalidInitialStockFormat") : t("fieldRequired");
+      }
+      if (formData.trackType === "serial" && (!formData.serialNumber || !validationPatterns.serialNumber.test(formData.serialNumber))) {
+        errors.serialNumber = formData.serialNumber ? t("invalidSerialNumberFormat") : t("fieldRequired");
+      }
+      if (formData.trackType === "batch" && (!formData.batchNumber || !validationPatterns.batchNumber.test(formData.batchNumber))) {
+        errors.batchNumber = formData.batchNumber ? t("invalidBatchNumberFormat") : t("fieldRequired");
+      }
+    }
+  } else if (step === 1) {
+    // Step 1: Pricing
+    if (!formData.purchasePrice || !validationPatterns.price.test(formData.purchasePrice)) {
+      errors.purchasePrice = formData.purchasePrice ? t("invalidPriceFormat") : t("fieldRequired");
+    }
+    if (!formData.quantity || !validationPatterns.quantity.test(formData.quantity)) {
+      errors.quantity = formData.quantity ? t("invalidQuantityFormat") : t("fieldRequired");
+    }
+    if (!formData.sellingPrice || !validationPatterns.price.test(formData.sellingPrice)) {
+      errors.sellingPrice = formData.sellingPrice ? t("invalidPriceFormat") : t("fieldRequired");
+    }
+    if (!formData.wholesalePrice || !validationPatterns.price.test(formData.wholesalePrice)) {
+      errors.wholesalePrice = formData.wholesalePrice ? t("invalidPriceFormat") : t("fieldRequired");
+    }
+    if (!formData.retailPrice || !validationPatterns.price.test(formData.retailPrice)) {
+      errors.retailPrice = formData.retailPrice ? t("invalidPriceFormat") : t("fieldRequired");
+    }
+    if (!selectedUnits) {
+      errors.unit = t("fieldRequired");
+    }
+    if (!formData.taxType) {
+      errors.taxType = t("fieldRequired");
+    }
+    if (!formData.tax) {
+      errors.tax = t("fieldRequired");
+    }
+    if (!formData.discountType) {
+      errors.discountType = t("fieldRequired");
+    }
+    if (!formData.discountValue || !validationPatterns.discountValue.test(formData.discountValue)) {
+      errors.discountValue = formData.discountValue ? t("invalidDiscountValueFormat") : t("fieldRequired");
+    }
+    if (!formData.quantityAlert || !validationPatterns.quantityAlert.test(formData.quantityAlert)) {
+      errors.quantityAlert = formData.quantityAlert ? t("invalidQuantityAlertFormat") : t("fieldRequired");
+    }
+  } else if (step === 2) {
+    // Step 2: Images & SEO
+    if (!formData.description || !validationPatterns.description.test(formData.description)) {
+      errors.description = formData.description ? t("invalidDescriptionFormat") : t("fieldRequired");
+    }
+    // Optional: Add validation for images if required
+    // if (images.length === 0) {
+    //   errors.images = t("atLeastOneImageRequired");
     // }
-    return true;
-    // Improved comprehensive validation
-    const errors = {};
-    let isValid = true;
-
-    // if (step === 0) {
-    //   if (!formData.productName) errors.productName = t("fieldRequired");
-    //   if (!formData.sku) errors.sku = t("fieldRequired");
-    //   if (!formData.itemBarcode) errors.itemBarcode = t("fieldRequired");
-    //   if (!selectedCategory) errors.category = t("fieldRequired");
-    //   if (!selectedsubCategory) errors.subCategory = t("fieldRequired");
-    //   if (!selectedSupplier) errors.supplier = t("fieldRequired");
-    //   if (!formData.store) errors.store = t("fieldRequired");
-    //   if (!selectedWarehouse) errors.warehouse = t("fieldRequired");
-    //   if (!selectedHSN) errors.hsn = t("fieldRequired");
-    //   if (formData.isAdvanced) {
-    //     if (!formData.leadTime) errors.leadTime = t("fieldRequired");
-    //     if (!formData.reorderLevel) errors.reorderLevel = t("fieldRequired");
-    //     if (!formData.initialStock) errors.initialStock = t("fieldRequired");
-    //     if (formData.trackType === "serial" && !formData.serialNumber) errors.serialNumber = t("fieldRequired");
-    //     if (formData.trackType === "batch" && !formData.batchNumber) errors.batchNumber = t("fieldRequired");
-    //   }
-    // } else if (step === 1) {
-    //   if (!formData.purchasePrice) errors.purchasePrice = t("fieldRequired");
-    //   if (!formData.quantity) errors.quantity = t("fieldRequired");
-    //   if (!selectedUnits) errors.unit = t("fieldRequired");
-    //   if (!formData.taxType) errors.taxType = t("fieldRequired");
-    //   if (!formData.tax) errors.tax = t("fieldRequired");
-    //   if (!formData.discountType) errors.discountType = t("fieldRequired");
-    //   if (!formData.discountValue) errors.discountValue = t("fieldRequired");
-    //   if (!formData.quantityAlert) errors.quantityAlert = t("fieldRequired");
-    // } else if (step === 2) {
-    //   if (!formData.description) errors.description = t("fieldRequired");
-    // } else if (step === 3) {
-    //   const hasValidVariant = variants.some(variant => variant.variantName && variant.variantValue);
-    //   if (!hasValidVariant) {
-    //     errors.variants = t("atLeastOneVariantRequired");
-    //   }
-    //   variants.forEach((variant, index) => {
-    //     if (variant.variantValue) {
-    //       const error = validateField("variantValue", variant.variantValue);
-    //       if (error) errors[`variantValue_${index}`] = error;
-    //     }
-    //   });
+  } else if (step === 3) {
+    // Step 3: Variants
+    // const hasValidVariant = variants.some(
+    //   (variant) => variant.selectedVariant && variant.selectedValue
+    // );
+    // if (!hasValidVariant) {
+    //   errors.variants = t("atLeastOneVariantRequired");
     // }
+    variants.forEach((variant, index) => {
+      if (variant.selectedValue && !validationPatterns.variantValue.test(variant.selectedValue)) {
+        errors[`variantValue_${index}`] = t("invalidVariantFormat");
+      }
+    });
+  }
 
-    setFormErrors(errors);
-    isValid = Object.keys(errors).length === 0;
-    return isValid;
-
-  };
+  setFormErrors(errors);
+  isValid = Object.keys(errors).length === 0;
+  return isValid;
+};
 
   //  const validateStep = () => {
   //   if (step === 3) {
@@ -1082,11 +1124,12 @@ const ProductForm = () => {
                 data-bs-placement="top"
                 title="Refresh"
                 className="icon-btn"
+                onClick={() => window.location.reload()}
               >
                 <TbRefresh />
               </button>
             </li>
-            <li>
+            {/* <li>
               <button
                 type="button"
                 data-bs-toggle="tooltip"
@@ -1097,7 +1140,7 @@ const ProductForm = () => {
               >
                 <TbChevronUp />
               </button>
-            </li>
+            </li> */}
           </div>
 
           <div className="page-btn mt-0">
@@ -1240,6 +1283,7 @@ const ProductForm = () => {
                           />
                         </div>
                         {formErrors.hsn && <div className="text-danger">{formErrors.hsn}</div>}
+                        
                       </div>
                       <button
                         type="button"

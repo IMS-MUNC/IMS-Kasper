@@ -278,6 +278,14 @@ const Variant = ({ show, handleClose }) => {
       });
   }, [variantData, searchTerm, statusFilter]);
 
+  useEffect(() => {
+  const totalPages = Math.ceil(filteredVariants.length / rowsPerPage);
+  if (currentPage > totalPages && totalPages > 0) {
+    setCurrentPage(1);
+  }
+}, [filteredVariants, rowsPerPage]);
+
+
   // Sync selectAll state with selectedVariants (only for current page)
   useEffect(() => {
     if (filteredVariants.length > 0) {
