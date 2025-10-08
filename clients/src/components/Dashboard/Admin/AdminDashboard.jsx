@@ -123,19 +123,66 @@ const AdminDashboard = () => {
 
 
     // Top Selling Products (by sale quantity)
-    const topSellingProducts = (() => {
-        const productSales = {};
-        recentSales.forEach(sale => {
-            sale.products?.forEach(prod => {
-                const name = prod.productName || prod.name || 'N/A';
-                productSales[name] = (productSales[name] || 0) + (prod.saleQty || 0);
-            });
-        });
-        return Object.entries(productSales)
-            .sort((a, b) => b[1] - a[1])
-            .slice(0, 5)
-            .map(([name, qty]) => ({ name, qty }));
-    })();
+    // const topSellingProducts = (() => {
+    //     const productSales = {};
+    //     recentSales.forEach(sale => {
+    //         sale.products?.forEach(prod => {
+    //             const name = prod.productName || prod.name || 'N/A';
+    //             productSales[name] = (productSales[name] || 0) + (prod.saleQty || 0);
+    //         });
+    //     });
+    //     return Object.entries(productSales)
+    //         .sort((a, b) => b[1] - a[1])
+    //         .slice(0, 5)
+    //         .map(([name, qty]) => ({ name, qty }));
+    // })();
+   const topSellingProducts = (() => {
+  const productSales = {};
+
+  recentSales.forEach(sale => {
+    sale.products?.forEach(prod => {
+      const id =
+        prod.productId?._id ||
+        prod.productId ||
+        prod._id ||
+        prod.sku ||
+        prod.productName;
+
+      const name = prod.productName || prod.name || 'N/A';
+      const sku = prod.sku || prod.productId?.sku || 'N/A';
+      const sellingPrice = Number(prod.sellingPrice || prod.unitCost || 0);
+      const image = prod.productImage || prod.productId?.images?.[0]?.url || 'assets/img/products/product-01.jpg';
+      const sellQuantity = Number(prod.saleQty || prod.sellQuantity || prod.quantity || 0);
+      const availableQuantity = Number(
+        prod.availableQuantity ??
+        prod.availableQty ??
+        prod.productId?.availableQty ??
+        0
+      );
+
+      if (!productSales[id]) {
+        productSales[id] = {
+          id,
+          name,
+          sku,
+          sellingPrice,
+          sellQuantity,
+          image,
+          availableQuantity,
+        };
+      } else {
+        productSales[id].sellQuantity += sellQuantity;
+      }
+    });
+  });
+
+  return Object.values(productSales)
+    .sort((a, b) => b.sellQuantity - a.sellQuantity)
+    .slice(0, 5);
+})();
+console.log("fdfdfrecentsales",recentSales[0]?.products[0]);
+
+
 
 
 
@@ -1329,6 +1376,7 @@ const AdminDashboard = () => {
                                 </div>
                             </div>
                             <div className="card-body sell-product">
+                               
                                 {topSellingProducts.length === 0 ? (
                                     <div className="text-muted">No sales data available.</div>
                                 ) : (
