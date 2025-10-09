@@ -9,6 +9,7 @@ import Polygon from "../../../assets/images/Polygon-2.png";
 import Poly from "../../../assets/images/Polygon-1.png";
 import Polygont from "../../../assets/images/Polygon3.png";
 import Polygo from "../../../assets/images/Polygon4.png";
+import AddWarehouseModal from "../../../pages/Modal/warehouse/AddWarehouseModal";
 import axios from "axios";
 
 function Warehouse() {
@@ -147,7 +148,7 @@ function Warehouse() {
             <span>
               <MdArrowForwardIos style={{ color: "#b0afafff" }} />
             </span>
-            <span>All Warehouse </span>
+            <span style={{fontWeight:'600', color:'black'}}>All Warehouse </span>
           </div>
 
           {/* Add Warehouse */}
@@ -200,11 +201,9 @@ function Warehouse() {
                   );
                   const totalStockValue = filteredProducts.reduce(
                     (sum, item) => {
-                      const itemQuanatity = Number(item.quantity) || 0;
-                      const soldUnits = Number(salesMap[item._id] || 0);
-                      const mrp = Number(item.mrp ?? item.sellingPrice) || 0;
-                      const remainingUnits = itemQuanatity - soldUnits;
-                      return sum + remainingUnits * mrp;
+                      const quantity = Number(item.quantity) || 0;
+                      const sellingPrice = Number(item.sellingPrice) || 0;
+                      return sum + quantity * sellingPrice;
                     },
                     0
                   );
@@ -213,7 +212,7 @@ function Warehouse() {
                     <div className="col-3" key={item._id}>
                       <div
                         style={{
-                          backgroundColor: "#f9f9f9",
+                          backgroundColor: "white",
                           padding: "10px",
                           borderRadius: "8px",
                           display: "flex",
@@ -245,6 +244,10 @@ function Warehouse() {
                           alt="Polygon"
                           style={{
                             position: "absolute",
+                            bottom: "0",
+                            left: "auto",
+                            top: "auto",
+                            right: "0",
                             bottom: "auto",
                             left: "0",
                             top: "0",
@@ -260,8 +263,10 @@ function Warehouse() {
                           alt="Polygon"
                           style={{
                             position: "absolute",
+                            bottom: "auto",
                             bottom: "0",
                             left: "0",
+                            top: "0",
                             top: "auto",
                             right: "auto",
                             width: "100%",
@@ -326,7 +331,7 @@ function Warehouse() {
                           <div
                             style={{
                               padding: "10px",
-                              backgroundColor: "#fff",
+                              backgroundColor: "#f1f1f1",
                               borderRadius: "8px",
                               width: "fit-content",
                             }}
@@ -374,7 +379,7 @@ function Warehouse() {
                             <span style={{ color: "#1368EC" }}>
                               ₹{totalStockValue.toLocaleString("en-IN")}
                             </span>
-                            <span style={{ marginLeft: "4px" }}>
+                            <span style={{ marginLeft: "4px", fontSize: "16px", color: "#676767" }}>
                               Stock Valuation
                             </span>
                             </Link>
@@ -414,51 +419,107 @@ function Warehouse() {
             <div className="row">
               {warehouses
                 .filter((item) => item.isFavorite)
-                .map((fav) => (
-                  <div className="col-3" key={fav._id}>
-                    <div
-                      style={{
-                        backgroundColor: "rgb(255 255 255)",
-                        padding: "10px",
-                        borderRadius: "8px",
-                        display: "flex",
-                        justifyContent: "space-between",
-                        alignItems: "flex-start",
-                        height: "150px",
-                        position: "relative",
-                      }}
-                    >
+                .map((fav) => {
+                  const filteredProducts = products.filter(
+                    (p) => p.warehouseName === fav.warehouseName
+                  );
+                  const totalStockValue = filteredProducts.reduce(
+                    (sum, item) => {
+                      const quantity = Number(item.quantity) || 0;
+                      const sellingPrice = Number(item.sellingPrice) || 0;
+                      return sum + quantity * sellingPrice;
+                    },
+                    0
+                  );
+
+                  return (
+                    <div className="col-3" key={fav._id}>
+
                       <div
                         style={{
+                          backgroundColor: "white",
+                          padding: "10px",
+                          borderRadius: "8px",
                           display: "flex",
                           justifyContent: "space-between",
-<<<<<<< HEAD
-                          width: "100%",
-                          marginBottom: "10px",
-=======
                           alignItems: "flex-start",
                           height: "150px",
                           position: "relative",
                           marginBottom: "30px",
                           overflow: "hidden",
->>>>>>> 851232da3e80bfc41066daf12001d00f09578bd8
                         }}
                       >
+
+                        <img
+                          src={Polygon}
+                          alt="Polygon"
+                          style={{
+                            position: "absolute",
+                            bottom: "0",
+                            left: "auto",
+                            top: "auto",
+                            right: "0",
+                            width: "100%",
+                            height: "50px",
+                            zIndex: "0",
+                          }}
+                        />
+
+                        <img
+                          src={Poly}
+                          alt="Polygon"
+                          style={{
+                            position: "absolute",
+                            bottom: "0",
+                            left: "auto",
+                            top: "auto",
+                            right: "0",
+                            width: "100%",
+                            height: "50px",
+                            zIndex: "0",
+                          }}
+                        />
+
+                        <img
+                          src={Polygont}
+                          alt="Polygon"
+                          style={{
+                            position: "absolute",
+                            bottom: "auto",
+                            left: "0",
+                            top: "0",
+                            right: "auto",
+                            width: "100%",
+                            height: "50px",
+                            zIndex: "0",
+                          }}
+                        />
+
+                        <img
+                          src={Polygo}
+                          alt="Polygon"
+                          style={{
+                            position: "absolute",
+                            bottom: "auto",
+                            left: "0",
+                            top: "0",
+                            right: "auto",
+                            width: "100%",
+                            height: "50px",
+                            zIndex: "0",
+                          }}
+                        />
                         <div
                           style={{
-                            backgroundColor: "#f1f1f1",
-                            border: "1px solid #e6e6e6",
-                            borderRadius: "8px",
-                            padding: "10px",
-                            alignItems: "center",
+                            display: "flex",
+                            justifyContent: "space-between",
+                            width: "100%",
+                            marginBottom: "10px",
                           }}
                         >
-<<<<<<< HEAD
-                          <span>
-                            <PiWarehouseFill
-=======
                           <div
                             style={{
+                              backgroundColor: "#f1f1f1",
                               backgroundColor: "#fff",
                               border: "1px solid #e6e6e6",
                               borderRadius: "8px",
@@ -493,72 +554,17 @@ function Warehouse() {
                           >
                             <FaHeart
                               onClick={() => toggleFavourite(fav)}
->>>>>>> 851232da3e80bfc41066daf12001d00f09578bd8
                               style={{
-                                color: "#1368EC",
-                                fontSize: "20px",
-                                fontWeight: "bold",
+                                cursor: "pointer",
+                                color: "red",
+                                fontWeight: "500",
+                                fontSize: "26px",
                               }}
                             />
-                            {fav.warehouseName}
-                          </span>
+                          </div>
                         </div>
                         <div
                           style={{
-<<<<<<< HEAD
-                            padding: "10px",
-                            backgroundColor: "#f1f1f1",
-                            borderRadius: "8px",
-                            width: "fit-content",
-                          }}
-                        >
-                          <FaHeart
-                            onClick={() => toggleFavourite(fav)}
-                            style={{
-                              cursor: "pointer",
-                              color: "red",
-                              fontWeight: "500",
-                              fontSize: "26px",
-                            }}
-                          />
-                        </div>
-                      </div>
-                      <div
-                        style={{
-                          position: "absolute",
-                          bottom: "10px",
-                          left: "10px",
-                          right: "10px",
-                          display: "flex",
-                          justifyContent: "space-between",
-                          alignItems: "flex-end",
-                        }}
-                      >
-                        <div>
-                          <p style={{ margin: "0", fontWeight: "500" }}>
-                            {fav.city} - {fav.warehouseOwner}
-                          </p>
-                          <span style={{ color: "#1368EC" }}>
-                            {products
-                              .filter(
-                                (p) => p.warehouseName === fav.warehouseName
-                              )
-                              .reduce((sum, p) => {
-                                const soldUnits = salesMap[p._id] || 0;
-                                const price = parseFloat(p.sellingPrice) || 0;
-                                return sum + soldUnits * price;
-                              }, 0)
-                              .toLocaleString("en-IN")}
-                          </span>
-                          <span style={{ marginLeft: "4px" }}>
-                            Stock Valuation
-                          </span>
-                        </div>
-                        <div>
-                          <Link to={`/WarehouseDetails/${fav._id}`}>
-                            <FaArrowRight />
-                          </Link>
-=======
                             position: "absolute",
                             bottom: "10px",
                             left: "10px",
@@ -587,12 +593,11 @@ function Warehouse() {
                               <FaArrowRight />
                             </Link>
                           </div>
->>>>>>> 851232da3e80bfc41066daf12001d00f09578bd8
                         </div>
                       </div>
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
               {warehouses.filter((item) => item.isFavorite).length === 0 && (
                 <p>No favourites yet.</p>
               )}
@@ -601,7 +606,7 @@ function Warehouse() {
         </div>
 
         {/* Owened Warehouse */}
- 
+
         {/* <div
           style={{
             fontWeight: "500",
@@ -716,7 +721,7 @@ function Warehouse() {
           </div>
         </div> */}
 
-      
+
 {/* 
         <div
           style={{
@@ -829,7 +834,7 @@ function Warehouse() {
             </div>
           </div>
         </div>  */}
-        
+
       </div>
     </div>
   );
