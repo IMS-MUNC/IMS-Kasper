@@ -615,7 +615,7 @@ const Role = () => {
                               //   navigate(`/permissions/${role._id}`)
                               // }
                               onClick={() => handleViewPermissions(role.roleName)}
-
+                              title="View"
                             >
                               <TbEye />
                             </a>
@@ -626,6 +626,7 @@ const Role = () => {
                               data-bs-toggle="modal"
                               data-bs-target="#edit-role"
                               onClick={() => handleEditClick(role)}
+                              title="Edit"
                             >
                               <TbEdit />
                             </a>
@@ -633,6 +634,7 @@ const Role = () => {
                             <a
                               className="p-2"
                               onClick={() => handleDeleteRole(role._id)}
+                              title="Delete"
                             >
                               <TbTrash />
                             </a>

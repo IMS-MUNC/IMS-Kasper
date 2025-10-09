@@ -528,6 +528,7 @@ const State = () => {
                                 setEditStateCode(state.stateCode); // ✅ Set this correctly
                                 console.log("Edit Clicked:", state); // ✅ Debug log
                               }}
+                              title="Edit"
                             >
                               <TbEdit />
                             </a>
@@ -535,6 +536,7 @@ const State = () => {
                             <a
                               className="p-2"
                               onClick={() => handleDeleteState(state._id)}
+                              title="Delete"
                             >
                               <TbTrash />
                             </a>

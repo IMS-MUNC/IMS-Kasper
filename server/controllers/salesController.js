@@ -296,6 +296,212 @@ exports.getNextReferenceNumber = async (req, res) => {
   }
 };
 // 🔹 Create Sale
+// exports.createSale = async (req, res) => {
+//   try {
+//     const {
+//       customer,
+//       billing,
+//       shipping,
+//       products,
+//       saleDate,
+//       status,
+//       paymentType,
+//       referenceNumber,
+//       paidAmount,
+//       dueAmount,
+//       dueDate,
+//       paymentMethod,
+//       transactionId,
+//       onlineMod,
+//       transactionDate,
+//       paymentStatus,
+//       images,
+//       description,
+//       cgst,
+//       sgst,
+//       totalAmount,
+//       labourCost,
+//       orderTax,
+//       orderDiscount,
+//       roundOff,
+//       roundOffValue,
+//       shippingCost,
+//       notes,
+//       currency,
+//       enableTax,
+//       enableAddCharges,
+//       grandTotals,
+//       billSummary,
+//       company,
+//     } = req.body;
+
+
+//     // ✅ Validate
+//     if (!customer || !mongoose.Types.ObjectId.isValid(customer)) {
+//       return res.status(400).json({ message: "Please fill customer" });
+//     }
+//     if (!products || products.length === 0) {
+//       return res.status(400).json({ message: "Please add at least one product" });
+//     }
+
+//     // ✅ Check and update product stock
+//     for (const item of products) {
+//       const product = await Product.findById(item.productId);
+//       if (!product) {
+//         return res.status(404).json({ message: "Product not found" });
+//       }
+
+//       if (product.availableQty < item.saleQty) {
+//         return res.status(400).json({
+//           message: `Not enough stock for ${product.name}. Available: ${product.availableQty}, Requested: ${item.saleQty}`,
+//         });
+//       }
+
+//       // 🔹 Subtract saleQty from stock and push soldPrice/soldQuantity
+//       await Product.findByIdAndUpdate(item.productId, {
+//         $inc: { availableQty: -item.saleQty },
+//         $push: {
+//           soldPrice: item.sellingPrice,
+//           soldQuantity: item.saleQty,
+//           purchases: {
+//             referenceNumber: referenceNumber,
+//             purchaseId: null, // Not a purchase, but sale reference
+//             quantity: item.saleQty,
+//             purchasePrice: item.sellingPrice,
+//             purchaseDate: saleDate
+//           }
+//         },
+//       });
+
+//       // 🔹 Stock History Entry
+//       await StockHistory.create({
+//         product: product._id,
+//         type: "SALE",
+//         soldQuantity: -item.saleQty,
+//         referenceNumber: referenceNumber,
+//         sellingPrice: item.sellingPrice,
+//         date: saleDate,
+//         notes: `Sale created for ${item.saleQty} qty`,
+//       });
+//     }
+
+
+
+//     // // ✅ Generate next invoiceId
+//     // let invoiceId = "INV001";
+//     // // Find last invoice by createdAt, not _id, to avoid duplicate key error
+//     // const lastInvoice = await Sales.findOne({ invoiceId: { $exists: true, $ne: null } }, { invoiceId: 1 }).sort({ createdAt: -1 });
+//     // if (lastInvoice && lastInvoice.invoiceId) {
+//     //   const match = lastInvoice.invoiceId.match(/INV(\d+)/);
+//     //   if (match) {
+//     //     let num = parseInt(match[1], 10);
+//     //     // Check for existing invoiceId in DB and increment until unique
+//     //     let nextId;
+//     //     do {
+//     //       num++;
+//     //       nextId = `INV${num.toString().padStart(3, "0")}`;
+//     //     } while (await Sales.exists({ invoiceId: nextId }));
+//     //     invoiceId = nextId;
+//     //   }
+//     // }
+
+//     // ✅ Create Sale with invoiceId
+//     const sale = new Sales({
+//       customer,
+//       billing,
+//       shipping,
+//       products: products.map(p => ({
+//         productId: p.productId,
+//         saleQty: p.saleQty,
+//         quantity: p.quantity,
+//         sellingPrice: p.sellingPrice,
+//         discount: p.discount,
+//         discountType: p.discountType,
+//         tax: p.tax,
+//         unit: p.unit,
+//         hsnCode: p.hsnCode,
+//         subTotal: p.subTotal,
+//         discountAmount: p.discountAmount,
+//         taxableAmount: p.taxableAmount,
+//         taxAmount: p.taxAmount,
+//         lineTotal: p.lineTotal,
+//         unitCost: p.unitCost,
+//       })),
+//       saleDate,
+//       status,
+//       paymentType,
+//       referenceNumber,
+//       paidAmount,
+//       dueAmount,
+//       dueDate,
+//       paymentMethod,
+//       transactionId,
+//       onlineMod,
+//       transactionDate,
+//       paymentStatus,
+//       images,
+//       description,
+//       cgst,
+//       sgst,
+//       cgstValue: billSummary?.cgst || 0,
+//       sgstValue: billSummary?.sgst || 0,
+//       totalAmount,
+//       labourCost,
+//       orderTax,
+//       orderDiscount,
+//       roundOff,
+//       roundOffValue,
+//       shippingCost,
+//       notes,
+//       currency,
+//       enableTax,
+//       enableAddCharges,
+//       grandTotals,
+//       billSummary,
+//       grandTotal: billSummary?.grandTotal || grandTotals || grandTotal,
+//       createdBy: req.user ? {
+//         name: req.user.firstName + ' ' + req.user.lastName,
+//         email: req.user.email
+//       } : undefined,
+
+//       updatedBy: req.user ? {
+//         name: req.user.firstName + ' ' + req.user.lastName,
+//         email: req.user.email
+//       } : undefined,
+//     });
+
+//     await sale.save();
+//     // ✅ Payment History Log
+//     if (paymentType === "Full" || paymentType === "Partial") {
+//       await PaymentHistory.create({
+//         sale: sale._id,
+//         customer,
+//         paymentType,
+//         paidAmount,
+//         dueAmount,
+//         paymentMethod,
+//         transactionId,
+//         onlineMod,
+//         transactionDate,
+//         paymentStatus,
+//         notes: "Initial payment logged during Sale creation",
+//       });
+//     }
+//     // Invoice is NOT created on sale creation. It will be created only when converting sale to invoice.
+//     // Fetch updated stock for all products in the sale
+//     const updatedStocks = await Promise.all(
+//       products.map(async item => {
+//         const product = await Product.findById(item.productId).select('_id name availableQty');
+//         return product;
+//       })
+//     );
+//     res.status(201).json({ message: "Sale created successfully", sale, updatedStocks, grandTotals });
+//   } catch (error) {
+//     console.error("Error creating sale:", error);
+//     res.status(500).json({ message: "Internal server error" });
+//   }
+// };
+// Put this code in controllers/salesController.js — replace existing createSale
 exports.createSale = async (req, res) => {
   try {
     const {
@@ -335,8 +541,6 @@ exports.createSale = async (req, res) => {
       company,
     } = req.body;
 
-
-    // ✅ Validate
     if (!customer || !mongoose.Types.ObjectId.isValid(customer)) {
       return res.status(400).json({ message: "Please fill customer" });
     }
@@ -344,77 +548,29 @@ exports.createSale = async (req, res) => {
       return res.status(400).json({ message: "Please add at least one product" });
     }
 
-    // ✅ Check and update product stock
-    for (const item of products) {
-      const product = await Product.findById(item.productId);
-      if (!product) {
-        return res.status(404).json({ message: "Product not found" });
+    // Build populatedProducts snapshot and validate stock
+    const populatedProducts = [];
+    for (const p of products) {
+      const productDoc = await Product.findById(p.productId).select('productName sku sellingPrice images availableQty');
+      if (!productDoc) {
+        return res.status(404).json({ message: `Product not found: ${p.productId}` });
       }
-
-      if (product.availableQty < item.saleQty) {
+      const saleQty = Number(p.saleQty || p.quantity || 0);
+      if (productDoc.availableQty < saleQty) {
         return res.status(400).json({
-          message: `Not enough stock for ${product.name}. Available: ${product.availableQty}, Requested: ${item.saleQty}`,
+          message: `Not enough stock for ${productDoc.productName}. Available: ${productDoc.availableQty}, Requested: ${saleQty}`,
         });
       }
+      const sellingPrice = Number(p.sellingPrice ?? productDoc.sellingPrice ?? 0);
 
-      // 🔹 Subtract saleQty from stock and push soldPrice/soldQuantity
-      await Product.findByIdAndUpdate(item.productId, {
-        $inc: { availableQty: -item.saleQty },
-        $push: {
-          soldPrice: item.sellingPrice,
-          soldQuantity: item.saleQty,
-          purchases: {
-            referenceNumber: referenceNumber,
-            purchaseId: null, // Not a purchase, but sale reference
-            quantity: item.saleQty,
-            purchasePrice: item.sellingPrice,
-            purchaseDate: saleDate
-          }
-        },
-      });
-
-      // 🔹 Stock History Entry
-      await StockHistory.create({
-        product: product._id,
-        type: "SALE",
-        soldQuantity: -item.saleQty,
-        referenceNumber: referenceNumber,
-        sellingPrice: item.sellingPrice,
-        date: saleDate,
-        notes: `Sale created for ${item.saleQty} qty`,
-      });
-    }
-
-
-
-    // // ✅ Generate next invoiceId
-    // let invoiceId = "INV001";
-    // // Find last invoice by createdAt, not _id, to avoid duplicate key error
-    // const lastInvoice = await Sales.findOne({ invoiceId: { $exists: true, $ne: null } }, { invoiceId: 1 }).sort({ createdAt: -1 });
-    // if (lastInvoice && lastInvoice.invoiceId) {
-    //   const match = lastInvoice.invoiceId.match(/INV(\d+)/);
-    //   if (match) {
-    //     let num = parseInt(match[1], 10);
-    //     // Check for existing invoiceId in DB and increment until unique
-    //     let nextId;
-    //     do {
-    //       num++;
-    //       nextId = `INV${num.toString().padStart(3, "0")}`;
-    //     } while (await Sales.exists({ invoiceId: nextId }));
-    //     invoiceId = nextId;
-    //   }
-    // }
-
-    // ✅ Create Sale with invoiceId
-    const sale = new Sales({
-      customer,
-      billing,
-      shipping,
-      products: products.map(p => ({
-        productId: p.productId,
-        saleQty: p.saleQty,
+      populatedProducts.push({
+        productId: productDoc._id,
+        productName: productDoc.productName,
+        sku: productDoc.sku || '',
+        productImage: productDoc.images?.[0]?.url || '',
+        sellingPrice,
+        saleQty,
         quantity: p.quantity,
-        sellingPrice: p.sellingPrice,
         discount: p.discount,
         discountType: p.discountType,
         tax: p.tax,
@@ -426,7 +582,44 @@ exports.createSale = async (req, res) => {
         taxAmount: p.taxAmount,
         lineTotal: p.lineTotal,
         unitCost: p.unitCost,
-      })),
+        availableQuantityBeforeSale: productDoc.availableQty
+      });
+    }
+
+    // Update stock and stock history (one by one)
+    for (const item of populatedProducts) {
+      await Product.findByIdAndUpdate(item.productId, {
+        $inc: { availableQty: -item.saleQty },
+        $push: {
+          soldPrice: item.sellingPrice,
+          soldQuantity: item.saleQty,
+          purchases: {
+            referenceNumber: referenceNumber,
+            purchaseId: null,
+            quantity: item.saleQty,
+            purchasePrice: item.sellingPrice,
+            purchaseDate: saleDate
+          }
+        },
+      });
+
+      await StockHistory.create({
+        product: item.productId,
+        type: "SALE",
+        soldQuantity: -item.saleQty,
+        referenceNumber: referenceNumber,
+        sellingPrice: item.sellingPrice,
+        date: saleDate,
+        notes: `Sale created for ${item.saleQty} qty`,
+      });
+    }
+
+    // Create sale using snapshot products
+    const sale = new Sales({
+      customer,
+      billing,
+      shipping,
+      products: populatedProducts,
       saleDate,
       status,
       paymentType,
@@ -458,12 +651,11 @@ exports.createSale = async (req, res) => {
       enableAddCharges,
       grandTotals,
       billSummary,
-      grandTotal: billSummary?.grandTotal || grandTotals || grandTotal,
+      grandTotal: billSummary?.grandTotal || grandTotals,
       createdBy: req.user ? {
         name: req.user.firstName + ' ' + req.user.lastName,
         email: req.user.email
       } : undefined,
-
       updatedBy: req.user ? {
         name: req.user.firstName + ' ' + req.user.lastName,
         email: req.user.email
@@ -471,7 +663,8 @@ exports.createSale = async (req, res) => {
     });
 
     await sale.save();
-    // ✅ Payment History Log
+
+    // Payment history (unchanged)
     if (paymentType === "Full" || paymentType === "Partial") {
       await PaymentHistory.create({
         sale: sale._id,
@@ -487,20 +680,22 @@ exports.createSale = async (req, res) => {
         notes: "Initial payment logged during Sale creation",
       });
     }
-    // Invoice is NOT created on sale creation. It will be created only when converting sale to invoice.
-    // Fetch updated stock for all products in the sale
+
+    // return updated stocks for UI if needed
     const updatedStocks = await Promise.all(
-      products.map(async item => {
-        const product = await Product.findById(item.productId).select('_id name availableQty');
+      populatedProducts.map(async item => {
+        const product = await Product.findById(item.productId).select('_id productName availableQty');
         return product;
       })
     );
+
     res.status(201).json({ message: "Sale created successfully", sale, updatedStocks, grandTotals });
   } catch (error) {
     console.error("Error creating sale:", error);
     res.status(500).json({ message: "Internal server error" });
   }
 };
+
 
 
 
@@ -715,7 +910,7 @@ exports.getSales = async (req, res) => {
     const total = await Sales.countDocuments(query);
     const salesRaw = await Sales.find(query)
       .populate({ path: "customer", select: "-password -__v" })
-      .populate({ path: "products.productId", select: "productName images" })
+      .populate({ path: "products.productId", select: "productName images sku availableQty" })
       .populate({
         path: "creditNotes",
         select: "creditNoteId total grandTotal createdAt products isDeleted",
@@ -752,7 +947,7 @@ exports.getSales = async (req, res) => {
             }
           });
         }
-        const saleQty = Number(item.saleQty || item.quantity || 1);
+        const saleQty = Number(item.saleQty  ??  item.quantity ?? 0);
         const netQty = saleQty - totalReturnedQty;
 
         const price = Number(item.sellingPrice || 0);
@@ -787,7 +982,12 @@ exports.getSales = async (req, res) => {
         return {
           ...item.toObject(),
           productName: item.productId?.productName || "",
-          productImage: item.productId?.images?.[0]?.url || "",
+          productImage: item.productImage || item.productId?.images?.[0]?.url || "",
+    sku: item.sku || item.productId?.sku || "",
+    sellingPrice: item.sellingPrice || item.unitCost || 0,
+    saleQty,
+    availableQuantity: item.availableQuantityBeforeSale ?? item.availableQty ?? item.productId?.availableQty ?? 0,  
+
           subTotal: subTotalLine,
           discountAmount,
           taxableAmount,
