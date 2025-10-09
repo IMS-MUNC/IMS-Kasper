@@ -866,7 +866,7 @@ exports.getSaleById = async (req, res) => {
     if (!sale) return res.status(404).json({ message: 'Sale not found' });
     // Map productName, image, and netQty to top-level for each product
 
-    res.json({ ...sale.toObject(), products });
+    res.json({ ...sale.toObject(), Product });
   } catch (err) {
     res.status(500).json({ message: err.message });
   }
