@@ -9,7 +9,6 @@ import {
 
 
 import { IoFilter } from 'react-icons/io5';
-
 import { IoMdClose } from "react-icons/io";
 import { IoSearch } from "react-icons/io5";
 
@@ -642,6 +641,11 @@ function Godown() {
     }
   };
 
+  const handleCancelAssignPopup = () => {
+      setPopup(false);
+      setStagedProducts([]); // Clear staging area on cancel
+  }
+
   // Handle removing products from staging area or assigned products
   const handleRemoveProduct = async (productToRemove, isStaged = false) => {
     try {
@@ -1053,6 +1057,7 @@ function Godown() {
                               cursor: "pointer",
                               backgroundColor: cell.items.length > 0 ? '#e3f3ff' : '#ffffff',
                               minHeight: "40px",
+                              marginBottom: "20px",
                             }}
                           >
                             {cell.name}
@@ -1419,8 +1424,22 @@ function Godown() {
                             right: "20px",
                             justifyContent: "right",
                             display: "flex",
+                            gap: "10px",
                           }}
                         >
+                          <button
+                            onClick={handleCancelAssignPopup}
+                            style={{
+                              padding: "8px 16px",
+                              backgroundColor: "#6B7778",
+                              color: "#fff",
+                              border: "none",
+                              borderRadius: "4px",
+                              cursor: "pointer",
+                            }}
+                          >
+                            Cancel
+                          </button>
                           <button
                             onClick={handleDoneAssignment}
                             style={{
@@ -1481,7 +1500,7 @@ function Godown() {
               ></div>
               <span>Occupied</span>
             </div>
-            <div style={{ display: "flex", gap: "10px" }}>
+           {/* <div style={{ display: "flex", gap: "10px" }}>
               <div
                 style={{
                   backgroundColor: "#1368ec",
@@ -1490,7 +1509,7 @@ function Godown() {
                 }}
               ></div>
               <span>Selected</span>
-            </div>
+            </div> */}
           </div>
         </div>
 
