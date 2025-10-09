@@ -630,31 +630,7 @@ const downloadPDF = (elementId) => {
                                                   ? new Date(note.date).toLocaleDateString()
                                                   : ""}
                                       </td>
-                                      {/* <td>
-                      {note.sale?.customer?.images?.[0] && (
-                        <img
-                          src={
-                            note.sale.customer.images[0]?.url ||
-                            note.sale.customer.images[0]
-                          }
-                          alt={note.sale.customer.name || "-"}
-                          
-                          style={{
-                            width: 32,
-                            height: 32,
-                            borderRadius: "50%",
-                            objectFit: "cover",
-                            marginRight: 6,
-                          }}
-                        />
-                      )}
-                      {note.sale?.customer?.name ||
-                        note.billFrom?.name ||
-                        note.billTo?.name ||
-                        note.billFrom?.email ||
-                        note.billTo?.email ||
-                        "-"}
-                    </td> */}
+                                    
                                       <td>
                                           <div className="d-flex align-items-center me-2">
                                               {note.sale?.customer?.images?.[0] ? (
