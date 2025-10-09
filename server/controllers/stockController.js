@@ -36,7 +36,7 @@ exports.getStockSummary = async (req, res) => {
                 );
                 for (const prod of matchingProducts) {
                     totalPurchased += prod.quantity || 0;
-                    productPurchaseQty += prod.quantity || 0;
+                    // productPurchaseQty += prod.quantity || 0;
                     totalPurchaseReturn += prod.returnQty || 0;
                     purchaseAmount +=
                         (prod.quantity - (prod.returnQty || 0)) * (prod.purchasePrice || 0);

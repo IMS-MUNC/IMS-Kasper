@@ -534,12 +534,14 @@ const Country = () => {
                                 setNewName(country.name);
                                 setNewCode(country.code);
                               }}
+                              title="Edit"
                             >
                               <TbEdit />
                             </a>
                             <a
                               className="p-2"
                               onClick={() => handleDelete(country._id)}
+                              title="Delete"
                             >
                               <TbTrash />
                             </a>

@@ -183,7 +183,6 @@ const GiftCard = ({ show, handleClose }) => {
       "Issued Date",
       "Expiry Date",
       "Amount",
-      "Balance",
       "Status",
     ];
 
@@ -193,7 +192,6 @@ const GiftCard = ({ show, handleClose }) => {
       new Date(e.issuedDate).toLocaleDateString(),
       new Date(e.expiryDate).toLocaleDateString(),
       e.amount,
-      e.balance,
       e.status ? "Active" : "Inactive",
     ]);
 
@@ -224,7 +222,6 @@ const GiftCard = ({ show, handleClose }) => {
       "Issued Date": new Date(giftCard.issuedDate).toLocaleDateString(),
       "Expiry Date": new Date(giftCard.expiryDate).toLocaleDateString(),
       "Amount": giftCard.amount,
-      "Balance": giftCard.balance,
       "Status": giftCard.status ? "Active" : "Inactive",
     }));
 
@@ -239,7 +236,6 @@ const GiftCard = ({ show, handleClose }) => {
       { wch: 15 }, // Issued Date
       { wch: 15 }, // Expiry Date
       { wch: 10 }, // Amount
-      { wch: 10 }, // Balance
       { wch: 10 }, // Status
     ];
     worksheet["!cols"] = columnWidths;
@@ -273,7 +269,6 @@ const GiftCard = ({ show, handleClose }) => {
           issuedDate: item["Issued Date"],
           expiryDate: item["Expiry Date"],
           amount: item["Amount"],
-          balance: item["Balance"],
           status: item["Status"] === "Active",
         }));
 
@@ -315,7 +310,6 @@ const GiftCard = ({ show, handleClose }) => {
       issuedDate: "",
       expiryDate: "",
       amount: "",
-      balance: "",
       status: false,
     });
     setError(null); // Clear any errors
@@ -327,7 +321,6 @@ const GiftCard = ({ show, handleClose }) => {
     issuedDate: "",
     expiryDate: "",
     amount: "",
-    balance: "",
     status: false,
   });
 
@@ -337,7 +330,6 @@ const GiftCard = ({ show, handleClose }) => {
     issuedDate: "",
     expiryDate: "",
     amount: "",
-    balance: "",
     status: false,
   });
 
@@ -359,8 +351,7 @@ const GiftCard = ({ show, handleClose }) => {
       !formData.customer ||
       !formData.issuedDate ||
       !formData.expiryDate ||
-      !formData.amount ||
-      !formData.balance
+      !formData.amount 
     ) {
       setError("All fields are required.");
       console.error("Form data is missing required fields:", formData);
@@ -435,7 +426,6 @@ const GiftCard = ({ show, handleClose }) => {
       issuedDate: "",
       expiryDate: "",
       amount: "",
-      balance: "",
       status: false,
     });
   };
@@ -447,7 +437,6 @@ const GiftCard = ({ show, handleClose }) => {
     issuedDate: dayjs(row.issuedDate).format("YYYY-MM-DD"), // Format the date
     expiryDate: dayjs(row.expiryDate).format("YYYY-MM-DD"), // Format the date
     amount: row.amount.toString(), // Ensure amount is a string
-    balance: row.balance.toString(), // Ensure balance is a string
     status: row.status, // Use the boolean status directly
   });
 
@@ -485,7 +474,6 @@ const GiftCard = ({ show, handleClose }) => {
       issuedDate: dayjs(editFormData.issuedDate).format("YYYY-MM-DD"),
       expiryDate: dayjs(editFormData.expiryDate).format("YYYY-MM-DD"),
       amount: Number(editFormData.amount), // Ensure amount is a number
-      balance: Number(editFormData.balance), // Ensure balance is a number
     };
 
     try {
@@ -812,7 +800,6 @@ const GiftCard = ({ show, handleClose }) => {
                   <th scope="col">Issued Date</th>
                   <th scope="col">Expiry Date</th>
                   <th scope="col">Amount</th>
-                  <th scope="col">Balance</th>
                   <th scope="col">Status</th>
                   <th style={{textAlign:'center'}}>Action</th>
                 </tr>
@@ -836,7 +823,6 @@ const GiftCard = ({ show, handleClose }) => {
                       <td>{dayjs(item.issuedDate).format("YYYY-MM-DD")}</td>
                       <td>{dayjs(item.expiryDate).format("YYYY-MM-DD")}</td>
                       <td>{item.amount}</td>
-                      <td>{item.balance}</td>
                       <td>
                         <span
                           className={`badge ${item.status ? "badge-success" : "badge-danger"
@@ -854,10 +840,13 @@ const GiftCard = ({ show, handleClose }) => {
                           <button
                             variant="warning text-white"
                             onClick={() => handleEditOpen(toEditForm(item))}
+                            title="Edit"
                           >
                             <FiEdit />
                           </button>
-                          <button onClick={() => handleDelete(item._id)}>
+                          <button onClick={() => handleDelete(item._id)}
+                            title="Delete"
+                          >
                             <RiDeleteBinLine />
                           </button>
                         </div>
@@ -909,6 +898,7 @@ const GiftCard = ({ show, handleClose }) => {
                   color: "grey",
                   backgroundColor: "white",
                 }}
+                title="Previous"
                 onClick={() =>
                   setCurrentPage((prev) => Math.max(prev - 1, 1))
                 }
@@ -921,6 +911,7 @@ const GiftCard = ({ show, handleClose }) => {
                 onClick={() =>
                   setCurrentPage((prev) => Math.min(prev + 1, totalPages))
                 }
+                title="Next"
                 disabled={currentPage === totalPages}
               >
                 <MdNavigateNext />
@@ -1026,7 +1017,7 @@ const GiftCard = ({ show, handleClose }) => {
                     />
                   </Form.Group>
                 </Col>
-                <Col>
+                {/* <Col>
                   <Form.Group controlId="balance">
                     <Form.Label>
                       Balance <span className="text-danger">*</span>
@@ -1038,7 +1029,7 @@ const GiftCard = ({ show, handleClose }) => {
                       onChange={handleChange}
                     />
                   </Form.Group>
-                </Col>
+                </Col> */}
               </Row>
 
               <Form.Group
@@ -1175,7 +1166,7 @@ const GiftCard = ({ show, handleClose }) => {
                     />
                   </Form.Group>
                 </Col>
-                <Col>
+                {/* <Col>
                   <Form.Group controlId="editBalance">
                     <Form.Label>
                       Balance <span className="text-danger">*</span>
@@ -1192,7 +1183,7 @@ const GiftCard = ({ show, handleClose }) => {
                       }
                     />
                   </Form.Group>
-                </Col>
+                </Col> */}
               </Row>
 
               <Form.Group

@@ -727,7 +727,7 @@ function Barcode() {
           <div className="d-flex align-items-center">
             <ul className="table-top-head">
               <li>
-                <a data-bs-toggle="tooltip" data-bs-placement="top" title="Refresh"><TbRefresh
+                <a data-bs-toggle="tooltip" data-bs-placement="top" title="Refresh" onClick={() => location.reload()}><TbRefresh
                   className="ti ti-refresh" /></a>
               </li>
               {/* <li>

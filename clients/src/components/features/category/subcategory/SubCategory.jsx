@@ -313,7 +313,6 @@ const SubCategory = () => {
       closeEditModal();
 
       // Clear editing state after modal is closed
-      setTimeout(() => {
         setEditingSubCategory(null);
         setEditSubCategoryName("");
         setEditDescription("");
@@ -324,10 +323,10 @@ const SubCategory = () => {
         setErrors({});
         setSelectedCategory(null);
         setIsUpdating(false);
+        closeEditModal();
 
         // Fetch updated data after state is cleared
-        fetchSubcategories();
-      }, 150);
+      await  fetchSubcategories();
     } catch (error) {
       toast.error(error.message || "Failed to update subcategory");
 
@@ -335,7 +334,6 @@ const SubCategory = () => {
       closeEditModal();
 
       // Clear editing state even on error
-      setTimeout(() => {
         setEditingSubCategory(null);
         setEditSubCategoryName("");
         setEditDescription("");
@@ -346,7 +344,6 @@ const SubCategory = () => {
         setErrors({});
         setSelectedCategory(null);
         setIsUpdating(false);
-      }, 150);
     }
   };
 
@@ -413,15 +410,25 @@ const SubCategory = () => {
     }, 100);
   };
 
-  const closeEditModal = () => {
-    // Close modal immediately
-    const modal = window.$("#edit-category");
-    modal.modal("hide");
+  // const closeEditModal = () => {
+  //   // Close modal immediately
+  //   const modal = window.$("#edit-category");
+  //   modal.modal("hide");
 
-    window.$("#edit-category").modal("hide");
+  //   window.$("#edit-category").modal("hide");
+  //   document.body.classList.remove("modal-open");
+  //   document.querySelectorAll(".modal-backdrop").forEach((el) => el.remove());
+  // };
+  const closeEditModal = () => {
+  const modalElement = document.getElementById("edit-category");
+  if (modalElement) {
+    modalElement.classList.remove("show");
+    modalElement.style.display = "none";
     document.body.classList.remove("modal-open");
-    document.querySelectorAll(".modal-backdrop").forEach((el) => el.remove());
-  };
+    document.querySelectorAll(".modal-backdrop").forEach(el => el.remove());
+  }
+};
+
 
   // Cancel handlers for modals
   const handleCancelAdd = () => {

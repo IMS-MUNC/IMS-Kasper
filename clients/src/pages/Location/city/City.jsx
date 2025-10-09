@@ -522,12 +522,14 @@ const City = () => {
                               data-bs-toggle="modal"
                               data-bs-target="#edit-city"
                               onClick={() => handleEditClick(city)}
+                              title="Edit"
                             >
                               <TbEdit />
                             </a>
                             <a
                               className="p-2"
                               onClick={() => handleDelete(city._id)}
+                              title="Delete"
                             >
                               <TbTrash />
                             </a>

@@ -1020,6 +1020,7 @@ const Users = () => {
                               data-bs-toggle="modal"
                               data-bs-target="#edit-user"
                               onClick={() => handleOpenEditModal(user)}
+                              title="Edit"
                             >
                               <TbEdit />
                             </a>
@@ -1027,6 +1028,7 @@ const Users = () => {
                             <a
                               className="p-2"
                               onClick={() => handleDelete(user._id)}
+                              title="Delete"
                             >
                               <TbTrash />
                             </a>
