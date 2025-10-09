@@ -751,7 +751,7 @@ const Variant = ({ show, handleClose }) => {
         </div>
 
         {/* DROPDOWN UI BELOW TABLE */}
-        <div className="card mt-4">
+        {/* <div className="card mt-4">
           <div className="card-body">
             <div className="row">
               <div className="col-md-6">
@@ -783,7 +783,7 @@ const Variant = ({ show, handleClose }) => {
               </div>
             </div>
           </div>
-        </div>
+        </div> */}
 
         <Modal show={showModal} onHide={handleCloses} centered>
           <Modal.Header>
