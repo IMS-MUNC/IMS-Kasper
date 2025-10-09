@@ -257,12 +257,38 @@ const ProductForm = () => {
     toast.info("Saved as draft!");
   };
 
-  const onDrop = (acceptedFiles) => {
-    const mapped = acceptedFiles.map((file) =>
-      Object.assign(file, { preview: URL.createObjectURL(file) })
-    );
-    setImages((prev) => [...prev, ...mapped]);
-  };
+  // const onDrop = (acceptedFiles) => {
+  //   const mapped = acceptedFiles.map((file) =>
+  //     Object.assign(file, { preview: URL.createObjectURL(file) })
+  //   );
+  //   setImages((prev) => [...prev, ...mapped]);
+  // };
+   const onDrop = (acceptedFiles) => {
+      const maxSize = 1 * 1024 * 1024; // 1MB in bytes
+      const validTypes = ["image/jpeg", "image/png", "image/jpg"];
+      const validFiles = [];
+      const invalidFiles = [];
+  
+      acceptedFiles.forEach((file) => {
+        if (!validTypes.includes(file.type)) {
+          invalidFiles.push({ file, error: `Invalid file type for ${file.name}. Only JPEG, PNG, or JPG allowed.` });
+        } else if (file.size > maxSize) {
+          invalidFiles.push({ file, error: `Image ${file.name} exceeds 1MB limit.` });
+        } else {
+          validFiles.push(Object.assign(file, { preview: URL.createObjectURL(file) }));
+        }
+      });
+  
+      if (invalidFiles.length > 0) {
+        invalidFiles.forEach(({ error }) => toast.error(error));
+        setFormErrors((prev) => ({ ...prev, images: "Image size should not exceeded 1MB." }));
+      }
+
+      if (validFiles.length > 0) {
+        setImages((prev) => [...prev, ...validFiles]);
+        setFormErrors((prev) => ({ ...prev, images: "" }));
+      }
+    };
 
   const { getRootProps, getInputProps } = useDropzone({
     accept: { "image/*": [] },
@@ -1868,7 +1894,14 @@ const ProductForm = () => {
     <input {...getInputProps()} />
     <MdImageSearch style={{ fontSize: "50px", color: "#6c757d" }} />
     <p className="mt-2 mb-1 fw-semibold">Drag & Drop your image here</p>
-    <small className="text-muted">Supports JPEG, PNG, JPG (Max 5MB)</small>
+    {/* <small className="text-muted">Supports JPEG, PNG, JPG (Max 5MB)</small> */}
+    <p>Supports JPEG, PNG, JPG. Maximum size: 1MB.</p>
+                   {/* {errors.images && (
+                    <p className="text-danger fs-12">{errors.images}</p>
+                  )} */}
+                  {formErrors.images && (
+                <p className="text-danger fs-12">{formErrors.images}</p>
+              )}
   </div>
 
   {/* Preview Images Grid */}
