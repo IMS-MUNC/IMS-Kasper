@@ -8,7 +8,7 @@ const userSchema = new mongoose.Schema(
       type: Boolean,
       default: true,
     },
-    twoFactorEnabled: { type: Boolean, default: true },
+    twoFactorEnabled: { type: Boolean, default: false },
     otp: { type: String },
     otpExpires:{type:Date},
   },

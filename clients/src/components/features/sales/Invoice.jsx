@@ -408,34 +408,34 @@ const Invoice = () => {
             style={{ minHeight: "100vh", padding: "30px" }}
           >
             {/* Header - Logo */}
-            <div className="text-center mb-4">
-              <img src={Logo} width={130} alt="Logo" />
+            <div className="text-center mb-2">
+              <img src={Logo} width={200} alt="Logo" />
             </div>
 
             {/* From / To / Invoice */}
-            <div className="row border-bottom mb-4 border-top invoice-header">
+            <div className="row mb-4 border invoice-header">
               <div className="col-md-4 border-end pe-3">
-                <p className="text-dark mb-2 fw-semibold">From</p>
+                <p className="text-dark mb-2 fw-bold fs-20">From</p>
                 <h4 className="mb-1">{formData.companyName || "-"}</h4>
                 <p className="mb-1">{formData.companyaddress || "-"}</p>
                 <p className="mb-1">Email: {formData.companyemail || "-"}</p>
                 <p>Phone: {formData.companyphone || "-"}</p>
               </div>
               <div className="col-md-4 border-end pe-3">
-                <p className="text-dark mb-2 fw-semibold">To</p>
+                <p className="text-dark mb-2 fw-bold fs-20">To</p>
                 <h4 className="mb-1">{sale.customer?.name || "-"}</h4>
-                <p>{formatShipping(sale.customer?.billing)}</p>
+                <p className="mb-1">{formatShipping(sale.customer?.billing)}</p>
                 <p className="mb-1">Email: {sale.customer?.email || "-"}</p>
                 <p>Phone: {sale.customer?.phone || "-"}</p>
               </div>
               <div className="col-md-4 pe-3">
-                <p className="text-dark mb-2 fw-semibold">GST Invoice</p>
-                <h5 className="text-gray mb-1">
-                  Invoice No{" "}
+                <p className="text-dark mb-2 fw-bold fs-20">GST Invoice</p>
+                <h4 className="mb-1">
+                  Invoice No:{" "}
                   <span className="text-primary">#{sale.invoiceId}</span>
-                </h5>
+                </h4>
                 <p className="mb-1 fw-medium">
-                  Created Date:{" "}
+                  Invoice Date:{" "}
                   {sale.saleDate
                     ? new Date(sale.saleDate).toLocaleDateString()
                     : "-"}
@@ -490,7 +490,7 @@ const Invoice = () => {
             </div>
 
             {/* Summary */}
-            <div className="col-12 mb-4">
+            <div className="row mb-4">
               <div className="d-flex justify-content-between bg-light border p-2 invoice-summary">
                 {[
                   { label: "Sub Total", value: summary.subTotal },
@@ -519,7 +519,7 @@ const Invoice = () => {
             </div>
 
             {/* Footer - Terms / Signatory / Biller */}
-            <div className="row border-top pt-3 invoice-footer">
+            <div className="row border mt-2 mb-2 pt-3 invoice-footer">
               <div className="col-md-4 border-end pe-3 text-center invoice-footer">
                 <h6 className="mb-1">Terms and Conditions</h6>
                 <p className="mb-0">
@@ -527,10 +527,10 @@ const Invoice = () => {
                   interest @ 14% will be charged on delayed payments.
                 </p>
               </div>
-              <div className="col-md-4 border-end px-3 text-center">
-                <h6
+              <div className="col-md-4 border-end px-3 text-center invoice-footer">
+                <h6 className="mb-1"
                   style={{
-                    fontWeight: "600",
+                    // fontWeight: "600",
                     fontSize: "12px",
                     paddingBottom: "30PX",
                   }}
@@ -541,26 +541,16 @@ const Invoice = () => {
                   Authorised Signatory
                 </p>
               </div>
-              <div className="col-md-4 ps-3 text-center">
-                <p className="mb-0">Biller</p>
-                <h6 className="fs-14 fw-medium mb-0">Afroz Zeelani</h6>
+              <div className="col-md-4 ps-3 text-center invoice-footer">
+                <h6 className="mb-1" style={{ fontSize: "12px" }}
+                >Biller</h6>
+                <p style={{ margin: 0, fontWeight: "600", fontSize: "12px" }}>Afroz Zeelani</p>
               </div>
             </div>
-            <div style={{marginTop:'25px'}}>
+            <div className="col-md-12" style={{marginTop:'30px', textAlign:'center', width:'100%'}}>
             {/* Notes at the bottom */}
-            <div
-              style={{
-                backgroundColor: "#f5f5f5",
-                padding: "5px 0",
-                textAlign: "center",
-                position: "absolute",
-                bottom: 0,
-                width: "100%",
-              }}
-            >
               <strong>NOTE:</strong> Please quote invoice number when remitting
               funds.
-            </div>
           </div>
           </div>
         </div>

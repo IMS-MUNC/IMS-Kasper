@@ -77,7 +77,7 @@
   table-layout: fixed;
 }
 .meta-table td {
-  padding: 6px 8px;
+  /* padding: 6px 6px; */
   border: 1px solid #111;
   vertical-align: middle;
   word-wrap: break-word;
@@ -166,14 +166,14 @@
   /* Footer (Terms / Signatory / Biller) */
   .invoice-footer {
     display: flex !important;
-    border-top: 1px solid #dee2e6 !important;
+    /* border-top: 1px solid #dee2e6 !important; */
     text-align: center !important;
     font-size: 12px !important;
   }
 
   .invoice-footer > div {
     flex: 1;
-    border-right: 1px solid #dee2e6 !important;
+    /* border-right: 1px solid #dee2e6 !important; */
     padding: 8px !important;
   }
 
@@ -262,7 +262,7 @@
     justify-content: space-between !important;
     align-items: start !important;
     border-top: 1px solid #dee2e6 !important;
-    border-bottom: none !important;
+    /* border-bottom: none !important; */
     margin-top: 10px !important;
   }
 
