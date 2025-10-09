@@ -191,9 +191,18 @@ const handleIndividualDelete = async (purchaseId, purchaseName) => {
   }
 };
 
-// Clean up selected items when data changes
 useEffect(() => {
-  setSelectedPurchases((prev) => prev.filter((id) => currentPageData.some((d) => d._id === id)));
+  setSelectedPurchases((prev) => {
+    const filtered = prev.filter((id) =>
+      currentPageData.some((d) => d._id === id)
+    );
+
+    // ✅ Only update if filtered array is different
+    if (filtered.length !== prev.length) {
+      return filtered;
+    }
+    return prev;
+  });
 }, [currentPageData]);
 
   function formatDateTime(dateString) {
@@ -436,20 +445,18 @@ useEffect(() => {
             </div> */}
                   </div>
                   <div className="d-flex table-dropdown my-xl-auto right-content align-items-center flex-wrap row-gap-3">
-                    {/* <div className="dropdown me-2">
-                      <a className="dropdown-toggle btn btn-white btn-md d-inline-flex align-items-center" data-bs-toggle="dropdown">
-                        Warehouse
+                    <div className="dropdown me-2">
+                      <a className="btn btn-white btn-md d-inline-flex align-items-center" data-bs-toggle="dropdown">
+                        Sort by : All Warehouse
                       </a>
                       <ul className="dropdown-menu  dropdown-menu-end p-3">
-                        <li>
-                          <a className="dropdown-item rounded-1">w1</a>
+                        {warehouses.map((wh) => (
+                        <li key={wh._id}>
+                          <a className="dropdown-item rounded-1">{wh.warehouseName}</a>
                         </li>
-                        <li>
-                          <a className="dropdown-item rounded-1">w2</a>
-                        </li>
-
+                        ))}
                       </ul>
-                    </div> */}
+                    </div>
                     {/* <div className="dropdown me-2">
                       <a  className="dropdown-toggle btn btn-white btn-md d-inline-flex align-items-center" data-bs-toggle="dropdown">
                         Store
