@@ -31,7 +31,7 @@ const SubCategory = () => {
   const [images, setImages] = useState([]);
   const [imagePreviews, setImagePreviews] = useState([]);
   const [editingSubCategory, setEditingSubCategory] = useState(null);
-   const [isAdding, setIsAdding] = useState(false);
+  const [isAdding, setIsAdding] = useState(false);
 
   const [errors, setErrors] = useState({});
   const nameRegex = /^[A-Za-z]{2,}$/;
@@ -147,7 +147,7 @@ const SubCategory = () => {
       } else {
         toast.error(
           error.response?.data?.message ||
-            "Failed to delete selected subcategories"
+          "Failed to delete selected subcategories"
         );
       }
     }
@@ -221,7 +221,7 @@ const SubCategory = () => {
       console.error("Submit Error:", error);
       toast.error(error.message || "Failed to add subcategory");
       closeAddModal();
-    }finally{
+    } finally {
       setIsAdding(false)
     }
   };
@@ -313,20 +313,20 @@ const SubCategory = () => {
       closeEditModal();
 
       // Clear editing state after modal is closed
-        setEditingSubCategory(null);
-        setEditSubCategoryName("");
-        setEditDescription("");
-        setEditSelectedCategory(null);
-        setEditStatus(true);
-        setImages([]);
-        setImagePreviews([]);
-        setErrors({});
-        setSelectedCategory(null);
-        setIsUpdating(false);
-        closeEditModal();
+      setEditingSubCategory(null);
+      setEditSubCategoryName("");
+      setEditDescription("");
+      setEditSelectedCategory(null);
+      setEditStatus(true);
+      setImages([]);
+      setImagePreviews([]);
+      setErrors({});
+      setSelectedCategory(null);
+      setIsUpdating(false);
+      closeEditModal();
 
-        // Fetch updated data after state is cleared
-      await  fetchSubcategories();
+      // Fetch updated data after state is cleared
+      await fetchSubcategories();
     } catch (error) {
       toast.error(error.message || "Failed to update subcategory");
 
@@ -334,16 +334,16 @@ const SubCategory = () => {
       closeEditModal();
 
       // Clear editing state even on error
-        setEditingSubCategory(null);
-        setEditSubCategoryName("");
-        setEditDescription("");
-        setEditSelectedCategory(null);
-        setEditStatus(true);
-        setImages([]);
-        setImagePreviews([]);
-        setErrors({});
-        setSelectedCategory(null);
-        setIsUpdating(false);
+      setEditingSubCategory(null);
+      setEditSubCategoryName("");
+      setEditDescription("");
+      setEditSelectedCategory(null);
+      setEditStatus(true);
+      setImages([]);
+      setImagePreviews([]);
+      setErrors({});
+      setSelectedCategory(null);
+      setIsUpdating(false);
     }
   };
 
@@ -420,14 +420,14 @@ const SubCategory = () => {
   //   document.querySelectorAll(".modal-backdrop").forEach((el) => el.remove());
   // };
   const closeEditModal = () => {
-  const modalElement = document.getElementById("edit-category");
-  if (modalElement) {
-    modalElement.classList.remove("show");
-    modalElement.style.display = "none";
-    document.body.classList.remove("modal-open");
-    document.querySelectorAll(".modal-backdrop").forEach(el => el.remove());
-  }
-};
+    const modalElement = document.getElementById("edit-category");
+    if (modalElement) {
+      modalElement.classList.remove("show");
+      modalElement.style.display = "none";
+      document.body.classList.remove("modal-open");
+      document.querySelectorAll(".modal-backdrop").forEach(el => el.remove());
+    }
+  };
 
 
   // Cancel handlers for modals
@@ -685,10 +685,10 @@ const SubCategory = () => {
                         <span className="checkmarks" />
                       </label>
                     </th>
-                    <th>Category Code</th>
-                    <th>Category</th>
-                    <th>Sub Category</th>
-                    <th>Description</th>
+                    <th style={{textAlign:'left'}}>Category Code</th>
+                    <th style={{textAlign:'left'}}>Category</th>
+                    <th style={{textAlign:'left'}}>Sub Category</th>
+                    <th style={{textAlign:'left'}}>Description</th>
                     <th>Action</th>
                     {/* <th className="no-sort" /> */}
                   </tr>
@@ -709,20 +709,13 @@ const SubCategory = () => {
                             <span className="checkmarks" />
                           </label>
                         </td>
-                        <td>{subcat.category?.categoryCode}</td>
+                        <td style={{textAlign:'left'}}>{subcat.category?.categoryCode}</td>
 
-                        <td
-                          style={{
-                            display: "flex",
-                            alignItems: "center",
-                            gap: "8px",
-                            justifyContent: "center",
-                          }}
-                        >
-                          <td>{subcat.category?.categoryName}</td>
-                        </td>
+                        
+                          <td style={{textAlign:'left'}}>{subcat.category?.categoryName}</td>
+                        
                         <td>
-                          <div>
+                          <div style={{alignItems:'left', display:'flex'}}>
                             {subcat.images?.map((img, i) => (
                               <>
                                 <div
@@ -734,7 +727,7 @@ const SubCategory = () => {
                                     display: "inline-block",
                                     justifyContent: "center",
                                     alignItems: "center",
-                                    marginRight:'10px'
+                                    marginRight: '10px'
                                   }}
                                 >
                                   <img
@@ -758,14 +751,16 @@ const SubCategory = () => {
                                 textOverflow: "ellipsis",
                                 overflow: "hidden",
                                 maxWidth: "80px", // controls cutoff width
-                                display: "inline-block",  
+                                display: "inline-block",
                               }}
                             >
-                            {subcat.subCategoryName?.length > 6 ? `${subcat.subCategoryName.slice(0,6)}...`:subcat.subCategoryName}
+                              {subcat.subCategoryName?.length > 10 ? `${subcat.subCategoryName.slice(0, 10)}...` : subcat.subCategoryName}
                             </span>
                           </div>
                         </td>
-                        <td>{subcat.description}</td>
+                        <td style={{textAlign:'left'}}>
+                          {subcat.description?.length > 10 ? `${subcat.description.slice(0,10)}...` : subcat.description }
+                        </td>
                         {/* <td>
                           <span className="badge bg-success fw-medium fs-10">
                             Active
@@ -774,9 +769,8 @@ const SubCategory = () => {
                         <td className="action-table-data">
                           <div className="edit-delete-action">
                             <a
-                              className={`me-2 p-2 ${
-                                isUpdating ? "disabled" : ""
-                              }`}
+                              className={`me-2 p-2 ${isUpdating ? "disabled" : ""
+                                }`}
                               data-bs-toggle="modal"
                               data-bs-target="#edit-category"
                               style={{
@@ -867,9 +861,9 @@ const SubCategory = () => {
                 {filteredSubCategories.length === 0
                   ? "0 of 0"
                   : `${(currentPage - 1) * itemsPerPage + 1}-${Math.min(
-                      currentPage * itemsPerPage,
-                      filteredSubCategories.length
-                    )} of ${filteredSubCategories.length}`}
+                    currentPage * itemsPerPage,
+                    filteredSubCategories.length
+                  )} of ${filteredSubCategories.length}`}
                 <button
                   style={{
                     border: "none",
@@ -1030,15 +1024,15 @@ const SubCategory = () => {
                   <button type="submit" className="btn btn-primary" disabled={isAdding}>
                     {
                       isAdding ? (
-                      <>
-      <span
-        className="spinner-border spinner-border-sm me-2"
-        role="status"
-        aria-hidden="true"
-      ></span>
-      Adding Sub Category...
-    </>
-                      ): ("Add Sub Category")
+                        <>
+                          <span
+                            className="spinner-border spinner-border-sm me-2"
+                            role="status"
+                            aria-hidden="true"
+                          ></span>
+                          Adding Sub Category...
+                        </>
+                      ) : ("Add Sub Category")
                     }
                   </button>
                 </div>
@@ -1096,20 +1090,20 @@ const SubCategory = () => {
                             )}
                             {(images.length > 0 ||
                               editingSubCategory?.images?.length > 0) && (
-                              <a
-                                style={{ marginTop: "-100px" }}
-                                href="javascript:void(0);"
-                                onClick={() => {
-                                  setImages([]);
-                                  setEditingSubCategory({
-                                    ...editingSubCategory,
-                                    images: [],
-                                  });
-                                }}
-                              >
-                                <FiXSquare className="x-square-add image-close remove-product fs-12 text-white bg-danger rounded-1" />
-                              </a>
-                            )}
+                                <a
+                                  style={{ marginTop: "-100px" }}
+                                  href="javascript:void(0);"
+                                  onClick={() => {
+                                    setImages([]);
+                                    setEditingSubCategory({
+                                      ...editingSubCategory,
+                                      images: [],
+                                    });
+                                  }}
+                                >
+                                  <FiXSquare className="x-square-add image-close remove-product fs-12 text-white bg-danger rounded-1" />
+                                </a>
+                              )}
                           </div>
                           <div className="mb-0">
                             <input
