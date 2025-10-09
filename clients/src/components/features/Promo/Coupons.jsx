@@ -617,9 +617,17 @@ const Coupons = () => {
                           </span>
                         </td>
                         <td  className="action-table-data">
-                          <div className="edit-delete-action" style={{display:'flex',alignItems:'center',justifyContent:'center',gap:'5px'}}>
-                            <a className="" style={{color: "#F2F2F2", border:'1px solid #F2F2F2',alignItems:'center',justifyContent:'center',padding:'4px 6px',borderRadius:'4px'}}><FaRegEdit onClick={() => handleEdit(item)} style={{color:'#73797F'}} /></a>
-                            <a className="" style={{color: "#F2F2F2", border:'1px solid #F2F2F2',alignItems:'center',justifyContent:'center',padding:'4px 6px',borderRadius:'4px'}}><RiDeleteBin6Line onClick={() => handleDeleteClick(item)} style={{color:'#73797F'}} /></a> 
+                          <div className="iconsms" style={{display:'flex', justifyContent:'center', gap:'10px'}}>
+                            <button className="" 
+                            title="Edit" 
+                            >
+                              <FaRegEdit onClick={() => handleEdit(item)}/>
+                            </button>
+                            <button className="" 
+                            title="Delete" 
+                            >
+                              <RiDeleteBin6Line onClick={() => handleDeleteClick(item)}/>
+                            </button> 
                           </div>
                         </td>
                       </tr>

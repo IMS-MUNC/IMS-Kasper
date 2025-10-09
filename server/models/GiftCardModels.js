@@ -23,7 +23,6 @@ const GiftcardSchema = new mongoose.Schema({
     },
     balance: {
         type: Number,
-        required: true,
     },
     status: {
         type: Boolean,
