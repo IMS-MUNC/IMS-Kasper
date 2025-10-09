@@ -2724,10 +2724,33 @@ function AddWarehouse() {
                     }
                     onMouseOut={(e) => (e.target.style.backgroundColor = "#3B82F6")}
                   >
-                    Save
+                    Done
                   </button>
                 </>
               ) : (
+                <>
+                <button
+                    type="button"
+                    onClick={handleCancel}
+                    style={{
+                      backgroundColor: "#6B7280",
+                      color: "#FFFFFF",
+                      border: "none",
+                      borderRadius: "8px",
+                      padding: "12px 24px",
+                      fontWeight: "500",
+                      fontSize: "16px",
+                      cursor: "pointer",
+                      boxShadow: "0 2px 4px rgba(0, 0, 0, 0.1)",
+                      transition: "background-color 0.3s",
+                    }}
+                    onMouseOver={(e) =>
+                      (e.target.style.backgroundColor = "#4B5563")
+                    }
+                    onMouseOut={(e) => (e.target.style.backgroundColor = "#6B7280")}
+                  >
+                    Cancel
+                  </button>
                 <button
                   type="button"
                   onClick={handleSubmit}
@@ -2748,6 +2771,7 @@ function AddWarehouse() {
                 >
                   Done
                 </button>
+                </>
               )}
             </div>
           </form>
