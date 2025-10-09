@@ -23,26 +23,48 @@ exports.getStockSummary = async (req, res) => {
         let totalAvailableStockValue = 0;
 
         for (const product of products) {
-            // Total purchased (stock in)
+            // --- Replace the existing purchases processing block with this ---
             const purchases = await Purchase.find({ 'products.product': product._id });
-            let totalPurchased = 0;
+
             let totalPurchaseReturn = 0;
             let purchaseAmount = 0;
-            let productPurchaseQty = 0;
 
+            // Use the product's stored quantity as the "purchased" / stock-in base for this product
+            let productPurchaseQty = Number(product.quantity) || 0;
+
+            // Still read purchase records to compute purchaseAmount and returns, but do NOT
+            // accumulate purchased quantity from purchase records (we use product.quantity instead).
             for (const purchase of purchases) {
                 const matchingProducts = purchase.products.filter(
                     (p) => p.product.toString() === product._id.toString()
                 );
                 for (const prod of matchingProducts) {
-                    totalPurchased += prod.quantity || 0;
-                    // productPurchaseQty += prod.quantity || 0;
                     totalPurchaseReturn += prod.returnQty || 0;
                     purchaseAmount +=
-                        (prod.quantity - (prod.returnQty || 0)) * (prod.purchasePrice || 0);
+                        ((prod.quantity || 0) - (prod.returnQty || 0)) * (prod.purchasePrice || 0);
                 }
             }
             totalPurchaseQty += productPurchaseQty;
+            // Total purchased (stock in)
+            // const purchases = await Purchase.find({ 'products.product': product._id });
+            // let totalPurchased = 0;
+            // let totalPurchaseReturn = 0;
+            // let purchaseAmount = 0;
+            // let productPurchaseQty = 0;
+
+            // for (const purchase of purchases) {
+            //     const matchingProducts = purchase.products.filter(
+            //         (p) => p.product.toString() === product._id.toString()
+            //     );
+            //     for (const prod of matchingProducts) {
+            //         totalPurchased += prod.quantity || 0;
+            //         productPurchaseQty += prod.quantity || 0;
+            //         totalPurchaseReturn += prod.returnQty || 0;
+            //         purchaseAmount +=
+            //             (prod.quantity - (prod.returnQty || 0)) * (prod.purchasePrice || 0);
+            //     }
+            // }
+            // totalPurchaseQty += productPurchaseQty;
 
             // Debit Notes (purchase returns)
             const debitNotes = await DebitNote.find({ 'products.product': product._id });
@@ -108,7 +130,7 @@ exports.getStockSummary = async (req, res) => {
 
             // Stock in/out calculation (corrected)
             const baseProductQty = typeof product.quantity === 'number' ? product.quantity : 0;
-            const stockIn = baseProductQty + totalPurchased;
+            const stockIn = baseProductQty ;
             const stockOut = saleQty;
             const purchaseReturn = totalPurchaseReturn + debitNoteReturn;
             const saleReturnQty = saleReturn;

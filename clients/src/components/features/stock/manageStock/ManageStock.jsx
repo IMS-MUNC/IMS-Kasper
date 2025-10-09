@@ -43,7 +43,7 @@ const Stock = () => {
             <div className="card text-center">
               <div className="card-body">
                 <h6 className="mb-1">Total Purchase Qty</h6>
-                <div className="fw-bold fs-5">{totals.totalPurchaseQty ?? '-'}</div>
+                <div className="fw-bold fs-10">{totals.totalPurchaseQty ?? '-'}</div>
               </div>
             </div>
           </div>
@@ -51,7 +51,7 @@ const Stock = () => {
             <div className="card text-center">
               <div className="card-body">
                 <h6 className="mb-1">Total Purchase Return Qty</h6>
-                <div className="fw-bold fs-5">{totals.totalPurchaseReturnQty ?? '-'}</div>
+                <div className="fw-bold fs-10">{totals.totalPurchaseReturnQty ?? '-'}</div>
               </div>
             </div>
           </div>
@@ -59,7 +59,7 @@ const Stock = () => {
             <div className="card text-center">
               <div className="card-body">
                 <h6 className="mb-1">Total Sale Qty</h6>
-                <div className="fw-bold fs-5">{totals.totalSaleQty ?? '-'}</div>
+                <div className="fw-bold fs-10">{totals.totalSaleQty ?? '-'}</div>
               </div>
             </div>
           </div>
@@ -67,7 +67,7 @@ const Stock = () => {
             <div className="card text-center">
               <div className="card-body">
                 <h6 className="mb-1">Total Sale Return</h6>
-                <div className="fw-bold fs-5">{totals.totalSaleReturn ?? '-'}</div>
+                <div className="fw-bold fs-10">{totals.totalSaleReturn ?? '-'}</div>
               </div>
             </div>
           </div>
@@ -77,7 +77,7 @@ const Stock = () => {
             <div className="card text-center">
               <div className="card-body">
                 <h6 className="mb-1">Total Purchase Amount</h6>
-                <div className="fw-bold fs-5">₹{totals.totalPurchaseAmount?.toLocaleString() ?? '-'}</div>
+                <div className="fw-bold fs-10">₹{totals.totalPurchaseAmount?.toLocaleString() ?? '-'}</div>
               </div>
             </div>
           </div>
@@ -85,7 +85,7 @@ const Stock = () => {
             <div className="card text-center">
               <div className="card-body">
                 <h6 className="mb-1">Total Sales Amount</h6>
-                <div className="fw-bold fs-5">₹{totals.totalSalesAmount?.toLocaleString() ?? '-'}</div>
+                <div className="fw-bold fs-10">₹{totals.totalSalesAmount?.toLocaleString() ?? '-'}</div>
               </div>
             </div>
           </div>
@@ -93,7 +93,7 @@ const Stock = () => {
             <div className="card text-center">
               <div className="card-body">
                 <h6 className="mb-1">Total Stock Value</h6>
-                <div className="fw-bold fs-5">₹{totals.totalAvailableStockValue?.toLocaleString() ?? '-'}</div>
+                <div className="fw-bold fs-10">₹{totals.totalAvailableStockValue?.toLocaleString() ?? '-'}</div>
               </div>
             </div>
           </div>
@@ -101,7 +101,7 @@ const Stock = () => {
             <div className="card text-center">
               <div className="card-body">
                 <h6 className="mb-1">Total Profit/Loss</h6>
-                <div className="fw-bold fs-5" style={{ color: (totals.totalProfit ?? 0) >= 0 ? 'green' : 'red' }}>{totals.totalProfit ?? '-'}</div>
+                <div className="fw-bold fs-10" style={{ color: (totals.totalProfit ?? 0) >= 0 ? 'green' : 'red' }}>{totals.totalProfit ?? '-'}</div>
               </div>
             </div>
           </div>
