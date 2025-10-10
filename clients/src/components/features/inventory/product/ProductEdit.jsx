@@ -452,7 +452,7 @@ const ProductEdit = () => {
             Authorization: `Bearer ${token}`, // ✅ token sent properly
           },
         });
-        console.log("hsnd", res.data.data);
+        // console.log("hsnd", res.data.data);
         if (res.data.success) {
           const options = res.data.data.map((item) => ({
             value: item._id,
@@ -490,7 +490,7 @@ const ProductEdit = () => {
       const foundCat = categories.find((opt) => opt.value === categoryId);
       if (foundCat) {
         setSelectedCategory(foundCat);
-        console.log("⚡ Fetching subcategories for:", foundCat.value);
+        // console.log("⚡ Fetching subcategories for:", foundCat.value);
         // Fetch subcategories for this category
         fetchSubcategoriesByCategory(foundCat.value);
       }
@@ -509,7 +509,7 @@ const ProductEdit = () => {
           },
         }
       );
-      console.log("sbcategryfd", res.data);
+      // console.log("sbcategryfd", res.data);
       const options = res.data.map((subcat) => ({
         value: subcat._id,
         label: sanitizeHtml(subcat.subCategoryName, sanitizeOptions),
@@ -527,7 +527,7 @@ const ProductEdit = () => {
       const found = subcategories.find((opt) => opt.value === subCategoryId);
       if (found) {
         setSelectedsubCategory(found);
-        console.log("✅ Preselected subcategory:", found);
+        // console.log("✅ Preselected subcategory:", found);
       }
     }
   }, [subCategoryId, subcategories]);
@@ -1045,7 +1045,7 @@ const validateStep = () => {
     const returnPath = location.state?.from || '/product';
     navigate(returnPath);
   } catch (err) {
-    console.log(err.response?.data);
+    // console.log(err.response?.data);
     toast.error("Failed to update product");
   }
 };
@@ -1142,8 +1142,8 @@ const validateStep = () => {
       setFormData((prev) => ({ ...prev, variants: updatedVariants }))
     }
   }, [variants]);
-  console.log("Variants state:", variants);
-  console.log("FormData variants:", formData.variants);
+  // console.log("Variants state:", variants);
+  // console.log("FormData variants:", formData.variants);
   if (loading) return <p>Loading...</p>;
   return (
     <div className="page-wrapper mt-4">
