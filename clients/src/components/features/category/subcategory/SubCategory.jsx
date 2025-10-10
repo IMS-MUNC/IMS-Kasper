@@ -249,7 +249,11 @@ const SubCategory = () => {
     (subcat) =>
       subcat.subCategoryName.toLowerCase().includes(searchTerm.toLowerCase()) ||
       (subcat.description &&
-        subcat.description.toLowerCase().includes(searchTerm.toLowerCase()))
+        subcat.description.toLowerCase().includes(searchTerm.toLowerCase())) || 
+      (subcat.category?.categoryName &&
+        subcat.category.categoryName.toLowerCase().includes(searchTerm.toLowerCase())) ||
+      (subcat.category?.categoryCode &&
+        subcat.category.categoryCode.toLowerCase().includes(searchTerm.toLowerCase()))
   );
 
   // pagination
