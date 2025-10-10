@@ -587,6 +587,7 @@ const EmailModal = ({
                 className="mailmdlbutton"
                 mailmdlbutton
                 onClick={handleAttachmentClick}
+                title="Upload files, folder or pdf"
               >
                 <RiAttachment2 />
               </button>
@@ -594,6 +595,8 @@ const EmailModal = ({
                 className="mailmdlbutton"
                 mailmdlbutton
                 onClick={() => imageInputRef.current.click()}
+                title="Upload JPEG, Png Image upto 1mb"
+                
               >
                 <HiOutlinePhotograph />
               </button>
@@ -606,6 +609,7 @@ const EmailModal = ({
               <button
                 className="mailmdlbutton"
                 onClick={() => setShowEmojiPicker(!showEmojiPicker)}
+                title="Emoji"
               >
                 <CiFaceSmile />
               </button>
