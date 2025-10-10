@@ -307,7 +307,7 @@ exports.getAllDebit = async (req, res) => {
 
     // Date range filtering
     if (startDate && endDate) {
-      filter.returnDate = {
+      filter.debitNoteDate = {
         $gte: new Date(startDate),
         $lte: new Date(endDate),
       };

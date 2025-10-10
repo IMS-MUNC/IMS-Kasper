@@ -30,6 +30,32 @@ const DebitNote = () => {
     // File input ref for import functionality
     const fileInputRef = React.useRef();
 
+    // Date validation function
+    const validateDates = (start, end) => {
+        if (start && end) {
+            const startDateObj = new Date(start);
+            const endDateObj = new Date(end);
+            if (endDateObj < startDateObj) {
+                toast.error('End date must be after start date');
+            }
+        }
+        return true;
+    };
+
+    // Handle start date change with validation
+    const handleStartDateChange = (e) => {
+        const newStartDate = e.target.value;
+        setStartDate(newStartDate);
+        validateDates(newStartDate, endDate);
+    };
+
+    // Handle end date change with validation
+    const handleEndDateChange = (e) => {
+        const newEndDate = e.target.value;
+        setEndDate(newEndDate);
+        validateDates(startDate, newEndDate);
+    };
+
     const fetchNotes = React.useCallback(() => {
         setLoading(true);
 
@@ -71,6 +97,22 @@ const DebitNote = () => {
     React.useEffect(() => {
         fetchNotes();
     }, [fetchNotes]);
+
+    // Debounced effect for date filtering
+    React.useEffect(() => {
+        // Only fetch if dates are valid
+        if (startDate && endDate && !validateDates(startDate, endDate)) {
+            return; // Don't fetch if there's a date validation error
+        }
+        
+        const timeoutId = setTimeout(() => {
+            if (startDate || endDate) {
+                fetchNotes();
+            }
+        }, 500); // 500ms debounce
+
+        return () => clearTimeout(timeoutId);
+    }, [startDate, endDate, fetchNotes]);
 
     const handleDelete = async (id) => {
         const token = localStorage.getItem("token");
@@ -402,15 +444,17 @@ const DebitNote = () => {
                             type="date"
                             className="form-control"
                             style={{ width: 150, display: 'inline-block' }}
+                            placeholder="Start Date"
                             value={startDate}
-                            onChange={(e) => setStartDate(e.target.value)}
+                            onChange={handleStartDateChange}
                         />
                         <input
                             type="date"
                             className="form-control"
                             style={{ width: 150, display: 'inline-block' }}
+                            placeholder="End Date"
                             value={endDate}
-                            onChange={(e) => setEndDate(e.target.value)}
+                            onChange={handleEndDateChange}
                         />
                     </div>
                 </div>
