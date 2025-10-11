@@ -715,7 +715,14 @@ exports.getSales = async (req, res) => {
     const total = await Sales.countDocuments(query);
     const salesRaw = await Sales.find(query)
       .populate({ path: "customer", select: "-password -__v" })
-      .populate({ path: "products.productId", select: "productName images" })
+      .populate({
+        path: "products.productId",
+        select: "productName sku warehouse images",
+        populate: {
+          path: "warehouse",
+          select: "warehouseName"
+        }
+      })
       .populate({
         path: "creditNotes",
         select: "creditNoteId total grandTotal createdAt products isDeleted",

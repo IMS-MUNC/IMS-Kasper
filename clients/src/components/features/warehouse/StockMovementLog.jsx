@@ -19,8 +19,13 @@ function StockMovementLog() {
   const [isPopupOpen, setIsPopupOpen] = useState(false);
   const [selectedStock, setSelectedStock] = useState(null);
   const [purchases, setPurchases] = useState([]);
+  const [sales, setSales] = useState([]);
+  const [combinedData, setCombinedData] = useState([]);
   const [warehouses, setWarehouses] = useState([]);
   const [selectedWarehouse, setSelectedWarehouse] = useState(null);
+  
+  // Filter state for stock movement type
+  const [movementFilter, setMovementFilter] = useState("All"); // "All", "Stock In", "Stock Out"
   
   // Pagination state
   const [currentPage, setCurrentPage] = useState(1);
@@ -39,17 +44,91 @@ function StockMovementLog() {
         },
       });
 
-
       setPurchases(res.data.purchases);
-      // console.log("new log data", res.data.purchases);
+      return res.data.purchases;
 
     } catch (error) {
       console.error("Error fetching purchases:", error);
+      return [];
+    }
+  };
+
+  const fetchSales = async () => {
+    try {
+      const token = localStorage.getItem("token");
+
+      const res = await axios.get(`${BASE_URL}/api/sales?limit=100000000`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      setSales(res.data.sales);
+      return res.data.sales;
+
+    } catch (error) {
+      console.error("Error fetching sales:", error);
+      return [];
+    }
+  };
+
+  const fetchCombinedData = async () => {
+    try {
+      const [purchasesData, salesData] = await Promise.all([
+        fetchPurchases(),
+        fetchSales()
+      ]);
+
+      // Transform purchases data to include movement type
+      const transformedPurchases = purchasesData.map(purchase => ({
+        ...purchase,
+        movementType: 'Stock In',
+        type: 'purchase',
+        transactionDate: purchase.purchaseDate || purchase.createdAt,
+        referenceNumber: purchase.referenceNumber,
+        customerSupplier: purchase.supplier 
+          ? `${purchase.supplier.firstName || ''} ${purchase.supplier.lastName || ''} | ${purchase.supplier.email || ''}`.trim()
+          : "N/A",
+        productName: purchase.products && purchase.products.length > 0 
+          ? (purchase.products.length === 1 
+              ? (purchase.products[0]?.product?.productName || "N/A")
+              : `${purchase.products[0]?.product?.productName || "Product"} (+${purchase.products.length - 1} more)`)
+          : "N/A",
+        quantity: purchase.products?.[0]?.quantity || "0"
+      }));
+
+      // Transform sales data to include movement type
+      const transformedSales = salesData.map(sale => ({
+        ...sale,
+        movementType: 'Stock Out',
+        type: 'sale',
+        transactionDate: sale.saleDate || sale.createdAt,
+        referenceNumber: sale.referenceNumber,
+        customerSupplier: sale.customer 
+          ? `${sale.customer.name || ''} | ${sale.customer.phone || ''}`.trim()
+          : "N/A",
+        productName: sale.products && sale.products.length > 0 
+          ? (sale.products.length === 1 
+              ? (sale.products[0]?.productId?.productName || sale.products[0]?.productName || "N/A")
+              : `${sale.products[0]?.productId?.productName || sale.products[0]?.productName || "Product"} (+${sale.products.length - 1} more)`)
+          : "N/A",
+        quantity: sale.products?.[0]?.saleQty || sale.products?.[0]?.quantity || "0"
+      }));
+
+      // Combine and sort by date (newest first)
+      const combined = [...transformedPurchases, ...transformedSales].sort(
+        (a, b) => new Date(b.transactionDate) - new Date(a.transactionDate)
+      );
+
+      setCombinedData(combined);
+
+    } catch (error) {
+      console.error("Error fetching combined data:", error);
     }
   };
 
   useEffect(() => {
-    fetchPurchases();
+    fetchCombinedData();
   }, []);
 
   //fetch warehoouses
@@ -66,35 +145,74 @@ function StockMovementLog() {
   // Reset current page when filters change
   useEffect(() => {
     setCurrentPage(1);
-  }, [activeTab, selectedWarehouse]);
+  }, [activeTab, selectedWarehouse, movementFilter]);
 
-const filteredPurchases = purchases.filter((purchase) => {
-  // Declare statusMatch first
-  let statusMatch = true; // default is true for "All" tab
+const filteredData = combinedData.filter((item) => {
+  // Check movement type filter
+  let movementMatch = true;
+  if (movementFilter === "Stock In") movementMatch = item.movementType === "Stock In";
+  if (movementFilter === "Stock Out") movementMatch = item.movementType === "Stock Out";
 
-  // Check tab/status filter
-  const status = purchase.status?.toLowerCase();
-  if (activeTab === "Stock In") statusMatch = status === "received";
-  if (activeTab === "Stock Out") statusMatch = status === "ordered";
+  // Check status filter (for activeTab)
+  let statusMatch = true;
+  if (activeTab !== "All") {
+    if (activeTab === "Stock In") {
+      // For Stock In tab, only show purchases (movementType === "Stock In")
+      statusMatch = item.movementType === "Stock In";
+    } else if (activeTab === "Stock Out") {
+      // For Stock Out tab, only show sales (movementType === "Stock Out")
+      statusMatch = item.movementType === "Stock Out";
+    }
+  }
 
   // Check warehouse filter
   let warehouseMatch = true;
   if (selectedWarehouse) {
-    warehouseMatch = purchase.products.some(
-      (p) => p.product?.warehouseName === selectedWarehouse
-    );
+    // Create warehouse mapping for ObjectId to name lookup
+    const warehouseMap = warehouses.reduce((map, warehouse) => {
+      map[warehouse._id] = warehouse.warehouseName;
+      return map;
+    }, {});
+
+    if (item.type === "purchase") {
+      warehouseMatch = item.products?.some((p) => {
+        // Handle populated warehouse data
+        if (p.product?.warehouse?.warehouseName) {
+          return p.product.warehouse.warehouseName === selectedWarehouse;
+        }
+        // Handle non-populated warehouse data (ObjectId only)
+        if (p.product?.warehouse && typeof p.product.warehouse === 'string') {
+          const warehouseName = warehouseMap[p.product.warehouse];
+          return warehouseName === selectedWarehouse;
+        }
+        return false;
+      });
+    } else if (item.type === "sale") {
+      warehouseMatch = item.products?.some((p) => {
+        // Handle populated warehouse data
+        if (p.productId?.warehouse?.warehouseName) {
+          return p.productId.warehouse.warehouseName === selectedWarehouse;
+        }
+        // Handle non-populated warehouse data (ObjectId only)
+        if (p.productId?.warehouse && typeof p.productId.warehouse === 'string') {
+          const warehouseName = warehouseMap[p.productId.warehouse];
+          return warehouseName === selectedWarehouse;
+        }
+        return false;
+      });
+    }
   }
 
-  // Both must match
-  return statusMatch && warehouseMatch;
+  // All filters must match
+  return movementMatch && statusMatch && warehouseMatch;
 });
 
 // Pagination logic
-const totalItems = filteredPurchases.length;
+const totalItems = filteredData.length;
 const totalPages = Math.ceil(totalItems / itemsPerPage);
 const startIndex = (currentPage - 1) * itemsPerPage;
 const endIndex = startIndex + itemsPerPage;
-const currentPageData = filteredPurchases.slice(startIndex, endIndex);
+const currentPageData = filteredData.slice(startIndex, endIndex);
 
 // Pagination handlers
 const handlePageChange = (page) => {
@@ -139,55 +257,72 @@ const handleBulkDelete = async () => {
   if (selectedPurchases.length === 0) return;
   
   const confirmed = await DeleteAlert({
-    title: 'Delete Selected Purchases',
-    text: `Are you sure you want to delete ${selectedPurchases.length} selected purchase records?`,
+    title: 'Delete Selected Records',
+    text: `Are you sure you want to delete ${selectedPurchases.length} selected records?`,
   });
   
   if (!confirmed) return;
 
   try {
     const token = localStorage.getItem("token");
-    await Promise.all(
-      selectedPurchases.map((id) => 
+    
+    // Group selected items by type
+    const selectedItems = currentPageData.filter(item => selectedPurchases.includes(item._id));
+    const purchaseIds = selectedItems.filter(item => item.type === 'purchase').map(item => item._id);
+    const salesIds = selectedItems.filter(item => item.type === 'sale').map(item => item._id);
+    
+    // Delete purchases and sales separately
+    const deletePromises = [
+      ...purchaseIds.map(id => 
         axios.delete(`${BASE_URL}/api/purchases/${id}`, {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
+          headers: { Authorization: `Bearer ${token}` }
+        })
+      ),
+      ...salesIds.map(id => 
+        axios.delete(`${BASE_URL}/api/sales/${id}`, {
+          headers: { Authorization: `Bearer ${token}` }
         })
       )
-    );
-    toast.success("Selected purchases deleted successfully!");
+    ];
+    
+    await Promise.all(deletePromises);
+    toast.success("Selected records deleted successfully!");
     setSelectedPurchases([]);
-    fetchPurchases(); // Reload data
+    fetchCombinedData(); // Reload data
   } catch (err) {
     console.error("Bulk delete error:", err);
-    toast.error("Failed to delete selected purchases");
+    toast.error("Failed to delete selected records");
   }
 };
 
 // individual delete functionality
-const handleIndividualDelete = async (purchaseId, purchaseName) => {
+const handleIndividualDelete = async (item) => {
+  const itemType = item.type === 'purchase' ? 'purchase' : 'sale';
+  const itemName = item.referenceNumber || item._id;
+  
   const confirmed = await DeleteAlert({
-    title: 'Delete Purchase',
-    text: `Are you sure you want to delete the purchase "${purchaseName}"?`,
+    title: `Delete ${itemType}`,
+    text: `Are you sure you want to delete the ${itemType} "${itemName}"?`,
   });
   
   if (!confirmed) return;
 
   try {
     const token = localStorage.getItem("token");
-    await axios.delete(`${BASE_URL}/api/purchases/${purchaseId}`, {
+    const endpoint = item.type === 'purchase' ? 'purchases' : 'sales';
+    
+    await axios.delete(`${BASE_URL}/api/${endpoint}/${item._id}`, {
       headers: {
         Authorization: `Bearer ${token}`,
       },
     });
-    toast.success("Purchase deleted successfully!");
+    toast.success(`${itemType} deleted successfully!`);
     // Remove from selected items if it was selected
-    setSelectedPurchases((prev) => prev.filter((id) => id !== purchaseId));
-    fetchPurchases(); // Reload data
+    setSelectedPurchases((prev) => prev.filter((id) => id !== item._id));
+    fetchCombinedData(); // Reload data
   } catch (err) {
     console.error("Delete error:", err);
-    toast.error("Failed to delete purchase");
+    toast.error(`Failed to delete ${itemType}`);
   }
 };
 
@@ -214,7 +349,7 @@ useEffect(() => {
     const day = date.getDate().toString().padStart(2, "0");
     const month = (date.getMonth() + 1).toString().padStart(2, "0");
     const year = date.getFullYear();
-    return `${hours}:${minutes} ${ampm} - ${day}-${month}-${year}`;
+    return `${day}-${month}-${year}`;
   }
 
   const handleCellClick = (stock) => {
@@ -246,7 +381,17 @@ useEffect(() => {
   // Function to download PDF
   const downloadPDF = () => {
     const doc = new jsPDF();
-    doc.text("Stock Movement Log", 14, 20);
+    
+    // Determine which data to export
+    const dataToExport = selectedPurchases.length > 0 
+      ? filteredData.filter(item => selectedPurchases.includes(item._id))
+      : filteredData;
+    
+    const title = selectedPurchases.length > 0 
+      ? `Stock Movement Log (${selectedPurchases.length} Selected Items)`
+      : "Stock Movement Log";
+    
+    doc.text(title, 14, 20);
 
     const tableColumn = [
       "Product",
@@ -256,15 +401,13 @@ useEffect(() => {
       "Source/Destination",
       "Reference/Note",
     ];
-    const tableRows = filteredPurchases.map((purchase) => [
-      purchase.products[0]?.product?.productName || "N/A",
-      formatDateTime(purchase.createdAt),
-      purchase.products[0]?.product?.quantity || "0",
-      purchase.status,
-      purchase.supplier
-        ? `${purchase.supplier.firstName} ${purchase.supplier.lastName} ${purchase.supplier.email}`
-        : "N/A",
-      purchase.referenceNumber || "N/A",
+    const tableRows = dataToExport.map((item) => [
+      item.productName || "N/A",
+      formatDateTime(item.transactionDate),
+      item.quantity || "0",
+      item.movementType,
+      item.customerSupplier || "N/A",
+      item.referenceNumber || "N/A",
     ]);
 
     // Use autoTable directly
@@ -277,26 +420,43 @@ useEffect(() => {
       styles: { fontSize: 10 },
     });
 
-    doc.save("Stock_Movement_Log.pdf");
+    const fileName = selectedPurchases.length > 0 
+      ? `Stock_Movement_Log_Selected_${selectedPurchases.length}_Items.pdf`
+      : "Stock_Movement_Log.pdf";
+    
+    doc.save(fileName);
   };
 
   // Function to download Excel
   const downloadExcel = () => {
-    const worksheetData = filteredPurchases.map((purchase) => ({
-      Product: purchase.products[0]?.product?.productName || "N/A",
-      Time: formatDateTime(purchase.createdAt),
-      Quantity: purchase.products[0]?.product?.quantity || 0,
-      "Movement Type": purchase.status,
-      "Source/Destination": purchase.supplier
-        ? `${purchase.supplier.firstName} ${purchase.supplier.lastName} ${purchase.supplier.email}`
-        : "N/A",
-      "Reference/Note": purchase.referenceNumber || "N/A",
+    // Determine which data to export
+    const dataToExport = selectedPurchases.length > 0 
+      ? filteredData.filter(item => selectedPurchases.includes(item._id))
+      : filteredData;
+    
+    const worksheetData = dataToExport.map((item) => ({
+      Product: item.productName || "N/A",
+      Time: formatDateTime(item.transactionDate),
+      Quantity: item.quantity || 0,
+      "Movement Type": item.movementType,
+      "Source/Destination": item.customerSupplier || "N/A",
+      "Reference/Note": item.referenceNumber || "N/A",
     }));
 
     const worksheet = XLSX.utils.json_to_sheet(worksheetData);
     const workbook = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(workbook, worksheet, "Stock Movement Log");
-    XLSX.writeFile(workbook, "Stock_Movement_Log.xlsx");
+    
+    const sheetName = selectedPurchases.length > 0 
+      ? `Selected Items (${selectedPurchases.length})`
+      : "Stock Movement Log";
+    
+    XLSX.utils.book_append_sheet(workbook, worksheet, sheetName);
+    
+    const fileName = selectedPurchases.length > 0 
+      ? `Stock_Movement_Log_Selected_${selectedPurchases.length}_Items.xlsx`
+      : "Stock_Movement_Log.xlsx";
+    
+    XLSX.writeFile(workbook, fileName);
   };
 
 
@@ -447,12 +607,33 @@ useEffect(() => {
                   <div className="d-flex table-dropdown my-xl-auto right-content align-items-center flex-wrap row-gap-3">
                     <div className="dropdown me-2">
                       <a className="btn btn-white btn-md d-inline-flex align-items-center" data-bs-toggle="dropdown">
-                        Sort by : All Warehouse
+                        Sort by : {selectedWarehouse || "All Warehouse"}
                       </a>
-                      <ul className="dropdown-menu  dropdown-menu-end p-3">
+                      <ul className="dropdown-menu dropdown-menu-end p-3" style={{height:'215px',overflowY:'auto'}}>
+                        <li>
+                          <a 
+                            className="dropdown-item rounded-1" 
+                            href="#" 
+                            onClick={(e) => {
+                              e.preventDefault();
+                              setSelectedWarehouse(null);
+                            }}
+                          >
+                            All Warehouse
+                          </a>
+                        </li>
                         {warehouses.map((wh) => (
                         <li key={wh._id}>
-                          <a className="dropdown-item rounded-1">{wh.warehouseName}</a>
+                          <a 
+                            className="dropdown-item rounded-1" 
+                            href="#" 
+                            onClick={(e) => {
+                              e.preventDefault();
+                              setSelectedWarehouse(wh.warehouseName);
+                            }}
+                          >
+                            {wh.warehouseName}
+                          </a>
                         </li>
                         ))}
                       </ul>
@@ -524,40 +705,37 @@ useEffect(() => {
                       </thead>
                       <tbody>
                         {currentPageData.length > 0 ? (
-                          currentPageData.map(purchase => (
-                            <tr key={purchase._id} >
+                          currentPageData.map(item => (
+                            <tr key={item._id} >
                               <td onClick={(e) => e.stopPropagation()}>
                                 <label className="checkboxs">
                                   <input 
                                     type="checkbox" 
-                                    checked={selectedPurchases.includes(purchase._id)}
-                                    onChange={() => handleCheckboxChange(purchase._id)}
+                                    checked={selectedPurchases.includes(item._id)}
+                                    onChange={() => handleCheckboxChange(item._id)}
                                   />
                                   <span className="checkmarks" />
                                 </label>
                               </td>
-                              <td> {purchase.products[0]?.product?.productName}</td>
-                              {/* <td>{product.store || 'N/A'}</td> */}
-                              <td>{formatDateTime(purchase.createdAt)}</td>
-                              <td >
-                                {purchase.products[0]?.product?.quantity}
-                              </td>
+                              <td>{item.productName || "N/A"}</td>
+                              <td>{formatDateTime(item.transactionDate)}</td>
+                              <td>{item.quantity || "0"}</td>
                               <td style={{ borderBottom: "1px solid #ddd", padding: "8px" }}>
                                 {(() => {
-                                  const type = purchase.status.trim().toLowerCase();
+                                  const type = item.movementType.trim().toLowerCase();
                                   let backgroundColor = "#D3D3D3";
                                   let textColor = "#000";
 
-                                  if (type === "received") {
+                                  if (type === "stock in" || type === "received") {
                                     backgroundColor = "#DFFFE0";
                                     textColor = "#2BAE66";
-                                  } else if (type === "ordered") {
+                                  } else if (type === "stock out" || type === "sold") {
                                     backgroundColor = "#FCE4E6";
                                     textColor = "#D64550";
                                   } else if (type === "transfer") {
                                     backgroundColor = "#D4E4FF";
                                     textColor = "#2F80ED";
-                                  } else if (type === "processing") {
+                                  } else if (type === "processing" || type === "ordered") {
                                     backgroundColor = "#FFF3CD";
                                     textColor = "#856404";
                                   }
@@ -572,34 +750,35 @@ useEffect(() => {
                                         backgroundColor,
                                       }}
                                     >
-                                      {purchase.status}
+                                      {item.movementType}
                                     </span>
                                   );
                                 })()}
                               </td>
-
-
-                              <td>{purchase.supplier.firstName + " " + purchase.supplier.lastName + " " + purchase.supplier.email || "N/A"}</td>
-                              <td> {purchase.referenceNumber || "N/A"}</td>
-                              {/* <td>{product.quantityAlert} {product.unit}</td> */}
+                              <td>{item.customerSupplier || "N/A"}</td>
+                              <td>{item.referenceNumber || "N/A"}</td>
                               <td className="action-table-data">
                                 <div className="edit-delete-action" style={{gap:"8px"}}>
-                                  {/* <a className="me-2 p-2" data-bs-toggle="modal" data-bs-target="#edit-stock">
-                                     <TbEdit data-feather="edit" className="feather-edit" /> 
-                                  </a>*/}
-                                  <a data-bs-toggle="modal" data-bs-target="#delete-modal" className="p-2" onClick={() => handleCellClick(purchase)} >
+                                  <a 
+                                    className="p-2" 
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      handleCellClick(item);
+                                    }}
+                                    style={{cursor: 'pointer'}}
+                                  >
                                     <TbEye data-feather="eye" className="feather-eye" />
                                   </a>
                                   <a
-                              className="p-2"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                handleIndividualDelete(purchase._id, purchase.referenceNumber || `Purchase ${purchase._id.slice(-6)}`);
-                              }}
-                              style={{ cursor: 'pointer' }}
-                            >
-                              <TbTrash />
-                            </a>
+                                    className="p-2"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      handleIndividualDelete(item);
+                                    }}
+                                    style={{ cursor: 'pointer' }}
+                                  >
+                                    <TbTrash />
+                                  </a>
                                 </div>
                               </td>
                             </tr>
