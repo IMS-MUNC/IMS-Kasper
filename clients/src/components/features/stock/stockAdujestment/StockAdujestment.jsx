@@ -63,52 +63,205 @@ const StockAdujestment = () => {
     return sum + (qty * price);
   }, 0);
 
-  const exportToExcel = () => {
-    const selected = products.filter((unit) =>
-      selectedStocks.includes(unit._id)
-    );
-    if (selected.length === 0) {
-      toast.warn("No Stocks selected.");
-      return;
+  // const exportToExcel = () => {
+  //   const selected = filterStocks;
+  //   if (selected.length === 0) {
+  //     toast.warn("No stocks available to export.");
+  //     return;
+  //   }
+
+  //   const ws = XLSX.utils.json_to_sheet(selected);
+  //   const wb = XLSX.utils.book_new();
+  //   XLSX.utils.book_append_sheet(wb, ws, "Stocks");
+  //   XLSX.writeFile(wb, "stocks.xlsx");
+  // };
+
+  
+//   const exportToExcel = () => {
+//   const selected = filterStocks;
+
+//   if (selected.length === 0) {
+//     toast.warn("No stocks available to export.");
+//     return;
+//   }
+
+//   const data = selected.map((p) => {
+//     let qty = 0;
+
+//     if (typeof p.availableQty === 'number') {
+//       qty = p.availableQty;
+//     } else {
+//       const quantity = Number(p.quantity ?? 0);
+//       let newQuantitySum = 0;
+//       if (Array.isArray(p.newQuantity)) {
+//         newQuantitySum = p.newQuantity.reduce((acc, n) => acc + (Number(n) || 0), 0);
+//       } else if (typeof p.newQuantity === 'number') {
+//         newQuantitySum = Number(p.newQuantity);
+//       }
+//       qty = quantity + newQuantitySum;
+//     }
+
+//     const purchasePrice = Number(p.purchasePrice ?? 0);
+//     const sellingPrice = Number(p.sellingPrice ?? 0);
+//     const availableValue = qty * purchasePrice;
+//     const profitLoss = (qty * sellingPrice) - availableValue;
+
+//     return {
+//       "Product Name": p.productName || 'N/A',
+//       "Product Code": p.productCode || 'N/A',
+//       "Available Quantity": qty,
+//       "Purchase Price (₹)": purchasePrice.toFixed(2),
+//       "Selling Price (₹)": sellingPrice.toFixed(2),
+//       "Available Value (₹)": availableValue.toFixed(2),
+//       "Profit / Loss (₹)": profitLoss.toFixed(2),
+//     };
+//   });
+
+//   const ws = XLSX.utils.json_to_sheet(data);
+//   const wb = XLSX.utils.book_new();
+//   XLSX.utils.book_append_sheet(wb, ws, "Stocks");
+//   XLSX.writeFile(wb, "stocks.xlsx");
+// };
+
+
+const exportToExcel = () => {
+  const selected = filterStocks;
+
+  if (selected.length === 0) {
+    toast.warn("No stocks available to export.");
+    return;
+  }
+
+  const data = selected.map((p) => {
+    let qty = 0;
+
+    if (typeof p.availableQty === 'number') {
+      qty = p.availableQty;
+    } else {
+      const quantity = Number(p.quantity ?? 0);
+      let newQuantitySum = 0;
+      if (Array.isArray(p.newQuantity)) {
+        newQuantitySum = p.newQuantity.reduce((acc, n) => acc + (Number(n) || 0), 0);
+      } else if (typeof p.newQuantity === 'number') {
+        newQuantitySum = Number(p.newQuantity);
+      }
+      qty = quantity + newQuantitySum;
     }
 
-    const ws = XLSX.utils.json_to_sheet(selected);
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, "Stocks");
-    XLSX.writeFile(wb, "stocks.xlsx");
-  };
+    const purchasePrice = Number(p.purchasePrice ?? 0);
+    const sellingPrice = Number(p.sellingPrice ?? 0);
+    const availableValue = qty * purchasePrice;
+    const profitLoss = (qty * sellingPrice) - availableValue;
 
-  const exportToPDF = () => {
-    const selected = products.filter((unit) =>
-      selectedStocks.includes(unit._id)
-    );
-    if (selected.length === 0) {
-      toast.warn("No stocks selected.");
-      return;
-    }
+    return {
+      "Product Name": p.productName || 'N/A',
+      "Product Code": p.productCode || 'N/A',
+      "Available Quantity": qty,
+      "Purchase Price ": `Rs. ${purchasePrice.toFixed(2)}`,
+      "Selling Price (Rs.)":  `Rs. ${sellingPrice.toFixed(2)}`,
+      "Available Value (Rs.)": `Rs. ${availableValue.toFixed(2)}`,
+      "Profit / Loss": `${profitLoss.toFixed(2)} ${profitLoss > 0 ? '(Profit)' : profitLoss < 0 ? '(Loss)' : ''}`,
+       // For styling later
+    };
+  });
 
-    const doc = new jsPDF();
-    doc.text("Stocks List", 14, 10);
-    doc.autoTable({
-      startY: 20,
-      head: [["Product Name", "Product Code", "Available Quantity", "Purchase Price", "Selling Price", "Available Value", "Profit/Loss"]],
-      body: selected.map((p) => [
-        p.productName,
-        p.productCode,
-        p.availableQty ?? 0,
-        p.purchasePrice ?? 0,
-        p.sellingPrice ?? 0,
-        (p.availableQty ?? 0) * (p.purchasePrice ?? 0),
-        (p.sellingPrice ?? 0) - (p.purchasePrice ?? 0),
-      ]),
-    });
-    doc.save("stocks.pdf");
-  };
+  // Create worksheet
+  const ws = XLSX.utils.json_to_sheet(data);
 
-  const filterStocks = products.filter((p) => {
+  // Optional: Add styling to Profit/Loss column
+  const range = XLSX.utils.decode_range(ws['!ref']);
+  for (let row = 1; row <= range.e.r; row++) {
+    const cellAddress = `H${row + 1}`;  // H column = 8th column (Profit / Loss)
+    const colorCellAddress = `I${row + 1}`;
+    const color = ws[colorCellAddress]?.v || 'black';
+
+    if (!ws[cellAddress]) continue;
+
+    ws[cellAddress].s = {
+      font: {
+        color: { rgb: color === 'green' ? '008000' : color === 'red' ? 'FF0000' : '000000' },
+      },
+    };
+  }
+
+  // Remove helper column before export
+  delete ws['I1']; // Header
+  for (let row = 2; row <= data.length + 1; row++) {
+    delete ws[`I${row}`];
+  }
+
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, "Stocks");
+
+  // Enable styles
+  XLSX.writeFile(wb, "stocks.xlsx", { cellStyles: true });
+};
+
+    const filterStocks = products.filter((p) => {
     const matchesSearch = p.productName?.toLowerCase().includes(searchTerm.toLowerCase().trim());
     return matchesSearch;
   })
+
+  
+
+const exportToPDF = () => {
+  const selected = filterStocks;
+
+  if (selected.length === 0) {
+    toast.warn("No stocks available to export.");
+    return;
+  }
+
+  const doc = new jsPDF();
+  doc.text("Stocks List", 14, 10);
+  autoTable(doc, {
+    startY: 20,
+    head: [
+      ["Product Name", "Product Code", "Available Quantity", "Purchase Price", "Selling Price", "Available Value", "Profit/Loss"]
+    ],
+    body: selected.map((p) => {
+      let qty = 0;
+      if (typeof p.availableQty === 'number') {
+        qty = p.availableQty;
+      } else {
+        const quantity = Number(p.quantity ?? 0);
+        let newQuantitySum = 0;
+        if (Array.isArray(p.newQuantity)) {
+          newQuantitySum = p.newQuantity.reduce((acc, n) => acc + (Number(n) || 0), 0);
+        } else if (typeof p.newQuantity === 'number') {
+          newQuantitySum = Number(p.newQuantity);
+        }
+        qty = quantity + newQuantitySum;
+      }
+
+      const purchasePrice = Number(p.purchasePrice ?? 0);
+      const sellingPrice = Number(p.sellingPrice ?? 0);
+      const availableValue = qty * purchasePrice;
+      const profitLoss = (qty * sellingPrice) - availableValue;
+
+      return [
+        p.productName || 'N/A',
+        p.productCode || 'N/A',
+        qty,
+        `Rs. ${purchasePrice.toFixed(2)}`,
+        `Rs. ${sellingPrice.toFixed(2)}`,
+        `Rs. ${availableValue.toFixed(2)}`,
+        // `₹${profitLoss.toFixed(2)} ${profitLoss > 0 ? '(Profit)' : profitLoss < 0 ? '(Loss)' : '' || profitLoss >= 0 ? 'text-success' : 'text-danger'}
+        // `
+         {
+        content: `Rs. ${profitLoss.toFixed(2)} ${profitLoss > 0 ? '(Profit)' : profitLoss < 0 ? '(Loss)' : ''}`,
+        styles: {
+          textColor: profitLoss > 0 ? [0, 128, 0] : profitLoss < 0 ? [255, 0, 0] : [0, 0, 0]  // Green / Red / Black
+        }}
+      ];
+    }),
+  });
+
+  doc.save("stocks.pdf");
+};
+
+
+ 
 
   const totalPages = Math.ceil(filterStocks.length / itemsPerPage);
   const paginatedStocks = filterStocks.slice(
@@ -126,34 +279,83 @@ const StockAdujestment = () => {
               <h6>Total Stock Value:₹{totalValue.toFixed(2)}</h6>
             </div>
           </div>
-          <div className="table-top-head me-2">
-            <li>
-              <button
-                type="button"
-                className="icon-btn"
-                title="Pdf"
-                onClick={exportToPDF}
-              >
-                <FaFilePdf />
-              </button>
-            </li>
-            <li>
-              <label className="icon-btn m-0" title="Import Excel">
-                <input type="file" accept=".xlsx, .xls" hidden />
-                <FaFileExcel style={{ color: "green" }} />
-              </label>
-            </li>
-            <li>
-              <button
-                type="button"
-                className="icon-btn"
-                title="Export Excel"
-                onClick={exportToExcel}
-              >
-                <FaFileExcel />
-              </button>
-            </li>
-          </div>
+          <div
+                      className="table-top-head me-2"
+                      style={{ display: "flex", alignItems: "center", gap: "10px" }}
+                    >
+                      <div
+                        style={{ display: "flex", alignItems: "center", gap: "5px" }}
+                        className="icon-btn"
+                      >
+                        <label className="" title="">
+                          Export :{" "}
+                        </label>
+                        <button
+                         onClick={exportToPDF}
+                          title="Download PDF"
+                          style={{
+                            backgroundColor: "white",
+                            display: "flex",
+                            alignItems: "center",
+                            border: "none",
+                          }}
+                        >
+                          <FaFilePdf className="fs-20" style={{ color: "red" }} />
+                        </button>
+                        <button
+                          onClick={exportToExcel}
+                          title="Download Excel"
+                          style={{
+                            backgroundColor: "white",
+                            display: "flex",
+                            alignItems: "center",
+                            border: "none",
+                          }}
+                        >
+                          <FaFileExcel className="fs-20" style={{ color: "orange" }} />
+                        </button>
+                      </div>
+          
+                      <div
+                        style={{ display: "flex", alignItems: "center", gap: "5px" }}
+                        className="icon-btn"
+                      >
+                        <label className="" title="">
+                          Import :{" "}
+                        </label>
+                        <label className="" title="Import Excel">
+                          <button
+                            type="button"
+                            // onClick={handleImportClick}
+                            style={{
+                              backgroundColor: "white",
+                              display: "flex",
+                              alignItems: "center",
+                              border: "none",
+                            }}
+                          >
+                            <FaFileExcel style={{ color: "green" }} />
+                          </button>
+                          <input
+                            type="file"
+                            accept=".xlsx, .xls"
+                            // ref={fileInputRef}
+                            style={{ display: "none" }}
+                            // onChange={handleFileChange}
+                          />
+                        </label>
+                      </div>
+                      {/* <li>
+                                  <button
+                                    type="button"
+                                    className="icon-btn"
+                                    title="Export Excel"
+                                    onClick={handleExcel}
+                                  >
+                                    <FaFileExcel />
+                                  </button>
+                                </li> */}
+                    </div>
         </div>
         {loading ? (
           <div>Loading...</div>

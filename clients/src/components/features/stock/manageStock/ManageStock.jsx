@@ -1,6 +1,13 @@
-import React, { useEffect, useState } from 'react';
-import axios from 'axios';
-import BASE_URL from '../../../../pages/config/config';
+import React, { useEffect, useState } from "react";
+import axios from "axios";
+import BASE_URL from "../../../../pages/config/config";
+import { FaFileExcel, FaFilePdf } from "react-icons/fa";
+
+import jsPDF from "jspdf";
+import "jspdf-autotable";
+import * as XLSX from "xlsx";
+import { saveAs } from "file-saver";
+import autoTable from "jspdf-autotable";
 
 const Stock = () => {
   const [stockData, setStockData] = useState([]);
@@ -13,20 +20,85 @@ const Stock = () => {
       setLoading(true);
       setError(null);
       try {
-        const token = localStorage.getItem('token');
+        const token = localStorage.getItem("token");
         const res = await axios.get(`${BASE_URL}/api/stock/summary`, {
           headers: { Authorization: `Bearer ${token}` },
         });
         setStockData(res.data.summary || []);
         setTotals(res.data.totals || {});
       } catch (err) {
-        setError('Failed to fetch stock summary');
+        setError("Failed to fetch stock summary");
       } finally {
         setLoading(false);
       }
     };
     fetchStock();
   }, []);
+
+  const handlePdf = () => {
+    const doc = new jsPDF();
+    doc.text("Stock Summary", 14, 10);
+
+    const tableColumn = [
+      "Product",
+      "HSN Code",
+      "Stock In",
+      "Stock Out",
+      "Purchase Return",
+      "Sale Return",
+      "Current Stock",
+      "Purchase Amount",
+      "Sales Amount",
+      "Profit",
+    ];
+
+    const tableRows = stockData.map((item) => [
+      item.product,
+      item.hsnCode || "-",
+      item.stockIn,
+      item.stockOut,
+      item.purchaseReturn,
+      item.saleReturn,
+      item.currentStock,
+      item.purchaseAmount,
+      item.salesAmount,
+      item.profit,
+    ]);
+
+    autoTable(doc, {
+      head: [tableColumn],
+      body: tableRows,
+      startY: 20,
+    });
+
+    doc.save("stock_summary.pdf");
+  };
+
+  const handleExcel = () => {
+    const worksheetData = stockData.map((item) => ({
+      Product: item.product,
+      "HSN Code": item.hsnCode || "-",
+      "Stock In": item.stockIn,
+      "Stock Out": item.stockOut,
+      "Purchase Return": item.purchaseReturn,
+      "Sale Return": item.saleReturn,
+      "Current Stock": item.currentStock,
+      "Purchase Amount": item.purchaseAmount,
+      "Sales Amount": item.salesAmount,
+      Profit: item.profit,
+    }));
+
+    const worksheet = XLSX.utils.json_to_sheet(worksheetData);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, "Stock Summary");
+
+    const excelBuffer = XLSX.write(workbook, {
+      bookType: "xlsx",
+      type: "array",
+    });
+    const data = new Blob([excelBuffer], { type: "application/octet-stream" });
+    saveAs(data, "stock_summary.xlsx");
+  };
 
   return (
     <div className="page-wrapper">
@@ -36,14 +108,93 @@ const Stock = () => {
             <h4 className="fw-bold">Stock Summary</h4>
             <h6>Inventory overview and profit/loss</h6>
           </div>
+          <div
+            className="table-top-head me-2"
+            style={{ display: "flex", alignItems: "center", gap: "10px" }}
+          >
+            <div
+              style={{ display: "flex", alignItems: "center", gap: "5px" }}
+              className="icon-btn"
+            >
+              <label className="" title="">
+                Export :{" "}
+              </label>
+              <button
+                onClick={handlePdf}
+                title="Download PDF"
+                style={{
+                  backgroundColor: "white",
+                  display: "flex",
+                  alignItems: "center",
+                  border: "none",
+                }}
+              >
+                <FaFilePdf className="fs-20" style={{ color: "red" }} />
+              </button>
+              <button
+                onClick={handleExcel}
+                title="Download Excel"
+                style={{
+                  backgroundColor: "white",
+                  display: "flex",
+                  alignItems: "center",
+                  border: "none",
+                }}
+              >
+                <FaFileExcel className="fs-20" style={{ color: "orange" }} />
+              </button>
+            </div>
+
+            <div
+              style={{ display: "flex", alignItems: "center", gap: "5px" }}
+              className="icon-btn"
+            >
+              <label className="" title="">
+                Import :{" "}
+              </label>
+              <label className="" title="Import Excel">
+                <button
+                  type="button"
+                  // onClick={handleImportClick}
+                  style={{
+                    backgroundColor: "white",
+                    display: "flex",
+                    alignItems: "center",
+                    border: "none",
+                  }}
+                >
+                  <FaFileExcel style={{ color: "green" }} />
+                </button>
+                <input
+                  type="file"
+                  accept=".xlsx, .xls"
+                  // ref={fileInputRef}
+                  style={{ display: "none" }}
+                  // onChange={handleFileChange}
+                />
+              </label>
+            </div>
+            {/* <li>
+                        <button
+                          type="button"
+                          className="icon-btn"
+                          title="Export Excel"
+                          onClick={handleExcel}
+                        >
+                          <FaFileExcel />
+                        </button>
+                      </li> */}
+          </div>
         </div>
         {/* Totals Card */}
-         <div className="row mb-3">
+        <div className="row mb-3">
           <div className="col-md-3">
             <div className="card text-center">
               <div className="card-body">
                 <h6 className="mb-1">Total Purchase Qty</h6>
-                <div className="fw-bold fs-10">{totals.totalPurchaseQty ?? '-'}</div>
+                <div className="fw-bold fs-10">
+                  {totals.totalPurchaseQty ?? "-"}
+                </div>
               </div>
             </div>
           </div>
@@ -51,7 +202,9 @@ const Stock = () => {
             <div className="card text-center">
               <div className="card-body">
                 <h6 className="mb-1">Total Purchase Return Qty</h6>
-                <div className="fw-bold fs-10">{totals.totalPurchaseReturnQty ?? '-'}</div>
+                <div className="fw-bold fs-10">
+                  {totals.totalPurchaseReturnQty ?? "-"}
+                </div>
               </div>
             </div>
           </div>
@@ -59,7 +212,9 @@ const Stock = () => {
             <div className="card text-center">
               <div className="card-body">
                 <h6 className="mb-1">Total Sale Qty</h6>
-                <div className="fw-bold fs-10">{totals.totalSaleQty ?? '-'}</div>
+                <div className="fw-bold fs-10">
+                  {totals.totalSaleQty ?? "-"}
+                </div>
               </div>
             </div>
           </div>
@@ -67,7 +222,9 @@ const Stock = () => {
             <div className="card text-center">
               <div className="card-body">
                 <h6 className="mb-1">Total Sale Return</h6>
-                <div className="fw-bold fs-10">{totals.totalSaleReturn ?? '-'}</div>
+                <div className="fw-bold fs-10">
+                  {totals.totalSaleReturn ?? "-"}
+                </div>
               </div>
             </div>
           </div>
@@ -77,7 +234,9 @@ const Stock = () => {
             <div className="card text-center">
               <div className="card-body">
                 <h6 className="mb-1">Total Purchase Amount</h6>
-                <div className="fw-bold fs-10">₹{totals.totalPurchaseAmount?.toLocaleString() ?? '-'}</div>
+                <div className="fw-bold fs-10">
+                  ₹{totals.totalPurchaseAmount?.toLocaleString() ?? "-"}
+                </div>
               </div>
             </div>
           </div>
@@ -85,7 +244,9 @@ const Stock = () => {
             <div className="card text-center">
               <div className="card-body">
                 <h6 className="mb-1">Total Sales Amount</h6>
-                <div className="fw-bold fs-10">₹{totals.totalSalesAmount?.toLocaleString() ?? '-'}</div>
+                <div className="fw-bold fs-10">
+                  ₹{totals.totalSalesAmount?.toLocaleString() ?? "-"}
+                </div>
               </div>
             </div>
           </div>
@@ -93,7 +254,9 @@ const Stock = () => {
             <div className="card text-center">
               <div className="card-body">
                 <h6 className="mb-1">Total Stock Value</h6>
-                <div className="fw-bold fs-10">₹{totals.totalAvailableStockValue?.toLocaleString() ?? '-'}</div>
+                <div className="fw-bold fs-10">
+                  ₹{totals.totalAvailableStockValue?.toLocaleString() ?? "-"}
+                </div>
               </div>
             </div>
           </div>
@@ -101,11 +264,18 @@ const Stock = () => {
             <div className="card text-center">
               <div className="card-body">
                 <h6 className="mb-1">Total Profit/Loss</h6>
-                <div className="fw-bold fs-10" style={{ color: (totals.totalProfit ?? 0) >= 0 ? 'green' : 'red' }}>{totals.totalProfit ?? '-'}</div>
+                <div
+                  className="fw-bold fs-10"
+                  style={{
+                    color: (totals.totalProfit ?? 0) >= 0 ? "green" : "red",
+                  }}
+                >
+                  {totals.totalProfit ?? "-"}
+                </div>
               </div>
             </div>
           </div>
-        </div> 
+        </div>
         <div className="card">
           <div className="card-body p-0">
             {loading ? (
@@ -131,17 +301,31 @@ const Stock = () => {
                   </thead>
                   <tbody>
                     {stockData.length === 0 ? (
-                      <tr><td colSpan="9" className="text-center">No data</td></tr>
+                      <tr>
+                        <td colSpan="9" className="text-center">
+                          No data
+                        </td>
+                      </tr>
                     ) : (
                       stockData.map((item) => (
                         <tr key={item.productId}>
                           <td>
                             {item.image && (
-                              <img src={item.image} alt={item.product} style={{ width: 36, height: 36, objectFit: 'cover', borderRadius: 4, marginRight: 8 }} />
+                              <img
+                                src={item.image}
+                                alt={item.product}
+                                style={{
+                                  width: 36,
+                                  height: 36,
+                                  objectFit: "cover",
+                                  borderRadius: 4,
+                                  marginRight: 8,
+                                }}
+                              />
                             )}
                             {item.product}
                           </td>
-                          <td>{item.hsnCode || '-'}</td>
+                          <td>{item.hsnCode || "-"}</td>
                           <td>{item.stockIn}</td>
                           <td>{item.stockOut}</td>
                           <td>{item.purchaseReturn}</td>
@@ -149,7 +333,13 @@ const Stock = () => {
                           <td>{item.currentStock}</td>
                           <td>{item.purchaseAmount}</td>
                           <td>{item.salesAmount}</td>
-                          <td style={{ color: item.profit >= 0 ? 'green' : 'red' }}>{item.profit}</td>
+                          <td
+                            style={{
+                              color: item.profit >= 0 ? "green" : "red",
+                            }}
+                          >
+                            {item.profit}
+                          </td>
                         </tr>
                       ))
                     )}
@@ -165,8 +355,6 @@ const Stock = () => {
 };
 
 export default Stock;
-
-
 
 // import React, { useEffect, useState } from "react";
 // import { Bar } from 'react-chartjs-2';
@@ -259,7 +447,7 @@ export default Stock;
 //           Authorization: `Bearer ${token}`,
 //         },
 //       });
-      
+
 //       if (response.data.success && response.data.totals) {
 //         setAllTotals(response.data.totals);
 //       } else {
@@ -299,16 +487,16 @@ export default Stock;
 //   const handleInputChange = (e) => {
 //     const { name, value } = e.target;
 //     const newFilters = { ...filters, [name]: value };
-    
+
 //     // Date validation
 //     if (name === 'startDate' || name === 'endDate') {
 //       const startDate = name === 'startDate' ? value : filters.startDate;
 //       const endDate = name === 'endDate' ? value : filters.endDate;
-      
+
 //       if (startDate && endDate) {
 //         const start = new Date(startDate);
 //         const end = new Date(endDate);
-        
+
 //         if (start > end) {
 //           toast.error("End date cannot be earlier than start date. Select a valid date range.");
 //           return; // Don't update filters if validation fails
@@ -319,7 +507,7 @@ export default Stock;
 //         setDateError(""); // Clear error if one of the dates is empty
 //       }
 //     }
-    
+
 //     setFilters(newFilters);
 //   };
 
@@ -381,7 +569,6 @@ export default Stock;
 //       }
 //     }
 //   };
-
 
 //   const handleDelete = async (id) => {
 //     if (!window.confirm("Are you sure you want to delete this log?")) return;
@@ -560,7 +747,7 @@ export default Stock;
 //                   </button>
 //                 </div>
 //               )}
-//               From: 
+//               From:
 //               <div className="dropdown me">
 //                 <input
 //                   type="date"
@@ -661,8 +848,8 @@ export default Stock;
 //                             {/* <a className="me-2 border rounded d-flex align-items-center p-2" href="#" data-bs-toggle="modal" data-bs-target="#edit-stock">
 //                               <TbEdit data-feather="edit" className="feather-edit" />
 //                             </a> */}
-//                             <button 
-//                               className="p-2 border rounded d-flex align-items-center btn btn-link text-decoration-none" 
+//                             <button
+//                               className="p-2 border rounded d-flex align-items-center btn btn-link text-decoration-none"
 //                               onClick={() => handleDelete(log._id)}
 //                               title="Delete"
 //                             >
@@ -677,7 +864,6 @@ export default Stock;
 //                       <td colSpan="8" className="text-center">No products found.</td>
 //                     </tr>
 //                   )}
-
 
 //                 </tbody>
 //               </table>
@@ -748,5 +934,3 @@ export default Stock;
 // }
 
 // export default ManageStock
-
-
