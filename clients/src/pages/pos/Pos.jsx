@@ -38,8 +38,7 @@ import NoImage from '../../assets/img/products/no_image.png';
 import { FaHandPaper } from "react-icons/fa";
 import { GrPowerReset } from "react-icons/gr";
 import { FaExchangeAlt } from "react-icons/fa";
-import { Link } from "react-router-dom";
-import { FaThLarge, FaTags, FaChevronDown, FaChevronUp } from "react-icons/fa";
+import {  FaChevronDown, FaChevronUp } from "react-icons/fa";
 const Pos=() => {
   const userObj = JSON.parse(localStorage.getItem("user"));
     const userId = userObj?.id || userObj?._id; // Handle both id and _id
@@ -1522,12 +1521,12 @@ const handleSubmit = async (e) => {
       onMouseEnter={(e)=>e.currentTarget.style.background="#f3f4f6"}
       onMouseLeave={(e)=>e.currentTarget.style.background= selectedCategory === null ? '#eff6ff' : 'transparent'}
     >
-      <FaThLarge size={14}/> 
+       
       All Items
     </div>
 
     {/* Categories Section */}
-    <div style={{lineHeight:'28px',marginTop:'24px',marginBottom:'12px'}}>
+    <div style={{lineHeight:'15px',marginTop:'24px',marginBottom:'12px'}}>
       <span style={{color:'#374151', fontSize:"15px", fontWeight:"600"}}>Categories</span>
       <div style={{display:'flex',flexDirection:'column',marginTop:"10px"}}>
         {categories.length === 0 ? (
@@ -1551,10 +1550,10 @@ const handleSubmit = async (e) => {
                   fontWeight: selectedCategory && selectedCategory._id === category._id ? '600' : 'normal',
                 }}
                 onClick={() => handleCategoryClick(category)}
-                onMouseEnter={(e)=>e.currentTarget.style.background="#f3f4f6"}
-                onMouseLeave={(e)=>e.currentTarget.style.background= selectedCategory && selectedCategory._id === category._id ? '#eff6ff' : 'transparent'}
+                onMouseEnter={(e)=>e.currentTarget.style.background="rgb(239, 246, 255)"}
+                onMouseLeave={(e)=>e.currentTarget.style.background= selectedCategory && selectedCategory._id === category._id ? '#eff' : 'transparent'}
               >
-                <FaTags size={13}/>
+               
                 {category.categoryName}
               </div>
             ))}
@@ -1829,7 +1828,7 @@ const handleSubmit = async (e) => {
       </div>
 
        {/* billing section */}
-      <div className="col-md-12 col-lg-5 col-xl-4 ps-0 theiaStickySidebar  position-relative">
+      <div className="col-md-12 col-lg-5 col-xl-4 ps-0 theiaStickySidebar  position-relative" style={{backgroundColor:"white"}}>
 
         <div style={{width:'100%',display:'flex',justifyContent:'space-between',alignItems:'center',padding:'0px 20px',borderBottom:'1px solid #ccc'}}>
           <div style={{fontSize:'20px',fontWeight:'600'}}>
