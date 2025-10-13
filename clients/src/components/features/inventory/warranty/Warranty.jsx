@@ -25,6 +25,7 @@ import BASE_URL from "../../../../pages/config/config";
 import Pagination from "../../../../utils/pagination/Pagination";
 import 'react-toastify/dist/ReactToastify.css';
 import { toast } from 'react-toastify';
+import { sanitizeInput } from "../../../../utils/sanitize";
 
 
 
@@ -118,6 +119,8 @@ const Warranty = ({ show, handleClose }) => {
   const [loading, setLoading] = useState(false);
   const [selectedWarranties, setSelectedWarranties] = useState([]);
   const [selectAll, setSelectAll] = useState(false);
+  const [addErrors, setAddErrors] = useState({});
+  const [editErrors, setEditErrors] = useState({});
 
 
 
@@ -233,7 +236,18 @@ const Warranty = ({ show, handleClose }) => {
     XLSX.writeFile(workbook, "warranties.xlsx");
   };
 
-  const handleCloses = () => setShowModal(false);
+  const handleCloses = () => {
+    setShowModal(false);
+    setAddErrors({});
+    setFormData({
+      warranty: "",
+      description: "",
+      duration: "",
+      fromDate: "",
+      toDate: "",
+      status: false,
+    });
+  };
 
   const [formData, setFormData] = useState({
     warranty: "",
@@ -256,14 +270,67 @@ const Warranty = ({ show, handleClose }) => {
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
+    let sanitizedValue = value;
+
+    // Apply sanitization based on field
+    if (name === "warranty" || name === "description") {
+      sanitizedValue = sanitizeInput(value);
+    }
+
     setFormData((prev) => ({
       ...prev,
-      [name]: type === "checkbox" ? checked : value,
+      [name]: type === "checkbox" ? checked : sanitizedValue,
     }));
+
+    if (type !== "checkbox") {
+      setAddErrors(prev => ({...prev, [name]: ''}));
+    }
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    setAddErrors({});
+    let hasError = false;
+
+    // Validate warranty
+    if (!formData.warranty) {
+      setAddErrors(prev => ({...prev, warranty: "Warranty is required."}));
+      hasError = true;
+    }
+
+    // Validate description
+    if (!formData.description) {
+      setAddErrors(prev => ({...prev, description: "Description is required."}));
+      hasError = true;
+    }
+
+    // Validate fromDate
+    if (!formData.fromDate) {
+      setAddErrors(prev => ({...prev, fromDate: "From Date is required."}));
+      hasError = true;
+    }
+
+    // Validate toDate
+    if (!formData.toDate) {
+      setAddErrors(prev => ({...prev, toDate: "To Date is required."}));
+      hasError = true;
+    }
+
+    // Validate date comparison
+    if (formData.fromDate && formData.toDate) {
+      const from = new Date(formData.fromDate);
+      const to = new Date(formData.toDate);
+      if (to <= from) {
+        setAddErrors(prev => ({...prev, toDate: "To Date must be after From Date."}));
+        hasError = true;
+      }
+    }
+
+    if (hasError) {
+      return;
+    }
+
     try {
       const token = localStorage.getItem("token");
 
@@ -287,7 +354,7 @@ const Warranty = ({ show, handleClose }) => {
       // Add new warranty at the beginning of the array (LIFO order)
       setWarrantydata((prevData) => [newWarranty, ...prevData]);
       handleCloses();
-      // Reset form data
+            // Reset form data
       setFormData({
         warranty: "",
         description: "",
@@ -297,7 +364,7 @@ const Warranty = ({ show, handleClose }) => {
         status: false,
       });
     } catch (err) {
-      setError(err.message);
+      toast.error(err.message);
       console.error("Error:", err.message);
     }
   };
@@ -321,11 +388,13 @@ const Warranty = ({ show, handleClose }) => {
       toDate: formatDateForInput(card.toDate),
       status: card.status || false,
     });
+    setEditErrors({});
     setShowEditModal(true);
   };
 
   const handleEditClose = () => {
     setShowEditModal(false);
+    setEditErrors({});
     setEditFormData({
       id: "",
       warranty: "",
@@ -340,9 +409,16 @@ const Warranty = ({ show, handleClose }) => {
   const handleEditChange = (e) => {
     const { name, value, type, checked } = e.target;
 
+    let sanitizedValue = value;
+
+    // Apply sanitization based on field
+    if (name === "warranty" || name === "description") {
+      sanitizedValue = sanitizeInput(value);
+    }
+
     const updatedForm = {
       ...editFormData,
-      [name]: type === "checkbox" ? checked : value,
+      [name]: type === "checkbox" ? checked : sanitizedValue,
     };
 
     // Auto-calculate duration from fromDate and toDate
@@ -351,6 +427,10 @@ const Warranty = ({ show, handleClose }) => {
     }
 
     setEditFormData(updatedForm);
+
+    if (type !== "checkbox") {
+      setEditErrors(prev => ({...prev, [name]: ''}));
+    }
   };
 
 
@@ -358,9 +438,44 @@ const Warranty = ({ show, handleClose }) => {
   const handleEditSubmit = async (e) => {
     e.preventDefault();
 
-    // Validation
-    if (!editFormData.warranty || !editFormData.fromDate || !editFormData.toDate || !editFormData.description) {
-      setError("Please fill in all required fields.");
+    setEditErrors({});
+    let hasError = false;
+
+    // Validate warranty
+    if (!editFormData.warranty) {
+      setEditErrors(prev => ({...prev, warranty: "Warranty is required."}));
+      hasError = true;
+    }
+
+    // Validate description
+    if (!editFormData.description) {
+      setEditErrors(prev => ({...prev, description: "Description is required."}));
+      hasError = true;
+    }
+
+    // Validate fromDate
+    if (!editFormData.fromDate) {
+      setEditErrors(prev => ({...prev, fromDate: "From Date is required."}));
+      hasError = true;
+    }
+
+    // Validate toDate
+    if (!editFormData.toDate) {
+      setEditErrors(prev => ({...prev, toDate: "To Date is required."}));
+      hasError = true;
+    }
+
+    // Validate date comparison
+    if (editFormData.fromDate && editFormData.toDate) {
+      const from = new Date(editFormData.fromDate);
+      const to = new Date(editFormData.toDate);
+      if (to <= from) {
+        setEditErrors(prev => ({...prev, toDate: "To Date must be after From Date."}));
+        hasError = true;
+      }
+    }
+
+    if (hasError) {
       return;
     }
 
@@ -412,12 +527,12 @@ const Warranty = ({ show, handleClose }) => {
         return newData;
       });
 
-      setError(""); // Clear any previous errors
+      // setError(""); // Clear any previous errors
       handleEditClose();
       toast.success("Warranty updated successfully.");
     } catch (err) {
       console.error("Error updating warranty:", err);
-      setError(err.message || "Failed to update warranty. Please try again.");
+      toast.error(err.message || "Failed to update warranty. Please try again.");
     }
   };
 
@@ -443,7 +558,7 @@ const Warranty = ({ show, handleClose }) => {
       // alert("Warranty deleted successfully");
     } catch (err) {
       console.error("Error deleting warranty:", err);
-      setError("Failed to delete the warranty. Please try again.");
+      toast.error("Failed to delete the warranty. Please try again.");
     }
   };
 
@@ -843,6 +958,7 @@ const Warranty = ({ show, handleClose }) => {
                   value={formData.warranty}
                   onChange={handleChange}
                 />
+                {addErrors.warranty && (<p className='text-danger'>{addErrors.warranty}</p>)}
               </Form.Group>
 
               {/* //to date */}
@@ -859,6 +975,7 @@ const Warranty = ({ show, handleClose }) => {
                       value={formData.fromDate}
                       onChange={handleChange}
                     />
+                    {addErrors.fromDate && (<p className='text-danger'>{addErrors.fromDate}</p>)}
                   </Form.Group>
                 </Col>
                 <Col>
@@ -873,6 +990,7 @@ const Warranty = ({ show, handleClose }) => {
                       value={formData.toDate}
                       onChange={handleChange}
                     />
+                    {addErrors.toDate && (<p className='text-danger'>{addErrors.toDate}</p>)}
                   </Form.Group>
                 </Col>
               </Row>
@@ -889,6 +1007,7 @@ const Warranty = ({ show, handleClose }) => {
                       value={formData.description}
                       onChange={handleChange}
                     />
+                    {addErrors.description && (<p className='text-danger'>{addErrors.description}</p>)}
                   </Form.Group>
                 </Col>
               </Row>
@@ -933,6 +1052,7 @@ const Warranty = ({ show, handleClose }) => {
                   value={editFormData.warranty}
                   onChange={handleEditChange}
                 />
+                {editErrors.warranty && (<p className='text-danger'>{editErrors.warranty}</p>)}
               </Form.Group>
               {/* <Row className="mt-3">
               <Col>
@@ -963,6 +1083,7 @@ const Warranty = ({ show, handleClose }) => {
                       value={editFormData.fromDate}
                       onChange={handleEditChange}
                     />
+                    {editErrors.fromDate && (<p className='text-danger'>{editErrors.fromDate}</p>)}
                   </Form.Group>
                 </Col>
                 <Col>
@@ -977,6 +1098,7 @@ const Warranty = ({ show, handleClose }) => {
                       value={editFormData.toDate}
                       onChange={handleEditChange}
                     />
+                    {editErrors.toDate && (<p className='text-danger'>{editErrors.toDate}</p>)}
                   </Form.Group>
                 </Col>
               </Row>
@@ -990,6 +1112,7 @@ const Warranty = ({ show, handleClose }) => {
                   value={editFormData.description}
                   onChange={handleEditChange}
                 />
+                {editErrors.description && (<p className='text-danger'>{editErrors.description}</p>)}
               </Form.Group>
               <Form.Group
                 controlId="editStatus"
@@ -1042,4 +1165,3 @@ const Warranty = ({ show, handleClose }) => {
 };
 
 export default Warranty;
-

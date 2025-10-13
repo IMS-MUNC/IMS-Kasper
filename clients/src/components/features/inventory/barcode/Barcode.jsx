@@ -34,6 +34,8 @@ function Barcode() {
   const [showDropdown, setShowDropdown] = useState(false);
   const [loading, setLoading] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState(null);
+  const [labelFormat, setLabelFormat] = useState('');
+  const [pageSize, setPageSize] = useState('');
 
   const formRef = useRef(null);
   const searchRef = useRef(null);
@@ -94,7 +96,7 @@ function Barcode() {
       price: selectedProduct.sellingPrice || '',
       quantity: selectedProduct.quantity || '',
       img: selectedProduct.images && selectedProduct.images[0] ? selectedProduct.images[0].url : '',
-      expiryDate: selectedProduct.variants && selectedProduct.variants.Expiry && selectedProduct.variants.Expiry[0] ? selectedProduct.variants.Expiry[0] : '',
+      expiryDate: selectedProduct.variants && selectedProduct.variants.Expire && selectedProduct.variants.Expire[0] ? selectedProduct.variants.Expire[0] : '',
       barcode: selectedProduct.itemBarcode || '',
       barcodeImg: '',
     }));
@@ -138,6 +140,8 @@ function Barcode() {
     });
     setProducts([]);
     setShowDropdown(false);
+    setLabelFormat('');
+    setPageSize('');
   };
 
   const handleChange = (e) => {
@@ -146,6 +150,10 @@ function Barcode() {
       setNumberOfBarcodes(parseInt(value));
     } else if (name === 'searchQuery') {
       setSearchQuery(value);
+    } else if (name === 'labelFormat') {
+      setLabelFormat(value);
+    } else if (name === 'pageSize') {
+      setPageSize(value);
     } else {
       setProduct((prev) => ({
         ...prev,
@@ -162,8 +170,8 @@ function Barcode() {
 
     // Helper function to safely get expiry date
     const getExpiryDate = (selectedProduct) => {
-      return selectedProduct.variants && selectedProduct.variants.Expiry && selectedProduct.variants.Expiry[0]
-        ? selectedProduct.variants.Expiry[0]
+      return selectedProduct.variants && selectedProduct.variants.Expire && selectedProduct.variants.Expire[0]
+        ? selectedProduct.variants.Expire[0]
         : 'N/A';
     };
 
@@ -450,6 +458,8 @@ function Barcode() {
     });
     setProducts([]);
     setShowDropdown(false);
+    setLabelFormat('');
+    setPageSize('');
   };
 
   const handlePopupClose = () => {
@@ -786,7 +796,10 @@ function Barcode() {
                             }}
                           >
                             <div>
-                              <div style={{ fontWeight: '500', color: '#333' }}>{productItem.productName}</div>
+                              <div style={{ fontWeight: '500', color: '#333', display: 'flex', alignItems: 'center', gap: '10px' }}>
+                                <img src={productItem?.images[0]?.url} style={{ width: '30px' }} />
+                                {productItem.productName}
+                              </div>
                             </div>
                           </div>
                         ))
@@ -1012,14 +1025,14 @@ function Barcode() {
               </div>
               <div className="col-md-4">
                 <div className="mb-3">
-                  <label className="form-label">Lable Formate
+                  <label className="form-label">Lable Format
                     {/* <span className="text-danger ms-1">*</span> */}
                   </label>
-                  <select className="form-select" type="text" >
+                  <select className="form-select" type="text" name='labelFormat' value={labelFormat} onChange={handleChange}>
                     <option value="">--Select Lable--</option>
-                    <option>Large</option>
-                    <option>Mediam</option>
-                    <option>Small</option>
+                    <option value="large">Large</option>
+                    <option value="mediam">Mediam</option>
+                    <option value="small">Small</option>
                   </select>
                 </div>
               </div>
@@ -1031,10 +1044,12 @@ function Barcode() {
 
                   <select
                     className="form-select"
-                    name="status"
-
+                    name="pageSize"
+                    value={pageSize}
+                    onChange={handleChange}
                   >
-                    <option>A4</option>
+                    <option>--select Page Size--</option>
+                    <option value="a4">A4</option>
 
                   </select>
                 </div>
@@ -1205,7 +1220,7 @@ function Barcode() {
                   <span><TbEye className="fas fa-eye me-1" /></span>Generate Barcode
                 </a>
                 <a onClick={closeForm} className="btn btn-cancel btn-secondary fs-13 me-2">
-                  <span><i className="fas fa-power-off me-1" /></span>Cancel
+                  <span><i className="fas fa-power-off me-1" /></span>Clear
                 </a>
 
               </div>
@@ -1259,7 +1274,7 @@ function Barcode() {
 
           {/* Show Barcode SVG */}
           {isFormOpen && (
-            <div className="modal fade" id="prints-barcode">
+            <div className="modal fade" id="prints-barcode" style={{backgroundColor: 'rgba(199, 197, 197, 0.4)',backdropFilter: 'blur(1px)',}}>
               <div className="modal-dialog modal-dialog-centered stock-adjust-modal barcode-modal">
                 <div className="modal-content">
                   <div className="modal-header">

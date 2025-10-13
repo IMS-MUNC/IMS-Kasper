@@ -554,7 +554,7 @@ const [selectedPaymentMethod, setSelectedPaymentMethod] = useState(null);
   
   // Helper function to check if a product is expired
   const isProductExpired = (product) => {
-    const expiryArr = product.variants?.get?.('Expiry') || product.variants?.['Expiry'] || product.variants?.get?.('expiry') || product.variants?.['expiry'];
+    const expiryArr = product.variants?.get?.('Expire') || product.variants?.['Expire'] || product.variants?.get?.('expire') || product.variants?.['expire'];
     if (!expiryArr || expiryArr.length === 0) return false;
     
     return expiryArr.some(dateStr => {
@@ -3154,18 +3154,18 @@ const handleSubmit = async (e) => {
                     ) : (
                       posSales.map((sale) => (
                         <tr key={sale._id} style={{ borderTop: '1px solid #E6E6E6' }}>
-                          <td style={{ padding: '8px' }}>
-                            <div style={{ fontSize: '12px', fontWeight: '600', color: '#1368EC' }}>
+                          <td style={{ padding: '8px',position:'relative', }}>
+                            <div style={{ fontSize: '12px', fontWeight: '600', color: '#1368EC',top:'7px',position:'absolute', }}>
                               {sale.invoiceNumber || 'N/A'}
                             </div>
                           </td>
-                          <td style={{ padding: '8px' }}>
-                            <div>
+                          <td style={{ padding: '8px',position:'relative', }}>
+                            <div style={{top:'5px',position:'absolute',}}>
                               <div style={{ fontWeight: '600' }}>{sale.customer?.name || 'N/A'}</div>
                               <div style={{ fontSize: '12px', color: '#666' }}>{sale.customer?.phone || 'N/A'}</div>
                             </div>
                           </td>
-                          <td style={{ padding: '8px' }}>
+                          <td style={{ padding: '8px', }}>
                             <div style={{ fontSize: '12px' }}>
                               {sale.items?.map((item, index) => (
                                 <div key={index} style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
@@ -3192,14 +3192,17 @@ const handleSubmit = async (e) => {
                               ))}
                             </div>
                           </td>
-                          <td>
+                          <td style={{position:'relative',}}>
+                            <div style={{top:'5px',position:'absolute',}}>
                             {new Date(sale.saleDate).toLocaleDateString('en-IN')}
                             <br />
                             <span style={{ fontSize: '12px', color: '#666' }}>
                               {new Date(sale.saleDate).toLocaleTimeString('en-IN')}
                             </span>
+                            </div>
                           </td>
-                          <td>
+                          <td style={{position:'relative',}}>
+                            <div style={{top:'7px',position:'absolute',}}>
                             <span style={{
                               padding: '4px 8px',
                               borderRadius: '4px',
@@ -3211,9 +3214,15 @@ const handleSubmit = async (e) => {
                             }}>
                               {sale.status}
                             </span>
+                            </div>
                           </td>
-                          <td>₹{sale.totals?.totalAmount?.toFixed(2) || '0.00'}</td>
-                          <td>
+                          <td style={{position:'relative',}}>
+                            <div style={{top:'5px',position:'absolute',}}>
+                            ₹{sale.totals?.totalAmount?.toFixed(2) || '0.00'}
+                            </div>
+                          </td>
+                          <td style={{position:'relative',}}>
+                            <div style={{top:'5px',position:'absolute',}}>
                             {sale.paymentDetails?.dueAmount > 0 ? (
                               <span style={{ color: '#dc3545', fontWeight: '600' }}>
                                 ₹{sale.paymentDetails.dueAmount.toFixed(2)}
@@ -3221,8 +3230,13 @@ const handleSubmit = async (e) => {
                             ) : (
                               <span style={{ color: '#28a745' }}>₹0.00</span>
                             )}
+                            </div>
                           </td>
-                          <td>{sale.paymentDetails?.paymentMethod || 'N/A'}</td>
+                          <td style={{position:'relative',}}>
+                            <div style={{top:'5px',position:'absolute',}}>
+                            {sale.paymentDetails?.paymentMethod || 'N/A'}
+                            </div>
+                          </td>
                         </tr>
                       ))
                     )}
