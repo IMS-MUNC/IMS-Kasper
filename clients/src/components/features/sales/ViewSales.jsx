@@ -473,7 +473,7 @@ const ViewSales = () => {
         )}
 
       </div>
-    </div>
+    </div>  
   );
 };
 

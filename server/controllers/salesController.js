@@ -1,3 +1,17 @@
+
+
+// Auto-generate next sale reference number (like purchase)
+
+// const Sales = require('../models/salesModel');
+// const mongoose = require('mongoose');
+// const Products = require('../models/productModels');
+
+const mongoose = require("mongoose");
+const Sales = require("../models/salesModel");
+const Product = require("../models/productModels");
+const StockHistory = require("../models/soldStockHistoryModel");
+const PaymentHistory = require("../models/salesPaymentHistoryModel"); // ✅ New Model
+const Invoice = require("../models/invoiceModel");
 // Sales and Return Stock Aggregation for Dashboard
 exports.getSalesReturnStats = async (req, res) => {
   try {
@@ -50,20 +64,6 @@ exports.getSalesReturnStats = async (req, res) => {
     res.status(500).json({ message: err.message });
   }
 };
-
-
-// Auto-generate next sale reference number (like purchase)
-
-// const Sales = require('../models/salesModel');
-// const mongoose = require('mongoose');
-// const Products = require('../models/productModels');
-
-const mongoose = require("mongoose");
-const Sales = require("../models/salesModel");
-const Product = require("../models/productModels");
-const StockHistory = require("../models/soldStockHistoryModel");
-const PaymentHistory = require("../models/salesPaymentHistoryModel"); // ✅ New Model
-const Invoice = require("../models/invoiceModel");
 
 // Get Sale Stock History
 exports.getStockHistory = async (req, res) => {

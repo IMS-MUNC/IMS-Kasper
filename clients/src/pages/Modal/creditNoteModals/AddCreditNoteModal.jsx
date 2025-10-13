@@ -111,8 +111,7 @@ const AddCreditNoteModal = ({ creditData, onAddCredit, onClose }) => {
     }, [creditData]);
 
 
-    // ...existing logic for fetching customers, products, etc. (copy from AddSalesModal)
-    // ...existing UI for all fields (copy from AddSalesModal)
+  
 
     // On submit, call update API
     const handleSubmit = async (e) => {
@@ -260,71 +259,7 @@ const AddCreditNoteModal = ({ creditData, onAddCredit, onClose }) => {
         });
     }, [selectedProducts]);
 
-    // // Product totals and calculations
-    // const calculateLineTotal = (product) => {
-    //     const price = product.sellingPrice || 0;
-    //     // Use returnQty for calculation
-    //     const qty = product.returnQty || 1;
-    //     let discount = 0;
-    //     if (product.isDiscountPercent) {
-    //         discount = ((price * qty) * (product.discount || 0)) / 100;
-    //     } else {
-    //         discount = product.discount || 0;
-    //     }
-    //     const afterDiscount = (price * qty) - discount;
-    //     const taxAmount = (afterDiscount * (product.tax || 0)) / 100;
-    //     return {
-    //         subTotal: price * qty,
-    //         afterDiscount,
-    //         taxAmount,
-    //         lineTotal: afterDiscount + taxAmount,
-    //         unitCost: qty > 0 ? (afterDiscount + taxAmount) / qty : 0
-    //     };
-    // };
-
-
-    // const productTotals = selectedProducts.map(calculateLineTotal);
-    // const totalProductAmount = productTotals.reduce((acc, t) => acc + t.lineTotal, 0);
-    // const amount = totalProductAmount;
-    // const additionalCharges = (formState.enableAddCharges ? (labourCost + shippingCost) : 0);
-    // let cgstValue = 0;
-    // let sgstValue = 0;
-    // if (formState.enableTax && formState.cgst) {
-    //     const percent = parseFloat(formState.cgst) || 0;
-    //     cgstValue = (amount * percent) / 100;
-    // }
-    // if (formState.enableTax && formState.sgst) {
-    //     const percent = parseFloat(formState.sgst) || 0;
-    //     sgstValue = (amount * percent) / 100;
-    // }
-    // let summaryDiscount = 0;
-    // if (orderDiscount) {
-    //     if (isDiscountPercent) {
-    //         const percent = parseFloat(orderDiscount);
-    //         summaryDiscount = ((amount + cgstValue + sgstValue + additionalCharges) * percent) / 100;
-    //     } else {
-    //         summaryDiscount = parseFloat(orderDiscount) || 0;
-    //     }
-    // }
-    // let grandTotal = amount + cgstValue + sgstValue + additionalCharges - summaryDiscount;
-    // if (formState.roundOff) {
-    //     grandTotal = Math.round(grandTotal);
-    // }
-    // let roundOffValue = 0;
-    // if (formState.roundOff) {
-    //     const rounded = Math.round(grandTotal);
-    //     roundOffValue = rounded - grandTotal;
-    //     grandTotal = rounded;
-    // }
-    // useEffect(() => {
-    //     if (paymentType === "Partial") {
-    //         const due = grandTotal - paidAmount;
-    //         setDueAmount(due > 0 ? due : 0);
-    //     } else {
-    //         setPaidAmount(grandTotal);
-    //         setDueAmount(0);
-    //     }
-    // }, [paymentType, paidAmount, grandTotal]);
+   
 const [amounts, setAmounts] = React.useState(0);        // Subtotal
 const [discountTotal, setDiscountTotal] = React.useState(0); // Discount
 const [taxTotal, setTaxTotal] = React.useState(0);    // Total tax
@@ -636,8 +571,6 @@ useEffect(() => {
         const lineTotal = taxableAmount + taxAmount;
         const unitCost = saleQty > 0 ? lineTotal / saleQty : 0;
 
-
-
         return {
             subTotal,
             discountAmount,
@@ -757,54 +690,7 @@ useEffect(() => {
                                                 </div>
                                             </div>
 
-                                            {/* <div className="col-md-4">
-                                                <div className="purchase-top-content">
-                                                    <div className="row">
-                                                     
-                                                        <div className="col-md-6">
-                                                            <div className="mb-3">
-                                                                <select
-                                                                    className="form-select"
-                                                                    name="currency"
-                                                                    value={formState.currency || ""}
-                                                                    onChange={handleChange}
-                                                                >
-                                                                    <option value="">Currency</option>
-                                                                    <option value="$">$</option>
-                                                                    <option value="€">€</option>
-                                                                    <option value="₹">₹</option>
-                                                                </select>
-                                                            </div>
-                                                        </div>
-                                                        <div className="col-md-12">
-                                                            <div className="p-2 border rounded d-flex justify-content-between">
-                                                                <div className="d-flex align-items-center">
-                                                                    <div className="form-check form-switch me-4">
-                                                                       
-                                                                        <input
-                                                                            className="form-check-input"
-                                                                            type="checkbox"
-                                                                            role="switch"
-                                                                            id="enableTaxSwitch"
-                                                                            name="enableTax"
-                                                                            checked={!!formState.enableTax}
-                                                                            onChange={handleChange}
-                                                                        />
-                                                                        <label className="form-check-label" htmlFor="enabe_tax">Enable Tax</label>
-                                                                    </div>
-                                                                </div>
-                                                                <div>
-                                                                    <a><span className="bg-primary-subtle p-1 rounded"><i
-                                                                        className="isax isax-setting-2 text-primary" /></span></a>
-                                                                </div>
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            </div> */}
-
-                                            {/* end col */}
-                                        </div>
+                                            </div>
                                     </div>
                                 </div>
 
