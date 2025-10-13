@@ -697,7 +697,7 @@ const ProductForm = () => {
       setCategories(options);
 
       // setCategories(options);
-      console.log("ferere categories", data);
+      // console.log("ferere categories", data);
     } catch (error) {
       console.error("Error fetching categories:", error);
     }
@@ -727,7 +727,7 @@ const ProductForm = () => {
   };
 
   useEffect(() => {
-    console.log("Selected Category:", selectedCategory);
+    // console.log("Selected Category:", selectedCategory);
     if (selectedCategory) {
       fetchSubcategoriesByCategory(selectedCategory.value);
     } else {
@@ -738,7 +738,7 @@ const ProductForm = () => {
   const fetchSubcategoriesByCategory = async (categoryId) => {
     try {
       const token = localStorage.getItem("token");
-      console.log("Fetching subcategories for category ID:", categoryId);
+      // console.log("Fetching subcategories for category ID:", categoryId);
       // const res = await fetch(`${BASE_URL}/api/category/by-category/${categoryId}`);
       const res = await fetch(
         `${BASE_URL}/api/subcategory/by-category/${categoryId}`,
@@ -753,7 +753,7 @@ const ProductForm = () => {
       }
 
       const data = await res.json();
-      console.log("Subcategory API raw response:", data);
+      // console.log("Subcategory API raw response:", data);
 
       // const options = data.map((subcat) => ({
       //   value: subcat._id,
@@ -764,8 +764,8 @@ const ProductForm = () => {
         value: subcat._id,
         label: sanitizeInput(subcat.subCategoryName, true),
       }));
-      setSubcategories(options);
-      console.log("ferere subcategories", data);
+      // setSubcategories(options);
+      // console.log("ferere subcategories", data);
     } catch (error) {
       console.error("Error fetching subcategories:", error);
     }
@@ -779,7 +779,7 @@ const ProductForm = () => {
         },
       });
       const data = await res.json();
-      console.log("fetchbrand", data);
+      // console.log("fetchbrand", data);
 
       // const options = data.brands.map((brand) => ({
       //   value: brand._id,
@@ -792,7 +792,7 @@ const ProductForm = () => {
         label: sanitizeInput(brand.brandName, true),
       }));
       setBrandOptions(options);
-      console.log("ferere brand", data);
+      // console.log("ferere brand", data);
     } catch (error) {
       console.error("Failed to load active brands:", error);
     }
@@ -806,15 +806,15 @@ const ProductForm = () => {
 
   const subCategoryChange = (selectedOption) => {
     setSelectedsubCategory(selectedOption);
-    console.log("Selected subcategory:", selectedOption);
+    // console.log("Selected subcategory:", selectedOption);
   };
   const handleBrandChange = (selectedOption) => {
     setSelectedBrands(selectedOption);
-    console.log("Selected brands:", selectedOption);
+    // console.log("Selected brands:", selectedOption);
   };
   const handleUnitChange = (selectedOption) => {
     setSelectedUnits(selectedOption);
-    console.log("Selected Units:", selectedOption);
+    // console.log("Selected Units:", selectedOption);
   };
 
   const handleSubmit = async (e) => {
