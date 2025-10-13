@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { toast } from 'react-toastify';
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { exportToExcel, exportToPDF } from './exportUtils';
 import BASE_URL from "../../../../pages/config/config";
 import axios from 'axios';
@@ -21,10 +21,20 @@ const ExpriedProduct = () => {
   const [sortOrder, setSortOrder] = useState('desc');
 
   const navigate = useNavigate();
+  const location = useLocation();
 
   // Helper function to get expiry date from product
   const getExpiryDate = (product) => {
-    const expiryArr = product.variants?.get?.('Expiry') || product.variants?.['Expiry'] || product.variants?.get?.('expiry') || product.variants?.['expiry'];
+    // const expiryArr = product.variants?.get?.('Expiry') || product.variants?.['Expiry'] || product.variants?.get?.('expiry') || product.variants?.['expiry'];
+    const expiryArr =
+  product.variants?.get?.('Expiry') ||
+  product.variants?.['Expiry'] ||
+  product.variants?.get?.('expiry') ||
+  product.variants?.['expiry'] ||
+  product.variants?.get?.('Expire') ||
+  product.variants?.['Expire'];
+    console.log('expiryArr:', expiryArr); // Debug log
+    
     if (!expiryArr || expiryArr.length === 0) return new Date(0);
     const dateStr = expiryArr[0];
     if (typeof dateStr === "string") {
@@ -89,7 +99,13 @@ const ExpriedProduct = () => {
   // Prepare export data
   const getExportData = () => {
     return products.filter(product => {
-      const expiryArr = product.variants?.get?.('Expiry') || product.variants?.['Expiry'] || product.variants?.get?.('expiry') || product.variants?.['expiry'];
+      // const expiryArr = product.variants?.get?.('Expiry') || product.variants?.['Expiry'] || product.variants?.get?.('expiry') || product.variants?.['expiry'];
+      const expiryArr =  product.variants?.get?.('Expiry') ||
+  product.variants?.['Expiry'] ||
+  product.variants?.get?.('expiry') ||
+  product.variants?.['expiry'] ||
+  product.variants?.get?.('Expire') ||
+  product.variants?.['Expire'];
       if (!expiryArr || expiryArr.length === 0) return false;
       return expiryArr.some(dateStr => {
         // Handle multiple date formats: DD-MM-YYYY, D-M-YYYY, DD/MM/YYYY, etc.
@@ -180,7 +196,13 @@ const ExpriedProduct = () => {
       const today = new Date();
       today.setHours(0, 0, 0, 0); // Set to start of today
       const expiredProducts = products.filter(product => {
-        const expiryArr = product.variants?.get?.('Expiry') || product.variants?.['Expiry'] || product.variants?.get?.('expiry') || product.variants?.['expiry'];
+        // const expiryArr = product.variants?.get?.('Expiry') || product.variants?.['Expiry'] || product.variants?.get?.('expiry') || product.variants?.['expiry'];
+        const expiryArr =  product.variants?.get?.('Expiry') ||
+  product.variants?.['Expiry'] ||
+  product.variants?.get?.('expiry') ||
+  product.variants?.['expiry'] ||
+  product.variants?.get?.('Expire') ||
+  product.variants?.['Expire'];
         if (!expiryArr || expiryArr.length === 0) return false;
         return expiryArr.some(dateStr => {
           // Handle multiple date formats: DD-MM-YYYY, D-M-YYYY, DD/MM/YYYY, etc.
@@ -285,7 +307,13 @@ const ExpriedProduct = () => {
     oneMonthAgo.setMonth(today.getMonth() - 1);
 
     return products.filter(product => {
-      const expiryArr = product.variants?.get?.('Expiry') || product.variants?.['Expiry'] || product.variants?.get?.('expiry') || product.variants?.['expiry'];
+      // const expiryArr = product.variants?.get?.('Expiry') || product.variants?.['Expiry'] || product.variants?.get?.('expiry') || product.variants?.['expiry'];
+      const expiryArr =  product.variants?.get?.('Expiry') ||
+  product.variants?.['Expiry'] ||
+  product.variants?.get?.('expiry') ||
+  product.variants?.['expiry'] ||
+  product.variants?.get?.('Expire') ||
+  product.variants?.['Expire'];
       if (!expiryArr || expiryArr.length === 0) return false;
       
       return expiryArr.some(dateStr => {
@@ -523,7 +551,7 @@ const ExpriedProduct = () => {
             </ul>
           </div> */}
               <div className="dropdown">
-                <a className="dropdown-toggle btn btn-white btn-md d-inline-flex align-items-center" data-bs-toggle="dropdown">
+                <a className="btn btn-white btn-md d-inline-flex align-items-center" data-bs-toggle="dropdown">
                   Sort By : {sortBy}
                 </a>
                 <ul className="dropdown-menu dropdown-menu-end p-3">
@@ -570,9 +598,9 @@ const ExpriedProduct = () => {
                     <th>Manufactured Date</th>
                     <th>Expired Date</th>
                     <th>Quantity</th>
-                    <th>Supplier</th>
+                    {/* <th>Supplier</th> */}
                     <th>Warehouse</th>
-                    <th className="no-sort" />
+                    <th style={{textAlign: 'center'}}>Action</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -600,14 +628,14 @@ const ExpriedProduct = () => {
                             <a>{product.productName || product.name || 'N/A'}</a>
                           </div>
                         </td>
-                        <td>{(product.variants?.get?.('Manufactured') || product.variants?.['Manufactured'] || ['N/A']).join(', ')}</td>
-                        <td>{(product.variants?.get?.('Expiry') || product.variants?.['Expiry'] || ['N/A']).join(', ')}</td>
+                        <td>{(product.variants?.get?.('Manufactured Date') || product.variants?.['Manufactured Date'] || ['N/A']).join(', ')}</td>
+                        <td>{(product.variants?.get?.('Expire') || product.variants?.['Expire'] || ['N/A']).join(', ')}</td>
                         <td>{product.quantity ?? 'N/A'}</td>
-                        <td>{product.supplierName || 'N/A'}</td>
+                        {/* <td>{product.supplierName || 'N/A'}</td> */}
                         <td>{product.warehouseName || 'N/A'}</td>
                         <td className="action-table-data">
                           <div className="edit-delete-action">
-                            <a data-bs-toggle="modal" data-bs-target="#edit-expired-product" className="me-2 p-2" onClick={() => navigate(`/product/edit/${product._id}`)}>
+                            <a data-bs-toggle="modal" data-bs-target="#edit-expired-product" className="me-2 p-2" onClick={() => navigate(`/product/edit/${product._id}`,{ state: { from: location.pathname } })}>
                               <TbEdit data-feather="edit" className="feather-edit" />
                             </a>
                             <a data-bs-toggle="modal" data-bs-target="#delete-modal" className="p-2" onClick={() => handleDelete(product)}>

@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { useDropzone } from "react-dropzone";
 import axios from "axios";
-import { useParams, useNavigate, Link } from "react-router-dom";
+import { useParams, useNavigate, Link, useLocation } from "react-router-dom";
 import BASE_URL from "../../../../pages/config/config";
 import { toast } from "react-toastify";
 import { useTranslation } from "react-i18next";
@@ -16,7 +16,8 @@ const regexPatterns = {
   productName: /^[a-zA-Z0-9\s\-_&()]{2,100}$/, // Alphanumeric, spaces, some special chars, 2-100 chars
   sku: /^[A-Z0-9\-]{5,20}$/, // Alphanumeric with hyphens, 5-20 chars
   price: /^\d+(\.\d{1,2})?$/, // Positive number with up to 2 decimal places
-  quantity: /^\d+$/, // Positive integer
+  // quantity: /^\d+$/, // Positive integer
+   quantity: /^(?:[1-9]\d*)$/,
   discountValue: /^\d+(\.\d{1,2})?$/, // Positive number with up to 2 decimal places
   quantityAlert: /^\d+$/, // Positive integer
   leadTime: /^\d+$/, // Positive integer
@@ -40,7 +41,11 @@ const sanitizeOptions = {
 const ProductEdit = () => {
   const { id } = useParams();
   const navigate = useNavigate();
+  const location = useLocation();
   const { t } = useTranslation();
+
+
+
   // Declare steps and variantTabs before useState calls
   const steps = [
     t("descriptionAndMedia"),
@@ -130,27 +135,53 @@ const ProductEdit = () => {
   const [supplierId, setSupplierId] = useState(null);
   const [warehouseId, setWarehouseId] = useState(null);
 
-    //    const [variants, setVariants] = useState([
-    //   { selectedVariant: "", selectedValue: "", valueDropdown: [] },
-    // ]);
+  //    const [variants, setVariants] = useState([
+  //   { selectedVariant: "", selectedValue: "", valueDropdown: [] },
+  // ]);
 
-    const [variants, setVariants] = useState([
-  { selectedVariant: "", selectedValue: [], valueDropdown: [] },
-]);
-  
-    const [variantDropdown, setVariantDropdown] = useState([]);
-  
-  
+  const [variants, setVariants] = useState([
+    { selectedVariant: "", selectedValue: [], valueDropdown: [] },
+  ]);
+
+  const [variantDropdown, setVariantDropdown] = useState([]);
+
+
 
   // Image state
   const [images, setImages] = useState([]);
 
   // Add useDropzone for image upload
+  // const onDrop = (acceptedFiles) => {
+  //   const mapped = acceptedFiles.map((file) =>
+  //     Object.assign(file, { preview: URL.createObjectURL(file) })
+  //   );
+  //   setImages((prev) => [...prev, ...mapped]);
+  // };
   const onDrop = (acceptedFiles) => {
-    const mapped = acceptedFiles.map((file) =>
-      Object.assign(file, { preview: URL.createObjectURL(file) })
-    );
-    setImages((prev) => [...prev, ...mapped]);
+    const maxSize = 1 * 1024 * 1024; // 1MB in bytes
+    const validTypes = ["image/jpeg", "image/png", "image/jpg"];
+    const validFiles = [];
+    const invalidFiles = [];
+
+    acceptedFiles.forEach((file) => {
+      if (!validTypes.includes(file.type)) {
+        invalidFiles.push({ file, error: `Invalid file type for ${file.name}. Only JPEG, PNG, or JPG allowed.` });
+      } else if (file.size > maxSize) {
+        invalidFiles.push({ file, error: `Image ${file.name} exceeds 1MB limit.` });
+      } else {
+        validFiles.push(Object.assign(file, { preview: URL.createObjectURL(file) }));
+      }
+    });
+
+    if (invalidFiles.length > 0) {
+      invalidFiles.forEach(({ error }) => toast.error(error));
+      setErrors((prev) => ({ ...prev, images: "Image size should not exceeded 1MB." }));
+    }
+
+    if (validFiles.length > 0) {
+      setImages((prev) => [...prev, ...validFiles]);
+      setErrors((prev) => ({ ...prev, images: "" }));
+    }
   };
   const { getRootProps, getInputProps } = useDropzone({
     accept: { "image/*": [] },
@@ -211,34 +242,34 @@ const ProductEdit = () => {
           if (hsnOption) setSelectedHSN(hsnOption);
         }
 
-       
+
 
         // --- VARIANTS PATCH ---
-if (data.variants && typeof data.variants === "object" && Object.keys(data.variants).length > 0) {
-  const token = localStorage.getItem("token");
-  Promise.all(
-    Object.entries(data.variants).map(async ([variantName, values]) => {
-      // Fetch valueDropdown for this variant
-      let valueDropdown = [];
-      try {
-        const res = await fetch(`${BASE_URL}/api/variant-attributes/values/${encodeURIComponent(variantName)}`, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-        const data = await res.json();
-        valueDropdown = Array.isArray(data)
-          ? data.flatMap(val => typeof val === 'string' ? val.split(',').map(v => v.trim()).filter(Boolean) : [])
-          : [];
-      } catch (err) {}
-      return {
-        selectedVariant: variantName,
-        selectedValue: Array.isArray(values) ? values : [values],
-        valueDropdown,
-      };
-    })
-  ).then(variantArr => setVariants(variantArr));
-} else {
-  setVariants([{ selectedVariant: "", selectedValue: [], valueDropdown: [] }]);
-}
+        if (data.variants && typeof data.variants === "object" && Object.keys(data.variants).length > 0) {
+          const token = localStorage.getItem("token");
+          Promise.all(
+            Object.entries(data.variants).map(async ([variantName, values]) => {
+              // Fetch valueDropdown for this variant
+              let valueDropdown = [];
+              try {
+                const res = await fetch(`${BASE_URL}/api/variant-attributes/values/${encodeURIComponent(variantName)}`, {
+                  headers: { Authorization: `Bearer ${token}` },
+                });
+                const data = await res.json();
+                valueDropdown = Array.isArray(data)
+                  ? data.flatMap(val => typeof val === 'string' ? val.split(',').map(v => v.trim()).filter(Boolean) : [])
+                  : [];
+              } catch (err) { }
+              return {
+                selectedVariant: variantName,
+                selectedValue: Array.isArray(values) ? values : [values],
+                valueDropdown,
+              };
+            })
+          ).then(variantArr => setVariants(variantArr));
+        } else {
+          setVariants([{ selectedVariant: "", selectedValue: [], valueDropdown: [] }]);
+        }
 
         if (data.images && data.images.length > 0) {
           const existingImages = data.images.map((img) => ({
@@ -259,7 +290,7 @@ if (data.variants && typeof data.variants === "object" && Object.keys(data.varia
     fetchProduct();
   }, [id, optionsHsn]);
 
-   // ✅ Fetch all active variants for dropdown
+  // ✅ Fetch all active variants for dropdown
   useEffect(() => {
     const token = localStorage.getItem("token");
     if (!token) return;
@@ -334,7 +365,7 @@ if (data.variants && typeof data.variants === "object" && Object.keys(data.varia
           // label: category.categoryName,
         }));
         setCategories(options);
-      } catch (error) {}
+      } catch (error) { }
     };
     const fetchBrands = async () => {
       try {
@@ -349,7 +380,7 @@ if (data.variants && typeof data.variants === "object" && Object.keys(data.varia
           // label: brand.brandName,
         }));
         setBrandOptions(options);
-      } catch (error) {}
+      } catch (error) { }
     };
     const fetchUnits = async () => {
       try {
@@ -371,7 +402,7 @@ if (data.variants && typeof data.variants === "object" && Object.keys(data.varia
           // label: `${unit.unitsName} (${unit.shortName})`,
         }));
         setUnitsOptions(options);
-      } catch (error) {}
+      } catch (error) { }
     };
 
     // const fetchSuppliers = async () => {
@@ -393,8 +424,8 @@ if (data.variants && typeof data.variants === "object" && Object.keys(data.varia
     //     setOptions(options);
     //   } catch (error) {}
     // };
-    
-    
+
+
     const fetchWarehouses = async () => {
       try {
         const token = localStorage.getItem("token");
@@ -411,7 +442,7 @@ if (data.variants && typeof data.variants === "object" && Object.keys(data.varia
           }));
           setOptionsWare(options);
         }
-      } catch (error) {}
+      } catch (error) { }
     };
     const fetchHSN = async () => {
       try {
@@ -421,7 +452,7 @@ if (data.variants && typeof data.variants === "object" && Object.keys(data.varia
             Authorization: `Bearer ${token}`, // ✅ token sent properly
           },
         });
-        console.log("hsnd", res.data.data);
+        // console.log("hsnd", res.data.data);
         if (res.data.success) {
           const options = res.data.data.map((item) => ({
             value: item._id,
@@ -433,7 +464,7 @@ if (data.variants && typeof data.variants === "object" && Object.keys(data.varia
           }));
           setOptionsHsn(options);
         }
-      } catch (error) {}
+      } catch (error) { }
     };
 
     fetchCategories();
@@ -459,7 +490,7 @@ if (data.variants && typeof data.variants === "object" && Object.keys(data.varia
       const foundCat = categories.find((opt) => opt.value === categoryId);
       if (foundCat) {
         setSelectedCategory(foundCat);
-        console.log("⚡ Fetching subcategories for:", foundCat.value);
+        // console.log("⚡ Fetching subcategories for:", foundCat.value);
         // Fetch subcategories for this category
         fetchSubcategoriesByCategory(foundCat.value);
       }
@@ -478,7 +509,7 @@ if (data.variants && typeof data.variants === "object" && Object.keys(data.varia
           },
         }
       );
-      console.log("sbcategryfd", res.data);
+      // console.log("sbcategryfd", res.data);
       const options = res.data.map((subcat) => ({
         value: subcat._id,
         label: sanitizeHtml(subcat.subCategoryName, sanitizeOptions),
@@ -496,7 +527,7 @@ if (data.variants && typeof data.variants === "object" && Object.keys(data.varia
       const found = subcategories.find((opt) => opt.value === subCategoryId);
       if (found) {
         setSelectedsubCategory(found);
-        console.log("✅ Preselected subcategory:", found);
+        // console.log("✅ Preselected subcategory:", found);
       }
     }
   }, [subCategoryId, subcategories]);
@@ -610,81 +641,180 @@ if (data.variants && typeof data.variants === "object" && Object.keys(data.varia
     }
   };
   // Step validation logic
-  const validateStep = () => {
-    if (step === 0) {
-      return (
-        formData.productName &&
-        !errors.productName &&
-        formData.sku &&
-        !errors.sku &&
-        selectedCategory &&
-        selectedsubCategory &&
-        // selectedSupplier &&
-        selectedWarehouse &&
-        selectedHSN &&
-        // formData.itemBarcode &&
-        formData.store &&
-        (!formData.isAdvanced ||
-          (formData.leadTime &&
-            !errors.leadTime &&
-            formData.reorderLevel &&
-            !errors.reorderLevel &&
-            formData.initialStock &&
-            !errors.initialStock &&
-            ((formData.trackType === "serial" &&
-              formData.serialNumber &&
-              !errors.serialNumber) ||
-              (formData.trackType === "batch" &&
-                formData.batchNumber &&
-                !errors.batchNumber) ||
-              formData.trackType === "status")))
-      );
+  // const validateStep = () => {
+  //   if (step === 0) {
+  //     return (
+  //       formData.productName &&
+  //       !errors.productName &&
+  //       formData.sku &&
+  //       !errors.sku &&
+  //       selectedCategory &&
+  //       selectedsubCategory &&
+  //       // selectedSupplier &&
+  //       selectedWarehouse &&
+  //       selectedHSN &&
+  //       // formData.itemBarcode &&
+  //       formData.store &&
+  //       (!formData.isAdvanced ||
+  //         (formData.leadTime &&
+  //           !errors.leadTime &&
+  //           formData.reorderLevel &&
+  //           !errors.reorderLevel &&
+  //           formData.initialStock &&
+  //           !errors.initialStock &&
+  //           ((formData.trackType === "serial" &&
+  //             formData.serialNumber &&
+  //             !errors.serialNumber) ||
+  //             (formData.trackType === "batch" &&
+  //               formData.batchNumber &&
+  //               !errors.batchNumber) ||
+  //             formData.trackType === "status")))
+  //     );
+  //   }
+  //   if (step === 1) {
+  //     return (
+  //       formData.purchasePrice &&
+  //       !errors.purchasePrice &&
+  //       formData.sellingPrice &&
+  //       !errors.sellingPrice &&
+  //       formData.quantity &&
+  //       !errors.quantity &&
+  //       selectedUnits &&
+  //       formData.taxType &&
+  //       formData.tax &&
+  //       formData.discountType &&
+  //       // formData.discountValue &&
+  //       // !errors.discountValue &&
+  //       (formData.discountValue !== undefined && formData.discountValue !== "") &&
+  //       !errors.discountValue &&
+  //       formData.quantityAlert &&
+  //       !errors.quantityAlert
+  //     );
+  //   }
+  //   if (step === 2) {
+  //     return (
+  //       formData.description &&
+  //       !errors.description &&
+  //       (!formData.seoTitle || !errors.seoTitle) &&
+  //       (!formData.seoDescription || !errors.seoDescription)
+  //     );
+  //   }
+  //   if (step === 3) {
+  //     // return formData.variants[activeTab]?.length > 0;
+  //     return (
+  //       formData.variants &&
+  //       Object.keys(formData.variants).length > 0 &&
+  //       Object.values(formData.variants).every(
+  //         (vals) => Array.isArray(vals) && vals.length > 0
+  //       )
+  //     );
+  //   }
+  //   return true;
+  // };
+
+const validateStep = () => {
+  const newErrors = {};
+
+  if (step === 0) {
+    if (!formData.productName) newErrors.productName = "Product Name is required";
+    if (formData.productName && !regexPatterns.productName.test(formData.productName)) newErrors.productName = "Invalid Product Name";
+    if (!formData.sku) newErrors.sku = "SKU is required";
+    if (formData.sku && !regexPatterns.sku.test(formData.sku)) newErrors.sku = "Invalid SKU";
+    if (!selectedCategory) newErrors.category = "Category is required";
+    if (!selectedsubCategory) newErrors.subCategory = "Subcategory is required";
+    if (!selectedWarehouse) newErrors.warehouse = "Warehouse is required";
+    if (!selectedHSN) newErrors.hsn = "HSN Code is required";
+    if (!formData.store) newErrors.store = "Store is required";
+    if (formData.isAdvanced) {
+      if (!formData.leadTime) newErrors.leadTime = "Lead Time is required";
+      if (formData.leadTime && !regexPatterns.leadTime.test(formData.leadTime)) newErrors.leadTime = "Invalid Lead Time";
+      if (!formData.reorderLevel) newErrors.reorderLevel = "Reorder Level is required";
+      if (formData.reorderLevel && !regexPatterns.reorderLevel.test(formData.reorderLevel)) newErrors.reorderLevel = "Invalid Reorder Level";
+      if (!formData.initialStock) newErrors.initialStock = "Initial Stock is required";
+      if (formData.initialStock && !regexPatterns.initialStock.test(formData.initialStock)) newErrors.initialStock = "Invalid Initial Stock";
+      if (formData.trackType === "serial" && !formData.serialNumber)
+        newErrors.serialNumber = "Serial Number is required";
+      if (formData.serialNumber && !regexPatterns.serialNumber.test(formData.serialNumber)) newErrors.serialNumber = "Invalid Serial Number";
+      if (formData.trackType === "batch" && !formData.batchNumber)
+        newErrors.batchNumber = "Batch Number is required";
+      if (formData.batchNumber && !regexPatterns.batchNumber.test(formData.batchNumber)) newErrors.batchNumber = "Invalid Batch Number";
     }
-    if (step === 1) {
-      return (
-        formData.purchasePrice &&
-        !errors.purchasePrice &&
-        formData.sellingPrice &&
-        !errors.sellingPrice &&
-        formData.quantity &&
-        !errors.quantity &&
-        selectedUnits &&
-        formData.taxType &&
-        formData.tax &&
-        formData.discountType &&
-        formData.discountValue &&
-        !errors.discountValue &&
-        formData.quantityAlert &&
-        !errors.quantityAlert
-      );
+  }
+
+  if (step === 1) {
+    if (!formData.purchasePrice) newErrors.purchasePrice = "Purchase Price is required";
+    if (formData.purchasePrice && !regexPatterns.price.test(formData.purchasePrice)) newErrors.purchasePrice = "Purchase Price must be a positive number with up to 2 decimal places";
+    if (!formData.sellingPrice) newErrors.sellingPrice = "Selling Price is required";
+    if (formData.sellingPrice && !regexPatterns.price.test(formData.sellingPrice)) newErrors.sellingPrice = "Selling Price must be a positive number with up to 2 decimal places";
+    // NEW: Validation for wholesalePrice
+    if (!formData.wholesalePrice) newErrors.wholesalePrice = "Wholesale Price is required";
+    if (formData.wholesalePrice && !regexPatterns.price.test(formData.wholesalePrice)) newErrors.wholesalePrice = "Wholesale Price must be a positive number with up to 2 decimal places";
+    // NEW: Validation for retailPrice
+    if (!formData.retailPrice) newErrors.retailPrice = "Retail Price is required";
+    if (formData.retailPrice && !regexPatterns.price.test(formData.retailPrice)) newErrors.retailPrice = "Retail Price must be a positive number with up to 2 decimal places";
+    if (!formData.quantity) newErrors.quantity = "Quantity must be at least 1";
+    if (formData.quantity && !regexPatterns.quantity.test(formData.quantity)) newErrors.quantity = "Quantity must be a positive integer";
+    if (!selectedUnits) newErrors.unit = "Unit is required";
+    if (!formData.taxType) newErrors.taxType = "Tax Type is required";
+    if (!formData.tax) newErrors.tax = "Tax Rate is required";
+    if (!formData.discountType) newErrors.discountType = "Discount Type is required";
+    if (formData.discountValue === undefined || formData.discountValue === "") newErrors.discountValue = "Discount Value is required";
+    if (formData.discountValue && !regexPatterns.discountValue.test(formData.discountValue)) newErrors.discountValue = "Discount Value must be a positive number with up to 2 decimal places";
+    if (!formData.quantityAlert) newErrors.quantityAlert = "Quantity Alert is required";
+    if (formData.quantityAlert && !regexPatterns.quantityAlert.test(formData.quantityAlert)) newErrors.quantityAlert = "Quantity Alert must be a positive integer";
+  }
+
+  if (step === 2) {
+    if (!formData.description) newErrors.description = "Description is required";
+    if (formData.description && !regexPatterns.description.test(formData.description)) newErrors.description = "Invalid Description";
+    if (formData.seoTitle && !regexPatterns.seoTitle.test(formData.seoTitle)) newErrors.seoTitle = "Invalid SEO Title";
+    if (formData.seoDescription && !regexPatterns.seoDescription.test(formData.seoDescription)) newErrors.seoDescription = "Invalid SEO Description";
+  }
+
+  if (step === 3) {
+    if (
+      !formData.variants ||
+      Object.keys(formData.variants).length === 0 ||
+      !Object.values(formData.variants).every(
+        (vals) => Array.isArray(vals) && vals.length > 0
+      )
+    ) {
+      newErrors.variants = "At least one variant with a valid value is required";
     }
-    if (step === 2) {
-      return (
-        formData.description &&
-        !errors.description &&
-        (!formData.seoTitle || !errors.seoTitle) &&
-        (!formData.seoDescription || !errors.seoDescription)
-      );
-    }
-    if (step === 3) {
-      return formData.variants[activeTab]?.length > 0;
-    }
-    return true;
-  };
+  }
+
+  // NEW: Update errors state with validation results
+  setErrors(newErrors);
+  return Object.values(newErrors).filter(Boolean); // Return array of error messages for toast notifications
+};
 
   // Step navigation logic
+  // const handleNext = () => {
+  //   const isValid = validateStep();
+  //   const updatedStatus = [...stepStatus];
+  //   updatedStatus[step] = isValid ? "complete" : "incomplete";
+  //   setStepStatus(updatedStatus);
+  //   if (isValid && step < steps.length - 1) {
+  //     setStep((prev) => prev + 1);
+  //   } else if (!isValid) {
+  //     // Commented out: Error toast for validation
+  //     toast.error("Please correct the errors in the form");
+  //   }
+  // };
+
   const handleNext = () => {
-    const isValid = validateStep();
-    const updatedStatus = [...stepStatus];
-    updatedStatus[step] = isValid ? "complete" : "incomplete";
-    setStepStatus(updatedStatus);
-    if (isValid && step < steps.length - 1) {
-      setStep((prev) => prev + 1);
-    } else if (!isValid) {
-      // Commented out: Error toast for validation
-      toast.error("Please correct the errors in the form");
-    }
-  };
+  const validationErrors = validateStep();
+  const updatedStatus = [...stepStatus];
+  updatedStatus[step] = validationErrors.length === 0 ? "complete" : "incomplete";
+  setStepStatus(updatedStatus);
+
+  if (validationErrors.length === 0 && step < steps.length - 1) {
+    setStep((prev) => prev + 1);
+  } else if (validationErrors.length > 0) {
+    // Display all error messages
+    validationErrors.forEach((error) => toast.error(error));
+  }
+};
 
   const handlePrev = () => {
     if (step > 0) setStep((prev) => prev - 1);
@@ -731,119 +861,194 @@ if (data.variants && typeof data.variants === "object" && Object.keys(data.varia
   // };
 
   // Submit handler
+  // const handleSubmit = async (e) => {
+  //   // console.log("SUBMIT: selectedBrands", selectedBrands);
+  //   // console.log("SUBMIT: selectedCategory", selectedCategory);
+  //   // console.log("SUBMIT: selectedsubCategory", selectedsubCategory);
+  //   // console.log("SUBMIT: selectedSupplier", selectedSupplier);
+  //   // console.log("SUBMIT: selectedWarehouse", selectedWarehouse);
+  //   // console.log("SUBMIT: selectedUnits", selectedUnits);
+  //   // console.log("SUBMIT: selectedHSN", selectedHSN);
+  //   // console.log(
+  //   //   "SUBMIT: subcategory value sent:",
+  //   //   selectedsubCategory?.value || ""
+  //   // );
+  //   e.preventDefault();
+  //   if (!validateStep()) {
+  //     // Commented out: Validation check
+  //     toast.error("Please correct the errors before submitting");
+  //     return;
+  //   }
+  //   const formPayload = new FormData();
+  //   // Only append fields that have changed (non-empty or non-null)
+  //   if (formData.productName)
+  //     formPayload.append("productName", formData.productName);
+  //   if (formData.sku) formPayload.append("sku", formData.sku);
+  //   formPayload.append("brand", selectedBrands?.value || "");
+  //   formPayload.append("category", selectedCategory?.value || "");
+  //   formPayload.append("subcategory", selectedsubCategory?.value || "");
+  //   // formPayload.append("supplier", selectedSupplier?.value || "");
+  //   // if (formData.itemBarcode)
+  //   //   formPayload.append("itemBarcode", formData.itemBarcode);
+  //   if (formData.store) formPayload.append("store", formData.store);
+  //   formPayload.append("warehouse", selectedWarehouse?.value || "");
+  //   if (formData.purchasePrice)
+  //     formPayload.append("purchasePrice", formData.purchasePrice);
+  //   if (formData.sellingPrice)
+  //     formPayload.append("sellingPrice", formData.sellingPrice);
+  //   if (formData.wholesalePrice)
+  //     formPayload.append("wholesalePrice", formData.wholesalePrice);
+  //   if (formData.retailPrice)
+  //     formPayload.append("retailPrice", formData.retailPrice);
+  //   if (formData.quantity) formPayload.append("quantity", formData.quantity);
+  //   formPayload.append("unit", selectedUnits?.value || "");
+  //   if (formData.taxType) formPayload.append("taxType", formData.taxType);
+  //   if (formData.tax)
+  //     formPayload.append(
+  //       "tax",
+  //       parseFloat(formData.tax.replace(/\D/g, "")) || 0
+  //     );
+  //   if (formData.discountType)
+  //     formPayload.append("discountType", formData.discountType);
+  //   if (formData.discountValue)
+  //     formPayload.append("discountValue", formData.discountValue);
+  //   if (formData.quantityAlert)
+  //     formPayload.append("quantityAlert", formData.quantityAlert);
+  //   if (formData.description)
+  //     formPayload.append("description", formData.description);
+  //   if (formData.seoTitle) formPayload.append("seoTitle", formData.seoTitle);
+  //   if (formData.seoDescription)
+  //     formPayload.append("seoDescription", formData.seoDescription);
+  //   if (formData.itemType) formPayload.append("itemType", formData.itemType);
+  //   if (formData.isAdvanced)
+  //     formPayload.append("isAdvanced", formData.isAdvanced ? true : false);
+  //   if (formData.trackType) formPayload.append("trackType", formData.trackType);
+  //   if (formData.isReturnable)
+  //     formPayload.append("isReturnable", formData.isReturnable ? true : false);
+  //   if (formData.leadTime) formPayload.append("leadTime", formData.leadTime);
+  //   if (formData.reorderLevel)
+  //     formPayload.append("reorderLevel", formData.reorderLevel);
+  //   if (formData.initialStock)
+  //     formPayload.append("initialStock", formData.initialStock);
+  //   if (formData.serialNumber)
+  //     formPayload.append("serialNumber", formData.serialNumber);
+  //   if (formData.batchNumber)
+  //     formPayload.append("batchNumber", formData.batchNumber);
+  //   if (formData.returnable)
+  //     formPayload.append("returnable", formData.returnable ? true : false);
+  //   if (formData.expirationDate)
+  //     formPayload.append("expirationDate", formData.expirationDate);
+  //   formPayload.append("hsn", selectedHSN?.value || "");
+
+  //   // if (formData.variants && Object.keys(formData.variants).length > 0)
+  //   //   formPayload.append("variants", JSON.stringify(formData.variants));
+  //   if (formData.variants && Object.keys(formData.variants).length > 0)
+  //     formPayload.append("variants", JSON.stringify(formData.variants));
+  //   // append new images only
+  //   images.forEach((imgFile) => {
+  //     if (imgFile instanceof File) {
+  //       // only new uploads
+  //       formPayload.append("images", imgFile);
+  //     }
+  //   });
+
+  //   // append existing images as URLs
+  //   const existingImageUrls = images
+  //     .filter((img) => !(img instanceof File))
+  //     .map((img) => img.url); // only URL
+
+  //   formPayload.append("existingImages", JSON.stringify(existingImageUrls));
+  //   try {
+  //     const token = localStorage.getItem("token");
+  //     await axios.put(`${BASE_URL}/api/products/${id}`, formPayload, {
+  //       headers: {
+  //         Authorization: `Bearer ${token}`,
+  //       },
+  //     });
+  //     toast.success("Product updated successfully!");
+  //     const returnPath = location.state?.from || '/product';
+  //     navigate(returnPath);
+  //   } catch (err) {
+  //     console.log(err.response?.data);
+  //     toast.error("Failed to update product");
+  //   }
+  // };
+
   const handleSubmit = async (e) => {
-    // console.log("SUBMIT: selectedBrands", selectedBrands);
-    // console.log("SUBMIT: selectedCategory", selectedCategory);
-    // console.log("SUBMIT: selectedsubCategory", selectedsubCategory);
-    // console.log("SUBMIT: selectedSupplier", selectedSupplier);
-    // console.log("SUBMIT: selectedWarehouse", selectedWarehouse);
-    // console.log("SUBMIT: selectedUnits", selectedUnits);
-    // console.log("SUBMIT: selectedHSN", selectedHSN);
-    // console.log(
-    //   "SUBMIT: subcategory value sent:",
-    //   selectedsubCategory?.value || ""
-    // );
-    e.preventDefault();
-    if (!validateStep()) {
-      // Commented out: Validation check
-      toast.error("Please correct the errors before submitting");
-      return;
+  e.preventDefault();
+  const validationErrors = validateStep();
+
+  if (validationErrors.length > 0) {
+    validationErrors.forEach((error) => toast.error(error));
+    return;
+  }
+
+  const formPayload = new FormData();
+  // Append fields as before
+  if (formData.productName) formPayload.append("productName", formData.productName);
+  if (formData.sku) formPayload.append("sku", formData.sku);
+  formPayload.append("brand", selectedBrands?.value || "");
+  formPayload.append("category", selectedCategory?.value || "");
+  formPayload.append("subcategory", selectedsubCategory?.value || "");
+  // formPayload.append("supplier", selectedSupplier?.value || "");
+  if (formData.store) formPayload.append("store", formData.store);
+  formPayload.append("warehouse", selectedWarehouse?.value || "");
+  if (formData.purchasePrice) formPayload.append("purchasePrice", formData.purchasePrice);
+  if (formData.sellingPrice) formPayload.append("sellingPrice", formData.sellingPrice);
+  if (formData.wholesalePrice) formPayload.append("wholesalePrice", formData.wholesalePrice);
+  if (formData.retailPrice) formPayload.append("retailPrice", formData.retailPrice);
+  if (formData.quantity) formPayload.append("quantity", formData.quantity);
+  formPayload.append("unit", selectedUnits?.value || "");
+  if (formData.taxType) formPayload.append("taxType", formData.taxType);
+  if (formData.tax) formPayload.append("tax", parseFloat(formData.tax.replace(/\D/g, "")) || 0);
+  if (formData.discountType) formPayload.append("discountType", formData.discountType);
+  if (formData.discountValue) formPayload.append("discountValue", formData.discountValue);
+  if (formData.quantityAlert) formPayload.append("quantityAlert", formData.quantityAlert);
+  if (formData.description) formPayload.append("description", formData.description);
+  if (formData.seoTitle) formPayload.append("seoTitle", formData.seoTitle);
+  if (formData.seoDescription) formPayload.append("seoDescription", formData.seoDescription);
+  if (formData.itemType) formPayload.append("itemType", formData.itemType);
+  if (formData.isAdvanced) formPayload.append("isAdvanced", formData.isAdvanced ? true : false);
+  if (formData.trackType) formPayload.append("trackType", formData.trackType);
+  if (formData.isReturnable) formPayload.append("isReturnable", formData.isReturnable ? true : false);
+  if (formData.leadTime) formPayload.append("leadTime", formData.leadTime);
+  if (formData.reorderLevel) formPayload.append("reorderLevel", formData.reorderLevel);
+  if (formData.initialStock) formPayload.append("initialStock", formData.initialStock);
+  if (formData.serialNumber) formPayload.append("serialNumber", formData.serialNumber);
+  if (formData.batchNumber) formPayload.append("batchNumber", formData.batchNumber);
+  if (formData.returnable) formPayload.append("returnable", formData.returnable ? true : false);
+  if (formData.expirationDate) formPayload.append("expirationDate", formData.expirationDate);
+  formPayload.append("hsn", selectedHSN?.value || "");
+
+  if (formData.variants && Object.keys(formData.variants).length > 0)
+    formPayload.append("variants", JSON.stringify(formData.variants));
+
+  images.forEach((imgFile) => {
+    if (imgFile instanceof File) {
+      formPayload.append("images", imgFile);
     }
-    const formPayload = new FormData();
-    // Only append fields that have changed (non-empty or non-null)
-    if (formData.productName)
-      formPayload.append("productName", formData.productName);
-    if (formData.sku) formPayload.append("sku", formData.sku);
-    formPayload.append("brand", selectedBrands?.value || "");
-    formPayload.append("category", selectedCategory?.value || "");
-    formPayload.append("subcategory", selectedsubCategory?.value || "");
-    // formPayload.append("supplier", selectedSupplier?.value || "");
-    // if (formData.itemBarcode)
-    //   formPayload.append("itemBarcode", formData.itemBarcode);
-    if (formData.store) formPayload.append("store", formData.store);
-    formPayload.append("warehouse", selectedWarehouse?.value || "");
-    if (formData.purchasePrice)
-      formPayload.append("purchasePrice", formData.purchasePrice);
-    if (formData.sellingPrice)
-      formPayload.append("sellingPrice", formData.sellingPrice);
-    if (formData.wholesalePrice)
-      formPayload.append("wholesalePrice", formData.wholesalePrice);
-    if (formData.retailPrice)
-      formPayload.append("retailPrice", formData.retailPrice);
-    if (formData.quantity) formPayload.append("quantity", formData.quantity);
-    formPayload.append("unit", selectedUnits?.value || "");
-    if (formData.taxType) formPayload.append("taxType", formData.taxType);
-    if (formData.tax)
-      formPayload.append(
-        "tax",
-        parseFloat(formData.tax.replace(/\D/g, "")) || 0
-      );
-    if (formData.discountType)
-      formPayload.append("discountType", formData.discountType);
-    if (formData.discountValue)
-      formPayload.append("discountValue", formData.discountValue);
-    if (formData.quantityAlert)
-      formPayload.append("quantityAlert", formData.quantityAlert);
-    if (formData.description)
-      formPayload.append("description", formData.description);
-    if (formData.seoTitle) formPayload.append("seoTitle", formData.seoTitle);
-    if (formData.seoDescription)
-      formPayload.append("seoDescription", formData.seoDescription);
-    if (formData.itemType) formPayload.append("itemType", formData.itemType);
-    if (formData.isAdvanced)
-      formPayload.append("isAdvanced", formData.isAdvanced ? true : false);
-    if (formData.trackType) formPayload.append("trackType", formData.trackType);
-    if (formData.isReturnable)
-      formPayload.append("isReturnable", formData.isReturnable ? true : false);
-    if (formData.leadTime) formPayload.append("leadTime", formData.leadTime);
-    if (formData.reorderLevel)
-      formPayload.append("reorderLevel", formData.reorderLevel);
-    if (formData.initialStock)
-      formPayload.append("initialStock", formData.initialStock);
-    if (formData.serialNumber)
-      formPayload.append("serialNumber", formData.serialNumber);
-    if (formData.batchNumber)
-      formPayload.append("batchNumber", formData.batchNumber);
-    if (formData.returnable)
-      formPayload.append("returnable", formData.returnable ? true : false);
-    if (formData.expirationDate)
-      formPayload.append("expirationDate", formData.expirationDate);
-    formPayload.append("hsn", selectedHSN?.value || "");
-    
-    // if (formData.variants && Object.keys(formData.variants).length > 0)
-    //   formPayload.append("variants", JSON.stringify(formData.variants));
-    if (formData.variants && Object.keys(formData.variants).length > 0)
-  formPayload.append("variants", JSON.stringify(formData.variants));
-    // append new images only
-    images.forEach((imgFile) => {
-      if (imgFile instanceof File) {
-        // only new uploads
-        formPayload.append("images", imgFile);
-      }
+  });
+
+  const existingImageUrls = images
+    .filter((img) => !(img instanceof File))
+    .map((img) => img.url);
+  formPayload.append("existingImages", JSON.stringify(existingImageUrls));
+
+  try {
+    const token = localStorage.getItem("token");
+    await axios.put(`${BASE_URL}/api/products/${id}`, formPayload, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
     });
-
-    // append existing images as URLs
-    const existingImageUrls = images
-      .filter((img) => !(img instanceof File))
-      .map((img) => img.url); // only URL
-
-    formPayload.append("existingImages", JSON.stringify(existingImageUrls));
-    try {
-      const token = localStorage.getItem("token");
-      await axios.put(`${BASE_URL}/api/products/${id}`, formPayload, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
-      toast.success("Product updated successfully!");
-      navigate("/product");
-    } catch (err) {
-      console.log(err.response?.data);
-      toast.error("Failed to update product");
-    }
-  };
-
-  if (loading) return <p>Loading...</p>;
+    toast.success("Product updated successfully!");
+    const returnPath = location.state?.from || '/product';
+    navigate(returnPath);
+  } catch (err) {
+    // console.log(err.response?.data);
+    toast.error("Failed to update product");
+  }
+};
 
   // remove image
   const handleRemoveImage = async (file) => {
@@ -852,6 +1057,7 @@ if (data.variants && typeof data.variants === "object" && Object.keys(data.varia
         const res = await axios.delete(
           `${BASE_URL}/api/products/${productId}/images`,
           {
+            
             data: { public_id: file.public_id },
           }
         );
@@ -865,66 +1071,80 @@ if (data.variants && typeof data.variants === "object" && Object.keys(data.varia
   };
 
 
-  
- 
-    // Fetch all active variants for dropdown
-    // useEffect(() => {
-    //   const token = localStorage.getItem("token");
-    //   if (!token) return;
-  
-    //   fetch(`${BASE_URL}/api/variant-attributes/active-variants`, {
-    //     headers: { Authorization: `Bearer ${token}` },
-    //   })
-    //     .then(res => res.json())
-    //     .then(data => setVariantDropdown(data))
-    //     .catch(err => console.error("Error fetching variant dropdown:", err));
-    // }, []);
-  
-    // Handle variant change per row
-    const handleVariantChange = (index, value) => {
-      const token = localStorage.getItem("token");
-      setVariants(prev =>
-        prev.map((v, i) =>
-          i === index ? { ...v, selectedVariant: value, selectedValue: "", valueDropdown: [] } : v
-        )
-      );
-  
-      if (!value || !token) return;
-  
-      fetch(`${BASE_URL}/api/variant-attributes/values/${encodeURIComponent(value)}`, {
-        headers: { Authorization: `Bearer ${token}` },
-      })
-        .then(res => res.json())
-        .then(data => {
-          let values = [];
-          data.forEach(val => {
-            if (typeof val === "string") {
-              values.push(...val.split(",").map(v => v.trim()).filter(Boolean));
-            }
-          });
-          setVariants(prev =>
-            prev.map((v, i) => (i === index ? { ...v, valueDropdown: values } : v))
-          );
-        })
-        .catch(err => console.error("Error fetching value dropdown:", err));
-    };
-  
-    const handleValueChange = (index, value) => {
-      setVariants(prev =>
-        prev.map((v, i) => (i === index ? { ...v, selectedValue: value } : v))
-      );
-    };
-  
-    const handleAddVariant = () => {
-      setVariants(prev => [...prev, { selectedVariant: "", selectedValue: "", valueDropdown: [] }]);
-    };
-  
-    const handleRemoveVariant = index => {
-      if (variants.length > 1) {
-        setVariants(prev => prev.filter((_, i) => i !== index));
-      }
-    };
 
+
+  // Fetch all active variants for dropdown
+  // useEffect(() => {
+  //   const token = localStorage.getItem("token");
+  //   if (!token) return;
+
+  //   fetch(`${BASE_URL}/api/variant-attributes/active-variants`, {
+  //     headers: { Authorization: `Bearer ${token}` },
+  //   })
+  //     .then(res => res.json())
+  //     .then(data => setVariantDropdown(data))
+  //     .catch(err => console.error("Error fetching variant dropdown:", err));
+  // }, []);
+
+  // Handle variant change per row
+  const handleVariantChange = (index, value) => {
+    const token = localStorage.getItem("token");
+    setVariants(prev =>
+      prev.map((v, i) =>
+        i === index ? { ...v, selectedVariant: value.trim(), selectedValue: "", valueDropdown: [] } : v
+      )
+    );
+
+    if (!value || !token) return;
+
+    fetch(`${BASE_URL}/api/variant-attributes/values/${encodeURIComponent(value)}`, {
+      headers: { Authorization: `Bearer ${token}` },
+    })
+      .then(res => res.json())
+      .then(data => {
+        let values = [];
+        data.forEach(val => {
+          if (typeof val === "string") {
+            values.push(...val.split(",").map(v => v.trim()).filter(Boolean));
+          }
+        });
+        setVariants(prev =>
+          prev.map((v, i) => (i === index ? { ...v, valueDropdown: values } : v))
+        );
+      })
+      .catch(err => console.error("Error fetching value dropdown:", err));
+  };
+
+  const handleValueChange = (index, value) => {
+    setVariants(prev =>
+      prev.map((v, i) => (i === index ? { ...v, selectedValue: value } : v))
+    );
+  };
+
+  const handleAddVariant = () => {
+    setVariants(prev => [...prev, { selectedVariant: "", selectedValue: "", valueDropdown: [] }]);
+  };
+
+  const handleRemoveVariant = index => {
+    if (variants.length > 1) {
+      setVariants(prev => prev.filter((_, i) => i !== index));
+    }
+  };
+
+  useEffect(() => {
+    if (variants && variants.length > 0) {
+      const updatedVariants = variants.reduce((acc, v) => {
+        if (v.selectedVariant && v.selectedValue?.length > 0) {
+          acc[v.selectedVariant.trim()] = v.selectedValue;
+        }
+        return acc;
+      }, {});
+      setFormData((prev) => ({ ...prev, variants: updatedVariants }))
+    }
+  }, [variants]);
+  // console.log("Variants state:", variants);
+  // console.log("FormData variants:", formData.variants);
+  if (loading) return <p>Loading...</p>;
   return (
     <div className="page-wrapper mt-4">
       <div className="content">
@@ -965,8 +1185,8 @@ if (data.variants && typeof data.variants === "object" && Object.keys(data.varia
           <div className="page-btn mt-0">
             <div className="d-flex gap-2">
               {/* <Link to="/product"></Link>{t("backToProduct")} */}
-              <Link to="/product">
-                <a className="btn btn-primary">Back to Product</a>
+              <Link to={location.state?.from || "/product"}>
+                <a className="btn btn-primary">Back to {location.state?.from == '/expired-products' ? "Expired Products" : location.state?.from == '/low-stocks' ? "Low Stocks" : "Product"}</a>
               </Link>
             </div>
           </div>
@@ -983,28 +1203,26 @@ if (data.variants && typeof data.variants === "object" && Object.keys(data.varia
             return (
               <div key={index} className="step-wrapper">
                 <div
-                  className={`circle ${
-                    isComplete
-                      ? "complete"
-                      : isIncomplete
+                  className={`circle ${isComplete
+                    ? "complete"
+                    : isIncomplete
                       ? "incomplete"
                       : isActive
-                      ? "active"
-                      : ""
-                  }`}
+                        ? "active"
+                        : ""
+                    }`}
                 >
                   {index + 1}
                 </div>
                 <div className="step-text">{label}</div>
                 {index < steps.length - 1 && (
                   <div
-                    className={`progress-line ${
-                      status === "complete"
-                        ? "line-complete"
-                        : status === "incomplete"
+                    className={`progress-line ${status === "complete"
+                      ? "line-complete"
+                      : status === "incomplete"
                         ? "line-incomplete"
                         : "line-pending"
-                    }`}
+                      }`}
                   />
                 )}
               </div>
@@ -1064,9 +1282,8 @@ if (data.variants && typeof data.variants === "object" && Object.keys(data.varia
                       <input
                         type="text"
                         name="productName"
-                        className={`form-control ${
-                          errors.productName ? "is-invalid" : ""
-                        }`} // Commented out: Validation class
+                        className={`form-control ${errors.productName ? "is-invalid" : ""
+                          }`} // Commented out: Validation class
                         // className="form-control"
                         value={formData.productName}
                         onChange={handleChange}
@@ -1193,9 +1410,8 @@ if (data.variants && typeof data.variants === "object" && Object.keys(data.varia
                         <input
                           type="text"
                           name="sku"
-                          className={`form-control ${
-                            errors.sku ? "is-invalid" : ""
-                          }`} // Commented out: Validation class
+                          className={`form-control ${errors.sku ? "is-invalid" : ""
+                            }`} // Commented out: Validation class
                           // className="form-control"
                           value={formData.sku}
                           onChange={(e) =>
@@ -1208,7 +1424,7 @@ if (data.variants && typeof data.variants === "object" && Object.keys(data.varia
                           <div className="invalid-feedback">{errors.sku}</div>
                         )}
                         <button
-                          type="submit"
+                          type="button"
                           onClick={generateSKU}
                           className="btn-primaryadd"
                           style={{
@@ -1407,9 +1623,8 @@ if (data.variants && typeof data.variants === "object" && Object.keys(data.varia
                           <label className="form-label">{t("leadTime")}</label>
                           <input
                             type="number"
-                            className={`form-control ${
-                              errors.leadTime ? "is-invalid" : ""
-                            }`} // Commented out: Validation class
+                            className={`form-control ${errors.leadTime ? "is-invalid" : ""
+                              }`} // Commented out: Validation class
                             // className="form-control"
                             placeholder={t("enterLeadTime")}
                             name="leadTime"
@@ -1429,9 +1644,8 @@ if (data.variants && typeof data.variants === "object" && Object.keys(data.varia
                           </label>
                           <input
                             type="number"
-                            className={`form-control ${
-                              errors.reorderLevel ? "is-invalid" : ""
-                            }`}
+                            className={`form-control ${errors.reorderLevel ? "is-invalid" : ""
+                              }`}
                             // className="form-control"
                             placeholder={t("enterReorderLevel")}
                             name="reorderLevel"
@@ -1451,9 +1665,8 @@ if (data.variants && typeof data.variants === "object" && Object.keys(data.varia
                           </label>
                           <input
                             type="number"
-                            className={`form-control ${
-                              errors.initialStock ? "is-invalid" : ""
-                            }`}
+                            className={`form-control ${errors.initialStock ? "is-invalid" : ""
+                              }`}
                             // className="form-control"
                             placeholder={t("enterInitialStock")}
                             name="initialStock"
@@ -1554,9 +1767,8 @@ if (data.variants && typeof data.variants === "object" && Object.keys(data.varia
                             </label>
                             <input
                               type="text"
-                              className={`form-control ${
-                                errors.serialNumber ? "is-invalid" : ""
-                              }`}
+                              className={`form-control ${errors.serialNumber ? "is-invalid" : ""
+                                }`}
                               // className="form-control"
                               placeholder={t("enterSerialNumber")}
                               name="serialNumber"
@@ -1577,9 +1789,8 @@ if (data.variants && typeof data.variants === "object" && Object.keys(data.varia
                             <label className="form-label">{t("batchNo")}</label>
                             <input
                               type="text"
-                              className={`form-control ${
-                                errors.batchNumber ? "is-invalid" : ""
-                              }`}
+                              className={`form-control ${errors.batchNumber ? "is-invalid" : ""
+                                }`}
                               // className="form-control"
                               placeholder={t("enterBatchNumber")}
                               name="batchNumber"
@@ -1663,17 +1874,15 @@ if (data.variants && typeof data.variants === "object" && Object.keys(data.varia
                     </label>
                     <input
                       type="number"
-                      className={`form-control ${
-                        errors[field.name] ? "is-invalid" : ""
-                      }`} // Commented out: Validation class
+                      className={`form-control ${errors[field.name] ? "is-invalid" : ""
+                        }`} // Commented out: Validation class
                       // className="form-control"
                       name={field.name}
                       value={formData[field.name] || ""}
                       onChange={handleChange}
                       placeholder={t(
-                        `enter${
-                          field.name.charAt(0).toUpperCase() +
-                          field.name.slice(1)
+                        `enter${field.name.charAt(0).toUpperCase() +
+                        field.name.slice(1)
                         }`
                       )}
                     />
@@ -1692,9 +1901,8 @@ if (data.variants && typeof data.variants === "object" && Object.keys(data.varia
                   </label>
                   <input
                     type="number"
-                    className={`form-control ${
-                      errors.quantity ? "is-invalid" : ""
-                    }`}
+                    className={`form-control ${errors.quantity ? "is-invalid" : ""
+                      }`}
                     // className="form-control"
                     name="quantity"
                     value={formData.quantity}
@@ -1780,9 +1988,8 @@ if (data.variants && typeof data.variants === "object" && Object.keys(data.varia
                   </label>
                   <input
                     type="number"
-                    className={`form-control ${
-                      errors.discountValue ? "is-invalid" : ""
-                    }`}
+                    className={`form-control ${errors.discountValue ? "is-invalid" : ""
+                      }`}
                     // className="form-control"
                     name="discountValue"
                     value={formData.discountValue}
@@ -1803,9 +2010,8 @@ if (data.variants && typeof data.variants === "object" && Object.keys(data.varia
                   </label>
                   <input
                     type="number"
-                    className={`form-control ${
-                      errors.quantityAlert ? "is-invalid" : ""
-                    }`} // Commented out: Validation class
+                    className={`form-control ${errors.quantityAlert ? "is-invalid" : ""
+                      }`} // Commented out: Validation class
                     // className="form-control"
                     name="quantityAlert"
                     value={formData.quantityAlert}
@@ -1834,7 +2040,10 @@ if (data.variants && typeof data.variants === "object" && Object.keys(data.varia
                   <input {...getInputProps()} />
                   <MdImageSearch style={{ fontSize: "50px" }} />
                   <p>Drag your image here, or browse</p>
-                  <p>Supports JPEG, PNG, JPG</p>
+                   <p>Supports JPEG, PNG, JPG. Maximum size: 1MB.</p>
+                   {errors.images && (
+                    <p className="text-danger fs-12">{errors.images}</p>
+                  )}
                 </div>
 
                 <div className="row mt-3">
@@ -1843,7 +2052,7 @@ if (data.variants && typeof data.variants === "object" && Object.keys(data.varia
                       <img
                         src={file.url || file.preview}
                         className="img-thumbnail"
-                        style={{ height: 100, width:100, objectFit: "cover" }}
+                        style={{ height: 100, width: 100, objectFit: "cover" }}
                       />
                       <button
                         type="button"
@@ -1855,8 +2064,8 @@ if (data.variants && typeof data.variants === "object" && Object.keys(data.varia
                           borderRadius: "50%",
                           backgroundColor: "red",
                           color: "white",
-                          width:'20px',
-                          height:'20px'
+                          width: '20px',
+                          height: '20px'
                         }}
                         onClick={() => handleRemoveImage(file)}
                       >
@@ -1870,9 +2079,8 @@ if (data.variants && typeof data.variants === "object" && Object.keys(data.varia
                   <label>{t("description")}</label>
                   <textarea
                     name="description"
-                    className={`form-control ${
-                      errors.description ? "is-invalid" : ""
-                    }`}
+                    className={`form-control ${errors.description ? "is-invalid" : ""
+                      }`}
                     // className="form-control"
                     maxLength={300}
                     value={formData.description}
@@ -1890,9 +2098,8 @@ if (data.variants && typeof data.variants === "object" && Object.keys(data.varia
                     <input
                       type="text"
                       name="seoTitle"
-                      className={`form-control ${
-                        errors.seoTitle ? "is-invalid" : ""
-                      }`} // Commented out: Validation class
+                      className={`form-control ${errors.seoTitle ? "is-invalid" : ""
+                        }`} // Commented out: Validation class
                       // className="form-control"
                       value={formData.seoTitle || ""}
                       onChange={handleChange}
@@ -1909,9 +2116,8 @@ if (data.variants && typeof data.variants === "object" && Object.keys(data.varia
                     <input
                       type="text"
                       name="seoDescription"
-                      className={`form-control ${
-                        errors.seoDescription ? "is-invalid" : ""
-                      }`}
+                      className={`form-control ${errors.seoDescription ? "is-invalid" : ""
+                        }`}
                       // className="form-control"
                       value={formData.seoDescription || ""}
                       onChange={handleChange}
@@ -1931,60 +2137,61 @@ if (data.variants && typeof data.variants === "object" && Object.keys(data.varia
             {step === 3 && (
               <>
 
-                 <div className="card mt-4">
-      <div className="card-body">
-        {variants.map((variant, index) => (
-          <div className="row mb-3" key={index}>
-            <div className="col-md-5">
-              <label className="form-label">Variant</label>
-              <select
-                className="form-select"
-                value={variant.selectedVariant}
-                onChange={e => handleVariantChange(index, e.target.value)}
-              >
-                <option value="">Select Variant</option>
-                {variantDropdown.map((v, idx) => (
-                  <option key={idx} value={v}>{v}</option>
-                ))}
-              </select>
-            </div>
-            <div className="col-md-5">
-              <label className="form-label">Value</label>
-              <select
-                className="form-select"
-                value={variant.selectedValue}
-                onChange={e => handleValueChange(index, e.target.value)}
-                disabled={!variant.selectedVariant}
-              >
-                <option value="">Select Value</option>
-                {variant.valueDropdown.map((val, idx) => (
-                  <option key={idx} value={val}>{val}</option>
-                ))}
-              </select>
-            </div>
-            <div className="col-md-2 d-flex align-items-end">
-              {variants.length > 1 && (
-                <button
-                  type="button"
-                  className="btn btn-danger"
-                  onClick={() => handleRemoveVariant(index)}
-                >
-                  ×
-                </button>
-              )}
-            </div>
-          </div>
-        ))}
+                <div className="card mt-4">
+                  <div className="card-body">
+                    {variants.map((variant, index) => (
+                      <div className="row mb-3" key={index}>
+                        <div className="col-md-5">
+                          <label className="form-label">Variant</label>
+                          <select
+                            className="form-select"
+                            value={variant.selectedVariant}
+                            onChange={e => handleVariantChange(index, e.target.value)}
+                          >
+                            <option value="">Select Variant</option>
+                            {variantDropdown.map((v, idx) => (
+                              <option key={idx} value={v}>{v}</option>
+                            ))}
+                          </select>
+                        </div>
+                        <div className="col-md-5">
+                          <label className="form-label">Value</label>
+                          <select
+                            className="form-select"
+                            // value={variant.selectedValue}
+                            value={variant.selectedValue[0] || ""}
+                            onChange={e => handleValueChange(index, [e.target.value])}
+                            disabled={!variant.selectedVariant}
+                          >
+                            <option value="">Select Value</option>
+                            {variant.valueDropdown.map((val, idx) => (
+                              <option key={idx} value={val}>{val}</option>
+                            ))}
+                          </select>
+                        </div>
+                        <div className="col-md-2 d-flex align-items-end">
+                          {variants.length > 1 && (
+                            <button
+                              type="button"
+                              className="btn btn-danger"
+                              onClick={() => handleRemoveVariant(index)}
+                            >
+                              ×
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                    ))}
 
-        <button
-          type="button"
-          className="btn btn-outline-primary"
-          onClick={handleAddVariant}
-        >
-          + Add another variant
-        </button>
-      </div>
-    </div>
+                    <button
+                      type="button"
+                      className="btn btn-outline-primary"
+                      onClick={handleAddVariant}
+                    >
+                      + Add another variant
+                    </button>
+                  </div>
+                </div>
 
 
 

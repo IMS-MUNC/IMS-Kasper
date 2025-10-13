@@ -28,6 +28,7 @@ const Brand = () => {
   const [editImagePreview, setEditImagePreview] = useState("");
   const [brands, setBrands] = useState([]);
   const [errors, setErrors] = useState({});
+  const [isAdding, setIsAdding] = useState(false)
 
   const [selectedBrands, setSelectedBrands] = useState([]);
 
@@ -100,6 +101,7 @@ const Brand = () => {
     });
 
     try {
+      setIsAdding(true);
       const token = localStorage.getItem("token"); // ✅ get token from storage
 
       const res = await axios.post(
@@ -132,6 +134,9 @@ const Brand = () => {
         error.response?.data?.message ||
         "Failed to add brand. Please try again."
       );
+    }
+    finally{
+      setIsAdding(false);
     }
   };
 
@@ -481,7 +486,7 @@ const Brand = () => {
             <div className="d-flex table-dropdown my-xl-auto right-content align-items-center flex-wrap row-gap-3">
               <div className="dropdown me-2">
                 <a
-                  className="dropdown-toggle btn btn-white btn-md d-inline-flex align-items-center"
+                  className="btn btn-white btn-md d-inline-flex align-items-center"
                   data-bs-toggle="dropdown"
                 >
                   Status : {statusFilter || "All"}
@@ -516,7 +521,7 @@ const Brand = () => {
               <div className="dropdown">
                 <a
                   href="javascript:void(0);"
-                  className="dropdown-toggle btn btn-white btn-md d-inline-flex align-items-center"
+                  className="btn btn-white btn-md d-inline-flex align-items-center"
                   data-bs-toggle="dropdown"
                 >
                   Sort By : {sortOrder || "Latest"}
@@ -813,8 +818,18 @@ const Brand = () => {
                     >
                       Cancel
                     </button>
-                    <button type="submit" className="btn btn-primary">
-                      Add Brand
+                    <button type="submit" className="btn btn-primary" disabled={isAdding}>
+                      {isAdding ? (
+                      <>
+                      <span
+ className="spinner-border spinner-border-sm me-2"
+        role="status"
+        aria-hidden="true"
+      ></span>
+      Adding Brand...
+                    </>
+                      ):("Add Brand")}
+                      
                     </button>
                   </div>
                 </form>

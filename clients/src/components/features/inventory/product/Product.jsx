@@ -1,7 +1,4 @@
 import { toast } from 'react-toastify';
-
-
-
 import React, { useEffect, useRef, useState } from "react";
 import Select from "react-select";
 import axios from "axios";
@@ -250,13 +247,16 @@ const Product = () => {
   const handlePdf = () => {
     const doc = new jsPDF();
     doc.text("Category", 14, 15);
-    const tableColumns = ["Product Name", "SKU", "Quantity", "Status", "Price"];
+    const tableColumns = ["Product Name", "SKU","Category","Brand", "Quantity", "Unit", "Price"];
 
     const tableRows = products.map((e) => [
       e.productName,
       e.sku,
+      e.category?.categoryName,
+      e.brand?.brandName,
       e.quantity,
-      e.trackType,
+      e.unit,
+      // e.trackType,
       e.sellingPrice,
     ]);
 
@@ -280,13 +280,16 @@ const Product = () => {
   //download excel---------------------------------------------------------------------------------------------------------------------------------------------------------
 
   const handleExcel = () => {
-    const tableColumns = ["Product Name", "SKU", "Quantity", "Status", "Price"];
+    const tableColumns = ["Product Name", "SKU","Category","Brand", "Quantity", "Unit", "Price"];
 
     const tableRows = products.map((e) => [
       e.productName,
       e.sku,
+      e.category?.categoryName,
+      e.brand?.brandName,
       e.quantity,
-      e.trackType,
+      e.unit,
+      // e.trackType,
       e.sellingPrice,
     ]);
 
@@ -391,10 +394,11 @@ const Product = () => {
                 data-bs-toggle="tooltip"
                 data-bs-placement="top"
                 title="Refresh"
-                // onClick={() => {
-                //   fetchProducts();
-                //   toast.success("Product list refreshed successfully!");
-                // }}
+              // onClick={() => {
+              //   fetchProducts();
+              //   toast.success("Product list refreshed successfully!");
+              // }}
+               onClick={() => location.reload()}
               >
                 <TbRefresh className="ti ti-refresh" />
               </a>

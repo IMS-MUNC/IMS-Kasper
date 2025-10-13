@@ -318,7 +318,14 @@ exports.getAllPurchases = async (req, res) => {
         const purchases = await Purchase.find(query)
             // .populate("supplier", "firstName lastName email phone")
             .populate("supplier", "supplierCode firstName lastName companyName companyWebsite businessType gstin email phone billing shipping status bank images")
-            .populate("products.product")
+            .populate({
+                path: "products.product",
+                select: "productName sku warehouse",
+                populate: {
+                    path: "warehouse",
+                    select: "warehouseName"
+                }
+            })
             .populate({ path: "debitNotes", populate: { path: "products.product" } })
             .sort({ createdAt: -1 })
             .skip((pageNum - 1) * limitNum)
@@ -814,7 +821,7 @@ exports.getAllDebitNotes = async (req, res) => {
     }
 
     if (startDate && endDate) {
-      filter.returnDate = {
+      filter.debitNoteDate = {
         $gte: new Date(startDate),
         $lte: new Date(endDate),
       };

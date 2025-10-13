@@ -79,3 +79,20 @@ exports.deleteCity = async (req, res) => {
     res.status(500).json({ message: "Server error", error: err.message });
   }
 };
+exports.bulkDeleteCity = async (req, res) => {
+  try {
+    const { ids } = req.body;
+    if (!ids || !Array.isArray(ids)) {
+      return res
+        .status(400)
+        .json({ message: "Invalid or missing 'ids', array in request body" });
+    }
+  const result =  await City.deleteMany({ _id: { $in: ids } });
+    return res.status(200).json({message: `${result.deletedCount} cities deleted successfully`,
+      deletedCount: result.deletedCount,})
+  } catch (error) {
+    res
+      .status(500)
+      .json({ message: "Bulk delete failed", error: error.message });
+  }
+};

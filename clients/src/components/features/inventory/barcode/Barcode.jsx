@@ -41,7 +41,7 @@ function Barcode() {
 
   // Fetch products based on search query
   const searchProducts = async (query) => {
-    if (!query || query.length < 2) {
+    if (!query || query.length < 1) {
       setProducts([]);
       setShowDropdown(false);
       return;
@@ -366,26 +366,26 @@ function Barcode() {
           <div id="barcode-print-root">${printContent}</div>
           <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
           <script>
-            (${function(barcodes, numberOfBarcodes) {
-              for (let i = 0; i < (numberOfBarcodes || 1); i++) {
-                const svg = document.getElementById(`barcode-svg-${i}`);
-                if (svg) {
-                  window.JsBarcode(svg, barcodes[i] || barcodes[0] || '', {
-                    format: "CODE128",
-                    lineColor: "#000",
-                    width: 1,
-                    height: 60,
-                    displayValue: true
-                  });
-                }
-              }
-              window.onload = function() {
-                window.print();
-                window.onafterprint = function() {
-                  window.close();
-                };
-              };
-            }.toString()})(${JSON.stringify(product.uniqueBarcodes)}, ${numberOfBarcodes || 1});
+            (${function (barcodes, numberOfBarcodes) {
+        for (let i = 0; i < (numberOfBarcodes || 1); i++) {
+          const svg = document.getElementById(`barcode-svg-${i}`);
+          if (svg) {
+            window.JsBarcode(svg, barcodes[i] || barcodes[0] || '', {
+              format: "CODE128",
+              lineColor: "#000",
+              width: 1,
+              height: 60,
+              displayValue: true
+            });
+          }
+        }
+        window.onload = function () {
+          window.print();
+          window.onafterprint = function () {
+            window.close();
+          };
+        };
+      }.toString()})(${JSON.stringify(product.uniqueBarcodes)}, ${numberOfBarcodes || 1});
           </script>
         </body>
       </html>
@@ -470,336 +470,336 @@ function Barcode() {
   }, []);
 
   return (
-    	// <div className="page-wrapper notes-page-wrapper">
-			// 	<div className="content">
-			// 		<div className="page-header">
-			// 			<div className="add-item d-flex">
-			// 				<div className="page-title">
-			// 					<h4 className="fw-bold">Print Barcode</h4>
-			// 					<h6>Manage your barcodes</h6>
-			// 				</div>
-			// 			</div>
-			// 			<div className="d-flex align-items-center">
-			// 				<ul className="table-top-head">
-			// 					<li>
-			// 						<a data-bs-toggle="tooltip" data-bs-placement="top" title="Refresh"><i
-			// 								className="ti ti-refresh" /></a>
-			// 					</li>
-			// 					<li>
-			// 						<a data-bs-toggle="tooltip" data-bs-placement="top" title="Collapse" id="collapse-header"><i
-			// 								className="ti ti-chevron-up" /></a>
-			// 					</li>
-			// 				</ul>
-			// 			</div>
-			// 		</div>
-			// 		<div className="barcode-content-list">
-			// 			<form>
-			// 				{/* <div className="row">
-			// 					<div className="col-lg-6 col-12">
-			// 						<div className="row seacrh-barcode-item mb-1">
-			// 							<div className="col-sm-6 mb-3 seacrh-barcode-item-one">
-			// 								<label className="form-label">Warehouse<span
-			// 										className="text-danger ms-1">*</span></label>
-			// 								<select className="select">
-			// 									<option>Select</option>
-			// 									<option>Lavish Warehouse</option>
-			// 									<option>Quaint Warehouse</option>
-			// 									<option>Traditional Warehouse</option>
-			// 									<option>Cool Warehouse</option>
-			// 									<option>Overflow Warehouse</option>
-			// 									<option>Nova Storage Hub</option>
-			// 									<option>Retail Supply Hub</option>
-			// 									<option>EdgeWare Solutions</option>
-			// 								</select>
-			// 							</div>
-			// 							<div className="col-sm-6 mb-3 seacrh-barcode-item-one">
-			// 								<label className="form-label">Store<span className="text-danger ms-1">*</span></label>
-			// 								<select className="select">
-			// 									<option>Select</option>
-			// 									<option>Electro Mart</option>
-			// 									<option>Quantum Gadgets</option>
-			// 									<option>Prime Bazaar</option>
-			// 									<option>Gadget World</option>
-			// 									<option>Volt Vault</option>
-			// 								</select>
-			// 							</div>
-			// 						</div>
-			// 					</div>
-			// 				</div> */}
-			// 				<div className="row">
-			// 					<div className="col-lg-6">
-			// 						<div className="mb-3 search-form seacrh-barcode-item">
-			// 							<div className="search-form">
-			// 								<label className="form-label">Product<span className="text-danger ms-1">*</span></label>
-			// 								<div className="position-relative">
-			// 									<input type="text" name="searchQuery" value={searchQuery} onChange={handleChange} className="form-control"
-			// 				  placeholder="Search Product by Code" />
-			// 									<i data-feather="search" className="feather-search" />
+    // <div className="page-wrapper notes-page-wrapper">
+    // 	<div className="content">
+    // 		<div className="page-header">
+    // 			<div className="add-item d-flex">
+    // 				<div className="page-title">
+    // 					<h4 className="fw-bold">Print Barcode</h4>
+    // 					<h6>Manage your barcodes</h6>
+    // 				</div>
+    // 			</div>
+    // 			<div className="d-flex align-items-center">
+    // 				<ul className="table-top-head">
+    // 					<li>
+    // 						<a data-bs-toggle="tooltip" data-bs-placement="top" title="Refresh"><i
+    // 								className="ti ti-refresh" /></a>
+    // 					</li>
+    // 					<li>
+    // 						<a data-bs-toggle="tooltip" data-bs-placement="top" title="Collapse" id="collapse-header"><i
+    // 								className="ti ti-chevron-up" /></a>
+    // 					</li>
+    // 				</ul>
+    // 			</div>
+    // 		</div>
+    // 		<div className="barcode-content-list">
+    // 			<form>
+    // 				{/* <div className="row">
+    // 					<div className="col-lg-6 col-12">
+    // 						<div className="row seacrh-barcode-item mb-1">
+    // 							<div className="col-sm-6 mb-3 seacrh-barcode-item-one">
+    // 								<label className="form-label">Warehouse<span
+    // 										className="text-danger ms-1">*</span></label>
+    // 								<select className="select">
+    // 									<option>Select</option>
+    // 									<option>Lavish Warehouse</option>
+    // 									<option>Quaint Warehouse</option>
+    // 									<option>Traditional Warehouse</option>
+    // 									<option>Cool Warehouse</option>
+    // 									<option>Overflow Warehouse</option>
+    // 									<option>Nova Storage Hub</option>
+    // 									<option>Retail Supply Hub</option>
+    // 									<option>EdgeWare Solutions</option>
+    // 								</select>
+    // 							</div>
+    // 							<div className="col-sm-6 mb-3 seacrh-barcode-item-one">
+    // 								<label className="form-label">Store<span className="text-danger ms-1">*</span></label>
+    // 								<select className="select">
+    // 									<option>Select</option>
+    // 									<option>Electro Mart</option>
+    // 									<option>Quantum Gadgets</option>
+    // 									<option>Prime Bazaar</option>
+    // 									<option>Gadget World</option>
+    // 									<option>Volt Vault</option>
+    // 								</select>
+    // 							</div>
+    // 						</div>
+    // 					</div>
+    // 				</div> */}
+    // 				<div className="row">
+    // 					<div className="col-lg-6">
+    // 						<div className="mb-3 search-form seacrh-barcode-item">
+    // 							<div className="search-form">
+    // 								<label className="form-label">Product<span className="text-danger ms-1">*</span></label>
+    // 								<div className="position-relative">
+    // 									<input type="text" name="searchQuery" value={searchQuery} onChange={handleChange} className="form-control"
+    // 				  placeholder="Search Product by Code" />
+    // 									<i data-feather="search" className="feather-search" />
 
-                        
-			// 								</div>
-			// 								<div className="dropdown-menu search-dropdown w-100 h-auto rounded-1 mt-2"
-			// 									aria-labelledby="dropdownsearchClickable">
-			// 									<ul>
-			// 										<li className="fs-14 text-gray-9 mb-2">Amazon Echo Dot</li>
-			// 										<li className="fs-14 text-gray-9 mb-2">Armani Belt</li>
-			// 										<li className="fs-14 text-gray-9 mb-2">Apple Watch</li>
-			// 										<li className="fs-14 text-gray-9">Apple Iphone 14 Pro</li>
-			// 									</ul>
-			// 								</div>
-			// 							</div>
-			// 						</div>
-			// 					</div>
-			// 				</div>
-			// 			</form>
-			// 			<div className="col-lg-12">
-			// 				<div className="p-3 bg-light rounded border mb-3">
-			// 					<div className="table-responsive rounded border">
-			// 						<table className="table">
-			// 							<thead>
-			// 								<tr>
-			// 									<th>Product</th>
-			// 									<th>SKU</th>
-			// 									<th>Code</th>
-			// 									<th>Qty</th>
-			// 									<th className="text-center no-sort bg-secondary-transparent" />
-			// 								</tr>
-			// 							</thead>
-			// 							<tbody>
-			// 								<tr>
-			// 									<td>
-			// 										<div className="d-flex align-items-center">
-			// 											<a products className="avatar avatar-md me-2">
-			// 												<img src="assets/img/products/stock-img-02.png" alt="product" />
-			// 											</a>
-			// 											<a products>Nike Jordan</a>
-			// 										</div>
-			// 									</td>
-			// 									<td>PT002</td>
-			// 									<td>HG3FK</td>
-			// 									<td>
-			// 										<div className="product-quantity border-secondary-transparent">
-			// 											<span className="quantity-btn"><i data-feather="minus-circle"
-			// 													className="feather-search" /></span>
-			// 											<input type="text" className="quntity-input" defaultValue={4} />
-			// 											<span className="quantity-btn">+<i data-feather="plus-circle"
-			// 													className="plus-circle" /></span>
-			// 										</div>
-			// 									</td>
-			// 									<td className="action-table-data">
-			// 										<div className="edit-delete-action">
-			// 											<a data-bs-toggle="modal" data-bs-target="#delete-modal"
-			// 												className="barcode-delete-icon" products>
-			// 												<i data-feather="trash-2" className="feather-trash-2" />
-			// 											</a>
-			// 										</div>
-			// 									</td>
-			// 								</tr>
-			// 								<tr>
-			// 									<td>
-			// 										<div className="d-flex align-items-center">
-			// 											<a products className="avatar avatar-md me-2">
-			// 												<img src="assets/img/products/stock-img-03.png" alt="product" />
-			// 											</a>
-			// 											<a products>Apple Series 5 Watch</a>
-			// 										</div>
-			// 									</td>
-			// 									<td>PT003</td>
-			// 									<td>TEUIU7</td>
-			// 									<td>
-			// 										<div className="product-quantity border-secondary-transparent">
-			// 											<span className="quantity-btn"><i data-feather="minus-circle"
-			// 													className="feather-search" /></span>
-			// 											<input type="text" className="quntity-input" defaultValue={4} />
-			// 											<span className="quantity-btn">+<i data-feather="plus-circle"
-			// 													className="plus-circle" /></span>
-			// 										</div>
-			// 									</td>
-			// 									<td className="action-table-data">
-			// 										<div className="edit-delete-action">
-			// 											<a data-bs-toggle="modal" data-bs-target="#delete-modal"
-			// 												className="barcode-delete-icon" products>
-			// 												<i data-feather="trash-2" className="feather-trash-2" />
-			// 											</a>
-			// 										</div>
-			// 									</td>
-			// 								</tr>
-			// 							</tbody>
-			// 						</table>
-			// 					</div>
-			// 				</div>
-			// 			</div>
-			// 			<div className="paper-search-size">
-			// 				<div className="row align-items-center">
-			// 					<div className="col-lg-6">
-			// 						<form className="mb-0">
-			// 							<label className="form-label">Paper Size<span className="text-danger ms-1">*</span></label>
-			// 							<select className="select">
-			// 								<option>Select</option>
-			// 								<option>A3</option>
-			// 								<option>A4</option>
-			// 								<option>A5</option>
-			// 								<option>A6</option>
-			// 							</select>
-			// 						</form>
-			// 					</div>
-			// 					<div className="col-lg-6 pt-3">
-			// 						<div className="row">
-			// 							<div className="col-sm-4">
-			// 								<div className="search-toggle-list">
-			// 									<p>Show Store Name</p>
-			// 									<div className="m-0">
-			// 										<div
-			// 											className="status-toggle modal-status d-flex justify-content-between align-items-center">
-			// 											<input type="checkbox" id="user7" className="check" defaultChecked />
-			// 											<label htmlFor="user7" className="checktoggle mb-0" />
-			// 										</div>
-			// 									</div>
-			// 								</div>
-			// 							</div>
-			// 							<div className="col-sm-4">
-			// 								<div className="search-toggle-list">
-			// 									<p>Show Product Name</p>
-			// 									<div className="m-0">
-			// 										<div
-			// 											className="status-toggle modal-status d-flex justify-content-between align-items-center">
-			// 											<input type="checkbox" id="user8" className="check" defaultChecked />
-			// 											<label htmlFor="user8" className="checktoggle mb-0" />
-			// 										</div>
-			// 									</div>
-			// 								</div>
-			// 							</div>
-			// 							<div className="col-sm-4">
-			// 								<div className="search-toggle-list">
-			// 									<p>Show Price</p>
-			// 									<div className="m-0">
-			// 										<div
-			// 											className="status-toggle modal-status d-flex justify-content-between align-items-center">
-			// 											<input type="checkbox" id="user9" className="check" defaultChecked />
-			// 											<label htmlFor="user9" className="checktoggle mb-0"> </label>
-			// 										</div>
-			// 									</div>
-			// 								</div>
-			// 							</div>
-			// 						</div>
-			// 					</div>
-			// 				</div>
-			// 			</div>
-			// 			<div className="search-barcode-button">
-			// 				<a products className="btn btn-submit btn-primary me-2 mt-0" data-bs-toggle="modal"
-			// 					data-bs-target="#prints-barcode">
-			// 					<span><i className="fas fa-eye me-1" /></span>Generate Barcode
-			// 				</a>
-			// 				<a products className="btn btn-cancel btn-secondary fs-13 me-2">
-			// 					<span><i className="fas fa-power-off me-1" /></span>Reset Barcode
-			// 				</a>
-			// 				<a products className="btn btn-cancel btn-danger close-btn">
-			// 					<span><i className="fas fa-print me-1" /></span>Print Barcode
-			// 				</a>
-			// 			</div>
-			// 		</div>
-			// 	</div>
-				
-			// </div>
+
+    // 								</div>
+    // 								<div className="dropdown-menu search-dropdown w-100 h-auto rounded-1 mt-2"
+    // 									aria-labelledby="dropdownsearchClickable">
+    // 									<ul>
+    // 										<li className="fs-14 text-gray-9 mb-2">Amazon Echo Dot</li>
+    // 										<li className="fs-14 text-gray-9 mb-2">Armani Belt</li>
+    // 										<li className="fs-14 text-gray-9 mb-2">Apple Watch</li>
+    // 										<li className="fs-14 text-gray-9">Apple Iphone 14 Pro</li>
+    // 									</ul>
+    // 								</div>
+    // 							</div>
+    // 						</div>
+    // 					</div>
+    // 				</div>
+    // 			</form>
+    // 			<div className="col-lg-12">
+    // 				<div className="p-3 bg-light rounded border mb-3">
+    // 					<div className="table-responsive rounded border">
+    // 						<table className="table">
+    // 							<thead>
+    // 								<tr>
+    // 									<th>Product</th>
+    // 									<th>SKU</th>
+    // 									<th>Code</th>
+    // 									<th>Qty</th>
+    // 									<th className="text-center no-sort bg-secondary-transparent" />
+    // 								</tr>
+    // 							</thead>
+    // 							<tbody>
+    // 								<tr>
+    // 									<td>
+    // 										<div className="d-flex align-items-center">
+    // 											<a products className="avatar avatar-md me-2">
+    // 												<img src="assets/img/products/stock-img-02.png" alt="product" />
+    // 											</a>
+    // 											<a products>Nike Jordan</a>
+    // 										</div>
+    // 									</td>
+    // 									<td>PT002</td>
+    // 									<td>HG3FK</td>
+    // 									<td>
+    // 										<div className="product-quantity border-secondary-transparent">
+    // 											<span className="quantity-btn"><i data-feather="minus-circle"
+    // 													className="feather-search" /></span>
+    // 											<input type="text" className="quntity-input" defaultValue={4} />
+    // 											<span className="quantity-btn">+<i data-feather="plus-circle"
+    // 													className="plus-circle" /></span>
+    // 										</div>
+    // 									</td>
+    // 									<td className="action-table-data">
+    // 										<div className="edit-delete-action">
+    // 											<a data-bs-toggle="modal" data-bs-target="#delete-modal"
+    // 												className="barcode-delete-icon" products>
+    // 												<i data-feather="trash-2" className="feather-trash-2" />
+    // 											</a>
+    // 										</div>
+    // 									</td>
+    // 								</tr>
+    // 								<tr>
+    // 									<td>
+    // 										<div className="d-flex align-items-center">
+    // 											<a products className="avatar avatar-md me-2">
+    // 												<img src="assets/img/products/stock-img-03.png" alt="product" />
+    // 											</a>
+    // 											<a products>Apple Series 5 Watch</a>
+    // 										</div>
+    // 									</td>
+    // 									<td>PT003</td>
+    // 									<td>TEUIU7</td>
+    // 									<td>
+    // 										<div className="product-quantity border-secondary-transparent">
+    // 											<span className="quantity-btn"><i data-feather="minus-circle"
+    // 													className="feather-search" /></span>
+    // 											<input type="text" className="quntity-input" defaultValue={4} />
+    // 											<span className="quantity-btn">+<i data-feather="plus-circle"
+    // 													className="plus-circle" /></span>
+    // 										</div>
+    // 									</td>
+    // 									<td className="action-table-data">
+    // 										<div className="edit-delete-action">
+    // 											<a data-bs-toggle="modal" data-bs-target="#delete-modal"
+    // 												className="barcode-delete-icon" products>
+    // 												<i data-feather="trash-2" className="feather-trash-2" />
+    // 											</a>
+    // 										</div>
+    // 									</td>
+    // 								</tr>
+    // 							</tbody>
+    // 						</table>
+    // 					</div>
+    // 				</div>
+    // 			</div>
+    // 			<div className="paper-search-size">
+    // 				<div className="row align-items-center">
+    // 					<div className="col-lg-6">
+    // 						<form className="mb-0">
+    // 							<label className="form-label">Paper Size<span className="text-danger ms-1">*</span></label>
+    // 							<select className="select">
+    // 								<option>Select</option>
+    // 								<option>A3</option>
+    // 								<option>A4</option>
+    // 								<option>A5</option>
+    // 								<option>A6</option>
+    // 							</select>
+    // 						</form>
+    // 					</div>
+    // 					<div className="col-lg-6 pt-3">
+    // 						<div className="row">
+    // 							<div className="col-sm-4">
+    // 								<div className="search-toggle-list">
+    // 									<p>Show Store Name</p>
+    // 									<div className="m-0">
+    // 										<div
+    // 											className="status-toggle modal-status d-flex justify-content-between align-items-center">
+    // 											<input type="checkbox" id="user7" className="check" defaultChecked />
+    // 											<label htmlFor="user7" className="checktoggle mb-0" />
+    // 										</div>
+    // 									</div>
+    // 								</div>
+    // 							</div>
+    // 							<div className="col-sm-4">
+    // 								<div className="search-toggle-list">
+    // 									<p>Show Product Name</p>
+    // 									<div className="m-0">
+    // 										<div
+    // 											className="status-toggle modal-status d-flex justify-content-between align-items-center">
+    // 											<input type="checkbox" id="user8" className="check" defaultChecked />
+    // 											<label htmlFor="user8" className="checktoggle mb-0" />
+    // 										</div>
+    // 									</div>
+    // 								</div>
+    // 							</div>
+    // 							<div className="col-sm-4">
+    // 								<div className="search-toggle-list">
+    // 									<p>Show Price</p>
+    // 									<div className="m-0">
+    // 										<div
+    // 											className="status-toggle modal-status d-flex justify-content-between align-items-center">
+    // 											<input type="checkbox" id="user9" className="check" defaultChecked />
+    // 											<label htmlFor="user9" className="checktoggle mb-0"> </label>
+    // 										</div>
+    // 									</div>
+    // 								</div>
+    // 							</div>
+    // 						</div>
+    // 					</div>
+    // 				</div>
+    // 			</div>
+    // 			<div className="search-barcode-button">
+    // 				<a products className="btn btn-submit btn-primary me-2 mt-0" data-bs-toggle="modal"
+    // 					data-bs-target="#prints-barcode">
+    // 					<span><i className="fas fa-eye me-1" /></span>Generate Barcode
+    // 				</a>
+    // 				<a products className="btn btn-cancel btn-secondary fs-13 me-2">
+    // 					<span><i className="fas fa-power-off me-1" /></span>Reset Barcode
+    // 				</a>
+    // 				<a products className="btn btn-cancel btn-danger close-btn">
+    // 					<span><i className="fas fa-print me-1" /></span>Print Barcode
+    // 				</a>
+    // 			</div>
+    // 		</div>
+    // 	</div>
+
+    // </div>
     <div className="page-wrapper notes-page-wrapper">
-<div className="content">
-     {/* Add CSS for loading animation */}
-      <style>
-        {`
+      <div className="content">
+        {/* Add CSS for loading animation */}
+        <style>
+          {`
           @keyframes spin {
             0% { transform: rotate(0deg); }
             100% { transform: rotate(360deg); }
           }
         `}
-      </style>
+        </style>
 
-      {/* path */}
-      {/* <div >
+        {/* path */}
+        {/* <div >
         <span className="ap-name" style={{ fontWeight: '600' }}>Print Barcode</span>
       </div> */}
-		<div className="page-header">
-						<div className="add-item d-flex">
-							<div className="page-title">
-								<h4 className="fw-bold">Print Barcode</h4>
-								<h6>Manage your barcodes</h6>
-							</div>
-						</div>
-						<div className="d-flex align-items-center">
-							<ul className="table-top-head">
-								<li>
-									<a data-bs-toggle="tooltip" data-bs-placement="top" title="Refresh"><TbRefresh
-											className="ti ti-refresh" /></a>
-								</li>
-								{/* <li>
+        <div className="page-header">
+          <div className="add-item d-flex">
+            <div className="page-title">
+              <h4 className="fw-bold">Print Barcode</h4>
+              <h6>Manage your barcodes</h6>
+            </div>
+          </div>
+          <div className="d-flex align-items-center">
+            <ul className="table-top-head">
+              <li>
+                <a data-bs-toggle="tooltip" data-bs-placement="top" title="Refresh" onClick={() => location.reload()}><TbRefresh
+                  className="ti ti-refresh" /></a>
+              </li>
+              {/* <li>
 									<a data-bs-toggle="tooltip" data-bs-placement="top" title="Collapse" id="collapse-header"><i
 											className="ti ti-chevron-up" /></a>
 								</li> */}
-							</ul>
-						</div>
-					</div>
+            </ul>
+          </div>
+        </div>
 
-          
-      <div >
-        <div className='card p-4'>
-          {/* <strong>Estimate Amount</strong> */}
 
-          <div className="mb-3 search-form seacrh-barcode-item" >
-          <div className="search-form">
-          <label className="form-label">Product<span className="text-danger ms-1">*</span></label>
-             <div ref={searchRef} className="position-relative">
-                  <input   name="searchQuery"
-                  value={searchQuery}
-                  onChange={handleChange} type="text" className="form-control" placeholder="Search Product by Name" />
+        <div >
+          <div className='card p-4'>
+            {/* <strong>Estimate Amount</strong> */}
+
+            <div className="mb-3 search-form seacrh-barcode-item" >
+              <div className="search-form">
+                <label className="form-label">Product<span className="text-danger ms-1">*</span></label>
+                <div ref={searchRef} className="position-relative">
+                  <input name="searchQuery"
+                    value={searchQuery}
+                    onChange={handleChange} type="text" className="form-control" placeholder="Search Product by Name" />
                   <IoIosSearch data-feather="search" className="feather-search" />
-                   {showDropdown && (
-                <div style={{
-                  position: 'absolute',
-                  top: '100%',
-                  left: 0,
-                  right: 0,
-                  backgroundColor: 'white',
-                  border: '1px solid #ccc',
-                  borderRadius: '8px',
-                  maxHeight: '200px',
-                  overflowY: 'auto',
-                  zIndex: 1000,
-                  boxShadow: '0 4px 6px rgba(0,0,0,0.1)'
-                }}>
-                  {products.length > 0 ? (
-                    products.map((productItem) => (
-                      <div
-                        key={productItem._id}
-                        onClick={() => handleProductSelect(productItem)}
-                        style={{
-                          padding: '10px 15px',
-                          cursor: 'pointer',
-                          borderBottom: '1px solid #f0f0f0',
-                          display: 'flex',
-                          justifyContent: 'space-between',
-                          alignItems: 'center'
-                        }}
-                        onMouseEnter={(e) => {
-                          e.target.style.backgroundColor = '#f8f9fa';
-                        }}
-                        onMouseLeave={(e) => {
-                          e.target.style.backgroundColor = 'white';
-                        }}
-                      >
-                        <div>
-                          <div style={{ fontWeight: '500', color: '#333' }}>{productItem.productName}</div>
+                  {showDropdown && (
+                    <div style={{
+                      position: 'absolute',
+                      top: '100%',
+                      left: 0,
+                      right: 0,
+                      backgroundColor: 'white',
+                      border: '1px solid #ccc',
+                      borderRadius: '8px',
+                      maxHeight: '200px',
+                      overflowY: 'auto',
+                      zIndex: 1000,
+                      boxShadow: '0 4px 6px rgba(0,0,0,0.1)'
+                    }}>
+                      {products.length > 0 ? (
+                        products.map((productItem) => (
+                          <div
+                            key={productItem._id}
+                            onClick={() => handleProductSelect(productItem)}
+                            style={{
+                              padding: '10px 15px',
+                              cursor: 'pointer',
+                              borderBottom: '1px solid #f0f0f0',
+                              display: 'flex',
+                              justifyContent: 'space-between',
+                              alignItems: 'center'
+                            }}
+                            onMouseEnter={(e) => {
+                              e.target.style.backgroundColor = '#f8f9fa';
+                            }}
+                            onMouseLeave={(e) => {
+                              e.target.style.backgroundColor = 'white';
+                            }}
+                          >
+                            <div>
+                              <div style={{ fontWeight: '500', color: '#333' }}>{productItem.productName}</div>
+                            </div>
+                          </div>
+                        ))
+                      ) : (
+                        <div style={{ padding: '15px', textAlign: 'center', color: '#666', fontStyle: 'italic' }}>
+                          {loading ? 'Searching...' : 'No products found'}
                         </div>
-                      </div>
-                    ))
-                  ) : (
-                    <div style={{ padding: '15px', textAlign: 'center', color: '#666', fontStyle: 'italic' }}>
-                      {loading ? 'Searching...' : 'No products found'}
+                      )}
                     </div>
                   )}
                 </div>
-              )}
-                </div>
 
-            {/* <div ref={searchRef} style={{ position: 'relative' }}>
+                {/* <div ref={searchRef} style={{ position: 'relative' }}>
               <div style={{ border: '1px solid #ccc', color: "#999797ff", backgroundColor: "#FBFBFB", padding: '6px', borderRadius: '8px', display: 'flex', alignItems: 'center' }}>
                 <IoIosSearch style={{ fontSize: '25px', marginRight: '8px' }} />
                 <input
@@ -861,142 +861,142 @@ function Barcode() {
                 </div>
               )}
             </div> */}
-          </div>
-          </div>
+              </div>
+            </div>
 
-          {/* Selected Product Display */}
-          {selectedProduct && (
-            <div className="col-lg-12">
-        <div className="p-3 bg-light rounded border mb-3">
-          <div className="table-responsive rounded border">
-            <table className="table">
-              <thead>
-                <tr>
-                  <th>Product</th>
-                  <th>HSN</th>
-                    <th>Qty</th>
-                   <th>Rate</th>
-                  <th>SKU</th>
-                  <th>Action</th>
-                
-                  {/* <th className="text-center no-sort bg-secondary-transparent" /> */}
-                </tr>
-              </thead>
-              <tbody>
-                <tr>
-                  <td>
-                    <div className="d-flex align-items-center">
-                                    {selectedProduct.images && selectedProduct.images[0] && (
-                                         <a products className="avatar avatar-md me-2">
-                        <img src={selectedProduct.images[0].url} alt="product" />
-                      </a>
-                            // <img src={selectedProduct.images[0].url} style={{ width: '30px', height: '30px', borderRadius: '6px' }} />
-                          )}
-                   
-                      <a className='text-capitalize'>{selectedProduct.productName}</a>
-                    </div>												
-                  </td>
-                     <td>{selectedProduct.hsnCode || '0'}</td>
-                     <td>{selectedProduct.quantity || '0'}</td>
-                     <td>₹{selectedProduct.sellingPrice || '0'}.00</td>
-                  <td>{selectedProduct.sku}</td>
-                  {/* <td>HG3FK</td> */}
-                  
-                  {/* <td>
+            {/* Selected Product Display */}
+            {selectedProduct && (
+              <div className="col-lg-12">
+                <div className="p-3 bg-light rounded border mb-3">
+                  <div className="table-responsive rounded border">
+                    <table className="table">
+                      <thead>
+                        <tr>
+                          <th>Product</th>
+                          <th>HSN</th>
+                          <th>Qty</th>
+                          <th>Rate</th>
+                          <th>SKU</th>
+                          <th>Action</th>
+
+                          {/* <th className="text-center no-sort bg-secondary-transparent" /> */}
+                        </tr>
+                      </thead>
+                      <tbody>
+                        <tr>
+                          <td>
+                            <div className="d-flex align-items-center">
+                              {selectedProduct.images && selectedProduct.images[0] && (
+                                <a products className="avatar avatar-md me-2">
+                                  <img src={selectedProduct.images[0].url} alt="product" />
+                                </a>
+                                // <img src={selectedProduct.images[0].url} style={{ width: '30px', height: '30px', borderRadius: '6px' }} />
+                              )}
+
+                              <a className='text-capitalize'>{selectedProduct.productName}</a>
+                            </div>
+                          </td>
+                          <td>{selectedProduct.hsnCode || '0'}</td>
+                          <td>{selectedProduct.quantity || '0'}</td>
+                          <td>₹{selectedProduct.sellingPrice || '0'}.00</td>
+                          <td>{selectedProduct.sku}</td>
+                          {/* <td>HG3FK</td> */}
+
+                          {/* <td>
                     <div className="product-quantity border-secondary-transparent">
                       <span className="quantity-btn"><i data-feather="minus-circle" className="feather-search" /></span>                                                        
                       <input type="text" className="quntity-input" defaultValue={4} />
                       <span className="quantity-btn">+<i data-feather="plus-circle" className="plus-circle" /></span>
                     </div>
                   </td> */}
-                  <td className="action-table-data">
-                    <div className="edit-delete-action">
-                      <a onClick={clearSearch} data-bs-toggle="modal" data-bs-target="#delete-modal" className="barcode-delete-icon" products>
-                        <TbTrash data-feather="trash-2" className="feather-trash-2" />
-                      </a>
-                    </div>
-                  </td>
-                </tr>
-              
-              </tbody>
-            </table>
+                          <td className="action-table-data">
+                            <div className="edit-delete-action">
+                              <a onClick={clearSearch} data-bs-toggle="modal" data-bs-target="#delete-modal" className="barcode-delete-icon" products>
+                                <TbTrash data-feather="trash-2" className="feather-trash-2" />
+                              </a>
+                            </div>
+                          </td>
+                        </tr>
+
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              </div>
+              // <div sclassName="p-3 bg-light rounded border mb-3">
+              //   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+              //     <div style={{ fontWeight: '600', color: '#495057' }}>Selected Product Details :</div>
+              //     <button
+              //       onClick={clearSearch}
+              //       style={{
+              //         background: '#dc3545',
+              //         color: 'white',
+              //         border: 'none',
+              //         padding: '4px 8px',
+              //         borderRadius: '4px',
+              //         fontSize: '12px',
+              //         cursor: 'pointer'
+              //       }}
+              //     >
+              //       Clear
+              //     </button>
+              //   </div>
+              //   <div style={{ fontSize: '14px' }}>
+              //     <div style={{ fontSize: '16px', fontWeight: '500' }}>SKU</div>
+              //     <div style={{ border: '1px solid #ccc', color: "#999797ff", backgroundColor: "#FBFBFB", padding: '8px', borderRadius: '8px', display: 'flex', alignItems: 'center' }}>{selectedProduct.sku}</div>
+              //     <div style={{ border: '1px solid #ccc', marginTop: '10px', borderRadius: '8px' }}>
+              //       <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+              //         <thead style={{ backgroundColor: '#E6E6E6' }}>
+              //           <tr style={{ color: "#676767", }}>
+              //             <th style={{ padding: '8px', borderTopLeftRadius: '8px' }}> Variant</th>
+              //             <th>Price</th>
+              //             <th style={{ borderTopRightRadius: '8px' }}>Quantity</th>
+              //           </tr>
+              //         </thead>
+              //         <tbody>
+              //           <tr>
+              //             <td style={{ padding: '8px' }}>
+              //               {selectedProduct.images && selectedProduct.images[0] && (
+              //                 <img src={selectedProduct.images[0].url} style={{ width: '30px', height: '30px', borderRadius: '6px' }} />
+              //               )}
+              //               {selectedProduct.productName}
+              //             </td>
+              //             <td>₹{selectedProduct.sellingPrice || '0'}.00</td>
+              //             <td>{selectedProduct.quantity || '0'}</td>
+              //           </tr>
+              //         </tbody>
+              //       </table>
+              //     </div>
+              //   </div>
+              // </div>
+            )}
+
+            {!selectedProduct && (
+              <div style={{ border: '1px solid #ccc', color: "#999797ff", backgroundColor: "white", padding: '40px', borderRadius: '8px', marginTop: '24px', textAlign: 'center' }}>
+                <AiFillProduct style={{ fontSize: '25px' }} />
+                <br />
+                <span style={{ color: '#1368EC' }}>Search Product</span><span> to Generate Barcode</span>
+              </div>
+            )}
           </div>
-        </div>
-      </div>
-            // <div sclassName="p-3 bg-light rounded border mb-3">
-            //   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
-            //     <div style={{ fontWeight: '600', color: '#495057' }}>Selected Product Details :</div>
-            //     <button
-            //       onClick={clearSearch}
-            //       style={{
-            //         background: '#dc3545',
-            //         color: 'white',
-            //         border: 'none',
-            //         padding: '4px 8px',
-            //         borderRadius: '4px',
-            //         fontSize: '12px',
-            //         cursor: 'pointer'
-            //       }}
-            //     >
-            //       Clear
-            //     </button>
-            //   </div>
-            //   <div style={{ fontSize: '14px' }}>
-            //     <div style={{ fontSize: '16px', fontWeight: '500' }}>SKU</div>
-            //     <div style={{ border: '1px solid #ccc', color: "#999797ff", backgroundColor: "#FBFBFB", padding: '8px', borderRadius: '8px', display: 'flex', alignItems: 'center' }}>{selectedProduct.sku}</div>
-            //     <div style={{ border: '1px solid #ccc', marginTop: '10px', borderRadius: '8px' }}>
-            //       <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-            //         <thead style={{ backgroundColor: '#E6E6E6' }}>
-            //           <tr style={{ color: "#676767", }}>
-            //             <th style={{ padding: '8px', borderTopLeftRadius: '8px' }}> Variant</th>
-            //             <th>Price</th>
-            //             <th style={{ borderTopRightRadius: '8px' }}>Quantity</th>
-            //           </tr>
-            //         </thead>
-            //         <tbody>
-            //           <tr>
-            //             <td style={{ padding: '8px' }}>
-            //               {selectedProduct.images && selectedProduct.images[0] && (
-            //                 <img src={selectedProduct.images[0].url} style={{ width: '30px', height: '30px', borderRadius: '6px' }} />
-            //               )}
-            //               {selectedProduct.productName}
-            //             </td>
-            //             <td>₹{selectedProduct.sellingPrice || '0'}.00</td>
-            //             <td>{selectedProduct.quantity || '0'}</td>
-            //           </tr>
-            //         </tbody>
-            //       </table>
-            //     </div>
-            //   </div>
-            // </div>
-          )}
 
-          {!selectedProduct && (
-            <div style={{ border: '1px solid #ccc', color: "#999797ff", backgroundColor: "white", padding: '40px', borderRadius: '8px', marginTop: '24px', textAlign: 'center' }}>
-              <AiFillProduct style={{ fontSize: '25px' }} />
-              <br />
-              <span style={{ color: '#1368EC' }}>Search Product</span><span> to Generate Barcode</span>
-            </div>
-          )}
-        </div>
-
-        <div className='card p-4 mt-3'>
-          <strong>Set Barcode Details</strong>
-          <div className="row mt-3">
-               <div className="col-md-4">
-                            <div className="mb-3">
-                              <label className="form-label">Number of Barcode to print<span className="text-danger ms-1">*</span></label>
- <input
-                  type="number"
-                  name="numberOfBarcodes"
-                  value={numberOfBarcodes}
-                  onChange={handleChange}
-                  min="1"
-                  placeholder='01'
-                   className="form-control"
+          <div className='card p-4 mt-3'>
+            <strong>Set Barcode Details</strong>
+            <div className="row mt-3">
+              <div className="col-md-4">
+                <div className="mb-3">
+                  <label className="form-label">Number of Barcode to print<span className="text-danger ms-1">*</span></label>
+                  <input
+                    type="number"
+                    name="numberOfBarcodes"
+                    value={numberOfBarcodes}
+                    onChange={handleChange}
+                    min="1"
+                    placeholder='01'
+                    className="form-control"
                   // style={{ border: '1px solid #ccc', color: "#999797ff", backgroundColor: "#FBFBFB", padding: '6px', borderRadius: '8px', width: '100%' }}
-                   />
-                              {/* <select
+                  />
+                  {/* <select
                                 className="form-select"
                                 name="status"
                                 value={status}
@@ -1008,41 +1008,41 @@ function Barcode() {
                                 <option value="In Progress">In Progress</option>
                                 <option value="On Hold">On Hold</option>
                               </select> */}
-                            </div>
-                          </div>
-               <div className="col-md-4">
-                            <div className="mb-3">
-                              <label className="form-label">Lable Formate
-                                {/* <span className="text-danger ms-1">*</span> */}
-                                </label>
-                              <select className="form-select" type="text" >
-                                  <option value="">--Select Lable--</option>
-                  <option>Large</option>
-                  <option>Mediam</option>
-                  <option>Small</option>
-                </select>
-                            </div>
-                          </div>
-               <div className="col-md-4">
-                            <div className="mb-3">
-                              <label className="form-label">Page Type & Size
-                                {/* <span className="text-danger ms-1">*</span> */}
-                                </label>
+                </div>
+              </div>
+              <div className="col-md-4">
+                <div className="mb-3">
+                  <label className="form-label">Lable Formate
+                    {/* <span className="text-danger ms-1">*</span> */}
+                  </label>
+                  <select className="form-select" type="text" >
+                    <option value="">--Select Lable--</option>
+                    <option>Large</option>
+                    <option>Mediam</option>
+                    <option>Small</option>
+                  </select>
+                </div>
+              </div>
+              <div className="col-md-4">
+                <div className="mb-3">
+                  <label className="form-label">Page Type & Size
+                    {/* <span className="text-danger ms-1">*</span> */}
+                  </label>
 
-                              <select
-                                className="form-select"
-                                name="status"
-                               
-                              >
-                                <option>A4</option>
-                            
-                              </select>
-                            </div>
-                          </div>
+                  <select
+                    className="form-select"
+                    name="status"
 
-          </div>
+                  >
+                    <option>A4</option>
 
-          {/* <div style={{ marginTop: '16px' }}>
+                  </select>
+                </div>
+              </div>
+
+            </div>
+
+            {/* <div style={{ marginTop: '16px' }}>
 
             <div style={{ display: 'flex', justifyContent: 'space-between', gap: '16px' }}>
               <div style={{ width: '100%' }}>
@@ -1074,7 +1074,7 @@ function Barcode() {
               </div>
             </div>
           </div> */}
-{/* 
+            {/* 
           <div style={{ marginTop: '16px' }}>
             <div>Barcode Content Options</div>
             <div style={{ display: 'flex', justifyContent: 'space-between', gap: '16px' }}>
@@ -1122,69 +1122,69 @@ function Barcode() {
 
                 {/* <div className="col-lg-6 pt-3"> */}
 
-                  <div className="row mt-3 " >
-                    <div className="col-4 col-sm-2">
-                      <div className="search-toggle-list">
-                        <p>Show Product Name</p>
-                        <div className="m-0">
-                          <div className="status-toggle modal-status d-flex justify-content-between align-items-center">
-                            <input
-                              type="checkbox"
-                              id="showProductName"
-                              className="check"
-                              name="showProductName"
-                              checked={product.showProductName}
-                              onChange={handleChange}
-                            />
-                            <label htmlFor="showProductName" className="checktoggle mb-0" />
-                          </div>
+                <div className="row mt-3 " >
+                  <div className="col-4 col-sm-2">
+                    <div className="search-toggle-list">
+                      <p>Show Product Name</p>
+                      <div className="m-0">
+                        <div className="status-toggle modal-status d-flex justify-content-between align-items-center">
+                          <input
+                            type="checkbox"
+                            id="showProductName"
+                            className="check"
+                            name="showProductName"
+                            checked={product.showProductName}
+                            onChange={handleChange}
+                          />
+                          <label htmlFor="showProductName" className="checktoggle mb-0" />
                         </div>
                       </div>
                     </div>
-                    <div className="col-4 col-sm-2">
-                      <div className="search-toggle-list">
-                        <p>Show Price</p>
-                        <div className="m-0">
-                          <div className="status-toggle modal-status d-flex justify-content-between align-items-center">
-                            <input
-                              type="checkbox"
-                              id="showPrice"
-                              className="check"
-                              name="showPrice"
-                              checked={product.showPrice}
-                              onChange={handleChange}
-                            />
-                            <label htmlFor="showPrice" className="checktoggle mb-0" />
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-
-                    <div className="col-4 col-sm-2">
-                      <div className="search-toggle-list">
-                        <p>Show Expiry Date</p>
-                        <div className="m-0">
-                          <div className="status-toggle modal-status d-flex justify-content-between align-items-center">
-                            <input
-                              type="checkbox"
-                              id="showExpiryDate"
-                              className="check"
-                              name="showExpiryDate"
-                              checked={product.showExpiryDate}
-                              onChange={handleChange}
-                            />
-                            <label htmlFor="showExpiryDate" className="checktoggle mb-0" />
-                          </div>
+                  </div>
+                  <div className="col-4 col-sm-2">
+                    <div className="search-toggle-list">
+                      <p>Show Price</p>
+                      <div className="m-0">
+                        <div className="status-toggle modal-status d-flex justify-content-between align-items-center">
+                          <input
+                            type="checkbox"
+                            id="showPrice"
+                            className="check"
+                            name="showPrice"
+                            checked={product.showPrice}
+                            onChange={handleChange}
+                          />
+                          <label htmlFor="showPrice" className="checktoggle mb-0" />
                         </div>
                       </div>
                     </div>
                   </div>
 
+                  <div className="col-4 col-sm-2">
+                    <div className="search-toggle-list">
+                      <p>Show Expiry Date</p>
+                      <div className="m-0">
+                        <div className="status-toggle modal-status d-flex justify-content-between align-items-center">
+                          <input
+                            type="checkbox"
+                            id="showExpiryDate"
+                            className="check"
+                            name="showExpiryDate"
+                            checked={product.showExpiryDate}
+                            onChange={handleChange}
+                          />
+                          <label htmlFor="showExpiryDate" className="checktoggle mb-0" />
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
                 {/* </div> */}
 
               </div>
-            </div> 
-      {/* <div className="search-barcode-button">                            
+            </div>
+            {/* <div className="search-barcode-button">                            
         <a className="btn btn-submit btn-primary me-2 mt-0" data-bs-toggle="modal" data-bs-target="#prints-barcode">
           <span><i className="fas fa-eye me-1" /></span>Generate Barcode
         </a>
@@ -1211,9 +1211,9 @@ function Barcode() {
               </div>
             </div>
 
-        </div>
+          </div>
 
-        {/* <div
+          {/* <div
           style={{
             display: "flex",
             justifyContent: "space-between",
@@ -1257,141 +1257,155 @@ function Barcode() {
           </button>
         </div> */}
 
-        {/* Show Barcode SVG */}
-        {isFormOpen && (
-          <div className="modal fade" id="prints-barcode">
-  <div className="modal-dialog modal-dialog-centered stock-adjust-modal barcode-modal">
-    <div className="modal-content">
-      <div className="modal-header">
-        <div className="page-title">
-          <h4>Barcode</h4>
-        </div>
-        <button type="button" className="close bg-danger text-white fs-16 shadow-none" data-bs-dismiss="modal" aria-label="Close">
-          <span aria-hidden="true">×</span>
-        </button>
-      </div>
-      <div className="modal-body pb-0">
-        <div className="d-flex justify-content-end">
-          <a onClick={handleDownloadPDF} className="btn btn-cancel close-btn btn-danger shadow-none me-2">
-            <span><FaFilePdf className="fas fa-print me-2" /></span>                                  
-          </a>
-          <a onClick={handlePrint} className="btn btn-cancel close-btn btn-danger shadow-none">
-            <span><IoPrint className="fas fa-print me-2" /></span>                                  
-            Print Barcode</a>
-        </div>
-      
-        <div ref={printRef}  className="row mt-3">
-           {Array.from({ length: numberOfBarcodes || 1 }).map((_, index) => (
-             <div className="col-sm-4">
-            <div className="barcode-scanner-link text-center">
-                           {product.showProductName && product.productName && (
-                        <h6>{product.productName}</h6>
-                      )}
-              
-                       {product.showPrice && product.price && (
-                       <p>Price: ₹{product.price}</p> 
-                       
-                      )}
-                                       {product.showExpiryDate && product.expiryDate && (
-                          <p>Expiry: {new Date(product.expiryDate).toLocaleDateString()}</p>
-                        )}
-            
-             
-                  {product.barcode && (
-                  <svg id={`barcode-svg-${index}`}></svg>
-                     )}
-            </div>                                                
-          </div>))}
-        
-         
-        </div>   
-     
-      </div>
-    </div>
-  </div>
-</div>
+          {/* Show Barcode SVG */}
+          {isFormOpen && (
+            <div className="modal fade" id="prints-barcode">
+              <div className="modal-dialog modal-dialog-centered stock-adjust-modal barcode-modal">
+                <div className="modal-content">
+                  <div className="modal-header">
+                    <div className="page-title">
+                      <h4>Barcode</h4>
+                    </div>
+                    <button type="button" className="close bg-danger text-white fs-16 shadow-none" data-bs-dismiss="modal" aria-label="Close">
+                      <span aria-hidden="true">×</span>
+                    </button>
+                  </div>
+                  <div className="modal-body pb-0">
+                    <div className="d-flex justify-content-end">
+                      <a onClick={handleDownloadPDF} className="btn btn-cancel close-btn btn-danger shadow-none me-2">
+                        <span><FaFilePdf className="fas fa-print me-2" /></span>
+                      </a>
+                      <a onClick={handlePrint} className="btn btn-cancel close-btn btn-danger shadow-none">
+                        <span><IoPrint className="fas fa-print me-2" /></span>
+                        Print Barcode</a>
+                    </div>
 
-          // <div style={{
-          //   position: 'fixed',
-          //   top: '0',
-          //   left: '0',
-          //   width: '100%',
-          //   height: '100%',
-          //   backgroundColor: 'rgba(199, 197, 197, 0.4)',
-          //   backdropFilter: 'blur(1px)',
-          //   display: 'flex',
-          //   justifyContent: 'center',
-          //   zIndex: '10',
-          //   overflowY: 'auto',
-          // }}>
-          //   <div ref={formRef} style={{ width: '760px', height: 'auto', margin: 'auto', marginTop: '80px', marginBottom: '80px', backgroundColor: 'white', border: '1px solid #E1E1E1', borderRadius: '8px', padding: '10px 16px', overflowY: 'auto' }}>
-          //     <div style={{ position: 'fixed', width: '725px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid #E1E1E1', backgroundColor: '#fff', zIndex: '100', marginTop: '-10px', padding: '10px 0px' }}>
-          //       <div style={{ display: 'flex', gap: '10px' }}>
-          //         <button
-          //           type="button"
-          //           className="icon-btn"
-          //           title="Pdf"
-          //           onClick={handleDownloadPDF}
-          //         >
-          //           <FaFilePdf style={{ color: "red" }} />
-          //         </button>
-          //         <button
-          //           type="button"
-          //           className="icon-btn"
-          //           title="Pdf"
-          //           onClick={handlePrint}
-          //         >
-          //           <IoPrint  style={{fontSize:'22px'}} /> Print
-          //         </button>
-          //       </div>
-          //       <div style={{}}>
-          //         <span style={{ backgroundColor: 'red', color: 'white', padding: '5px 11px', borderRadius: '50%', cursor: 'pointer', fontSize: '20px' }} onClick={handlePopupClose}>x</span>
-          //       </div>
-          //     </div>
+                    <div ref={printRef} className="row mt-3" style={{ display: 'flex', flexWrap: 'wrap', gap: '10px' }}>
+                      {Array.from({ length: numberOfBarcodes || 1 }).map((_, index) => (
+                        <div className="col-sm-4" style={{
+                          width: 'calc(33.333% - 7px)',
+                          display: 'inline-block',
+                          verticalAlign: 'top',
+                          boxSizing: 'border-box',
 
-          //     <div ref={printRef} className='row' style={{ marginTop: '60px', marginLeft: '1px' }}>
-          //       {Array.from({ length: numberOfBarcodes || 1 }).map((_, index) => (
-          //         <div key={index} className='col-6' style={{ height: '300px', }}>
-          //           <div style={{ marginTop: "10px", border: '2px solid #E6E6E6', borderRadius: '8px', width: '320px', padding: '16px 24px', height: '280px', marginBottom: '10px' }}>
-          //             {product.showProductName && product.productName && (
-          //               <span style={{ fontWeight: '600', color: 'black' }}>{product.productName}</span>
-          //             )}
-          //             {product.showSku && product.sku && (
-          //               <>
-          //                 <br />
-          //                 <span style={{ color: 'black' }}>SKU: {product.sku}</span>
-          //               </>
-          //             )}
-          //             {product.showPrice && product.price && (
-          //               <>
-          //                 <br /><br />
-          //                 <span style={{ fontWeight: '500', color: 'black' }}>MRP: ₹{product.price}</span>
-          //               </>
-          //             )}
-          //             <br />
-          //             <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-          //               {product.showExpiryDate && product.expiryDate && (
-          //                 <span style={{ color: 'black' }}>Expiry: {new Date(product.expiryDate).toLocaleDateString()}</span>
-          //               )}
-          //               {product.showQuantity && product.quantity && (
-          //                 <span style={{ color: 'black' }}>QTY: {product.quantity}</span>
-          //               )}
-          //             </div>
-          //             <div style={{ marginTop: '10px', textAlign: 'center' }}>
-          //               {product.barcode && (
-          //                 <svg id={`barcode-svg-${index}`}></svg>
-          //               )}
-          //             </div>
-          //           </div>
-          //         </div>
-          //       ))}
-          //     </div>
-          //   </div>
-          // </div>
-        )}
+                        }}>
+                          <div className="barcode-scanner-link text-center" style={{
+                            padding: '15px',
+                            border: '1px solid #ddd',
+                            borderRadius: '5px',
+                            backgroundColor: '#fff',
+                            margin: '5px 0',
+                            width: '90%',
+                            height: '200px',
+                          }}>
+                            {product.showProductName && product.productName && (
+                              <h6>{product.productName}</h6>
+                            )}
+
+                            {product.showPrice && product.price && (
+                              <p>Price: ₹{product.price}</p>
+
+                            )}
+                            {product.showExpiryDate && product.expiryDate && (
+                              <p>Expiry: {new Date(product.expiryDate).toLocaleDateString()}</p>
+                            )}
+
+
+                            {product.barcode && (
+                              <svg id={`barcode-svg-${index}`}></svg>
+                            )}
+                          </div>
+                        </div>))}
+
+
+                    </div>
+
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            // <div style={{
+            //   position: 'fixed',
+            //   top: '0',
+            //   left: '0',
+            //   width: '100%',
+            //   height: '100%',
+            //   backgroundColor: 'rgba(199, 197, 197, 0.4)',
+            //   backdropFilter: 'blur(1px)',
+            //   display: 'flex',
+            //   justifyContent: 'center',
+            //   zIndex: '10',
+            //   overflowY: 'auto',
+            // }}>
+            //   <div ref={formRef} style={{ width: '760px', height: 'auto', margin: 'auto', marginTop: '80px', marginBottom: '80px', backgroundColor: 'white', border: '1px solid #E1E1E1', borderRadius: '8px', padding: '10px 16px', overflowY: 'auto' }}>
+            //     <div style={{ position: 'fixed', width: '725px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid #E1E1E1', backgroundColor: '#fff', zIndex: '100', marginTop: '-10px', padding: '10px 0px' }}>
+            //       <div style={{ display: 'flex', gap: '10px' }}>
+            //         <button
+            //           type="button"
+            //           className="icon-btn"
+            //           title="Pdf"
+            //           onClick={handleDownloadPDF}
+            //         >
+            //           <FaFilePdf style={{ color: "red" }} />
+            //         </button>
+            //         <button
+            //           type="button"
+            //           className="icon-btn"
+            //           title="Pdf"
+            //           onClick={handlePrint}
+            //         >
+            //           <IoPrint  style={{fontSize:'22px'}} /> Print
+            //         </button>
+            //       </div>
+            //       <div style={{}}>
+            //         <span style={{ backgroundColor: 'red', color: 'white', padding: '5px 11px', borderRadius: '50%', cursor: 'pointer', fontSize: '20px' }} onClick={handlePopupClose}>x</span>
+            //       </div>
+            //     </div>
+
+            //     <div ref={printRef} className='row' style={{ marginTop: '60px', marginLeft: '1px' }}>
+            //       {Array.from({ length: numberOfBarcodes || 1 }).map((_, index) => (
+            //         <div key={index} className='col-6' style={{ height: '300px', }}>
+            //           <div style={{ marginTop: "10px", border: '2px solid #E6E6E6', borderRadius: '8px', width: '320px', padding: '16px 24px', height: '280px', marginBottom: '10px' }}>
+            //             {product.showProductName && product.productName && (
+            //               <span style={{ fontWeight: '600', color: 'black' }}>{product.productName}</span>
+            //             )}
+            //             {product.showSku && product.sku && (
+            //               <>
+            //                 <br />
+            //                 <span style={{ color: 'black' }}>SKU: {product.sku}</span>
+            //               </>
+            //             )}
+            //             {product.showPrice && product.price && (
+            //               <>
+            //                 <br /><br />
+            //                 <span style={{ fontWeight: '500', color: 'black' }}>MRP: ₹{product.price}</span>
+            //               </>
+            //             )}
+            //             <br />
+            //             <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+            //               {product.showExpiryDate && product.expiryDate && (
+            //                 <span style={{ color: 'black' }}>Expiry: {new Date(product.expiryDate).toLocaleDateString()}</span>
+            //               )}
+            //               {product.showQuantity && product.quantity && (
+            //                 <span style={{ color: 'black' }}>QTY: {product.quantity}</span>
+            //               )}
+            //             </div>
+            //             <div style={{ marginTop: '10px', textAlign: 'center' }}>
+            //               {product.barcode && (
+            //                 <svg id={`barcode-svg-${index}`}></svg>
+            //               )}
+            //             </div>
+            //           </div>
+            //         </div>
+            //       ))}
+            //     </div>
+            //   </div>
+            // </div>
+          )}
+        </div>
       </div>
-</div>
-   
+
 
     </div>
   );

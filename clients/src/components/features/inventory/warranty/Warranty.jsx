@@ -44,6 +44,63 @@ const calculateDuration = (fromDate, toDate) => {
   return `${(totalMonths / 12).toFixed(1)} years`;
 };
 
+// Function to check if warranty has expired and update status
+const checkAndUpdateExpiredWarranties = async (warranties) => {
+  const currentDate = new Date();
+  const expiredWarranties = [];
+  
+  const updatedWarranties = warranties.map(warranty => {
+    const toDate = new Date(warranty.toDate);
+    
+    // If warranty has expired and is still active, mark it for update
+    if (toDate < currentDate && warranty.status === true) {
+      expiredWarranties.push(warranty.id);
+      return { ...warranty, status: false };
+    }
+    
+    return warranty;
+  });
+  
+  // Update expired warranties in the backend
+  if (expiredWarranties.length > 0) {
+    try {
+      const token = localStorage.getItem("token");
+      
+      // Update each expired warranty
+      const updatePromises = expiredWarranties.map(async (warrantyId) => {
+        const warranty = warranties.find(w => w.id === warrantyId);
+        const response = await fetch(`${BASE_URL}/api/warranty/${warrantyId}`, {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({
+            ...warranty,
+            status: false
+          }),
+        });
+        
+        if (!response.ok) {
+          console.error(`Failed to update warranty ${warrantyId}`);
+        }
+        
+        return response;
+      });
+      
+      await Promise.all(updatePromises);
+      
+      if (expiredWarranties.length > 0) {
+        toast.info(`${expiredWarranties.length} warranty(ies) automatically set to inactive due to expiration.`);
+      }
+    } catch (error) {
+      console.error("Error updating expired warranties:", error);
+    }
+  }
+  
+  return updatedWarranties;
+};
+
 
 
 const Warranty = ({ show, handleClose }) => {
@@ -95,7 +152,10 @@ const Warranty = ({ show, handleClose }) => {
         return dateB - dateA; // Newest first
       });
 
-      setWarrantydata(sortedData);
+      // Check for expired warranties and update their status automatically
+      const finalData = await checkAndUpdateExpiredWarranties(sortedData);
+
+      setWarrantydata(finalData);
     } catch (err) {
       setError(err.message);
     } finally {
@@ -106,6 +166,22 @@ const Warranty = ({ show, handleClose }) => {
   useEffect(() => {
     fetchWarrantyData();
   }, []);
+
+  // Periodic check for expired warranties (runs every hour)
+  useEffect(() => {
+    const checkExpiredWarranties = async () => {
+      if (Warrantydata.length > 0) {
+        const updatedData = await checkAndUpdateExpiredWarranties(Warrantydata);
+        setWarrantydata(updatedData);
+      }
+    };
+
+    // Set up interval to check every hour (3600000 ms)
+    const intervalId = setInterval(checkExpiredWarranties, 3600000);
+
+    // Cleanup interval on component unmount
+    return () => clearInterval(intervalId);
+  }, [Warrantydata]);
 
 
 
@@ -317,9 +393,10 @@ const Warranty = ({ show, handleClose }) => {
       // console.log("Updated Warranty:", data);
       // console.log("Edit Form Data ID:", editFormData.id);
 
-      // Ensure we use the correct ID for updating
+      // Ensure we use the correct ID for updating and preserve all form data
       const updatedWarranty = {
-        ...data,
+        ...editFormData, // Start with the form data to ensure all fields are preserved
+        ...data, // Override with API response data
         id: data._id || data.id || editFormData.id,
         duration: calculateDuration(data.fromDate || editFormData.fromDate, data.toDate || editFormData.toDate)
       };
@@ -545,7 +622,7 @@ const Warranty = ({ show, handleClose }) => {
 							</li> */}
           </ul>
           <div className="page-btn">
-            <a href="#" className="btn btn-primary" data-bs-toggle="modal" data-bs-target="#add-warranty" onClick={handleShow}><i
+            <a href="#" className="btn btn-primary" onClick={handleShow}><i
               className="ti ti-circle-plus me-1" />Add Warranty</a>
           </div>
         </div>
@@ -579,12 +656,12 @@ const Warranty = ({ show, handleClose }) => {
             </div>
             <div className="table-dropdown my-xl-auto right-content">
               <div className="dropdown">
-                <Button
+                <a
                   className="btn btn-white btn-md d-inline-flex align-items-center"
                   data-bs-toggle="dropdown"
                 >
                   Sort By: {statusFilter.charAt(0).toUpperCase() + statusFilter.slice(1) || "Status"}
-                </Button>
+                </a>
                 <ul className="dropdown-menu dropdown-menu-end p-3">
                   <li>
                     <a
@@ -636,7 +713,7 @@ const Warranty = ({ show, handleClose }) => {
                     <th>To Date</th>
                     <th>Duration</th>
                     <th>Status</th>
-                    <th className="no-sort" />
+                    <th style={{textAlign:"center"}}>Actions</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -657,7 +734,7 @@ const Warranty = ({ show, handleClose }) => {
                         </td>
                         <td className="text-gray-9">{item.warranty}</td>
                         <td>
-                          <p className="description-para">{item.description.length > 15 ? item.description.slice(0, 15) + "..." : item.description}</p>
+                          <p className="description-para">{item.description && item.description.length > 15 ? item.description.slice(0, 15) + "..." : (item.description || "")}</p>
                         </td>
                         <td>{dayjs(item.fromDate).format("YYYY-MM-DD")}</td>
                         <td> {dayjs(item.toDate).format("YYYY-MM-DD")}</td>
@@ -672,12 +749,10 @@ const Warranty = ({ show, handleClose }) => {
                         </td>
                         <td className="action-table-data">
                           <div className="edit-delete-action">
-                            <a className="me-2 p-2" href="#" data-bs-toggle="modal"
-                              data-bs-target="#edit-warranty" onClick={() => handleEditOpen(item)}>
+                            <a className="me-2 p-2" href="#" onClick={() => handleEditOpen(item)}>
                               <TbEdit data-feather="edit" className="feather-edit" />
                             </a>
-                            <a data-bs-toggle="modal" data-bs-target="#delete-modal" className="p-2"
-                              onClick={() => openDeleteModal(item.id)}>
+                            <a className="p-2" href="#" onClick={() => openDeleteModal(item.id)}>
                               <TbTrash data-feather="trash-2" className="feather-trash-2" />
                               {/* <RiDeleteBinLine /> */}
                             </a>

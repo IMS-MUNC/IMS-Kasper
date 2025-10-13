@@ -13,13 +13,8 @@ import { TbChevronUp, TbEye, TbRefresh } from "react-icons/tb";
 import { useTranslation } from "react-i18next";
 import DOMPurify from "dompurify";
 
-
-
 const ProductForm = () => {
-
   const { t } = useTranslation();
-
-
 
   // Improved regex patterns for validation with examples
   // Example: productName: "Apple iPhone 15"
@@ -43,7 +38,7 @@ const ProductForm = () => {
     productName: /^[A-Za-z0-9\s\-]{2,50}$/,
     sku: /^[A-Z0-9\-]{3,20}$/,
     price: /^\d+(\.\d{1,2})?$/,
-    quantity: /^\d{1,10}$/,
+       quantity: /^(?:[1-9]\d*)$/,
     description: /^[\w\s.,!?\-]{0,300}$/,
     seoTitle: /^[a-zA-Z0-9\s\-]{2,60}$/,
     seoDescription: /^[a-zA-Z0-9\s\-,.]{2,160}$/,
@@ -70,7 +65,9 @@ const ProductForm = () => {
     // Remove HTML tags
     input = input.replace(/<[^>]*>?/gm, "");
     // Normalize whitespace
-    input = preserveSpaces ? input.replace(/\s+/g, " ") : input.trim().replace(/\s+/g, " ");
+    input = preserveSpaces
+      ? input.replace(/\s+/g, " ")
+      : input.trim().replace(/\s+/g, " ");
     // Remove dangerous characters (optional)
     input = input.replace(/[\u0000-\u001F\u007F-\u009F]/g, "");
     // DOMPurify fallback for extra safety
@@ -78,12 +75,11 @@ const ProductForm = () => {
     return input;
   };
 
-
   const steps = [
     t("descriptionAndMedia"),
     t("pricing"),
     t("images"),
-    t("variants")
+    t("variants"),
   ];
   const variantTabs = [
     t("color"),
@@ -94,7 +90,7 @@ const ProductForm = () => {
     t("weight"),
     t("skinType"),
     t("packagingType"),
-    t("flavour")
+    t("flavour"),
   ];
   // const navigate = useNavigate();
   const [step, setStep] = useState(0);
@@ -113,71 +109,113 @@ const ProductForm = () => {
     setFormData((prev) => ({ ...prev, [key]: sanitizedValue }));
   };
 
-  const validateStep = () => {
-    if (step === 0) {
-      return formData.productName;
-    }
-    if (step === 1) {
-      return formData.purchasePrice;
-    }
-    if (step === 2) {
-      return formData.description;
-    }
-    // if (step === 3) {
-    //   // Check if at least one variant has both name and value
-    //   return variants.some(variant => variant.variantName && variant.variantValue);
-    // }
-    return true;
-    // Improved comprehensive validation
-    const errors = {};
-    let isValid = true;
+  //  const validateStep = () => {
+  //   const errors = {};
+  //   let isValid = true;
 
-    // if (step === 0) {
-    //   if (!formData.productName) errors.productName = t("fieldRequired");
-    //   if (!formData.sku) errors.sku = t("fieldRequired");
-    //   if (!formData.itemBarcode) errors.itemBarcode = t("fieldRequired");
-    //   if (!selectedCategory) errors.category = t("fieldRequired");
-    //   if (!selectedsubCategory) errors.subCategory = t("fieldRequired");
-    //   if (!selectedSupplier) errors.supplier = t("fieldRequired");
-    //   if (!formData.store) errors.store = t("fieldRequired");
-    //   if (!selectedWarehouse) errors.warehouse = t("fieldRequired");
-    //   if (!selectedHSN) errors.hsn = t("fieldRequired");
-    //   if (formData.isAdvanced) {
-    //     if (!formData.leadTime) errors.leadTime = t("fieldRequired");
-    //     if (!formData.reorderLevel) errors.reorderLevel = t("fieldRequired");
-    //     if (!formData.initialStock) errors.initialStock = t("fieldRequired");
-    //     if (formData.trackType === "serial" && !formData.serialNumber) errors.serialNumber = t("fieldRequired");
-    //     if (formData.trackType === "batch" && !formData.batchNumber) errors.batchNumber = t("fieldRequired");
-    //   }
-    // } else if (step === 1) {
-    //   if (!formData.purchasePrice) errors.purchasePrice = t("fieldRequired");
-    //   if (!formData.quantity) errors.quantity = t("fieldRequired");
-    //   if (!selectedUnits) errors.unit = t("fieldRequired");
-    //   if (!formData.taxType) errors.taxType = t("fieldRequired");
-    //   if (!formData.tax) errors.tax = t("fieldRequired");
-    //   if (!formData.discountType) errors.discountType = t("fieldRequired");
-    //   if (!formData.discountValue) errors.discountValue = t("fieldRequired");
-    //   if (!formData.quantityAlert) errors.quantityAlert = t("fieldRequired");
-    // } else if (step === 2) {
-    //   if (!formData.description) errors.description = t("fieldRequired");
-    // } else if (step === 3) {
-    //   const hasValidVariant = variants.some(variant => variant.variantName && variant.variantValue);
-    //   if (!hasValidVariant) {
-    //     errors.variants = t("atLeastOneVariantRequired");
-    //   }
-    //   variants.forEach((variant, index) => {
-    //     if (variant.variantValue) {
-    //       const error = validateField("variantValue", variant.variantValue);
-    //       if (error) errors[`variantValue_${index}`] = error;
-    //     }
-    //   });
-    // }
+  //   if (step === 0) {
+  //     // Step 0: Basic Info
+  //     if (!formData.productName || !validationPatterns.productName.test(formData.productName)) {
+  //       errors.productName = formData.productName ? t("invalidProductName") : t("fieldRequired");
+  //     }
+  //     if (!formData.sku || !validationPatterns.sku.test(formData.sku)) {
+  //       errors.sku = formData.sku ? t("invalidSKUFormat") : t("fieldRequired");
+  //     }
+  //     if (!selectedCategory) {
+  //       errors.category = t("fieldRequired");
+  //     }
+  //     if (!selectedsubCategory) {
+  //       errors.subCategory = t("fieldRequired");
+  //     }
+  //     if (!formData.store) {
+  //       errors.store = t("fieldRequired");
+  //     }
+  //     if (!selectedWarehouse) {
+  //       errors.warehouse = t("fieldRequired");
+  //     }
+  //     if (!selectedHSN) {
+  //       errors.hsn = t("fieldRequired");
+  //     }
+  //     if (formData.isAdvanced) {
+  //       if (!formData.leadTime || !validationPatterns.leadTime.test(formData.leadTime)) {
+  //         errors.leadTime = formData.leadTime ? t("invalidLeadTimeFormat") : t("fieldRequired");
+  //       }
+  //       if (!formData.reorderLevel || !validationPatterns.reorderLevel.test(formData.reorderLevel)) {
+  //         errors.reorderLevel = formData.reorderLevel ? t("invalidReorderLevelFormat") : t("fieldRequired");
+  //       }
+  //       if (!formData.initialStock || !validationPatterns.initialStock.test(formData.initialStock)) {
+  //         errors.initialStock = formData.initialStock ? t("invalidInitialStockFormat") : t("fieldRequired");
+  //       }
+  //       if (formData.trackType === "serial" && (!formData.serialNumber || !validationPatterns.serialNumber.test(formData.serialNumber))) {
+  //         errors.serialNumber = formData.serialNumber ? t("invalidSerialNumberFormat") : t("fieldRequired");
+  //       }
+  //       if (formData.trackType === "batch" && (!formData.batchNumber || !validationPatterns.batchNumber.test(formData.batchNumber))) {
+  //         errors.batchNumber = formData.batchNumber ? t("invalidBatchNumberFormat") : t("fieldRequired");
+  //       }
+  //     }
+  //   } else if (step === 1) {
+  //     // Step 1: Pricing
+  //     if (!formData.purchasePrice || !validationPatterns.price.test(formData.purchasePrice)) {
+  //       errors.purchasePrice = formData.purchasePrice ? t("invalidPriceFormat") : t("fieldRequired");
+  //     }
+  //     if (!formData.quantity || !validationPatterns.quantity.test(formData.quantity)) {
+  //       errors.quantity = formData.quantity ? t("invalidQuantityFormat") : t("fieldRequired");
+  //     }
+  //     if (!formData.sellingPrice || !validationPatterns.price.test(formData.sellingPrice)) {
+  //       errors.sellingPrice = formData.sellingPrice ? t("invalidPriceFormat") : t("fieldRequired");
+  //     }
+  //     if (!formData.wholesalePrice || !validationPatterns.price.test(formData.wholesalePrice)) {
+  //       errors.wholesalePrice = formData.wholesalePrice ? t("invalidPriceFormat") : t("fieldRequired");
+  //     }
+  //     if (!formData.retailPrice || !validationPatterns.price.test(formData.retailPrice)) {
+  //       errors.retailPrice = formData.retailPrice ? t("invalidPriceFormat") : t("fieldRequired");
+  //     }
+  //     if (!selectedUnits) {
+  //       errors.unit = t("fieldRequired");
+  //     }
+  //     if (!formData.taxType) {
+  //       errors.taxType = t("fieldRequired");
+  //     }
+  //     if (!formData.tax) {
+  //       errors.tax = t("fieldRequired");
+  //     }
+  //     if (!formData.discountType) {
+  //       errors.discountType = t("fieldRequired");
+  //     }
+  //     if (!formData.discountValue || !validationPatterns.discountValue.test(formData.discountValue)) {
+  //       errors.discountValue = formData.discountValue ? t("invalidDiscountValueFormat") : t("fieldRequired");
+  //     }
+  //     if (!formData.quantityAlert || !validationPatterns.quantityAlert.test(formData.quantityAlert)) {
+  //       errors.quantityAlert = formData.quantityAlert ? t("invalidQuantityAlertFormat") : t("fieldRequired");
+  //     }
+  //   } else if (step === 2) {
+  //     // Step 2: Images & SEO
+  //     if (!formData.description || !validationPatterns.description.test(formData.description)) {
+  //       errors.description = formData.description ? t("invalidDescriptionFormat") : t("fieldRequired");
+  //     }
+  //     // Optional: Add validation for images if required
+  //     // if (images.length === 0) {
+  //     //   errors.images = t("atLeastOneImageRequired");
+  //     // }
+  //   } else if (step === 3) {
+  //     // Step 3: Variants
+  //     // const hasValidVariant = variants.some(
+  //     //   (variant) => variant.selectedVariant && variant.selectedValue
+  //     // );
+  //     // if (!hasValidVariant) {
+  //     //   errors.variants = t("atLeastOneVariantRequired");
+  //     // }
+  //     variants.forEach((variant, index) => {
+  //       if (variant.selectedValue && !validationPatterns.variantValue.test(variant.selectedValue)) {
+  //         errors[`variantValue_${index}`] = t("invalidVariantFormat");
+  //       }
+  //     });
+  //   }
 
-    setFormErrors(errors);
-    isValid = Object.keys(errors).length === 0;
-    return isValid;
-
-  };
+  //   setFormErrors(errors);
+  //   isValid = Object.keys(errors).length === 0;
+  //   return isValid;
+  // };
 
   //  const validateStep = () => {
   //   if (step === 3) {
@@ -186,27 +224,189 @@ const ProductForm = () => {
   //   return true; // Assume all other steps valid for now
   // };
 
-  const handleNext = () => {
-    // const isValid = validateStep();
-    // const updatedStatus = [...stepStatus];
-    // updatedStatus[step] = isValid ? "complete" : "incomplete";
-    // setStepStatus(updatedStatus);
+  const validateStep = () => {
+    const newErrors = {};
 
-    // if (isValid && step < steps.length - 1) {
-    //   setStep((prev) => prev + 1);
-    // }
-    const isValid = validateStep();
+    if (step === 0) {
+      // Step 0: Basic Info
+      if (!formData.productName)
+        newErrors.productName = "Product Name is required";
+      if (
+        formData.productName &&
+        !validationPatterns.productName.test(formData.productName)
+      )
+        newErrors.productName = "Invalid Product Name";
+      if (!formData.sku) newErrors.sku = "SKU is required";
+      if (formData.sku && !validationPatterns.sku.test(formData.sku))
+        newErrors.sku = "Invalid SKU formet";
+      if (!selectedCategory) newErrors.category = "Category is required";
+      if (!selectedsubCategory)
+        newErrors.subCategory = "Subcategory is required";
+      if (!formData.store) newErrors.store = "Store is required";
+      if (!selectedWarehouse) newErrors.warehouse = "Warehouse is required";
+      if (!selectedHSN) newErrors.hsn = "HSN Code is required";
+      if (formData.itemType === "Good" && !selectedBrands)
+      newErrors.brand = "Brand is required";
+      if (formData.isAdvanced) {
+        if (!formData.leadTime) newErrors.leadTime = "Lead Time is required";
+        if (
+          formData.leadTime &&
+          !validationPatterns.leadTime.test(formData.leadTime)
+        )
+          newErrors.leadTime = "Invalid Lead Time";
+        if (!formData.reorderLevel) newErrors.reorderLevel = "Reorder Level is required";
+        if (
+          formData.reorderLevel &&
+          !validationPatterns.reorderLevel.test(formData.reorderLevel)
+        )
+          newErrors.reorderLevel = "Invalid Reorder Level";
+        if (!formData.initialStock) newErrors.initialStock = "Initial Stock is required";
+        if (
+          formData.initialStock &&
+          !validationPatterns.initialStock.test(formData.initialStock)
+        )
+          newErrors.initialStock = "Invalid Initial Stock format";
+        if (formData.trackType === "serial" && !formData.serialNumber)
+          newErrors.serialNumber = "Serial Number is required";
+        if (
+          formData.serialNumber &&
+          !validationPatterns.serialNumber.test(formData.serialNumber)
+        )
+          newErrors.serialNumber = "Invalid Serial Number";
+        if (formData.trackType === "batch" && !formData.batchNumber)
+          newErrors.batchNumber = "Batch Number is required";
+        if (
+          formData.batchNumber &&
+          !validationPatterns.batchNumber.test(formData.batchNumber)
+        )
+          newErrors.batchNumber = "Invalid Batch Number";
+      }
+    } else if (step === 1) {
+      // Step 1: Pricing
+      if (!formData.purchasePrice) newErrors.purchasePrice = "Purchase Price is required";
+      if (
+        formData.purchasePrice &&
+        !validationPatterns.price.test(formData.purchasePrice)
+      )
+        newErrors.purchasePrice = "Purchase Price must be a positive number with up to 2 decimal places";
+      if (!formData.quantity) newErrors.quantity = "Quantity must be at least 1";
+      if (
+        formData.quantity &&
+        !validationPatterns.quantity.test(formData.quantity)
+      )
+        newErrors.quantity =  "Quantity atleast should be 1";
+      if (!formData.sellingPrice) newErrors.sellingPrice = "Selling Price is required";
+      if (
+        formData.sellingPrice &&
+        !validationPatterns.price.test(formData.sellingPrice)
+      )
+        newErrors.sellingPrice = "Selling Price must be a positive number with up to 2 decimal places";
+      if (!formData.wholesalePrice)
+        newErrors.wholesalePrice = "Wholesale Price must be a positive number with up to 2 decimal places";
+      if (
+        formData.wholesalePrice &&
+        !validationPatterns.price.test(formData.wholesalePrice)
+      )
+        newErrors.wholesalePrice = "Wholesale Price is required";
+      if (!formData.retailPrice) newErrors.retailPrice = "Retail Price must be a positive number with up to 2 decimal places";
+      if (
+        formData.retailPrice &&
+        !validationPatterns.price.test(formData.retailPrice)
+      )
+        newErrors.retailPrice = "Retail Price is required";
+      if (!selectedUnits) newErrors.unit = "Unit is required";
+      if (!formData.taxType) newErrors.taxType = "Tax Type is required";
+      if (!formData.tax) newErrors.tax = "Tax Rate is required";
+      if (!formData.discountType) newErrors.discountType = "Discount Type is required";
+      if (!formData.discountValue) newErrors.discountValue = "Discount Value must be a positive number with up to 2 decimal places";
+      if (
+        formData.discountValue &&
+        !validationPatterns.discountValue.test(formData.discountValue)
+      )
+        newErrors.discountValue = "Discount Value must be a positive number with up to 2 decimal places";
+      if (!formData.quantityAlert) newErrors.quantityAlert ="Quantity Alert is required";
+      if (
+        formData.quantityAlert &&
+        !validationPatterns.quantityAlert.test(formData.quantityAlert)
+      )
+        newErrors.quantityAlert = "Quantity Alert must be a positive integer";
+    } else if (step === 2) {
+      // Step 2: Images & SEO
+      if (!formData.description) newErrors.description = "Description is required";
+      if (
+        formData.description &&
+        !validationPatterns.description.test(formData.description)
+      )
+        newErrors.description = "Invalid Description";
+      if (
+        formData.seoTitle &&
+        !validationPatterns.seoTitle.test(formData.seoTitle)
+      )
+        newErrors.seoTitle = "Invalid SEO Title";
+      if (
+        formData.seoDescription &&
+        !validationPatterns.seoDescription.test(formData.seoDescription)
+      )
+        newErrors.seoDescription = "Invalid SEO Description";
+      // Optional: Add image validation if required
+      // if (images.length === 0) newErrors.images = t("atLeastOneImageRequired");
+    } else if (step === 3) {
+      // Step 3: Variants
+      const hasValidVariant = variants.some(
+        (variant) => variant.selectedVariant && variant.selectedValue
+      );
+      if (!hasValidVariant) {
+        newErrors.variants = "At least one variant with a valid value is required";
+      }
+      variants.forEach((variant, index) => {
+        if (
+          variant.selectedValue &&
+          !validationPatterns.variantValue.test(variant.selectedValue)
+        ) {
+          newErrors[`variantValue_${index}`] = t("invalidVariantFormat");
+        }
+      });
+    }
+
+    // Update formErrors state with new validation errors
+    setFormErrors(newErrors);
+
+    // Return array of error messages for toast notifications
+    return Object.values(newErrors).filter(Boolean);
+  };
+  // const handleNext = () => {
+  //   // const isValid = validateStep();
+  //   // const updatedStatus = [...stepStatus];
+  //   // updatedStatus[step] = isValid ? "complete" : "incomplete";
+  //   // setStepStatus(updatedStatus);
+
+  //   // if (isValid && step < steps.length - 1) {
+  //   //   setStep((prev) => prev + 1);
+  //   // }
+  //   const isValid = validateStep();
+  //   const updatedStatus = [...stepStatus];
+  //   updatedStatus[step] = isValid ? "complete" : "incomplete";
+  //   setStepStatus(updatedStatus);
+
+  //   if (isValid && step < steps.length - 1) {
+  //     setStep((prev) => prev + 1);
+  //   } else if (!isValid) {
+  //     toast.error(t("pleaseCompleteRequiredFields"));
+  //   }
+  // };
+
+  const handleNext = () => {
+    const errors = validateStep();
     const updatedStatus = [...stepStatus];
-    updatedStatus[step] = isValid ? "complete" : "incomplete";
+    updatedStatus[step] = errors.length === 0 ? "complete" : "incomplete";
     setStepStatus(updatedStatus);
 
-    if (isValid && step < steps.length - 1) {
+    if (errors.length === 0 && step < steps.length - 1) {
       setStep((prev) => prev + 1);
-    } else if (!isValid) {
-      toast.error(t("pleaseCompleteRequiredFields"));
+    } else if (errors.length > 0) {
+      errors.forEach((error) => toast.error(error));
     }
   };
-
   const handlePrev = () => {
     if (step > 0) setStep((prev) => prev - 1);
   };
@@ -215,11 +415,48 @@ const ProductForm = () => {
     toast.info("Saved as draft!");
   };
 
+  // const onDrop = (acceptedFiles) => {
+  //   const mapped = acceptedFiles.map((file) =>
+  //     Object.assign(file, { preview: URL.createObjectURL(file) })
+  //   );
+  //   setImages((prev) => [...prev, ...mapped]);
+  // };
   const onDrop = (acceptedFiles) => {
-    const mapped = acceptedFiles.map((file) =>
-      Object.assign(file, { preview: URL.createObjectURL(file) })
-    );
-    setImages((prev) => [...prev, ...mapped]);
+    const maxSize = 1 * 1024 * 1024; // 1MB in bytes
+    const validTypes = ["image/jpeg", "image/png", "image/jpg"];
+    const validFiles = [];
+    const invalidFiles = [];
+
+    acceptedFiles.forEach((file) => {
+      if (!validTypes.includes(file.type)) {
+        invalidFiles.push({
+          file,
+          error: `Invalid file type for ${file.name}. Only JPEG, PNG, or JPG allowed.`,
+        });
+      } else if (file.size > maxSize) {
+        invalidFiles.push({
+          file,
+          error: `Image ${file.name} exceeds 1MB limit.`,
+        });
+      } else {
+        validFiles.push(
+          Object.assign(file, { preview: URL.createObjectURL(file) })
+        );
+      }
+    });
+
+    if (invalidFiles.length > 0) {
+      invalidFiles.forEach(({ error }) => toast.error(error));
+      setFormErrors((prev) => ({
+        ...prev,
+        images: "Image size should not exceeded 1MB.",
+      }));
+    }
+
+    if (validFiles.length > 0) {
+      setImages((prev) => [...prev, ...validFiles]);
+      setFormErrors((prev) => ({ ...prev, images: "" }));
+    }
   };
 
   const { getRootProps, getInputProps } = useDropzone({
@@ -241,7 +478,6 @@ const ProductForm = () => {
   const [optionsware, setOptionsWare] = useState([]);
   // const [selectedSupplier, setSelectedSupplier] = useState(null);
   const [selectedWarehouse, setSelectedWarehouse] = useState(null);
-
 
   const [formData, setFormData] = useState({
     // Step 0 - Basic Info
@@ -277,7 +513,6 @@ const ProductForm = () => {
     sellingType: "",
     barcodeSymbology: "",
     productType: "Single",
-
 
     // Newly added
     itemType: "Good",
@@ -349,15 +584,25 @@ const ProductForm = () => {
     }
   };
 
-
   const validateField = (name, value) => {
-    if (!value && ["productName", "sku",  "quantity", "discountValue", "quantityAlert"].includes(name)) {
+    if (
+      !value &&
+      [
+        "productName",
+        "sku",
+        "quantity",
+        "discountValue",
+        "quantityAlert",
+      ].includes(name)
+    ) {
       return t("fieldRequired");
     }
 
     switch (name) {
       case "productName":
-        return validationPatterns.productName.test(value) ? "" : t("invalidProductName");
+        return validationPatterns.productName.test(value)
+          ? ""
+          : t("invalidProductName");
       case "sku":
         return validationPatterns.sku.test(value) ? "" : t("invalidSKUFormat");
       // case "itemBarcode":
@@ -366,40 +611,69 @@ const ProductForm = () => {
       case "sellingPrice":
       case "wholesalePrice":
       case "retailPrice":
-        return validationPatterns.price.test(value) ? "" : t("invalidPriceFormat");
+        return validationPatterns.price.test(value)
+          ? ""
+          : t("invalidPriceFormat");
       case "quantity":
-        return validationPatterns.quantity.test(value) ? "" : t("invalidQuantityFormat");
+        return validationPatterns.quantity.test(value)
+          ? ""
+          : t("invalidQuantityFormat");
       case "description":
-        return validationPatterns.description.test(value) ? "" : t("invalidDescriptionFormat");
+        return validationPatterns.description.test(value)
+          ? ""
+          : t("invalidDescriptionFormat");
       case "seoTitle":
-        return validationPatterns.seoTitle.test(value) ? "" : t("invalidSeoTitleFormat");
+        return validationPatterns.seoTitle.test(value)
+          ? ""
+          : t("invalidSeoTitleFormat");
       case "seoDescription":
-        return validationPatterns.seoDescription.test(value) ? "" : t("invalidSeoDescriptionFormat");
+        return validationPatterns.seoDescription.test(value)
+          ? ""
+          : t("invalidSeoDescriptionFormat");
       case "leadTime":
-        return validationPatterns.leadTime.test(value) ? "" : t("invalidLeadTimeFormat");
+        return validationPatterns.leadTime.test(value)
+          ? ""
+          : t("invalidLeadTimeFormat");
       case "reorderLevel":
-        return validationPatterns.reorderLevel.test(value) ? "" : t("invalidReorderLevelFormat");
+        return validationPatterns.reorderLevel.test(value)
+          ? ""
+          : t("invalidReorderLevelFormat");
       case "initialStock":
-        return validationPatterns.initialStock.test(value) ? "" : t("invalidInitialStockFormat");
+        return validationPatterns.initialStock.test(value)
+          ? ""
+          : t("invalidInitialStockFormat");
       case "serialNumber":
-        return validationPatterns.serialNumber.test(value) ? "" : t("invalidSerialNumberFormat");
+        return validationPatterns.serialNumber.test(value)
+          ? ""
+          : t("invalidSerialNumberFormat");
       case "batchNumber":
-        return validationPatterns.batchNumber.test(value) ? "" : t("invalidBatchNumberFormat");
+        return validationPatterns.batchNumber.test(value)
+          ? ""
+          : t("invalidBatchNumberFormat");
       case "discountValue":
-        return validationPatterns.discountValue.test(value) ? "" : t("invalidDiscountValueFormat");
+        return validationPatterns.discountValue.test(value)
+          ? ""
+          : t("invalidDiscountValueFormat");
       case "quantityAlert":
-        return validationPatterns.quantityAlert.test(value) ? "" : t("invalidQuantityAlertFormat");
+        return validationPatterns.quantityAlert.test(value)
+          ? ""
+          : t("invalidQuantityAlertFormat");
       case "categoryName":
-        return validationPatterns.categoryName.test(value) ? "" : t("invalidCategoryName");
+        return validationPatterns.categoryName.test(value)
+          ? ""
+          : t("invalidCategoryName");
       case "categorySlug":
-        return validationPatterns.categorySlug.test(value) ? "" : t("invalidCategorySlug");
+        return validationPatterns.categorySlug.test(value)
+          ? ""
+          : t("invalidCategorySlug");
       case "variantValue":
-        return validationPatterns.variantValue.test(value) ? "" : t("invalidVariantFormat");
+        return validationPatterns.variantValue.test(value)
+          ? ""
+          : t("invalidVariantFormat");
       default:
         return "";
     }
   };
-
 
   const fetchCategories = async () => {
     try {
@@ -423,7 +697,7 @@ const ProductForm = () => {
       setCategories(options);
 
       // setCategories(options);
-      console.log('ferere categories', data)
+      // console.log("ferere categories", data);
     } catch (error) {
       console.error("Error fetching categories:", error);
     }
@@ -453,7 +727,7 @@ const ProductForm = () => {
   };
 
   useEffect(() => {
-    console.log("Selected Category:", selectedCategory);
+    // console.log("Selected Category:", selectedCategory);
     if (selectedCategory) {
       fetchSubcategoriesByCategory(selectedCategory.value);
     } else {
@@ -464,20 +738,22 @@ const ProductForm = () => {
   const fetchSubcategoriesByCategory = async (categoryId) => {
     try {
       const token = localStorage.getItem("token");
-      console.log("Fetching subcategories for category ID:", categoryId);
+      // console.log("Fetching subcategories for category ID:", categoryId);
       // const res = await fetch(`${BASE_URL}/api/category/by-category/${categoryId}`);
-      const res = await fetch(`${BASE_URL}/api/subcategory/by-category/${categoryId}`, {
-        headers: {
-          Authorization: `Bearer ${token}`, // ✅ token sent properly
-        },
-      });
+      const res = await fetch(
+        `${BASE_URL}/api/subcategory/by-category/${categoryId}`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`, // ✅ token sent properly
+          },
+        }
+      );
       if (!res.ok) {
         throw new Error(`Server error: ${res.status}`);
       }
 
-
       const data = await res.json();
-      console.log("Subcategory API raw response:", data);
+      // console.log("Subcategory API raw response:", data);
 
       // const options = data.map((subcat) => ({
       //   value: subcat._id,
@@ -488,8 +764,8 @@ const ProductForm = () => {
         value: subcat._id,
         label: sanitizeInput(subcat.subCategoryName, true),
       }));
-      setSubcategories(options);
-      console.log('ferere subcategories', data)
+      // setSubcategories(options);
+      // console.log("ferere subcategories", data);
     } catch (error) {
       console.error("Error fetching subcategories:", error);
     }
@@ -499,11 +775,11 @@ const ProductForm = () => {
       const token = localStorage.getItem("token");
       const res = await fetch(`${BASE_URL}/api/brands/active-brands`, {
         headers: {
-          Authorization: `Bearer ${token}`
-        }
+          Authorization: `Bearer ${token}`,
+        },
       });
       const data = await res.json();
-      console.log('fetchbrand', data)
+      // console.log("fetchbrand", data);
 
       // const options = data.brands.map((brand) => ({
       //   value: brand._id,
@@ -516,7 +792,7 @@ const ProductForm = () => {
         label: sanitizeInput(brand.brandName, true),
       }));
       setBrandOptions(options);
-      console.log('ferere brand', data)
+      // console.log("ferere brand", data);
     } catch (error) {
       console.error("Failed to load active brands:", error);
     }
@@ -530,15 +806,15 @@ const ProductForm = () => {
 
   const subCategoryChange = (selectedOption) => {
     setSelectedsubCategory(selectedOption);
-    console.log("Selected subcategory:", selectedOption);
+    // console.log("Selected subcategory:", selectedOption);
   };
   const handleBrandChange = (selectedOption) => {
     setSelectedBrands(selectedOption);
-    console.log("Selected brands:", selectedOption);
+    // console.log("Selected brands:", selectedOption);
   };
   const handleUnitChange = (selectedOption) => {
     setSelectedUnits(selectedOption);
-    console.log("Selected Units:", selectedOption);
+    // console.log("Selected Units:", selectedOption);
   };
 
   const handleSubmit = async (e) => {
@@ -550,8 +826,10 @@ const ProductForm = () => {
     }
     const formPayload = new FormData();
 
-
-    formPayload.append("productName", sanitizeInput(formData.productName, true));
+    formPayload.append(
+      "productName",
+      sanitizeInput(formData.productName, true)
+    );
     formPayload.append("sku", sanitizeInput(formData.sku));
     formPayload.append("brand", selectedBrands?.value || "");
     formPayload.append("category", selectedCategory?.value || "");
@@ -576,20 +854,29 @@ const ProductForm = () => {
     formPayload.append("discountType", sanitizeInput(formData.discountType));
     formPayload.append("discountValue", Number(formData.discountValue));
     formPayload.append("quantityAlert", Number(formData.quantityAlert));
-    formPayload.append("description", sanitizeInput(formData.description, true));
+    formPayload.append(
+      "description",
+      sanitizeInput(formData.description, true)
+    );
     formPayload.append("seoTitle", sanitizeInput(formData.seoTitle, true));
-    formPayload.append("seoDescription", sanitizeInput(formData.seoDescription, true));
+    formPayload.append(
+      "seoDescription",
+      sanitizeInput(formData.seoDescription, true)
+    );
     formPayload.append("itemType", sanitizeInput(formData.itemType));
     formPayload.append("isAdvanced", formData.isAdvanced);
     formPayload.append("trackType", sanitizeInput(formData.trackType));
-  formPayload.append("isReturnable", Boolean(formData.isReturnable));
-  formPayload.append("leadTime", sanitizeInput(formData.leadTime));
-  formPayload.append("reorderLevel", sanitizeInput(formData.reorderLevel));
-  formPayload.append("initialStock", sanitizeInput(formData.initialStock));
-  formPayload.append("serialNumber", sanitizeInput(formData.serialNumber));
-  formPayload.append("batchNumber", sanitizeInput(formData.batchNumber));
-  formPayload.append("returnable", Boolean(formData.returnable));
-  formPayload.append("expirationDate", formData.expirationDate ? sanitizeInput(formData.expirationDate) : "");
+    formPayload.append("isReturnable", Boolean(formData.isReturnable));
+    formPayload.append("leadTime", sanitizeInput(formData.leadTime));
+    formPayload.append("reorderLevel", sanitizeInput(formData.reorderLevel));
+    formPayload.append("initialStock", sanitizeInput(formData.initialStock));
+    formPayload.append("serialNumber", sanitizeInput(formData.serialNumber));
+    formPayload.append("batchNumber", sanitizeInput(formData.batchNumber));
+    formPayload.append("returnable", Boolean(formData.returnable));
+    formPayload.append(
+      "expirationDate",
+      formData.expirationDate ? sanitizeInput(formData.expirationDate) : ""
+    );
 
     // Build variantsMap from selectedVariant and selectedValue
     const variantsMap = {};
@@ -603,7 +890,9 @@ const ProductForm = () => {
         if (values.length > 0) {
           if (variantsMap[variant.selectedVariant]) {
             // Merge values if variant already exists
-            variantsMap[variant.selectedVariant] = Array.from(new Set([...variantsMap[variant.selectedVariant], ...values]));
+            variantsMap[variant.selectedVariant] = Array.from(
+              new Set([...variantsMap[variant.selectedVariant], ...values])
+            );
           } else {
             variantsMap[variant.selectedVariant] = values;
           }
@@ -685,11 +974,9 @@ const ProductForm = () => {
           headers: {
             "Content-Type": "multipart/form-data",
             Authorization: `Bearer ${token}`, // ✅ token sent properly
-
           },
         }
       );
-
 
       toast.success("Product created successfully!");
       navigate("/product");
@@ -710,7 +997,6 @@ const ProductForm = () => {
   //   setFormData((prev) => ({ ...prev, itemBarcode: barcode }));
   //   return `${prefix}${randomNumber}`;
   // };
-
 
   const [categoryName, setCategoryName] = useState("");
   const [categorySlug, setCategorySlug] = useState("");
@@ -792,9 +1078,11 @@ const ProductForm = () => {
     const category = formData.category || "GEN";
     const name = formData.productName || "PRD";
     const randomNum = Math.floor(Math.random() * 9000) + 1000;
-    const sku = `${category.toUpperCase().slice(0, 3)}-${name.toUpperCase().slice(0, 3)}-${randomNum}`;
+    const sku = `${category.toUpperCase().slice(0, 3)}-${name
+      .toUpperCase()
+      .slice(0, 3)}-${randomNum}`;
     setFormData((prev) => ({ ...prev, sku }));
-  }
+  };
 
   // to auto change sku based on changes in product name or category
   useEffect(() => {
@@ -803,8 +1091,7 @@ const ProductForm = () => {
     }
   }, [formData.productName, formData.category]);
 
-
-// supplier
+  // supplier
   // useEffect(() => {
   //   const fetchActiveSuppliers = async () => {
   //     try {
@@ -838,9 +1125,6 @@ const ProductForm = () => {
   // const handleSupplierChange = (selectedOption) => {
   //   setSelectedSupplier(selectedOption);
   // };
-
-
-
 
   const [loading, setLoading] = useState(true);
 
@@ -900,7 +1184,10 @@ const ProductForm = () => {
           // setOptionsHsn(formatted);
           const formatted = res.data.data.map((item) => ({
             value: item._id,
-            label: sanitizeInput(`${item.hsnCode} - ${item.description || ""}`, true),
+            label: sanitizeInput(
+              `${item.hsnCode} - ${item.description || ""}`,
+              true
+            ),
           }));
           setOptionsHsn(formatted);
         }
@@ -917,7 +1204,6 @@ const ProductForm = () => {
   const handleHSNChange = (selectedOption) => {
     setSelectedHSN(selectedOption);
   };
-
 
   //variants----------------------------------------------------------------------------------------------------------------------------------------------
 
@@ -954,13 +1240,11 @@ const ProductForm = () => {
   //   }
   // };
 
-
-    const [variants, setVariants] = useState([
+  const [variants, setVariants] = useState([
     { selectedVariant: "", selectedValue: "", valueDropdown: [] },
   ]);
 
   const [variantDropdown, setVariantDropdown] = useState([]);
-
 
   // Fetch all active variants for dropdown
   useEffect(() => {
@@ -970,53 +1254,73 @@ const ProductForm = () => {
     fetch(`${BASE_URL}/api/variant-attributes/active-variants`, {
       headers: { Authorization: `Bearer ${token}` },
     })
-      .then(res => res.json())
-      .then(data => setVariantDropdown(data))
-      .catch(err => console.error("Error fetching variant dropdown:", err));
+      .then((res) => res.json())
+      .then((data) => setVariantDropdown(data))
+      .catch((err) => console.error("Error fetching variant dropdown:", err));
   }, []);
 
   // Handle variant change per row
   const handleVariantChange = (index, value) => {
     const token = localStorage.getItem("token");
-    setVariants(prev =>
+    setVariants((prev) =>
       prev.map((v, i) =>
-        i === index ? { ...v, selectedVariant: value, selectedValue: "", valueDropdown: [] } : v
+        i === index
+          ? {
+              ...v,
+              selectedVariant: value,
+              selectedValue: "",
+              valueDropdown: [],
+            }
+          : v
       )
     );
 
     if (!value || !token) return;
 
-    fetch(`${BASE_URL}/api/variant-attributes/values/${encodeURIComponent(value)}`, {
-      headers: { Authorization: `Bearer ${token}` },
-    })
-      .then(res => res.json())
-      .then(data => {
+    fetch(
+      `${BASE_URL}/api/variant-attributes/values/${encodeURIComponent(value)}`,
+      {
+        headers: { Authorization: `Bearer ${token}` },
+      }
+    )
+      .then((res) => res.json())
+      .then((data) => {
         let values = [];
-        data.forEach(val => {
+        data.forEach((val) => {
           if (typeof val === "string") {
-            values.push(...val.split(",").map(v => v.trim()).filter(Boolean));
+            values.push(
+              ...val
+                .split(",")
+                .map((v) => v.trim())
+                .filter(Boolean)
+            );
           }
         });
-        setVariants(prev =>
-          prev.map((v, i) => (i === index ? { ...v, valueDropdown: values } : v))
+        setVariants((prev) =>
+          prev.map((v, i) =>
+            i === index ? { ...v, valueDropdown: values } : v
+          )
         );
       })
-      .catch(err => console.error("Error fetching value dropdown:", err));
+      .catch((err) => console.error("Error fetching value dropdown:", err));
   };
 
   const handleValueChange = (index, value) => {
-    setVariants(prev =>
+    setVariants((prev) =>
       prev.map((v, i) => (i === index ? { ...v, selectedValue: value } : v))
     );
   };
 
   const handleAddVariant = () => {
-    setVariants(prev => [...prev, { selectedVariant: "", selectedValue: "", valueDropdown: [] }]);
+    setVariants((prev) => [
+      ...prev,
+      { selectedVariant: "", selectedValue: "", valueDropdown: [] },
+    ]);
   };
 
-  const handleRemoveVariant = index => {
+  const handleRemoveVariant = (index) => {
     if (variants.length > 1) {
-      setVariants(prev => prev.filter((_, i) => i !== index));
+      setVariants((prev) => prev.filter((_, i) => i !== index));
     }
   };
   //   const [selectedVariant, setSelectedVariant] = useState("");
@@ -1035,7 +1339,7 @@ const ProductForm = () => {
   //       .then(data => setVariantDropdown(data))
   //       .catch(err => console.error("Error fetching variant dropdown:", err));
   //   }, []);
-  
+
   //   // Fetch values for selected variant and split comma-separated values
   //   useEffect(() => {
   //     if (selectedVariant) {
@@ -1060,7 +1364,6 @@ const ProductForm = () => {
   //       setSelectedValue("");
   //     }
   //   }, [selectedVariant]);
-  
 
   return (
     <div className="page-wrapper mt-2">
@@ -1082,11 +1385,12 @@ const ProductForm = () => {
                 data-bs-placement="top"
                 title="Refresh"
                 className="icon-btn"
+                onClick={() => window.location.reload()}
               >
                 <TbRefresh />
               </button>
             </li>
-            <li>
+            {/* <li>
               <button
                 type="button"
                 data-bs-toggle="tooltip"
@@ -1097,12 +1401,14 @@ const ProductForm = () => {
               >
                 <TbChevronUp />
               </button>
-            </li>
+            </li> */}
           </div>
 
           <div className="page-btn mt-0">
-            <button className="btn" style={{ backgroundColor: '#007BFF' }}>
-              <Link to="/product" style={{ color: 'white' }}>{t("backToProduct")}</Link>
+            <button className="btn" style={{ backgroundColor: "#007BFF" }}>
+              <Link to="/product" style={{ color: "white" }}>
+                {t("backToProduct")}
+              </Link>
             </button>
           </div>
         </div>
@@ -1118,26 +1424,28 @@ const ProductForm = () => {
             return (
               <div key={index} className="step-wrapper">
                 <div
-                  className={`circle ${isComplete
-                    ? "complete"
-                    : isIncomplete
+                  className={`circle ${
+                    isComplete
+                      ? "complete"
+                      : isIncomplete
                       ? "incomplete"
                       : isActive
-                        ? "active"
-                        : ""
-                    }`}
+                      ? "active"
+                      : ""
+                  }`}
                 >
                   {index + 1}
                 </div>
                 <div className="step-text">{label}</div>
                 {index < steps.length - 1 && (
                   <div
-                    className={`progress-line ${status === "complete"
-                      ? "line-complete"
-                      : status === "incomplete"
+                    className={`progress-line ${
+                      status === "complete"
+                        ? "line-complete"
+                        : status === "incomplete"
                         ? "line-incomplete"
                         : "line-pending"
-                      }`}
+                    }`}
                   />
                 )}
               </div>
@@ -1194,7 +1502,8 @@ const ProductForm = () => {
                   <div className="row">
                     <div className="col-sm-6 col-12 mb-3">
                       <label className="form-label">
-                        {t("productName")}<span className="text-danger">*</span>
+                        {t("productName")}
+                        <span className="text-danger">*</span>
                       </label>
                       <input
                         type="text"
@@ -1204,17 +1513,22 @@ const ProductForm = () => {
                         onChange={handleChange}
                         placeholder={t("enterProductName")}
                       />
-                      {formErrors.productName && <div className="text-danger">{formErrors.productName}</div>}
+                      {formErrors.productName && (
+                        <div className="text-danger">
+                          {formErrors.productName}
+                        </div>
+                      )}
                     </div>
 
                     {/* HSNCODE */}
 
                     <div className="col-sm-6 col-12 mb-3 d-flex align-items-end gap-2">
-                      <div style={{ flex: 3, maxWidth: '100%', minWidth: 0 }}>
+                      <div style={{ flex: 3, maxWidth: "100%", minWidth: 0 }}>
                         <label className="form-label">
-                          {t("HSN")}<span className="text-danger">*</span>
+                          {t("HSN")}
+                          <span className="text-danger">*</span>
                         </label>
-                        <div style={{ position: 'relative', width: '100%' }}>
+                        <div style={{ position: "relative", width: "100%" }}>
                           <Select
                             options={optionsHsn}
                             isLoading={loading}
@@ -1225,28 +1539,30 @@ const ProductForm = () => {
                             styles={{
                               control: (base) => ({
                                 ...base,
-                                maxWidth: '100%',
+                                maxWidth: "100%",
                                 minWidth: 0,
-                                overflow: 'hidden',
+                                overflow: "hidden",
                               }),
                               singleValue: (base) => ({
                                 ...base,
-                                whiteSpace: 'nowrap',
-                                overflow: 'hidden',
-                                textOverflow: 'ellipsis',
-                                maxWidth: '100%',
+                                whiteSpace: "nowrap",
+                                overflow: "hidden",
+                                textOverflow: "ellipsis",
+                                maxWidth: "100%",
                               }),
                             }}
                           />
                         </div>
-                        {formErrors.hsn && <div className="text-danger">{formErrors.hsn}</div>}
+                        {formErrors.hsn && (
+                          <div className="text-danger">{formErrors.hsn}</div>
+                        )}
                       </div>
                       <button
                         type="button"
                         className="btn btn-outline-info btn-sm d-flex align-items-center gap-1"
                         onClick={() => setShowHSNModal(true)}
                         disabled={!selectedHSN}
-                        style={{ height: '38px' }}
+                        style={{ height: "38px" }}
                       >
                         <TbEye size={18} />
                         {/* View */}
@@ -1255,24 +1571,53 @@ const ProductForm = () => {
 
                     {/* HSN View Modal */}
                     {showHSNModal && selectedHSN && (
-                      <div className="modal fade show" style={{ display: 'block', background: 'rgba(0,0,0,0.3)' }} tabIndex="-1">
+                      <div
+                        className="modal fade show"
+                        style={{
+                          display: "block",
+                          background: "rgba(0,0,0,0.3)",
+                        }}
+                        tabIndex="-1"
+                      >
                         <div className="modal-dialog modal-dialog-centered">
-                          <div className="modal-content" style={{ borderRadius: '12px', boxShadow: '0 4px 24px rgba(0,0,0,0.15)' }}>
-                            <div className="modal-header mb-0" style={{ borderTopLeftRadius: '12px', borderTopRightRadius: '12px' }}>
+                          <div
+                            className="modal-content"
+                            style={{
+                              borderRadius: "12px",
+                              boxShadow: "0 4px 24px rgba(0,0,0,0.15)",
+                            }}
+                          >
+                            <div
+                              className="modal-header mb-0"
+                              style={{
+                                borderTopLeftRadius: "12px",
+                                borderTopRightRadius: "12px",
+                              }}
+                            >
                               <h5 className="modal-title">HSN Details</h5>
                               {/* <button type="button" className="btn-close" onClick={() => setShowHSNModal(false)}></button> */}
-                                 <button type="button" className="close" data-bs-dismiss="modal" aria-label="Close" onClick={() => setShowHSNModal(false)}>
-              <span aria-hidden="true">×</span>
-            </button>
+                              <button
+                                type="button"
+                                className="close"
+                                data-bs-dismiss="modal"
+                                aria-label="Close"
+                                onClick={() => setShowHSNModal(false)}
+                              >
+                                <span aria-hidden="true">×</span>
+                              </button>
                             </div>
                             <div className="modal-body">
                               <div className="mb-3">
                                 <label className="fw-bold">HSN Code:</label>
-                                <div className="fs-20 text-primary">{selectedHSN.label.split(' - ')[0]}</div>
+                                <div className="fs-20 text-primary">
+                                  {selectedHSN.label.split(" - ")[0]}
+                                </div>
                               </div>
                               <div className="mb-2">
                                 <label className="fw-bold">Description:</label>
-                                <div className="fs-12 text-secondary">{selectedHSN.label.split(' - ')[1] || 'N/A'}</div>
+                                <div className="fs-12 text-secondary">
+                                  {selectedHSN.label.split(" - ")[1] || "N/A"}
+                                </div>
                               </div>
                             </div>
                             {/* <div className="modal-footer">
@@ -1300,30 +1645,40 @@ const ProductForm = () => {
                     <div className="col-sm-6 col-12">
                       <div className="mb-3 list position-relative">
                         <label className="form-label">
-                          {t("sku")}<span className="text-danger ms-1">*</span>
+                          {t("sku")}
+                          <span className="text-danger ms-1">*</span>
                         </label>
                         <input
                           type="text"
                           name="sku"
                           className="form-control"
                           value={formData.sku}
-                          onChange={(e) => setFormData({ ...formData, sku: e.target.value })}
+                          onChange={(e) =>
+                            setFormData({ ...formData, sku: e.target.value })
+                          }
                           placeholder={t("enterSKU")}
                         />
                         {/* <button type="submit" onClick={generateSKU} className="btn btn-primaryadd">
                           {t("generate")}
                         </button> */}
-                        <button type="button" onClick={generateSKU} className="btn btn-primaryadd">
+                        <button
+                          type="button"
+                          onClick={generateSKU}
+                          className="btn btn-primaryadd"
+                        >
                           {t("generate")}
                         </button>
-                        {formErrors.sku && <div className="text-danger">{formErrors.sku}</div>}
-
+                        {formErrors.sku && (
+                          <div className="text-danger">{formErrors.sku}</div>
+                        )}
                       </div>
                     </div>
 
                     {/* Brand */}
                     <div className="col-sm-6 col-12 mb-3">
-                      <label className="form-label">{t("brandOrManufacture")}</label>
+                      <label className="form-label">
+                        {t("brandOrManufacture")}
+                      </label>
                       <Select
                         options={brandOptions}
                         value={selectedBrands}
@@ -1331,13 +1686,17 @@ const ProductForm = () => {
                         isSearchable
                         placeholder={t("searchOrSelectBrands")}
                       />
+                      {formErrors.brand && (
+    <div className="text-danger">{formErrors.brand}</div>
+  )}
                     </div>
 
                     {/* Category */}
                     <div className="col-sm-6 col-12 mb-3">
                       <div className="d-flex justify-content-between align-items-center">
                         <label className="form-label">
-                          {t("category")}<span className="text-danger">*</span>
+                          {t("category")}
+                          <span className="text-danger">*</span>
                         </label>
                         <a
                           href="javascript:void(0);"
@@ -1365,13 +1724,16 @@ const ProductForm = () => {
                         }}
                         placeholder={t("searchOrSelectCategory")}
                       />
-                      {formErrors.category && <div className="text-danger">{formErrors.category}</div>}
+                      {formErrors.category && (
+                        <div className="text-danger">{formErrors.category}</div>
+                      )}
                     </div>
 
                     {/* Subcategory */}
                     <div className="col-sm-6 col-12 mb-3">
                       <label className="form-label">
-                        {t("subCategory")}<span className="text-danger">*</span>
+                        {t("subCategory")}
+                        <span className="text-danger">*</span>
                       </label>
                       <Select
                         options={subcategories}
@@ -1379,7 +1741,11 @@ const ProductForm = () => {
                         onChange={subCategoryChange}
                         placeholder={t("searchOrSelectSubcategory")}
                       />
-                      {formErrors.subCategory && <div className="text-danger">{formErrors.subCategory}</div>}
+                      {formErrors.subCategory && (
+                        <div className="text-danger">
+                          {formErrors.subCategory}
+                        </div>
+                      )}
                     </div>
 
                     {/* Supplier */}
@@ -1398,12 +1764,11 @@ const ProductForm = () => {
                       {formErrors.supplier && <div className="text-danger">{formErrors.supplier}</div>}
                     </div> */}
 
-                  
-
                     {/* Store */}
                     <div className="col-sm-6 col-12 mb-3">
                       <label className="form-label">
-                        {t("store")}<span className="text-danger">*</span>
+                        {t("store")}
+                        <span className="text-danger">*</span>
                       </label>
                       <select
                         className="form-select"
@@ -1413,31 +1778,38 @@ const ProductForm = () => {
                       >
                         <option value="">{t("select")}</option>
                         <option value="India Mart">{t("indiaMart")}</option>
-                        <option value="India Gadgets">{t("indiaGadgets")}</option>
+                        <option value="India Gadgets">
+                          {t("indiaGadgets")}
+                        </option>
                       </select>
-                      {formErrors.store && <div className="text-danger">{formErrors.store}</div>}
+                      {formErrors.store && (
+                        <div className="text-danger">{formErrors.store}</div>
+                      )}
                     </div>
 
                     {/* Warehouse */}
                     <div className="col-sm-6 col-12 mb-3">
                       <label className="form-label">
-                        {t("warehouseOrLocation")}<span className="text-danger">*</span>
+                        {t("warehouseOrLocation")}
+                        <span className="text-danger">*</span>
                       </label>
                       <Select
                         options={optionsware}
                         value={selectedWarehouse}
-
                         isLoading={loading}
                         isSearchable
                         placeholder="Select Warehouse..."
                         onChange={handleWarehouseChange}
                       />
-                      {formErrors.warehouse && <div className="text-danger">{formErrors.warehouse}</div>}
-               
+                      {formErrors.warehouse && (
+                        <div className="text-danger">
+                          {formErrors.warehouse}
+                        </div>
+                      )}
                     </div>
 
                     {/* Advance Toggle */}
-                     <div
+                    <div
                       className="d-flex align-items-center mb-4"
                       style={{ gap: "1rem" }}
                     >
@@ -1463,10 +1835,10 @@ const ProductForm = () => {
                           }
                         />
                       </div>
-                    </div> 
+                    </div>
 
                     {/* Advanced Section */}
-                     {formData.isAdvanced && (
+                    {formData.isAdvanced && (
                       <>
                         <div className="col-sm-6 col-12 mb-3">
                           <label className="form-label">{t("leadTime")}</label>
@@ -1478,11 +1850,17 @@ const ProductForm = () => {
                             value={formData.leadTime}
                             onChange={handleChange}
                           />
-                          {formErrors.leadTime && <div className="text-danger">{formErrors.leadTime}</div>}
+                          {formErrors.leadTime && (
+                            <div className="text-danger">
+                              {formErrors.leadTime}
+                            </div>
+                          )}
                         </div>
 
                         <div className="col-sm-6 col-12 mb-3">
-                          <label className="form-label">{t("reorderLevel")}</label>
+                          <label className="form-label">
+                            {t("reorderLevel")}
+                          </label>
                           <input
                             type="number"
                             className="form-control"
@@ -1491,11 +1869,17 @@ const ProductForm = () => {
                             value={formData.reorderLevel}
                             onChange={handleChange}
                           />
-                          {formErrors.reorderLevel && <div className="text-danger">{formErrors.reorderLevel}</div>}
+                          {formErrors.reorderLevel && (
+                            <div className="text-danger">
+                              {formErrors.reorderLevel}
+                            </div>
+                          )}
                         </div>
 
                         <div className="col-sm-6 col-12 mb-3">
-                          <label className="form-label">{t("initialStock")}</label>
+                          <label className="form-label">
+                            {t("initialStock")}
+                          </label>
                           <input
                             type="number"
                             className="form-control"
@@ -1504,7 +1888,11 @@ const ProductForm = () => {
                             value={formData.initialStock}
                             onChange={handleChange}
                           />
-                          {formErrors.initialStock && <div className="text-danger">{formErrors.initialStock}</div>}
+                          {formErrors.initialStock && (
+                            <div className="text-danger">
+                              {formErrors.initialStock}
+                            </div>
+                          )}
                         </div>
 
                         <div className="col-sm-6 col-12 mb-3">
@@ -1518,7 +1906,6 @@ const ProductForm = () => {
                               type="radio"
                               name="track"
                               value="serial"
-                            
                               id="serial"
                               checked={formData.trackType === "serial"}
                               onChange={(e) =>
@@ -1528,7 +1915,10 @@ const ProductForm = () => {
                                 }))
                               }
                             />
-                            <label className="form-check-label" htmlFor="serial">
+                            <label
+                              className="form-check-label"
+                              htmlFor="serial"
+                            >
                               Serial No
                             </label>
                           </div>
@@ -1539,7 +1929,6 @@ const ProductForm = () => {
                               type="radio"
                               name="track"
                               value="batch"
-                             
                               id="batch"
                               checked={formData.trackType === "batch"}
                               onChange={(e) =>
@@ -1560,7 +1949,6 @@ const ProductForm = () => {
                               type="radio"
                               name="track"
                               value="status"
-                         
                               id="status"
                               checked={formData.trackType === "status"}
                               onChange={(e) =>
@@ -1570,7 +1958,10 @@ const ProductForm = () => {
                                 }))
                               }
                             />
-                            <label className="form-check-label" htmlFor="status">
+                            <label
+                              className="form-check-label"
+                              htmlFor="status"
+                            >
                               Status
                             </label>
                           </div>
@@ -1578,7 +1969,9 @@ const ProductForm = () => {
 
                         {formData.trackType === "serial" && (
                           <div className="col-sm-6 col-12 mb-3">
-                            <label className="form-label">{t("serialNo")}</label>
+                            <label className="form-label">
+                              {t("serialNo")}
+                            </label>
                             <input
                               type="text"
                               className="form-control"
@@ -1587,7 +1980,11 @@ const ProductForm = () => {
                               value={formData.serialNumber}
                               onChange={handleChange}
                             />
-                            {formErrors.serialNumber && <div className="text-danger">{formErrors.serialNumber}</div>}
+                            {formErrors.serialNumber && (
+                              <div className="text-danger">
+                                {formErrors.serialNumber}
+                              </div>
+                            )}
                           </div>
                         )}
 
@@ -1602,7 +1999,11 @@ const ProductForm = () => {
                               value={formData.batchNumber}
                               onChange={handleChange}
                             />
-                            {formErrors.batchNumber && <div className="text-danger">{formErrors.batchNumber}</div>}
+                            {formErrors.batchNumber && (
+                              <div className="text-danger">
+                                {formErrors.batchNumber}
+                              </div>
+                            )}
                           </div>
                         )}
 
@@ -1629,7 +2030,7 @@ const ProductForm = () => {
                           </div>
                         )}
                       </>
-                    )} 
+                    )}
                   </div>
                 ) : (
                   <>
@@ -1645,11 +2046,17 @@ const ProductForm = () => {
                         onChange={handleChange}
                         placeholder={t("enterExpireDate")}
                       />
-                      {formErrors.expirationDate && <div className="text-danger">{formErrors.expirationDate}</div>}
+                      {formErrors.expirationDate && (
+                        <div className="text-danger">
+                          {formErrors.expirationDate}
+                        </div>
+                      )}
                     </div>
                     <div>
-                      <label className="block text-sm font-medium">{t("brand")}</label>
-                   
+                      <label className="block text-sm font-medium">
+                        {t("brand")}
+                      </label>
+
                       <input
                         type="text"
                         className="form-control"
@@ -1658,7 +2065,9 @@ const ProductForm = () => {
                         onChange={handleChange}
                         placeholder={t("enterBrand")}
                       />
-                      {formErrors.brand && <div className="text-danger">{formErrors.brand}</div>}
+                      {formErrors.brand && (
+                        <div className="text-danger">{formErrors.brand}</div>
+                      )}
                     </div>
                   </>
                 )}
@@ -1685,15 +2094,25 @@ const ProductForm = () => {
                       name={field.name}
                       value={formData[field.name] || ""}
                       onChange={handleChange}
-                      placeholder={t(`enter${field.name.charAt(0).toUpperCase() + field.name.slice(1)}`)}
+                      placeholder={t(
+                        `enter${
+                          field.name.charAt(0).toUpperCase() +
+                          field.name.slice(1)
+                        }`
+                      )}
                     />
-                    {formErrors[field.name] && <div className="text-danger">{formErrors[field.name]}</div>}
+                    {formErrors[field.name] && (
+                      <div className="text-danger">
+                        {formErrors[field.name]}
+                      </div>
+                    )}
                   </div>
                 ))}
 
                 <div className=" col-sm-6 col-12 mb-3">
                   <label className="form-label">
-                    {t("quantity")}<span className="text-danger">*</span>
+                    {t("quantity")}
+                    <span className="text-danger">*</span>
                   </label>
                   <input
                     type="number"
@@ -1703,11 +2122,14 @@ const ProductForm = () => {
                     onChange={handleChange}
                     placeholder={t("enterQuantity")}
                   />
-                  {formErrors.quantity && <div className="text-danger">{formErrors.quantity}</div>}
+                  {formErrors.quantity && (
+                    <div className="text-danger">{formErrors.quantity}</div>
+                  )}
                 </div>
                 <div className="col-sm-6 col-12 mb-3">
                   <label className="form-label">
-                    {t("unit")}<span className="text-danger">*</span>
+                    {t("unit")}
+                    <span className="text-danger">*</span>
                   </label>
                   <Select
                     options={unitsOptions}
@@ -1716,12 +2138,15 @@ const ProductForm = () => {
                     isSearchable
                     placeholder={t("searchOrSelectUnits")}
                   />
-                  {formErrors.unit && <div className="text-danger">{formErrors.unit}</div>}
+                  {formErrors.unit && (
+                    <div className="text-danger">{formErrors.unit}</div>
+                  )}
                 </div>
 
                 <div className=" col-sm-6 col-12 mb-3">
                   <label className="form-label">
-                    {t("taxType")}<span className="text-danger">*</span>
+                    {t("taxType")}
+                    <span className="text-danger">*</span>
                   </label>
                   <select
                     className="form-select"
@@ -1733,12 +2158,15 @@ const ProductForm = () => {
                     <option>{t("exclusive")}</option>
                     <option>{t("inclusive")}</option>
                   </select>
-                  {formErrors.taxType && <div className="text-danger">{formErrors.taxType}</div>}
+                  {formErrors.taxType && (
+                    <div className="text-danger">{formErrors.taxType}</div>
+                  )}
                 </div>
 
                 <div className=" col-sm-6 col-12 mb-3">
                   <label className="form-label">
-                    {t("taxRate")}<span className="text-danger">*</span>
+                    {t("taxRate")}
+                    <span className="text-danger">*</span>
                   </label>
                   <select
                     className="form-select"
@@ -1753,12 +2181,15 @@ const ProductForm = () => {
                     <option value="16">{t("cgst16")}</option>
                     <option value="18">{t("gst18")}</option>
                   </select>
-                  {formErrors.tax && <div className="text-danger">{formErrors.tax}</div>}
+                  {formErrors.tax && (
+                    <div className="text-danger">{formErrors.tax}</div>
+                  )}
                 </div>
 
                 <div className=" col-sm-6 col-12 mb-3">
                   <label className="form-label">
-                    {t("discountType")}<span className="text-danger">*</span>
+                    {t("discountType")}
+                    <span className="text-danger">*</span>
                   </label>
                   <select
                     className="form-select"
@@ -1770,12 +2201,15 @@ const ProductForm = () => {
                     <option>{t("percentage")}</option>
                     <option>{t("fixed")}</option>
                   </select>
-                  {formErrors.discountType && <div className="text-danger">{formErrors.discountType}</div>}
+                  {formErrors.discountType && (
+                    <div className="text-danger">{formErrors.discountType}</div>
+                  )}
                 </div>
 
                 <div className=" col-sm-6 col-12 mb-3">
                   <label className="form-label">
-                    {t("discountValue")}<span className="text-danger">*</span>
+                    {t("discountValue")}
+                    <span className="text-danger">*</span>
                   </label>
                   <input
                     type="number"
@@ -1785,12 +2219,17 @@ const ProductForm = () => {
                     onChange={handleChange}
                     placeholder={t("enterDiscountValue")}
                   />
-                  {formErrors.discountValue && <div className="text-danger">{formErrors.discountValue}</div>}
+                  {formErrors.discountValue && (
+                    <div className="text-danger">
+                      {formErrors.discountValue}
+                    </div>
+                  )}
                 </div>
 
                 <div className=" col-sm-6 col-12 mb-3">
                   <label className="form-label">
-                    {t("quantityAlert")}<span className="text-danger">*</span>
+                    {t("quantityAlert")}
+                    <span className="text-danger">*</span>
                   </label>
                   <input
                     type="number"
@@ -1800,7 +2239,11 @@ const ProductForm = () => {
                     onChange={handleChange}
                     placeholder={t("enterQuantityAlert")}
                   />
-                  {formErrors.quantityAlert && <div className="text-danger">{formErrors.quantityAlert}</div>}
+                  {formErrors.quantityAlert && (
+                    <div className="text-danger">
+                      {formErrors.quantityAlert}
+                    </div>
+                  )}
                 </div>
               </div>
             )}
@@ -1808,123 +2251,155 @@ const ProductForm = () => {
             {/* Step 2 - Images and SEO */}
             {step === 2 && (
               <>
-  {/* Image Upload Section */}
-  <div
-    {...getRootProps({
-      className:
+                {/* Image Upload Section */}
+                <div
+                  {...getRootProps({
+                    className:
                       "dropzone p-4 text-center image-upload image-upload-two mb-3",
-    })}
-    style={{
-      cursor: "pointer",
-      transition: "0.3s ease",
-      width: "100%", height: "100%"
-    }}
-     
-  >
-    <input {...getInputProps()} />
-    <MdImageSearch style={{ fontSize: "50px", color: "#6c757d" }} />
-    <p className="mt-2 mb-1 fw-semibold">Drag & Drop your image here</p>
-    <small className="text-muted">Supports JPEG, PNG, JPG (Max 5MB)</small>
-  </div>
+                  })}
+                  style={{
+                    cursor: "pointer",
+                    transition: "0.3s ease",
+                    width: "100%",
+                    height: "100%",
+                  }}
+                >
+                  <input {...getInputProps()} />
+                  <MdImageSearch
+                    style={{ fontSize: "50px", color: "#6c757d" }}
+                  />
+                  <p className="mt-2 mb-1 fw-semibold">
+                    Drag & Drop your image here
+                  </p>
+                  {/* <small className="text-muted">Supports JPEG, PNG, JPG (Max 5MB)</small> */}
+                  <p>Supports JPEG, PNG, JPG. Maximum size: 1MB.</p>
+                  {/* {errors.images && (
+                    <p className="text-danger fs-12">{errors.images}</p>
+                  )} */}
+                  {formErrors.images && (
+                    <p className="text-danger fs-12">{formErrors.images}</p>
+                  )}
+                </div>
 
-  {/* Preview Images Grid */}
-  {images.length > 0 && (
-    <div className="row g-3 mb-4">
-      {images.map((file, i) => (
-        <div className="col-6 col-sm-2 col-md-2" key={i} style={{ position: 'relative' }}>
-          <div
-            className="border rounded-3 shadow-sm overflow-hidden"
-style={{ height: 100, width:100, objectFit: "cover" ,position:"relative"}}          >
-            <img
-              src={file.preview}
-              alt={`preview-${i}`}
-              className="w-100 h-100"
-              style={{ objectFit: "cover" }}
-            />
-            <button
-              type="button"
-              onClick={() => {
-                setImages(prev => {
-                  if (prev[i]?.preview) URL.revokeObjectURL(prev[i].preview);
-                  return prev.filter((_, idx) => idx !== i);
-                });
-              }}
-              style={{
-                position: 'absolute',
-                top: 6,
-                right: 6,
-                background: 'rgba(255,255,255,0.85)',
-                border: 'none',
-                borderRadius: '50%',
-                cursor: 'pointer',
-                padding: 2,
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                boxShadow: '0 1px 4px rgba(0,0,0,0.08)'
-              }}
-              title="Delete image"
-            >
-              <TbTrash color="#d00" size={18} />
-            </button>
-          </div>
-        </div>
-      ))}
-    </div>
-  )}
+                {/* Preview Images Grid */}
+                {images.length > 0 && (
+                  <div className="row g-3 mb-4">
+                    {images.map((file, i) => (
+                      <div
+                        className="col-6 col-sm-2 col-md-2"
+                        key={i}
+                        style={{ position: "relative" }}
+                      >
+                        <div
+                          className="border rounded-3 shadow-sm overflow-hidden"
+                          style={{
+                            height: 100,
+                            width: 100,
+                            objectFit: "cover",
+                            position: "relative",
+                          }}
+                        >
+                          <img
+                            src={file.preview}
+                            alt={`preview-${i}`}
+                            className="w-100 h-100"
+                            style={{ objectFit: "cover" }}
+                          />
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setImages((prev) => {
+                                if (prev[i]?.preview)
+                                  URL.revokeObjectURL(prev[i].preview);
+                                return prev.filter((_, idx) => idx !== i);
+                              });
+                            }}
+                            style={{
+                              position: "absolute",
+                              top: 6,
+                              right: 6,
+                              background: "rgba(255,255,255,0.85)",
+                              border: "none",
+                              borderRadius: "50%",
+                              cursor: "pointer",
+                              padding: 2,
+                              display: "flex",
+                              alignItems: "center",
+                              justifyContent: "center",
+                              boxShadow: "0 1px 4px rgba(0,0,0,0.08)",
+                            }}
+                            title="Delete image"
+                          >
+                            <TbTrash color="#d00" size={18} />
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
 
-  {/* Description */}
-  <div className="mb-4">
-    <label className="form-label fw-semibold">{t("description")}</label>
-    <textarea
-      name="description"
-      className="form-control rounded-3"
-      rows="3"
-      maxLength={300}
-      value={formData.description}
-      onChange={handleChange}
-      placeholder={t("enterDescription")}
-    />
-    {formErrors.description && (
-      <small className="text-danger">{formErrors.description}</small>
-    )}
-  </div>
+                {/* Description */}
+                <div className="mb-4">
+                  <label className="form-label fw-semibold">
+                    {t("description")}
+                  </label>
+                  <textarea
+                    name="description"
+                    className="form-control rounded-3"
+                    rows="3"
+                    maxLength={300}
+                    value={formData.description}
+                    onChange={handleChange}
+                    placeholder={t("enterDescription")}
+                  />
+                  {formErrors.description && (
+                    <small className="text-danger">
+                      {formErrors.description}
+                    </small>
+                  )}
+                </div>
 
-  {/* SEO Fields */}
-  <div className="row g-3">
-    <div className="col-sm-6">
-      <label className="form-label fw-semibold">{t("seoMetaTitle")}</label>
-      <input
-        type="text"
-        name="seoTitle"
-        className="form-control rounded-3"
-        value={formData.seoTitle || ""}
-        onChange={handleChange}
-        placeholder={t("enterSeoMetaTitle")}
-      />
-      {formErrors.seoTitle && (
-        <small className="text-danger">{formErrors.seoTitle}</small>
-      )}
-    </div>
+                {/* SEO Fields */}
+                <div className="row g-3">
+                  <div className="col-sm-6">
+                    <label className="form-label fw-semibold">
+                      {t("seoMetaTitle")}
+                    </label>
+                    <input
+                      type="text"
+                      name="seoTitle"
+                      className="form-control rounded-3"
+                      value={formData.seoTitle || ""}
+                      onChange={handleChange}
+                      placeholder={t("enterSeoMetaTitle")}
+                    />
+                    {formErrors.seoTitle && (
+                      <small className="text-danger">
+                        {formErrors.seoTitle}
+                      </small>
+                    )}
+                  </div>
 
-    <div className="col-sm-6">
-      <label className="form-label fw-semibold">{t("seoMetaDescription")}</label>
-      <input
-        type="text"
-        name="seoDescription"
-        className="form-control rounded-3"
-        value={formData.seoDescription || ""}
-        onChange={handleChange}
-        placeholder={t("enterSeoMetaDescription")}
-      />
-      {formErrors.seoDescription && (
-        <small className="text-danger">{formErrors.seoDescription}</small>
-      )}
-    </div>
-  </div>
-</>
-
-              
+                  <div className="col-sm-6">
+                    <label className="form-label fw-semibold">
+                      {t("seoMetaDescription")}
+                    </label>
+                    <input
+                      type="text"
+                      name="seoDescription"
+                      className="form-control rounded-3"
+                      value={formData.seoDescription || ""}
+                      onChange={handleChange}
+                      placeholder={t("enterSeoMetaDescription")}
+                    />
+                    {formErrors.seoDescription && (
+                      <small className="text-danger">
+                        {formErrors.seoDescription}
+                      </small>
+                    )}
+                  </div>
+                </div>
+              </>
             )}
 
             {/* Step 3 - Variants */}
@@ -1958,7 +2433,7 @@ style={{ height: 100, width:100, objectFit: "cover" ,position:"relative"}}      
                 </div> */}
 
                 {/* Variants */}
-                 {/* <div className="card mt-4">
+                {/* <div className="card mt-4">
           <div className="card-body">
             <div className="row">
               <div className="col-md-6">
@@ -1995,64 +2470,70 @@ style={{ height: 100, width:100, objectFit: "cover" ,position:"relative"}}      
           </div>
         </div> */}
 
+                <div className="card mt-4">
+                  <div className="card-body">
+                    {variants.map((variant, index) => (
+                      <div className="row mb-3" key={index}>
+                        <div className="col-md-5">
+                          <label className="form-label">Variant</label>
+                          <select
+                            className="form-select"
+                            value={variant.selectedVariant}
+                            onChange={(e) =>
+                              handleVariantChange(index, e.target.value)
+                            }
+                          >
+                            <option value="">Select Variant</option>
+                            {variantDropdown.map((v, idx) => (
+                              <option key={idx} value={v}>
+                                {v}
+                              </option>
+                            ))}
+                          </select>
+                        </div>
+                        <div className="col-md-5">
+                          <label className="form-label">Value</label>
+                          <select
+                            className="form-select"
+                            value={variant.selectedValue}
+                            onChange={(e) =>
+                              handleValueChange(index, e.target.value)
+                            }
+                            disabled={!variant.selectedVariant}
+                          >
+                            <option value="">Select Value</option>
+                            {variant.valueDropdown.map((val, idx) => (
+                              <option key={idx} value={val}>
+                                {val}
+                              </option>
+                            ))}
+                          </select>
+                        </div>
+                        <div className="col-md-2 d-flex align-items-end">
+                          {variants.length > 1 && (
+                            <button
+                              type="button"
+                              className="btn btn-danger"
+                              onClick={() => handleRemoveVariant(index)}
+                            >
+                              ×
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                    ))}
 
-         <div className="card mt-4">
-      <div className="card-body">
-        {variants.map((variant, index) => (
-          <div className="row mb-3" key={index}>
-            <div className="col-md-5">
-              <label className="form-label">Variant</label>
-              <select
-                className="form-select"
-                value={variant.selectedVariant}
-                onChange={e => handleVariantChange(index, e.target.value)}
-              >
-                <option value="">Select Variant</option>
-                {variantDropdown.map((v, idx) => (
-                  <option key={idx} value={v}>{v}</option>
-                ))}
-              </select>
-            </div>
-            <div className="col-md-5">
-              <label className="form-label">Value</label>
-              <select
-                className="form-select"
-                value={variant.selectedValue}
-                onChange={e => handleValueChange(index, e.target.value)}
-                disabled={!variant.selectedVariant}
-              >
-                <option value="">Select Value</option>
-                {variant.valueDropdown.map((val, idx) => (
-                  <option key={idx} value={val}>{val}</option>
-                ))}
-              </select>
-            </div>
-            <div className="col-md-2 d-flex align-items-end">
-              {variants.length > 1 && (
-                <button
-                  type="button"
-                  className="btn btn-danger"
-                  onClick={() => handleRemoveVariant(index)}
-                >
-                  ×
-                </button>
-              )}
-            </div>
-          </div>
-        ))}
+                    <button
+                      type="button"
+                      className="btn btn-outline-primary"
+                      onClick={handleAddVariant}
+                    >
+                      + Add another variant
+                    </button>
+                  </div>
+                </div>
 
-        <button
-          type="button"
-          className="btn btn-outline-primary"
-          onClick={handleAddVariant}
-        >
-          + Add another variant
-        </button>
-      </div>
-    </div>
-
-
-        {/* fina;l */}
+                {/* fina;l */}
                 {/* <div className="">
                   <h3 className="" >Add Variants</h3>
                   <br />
@@ -2118,7 +2599,6 @@ style={{ height: 100, width:100, objectFit: "cover" ,position:"relative"}}      
                   </button>
 
                 </div> */}
-
               </>
             )}
           </div>
@@ -2186,13 +2666,22 @@ style={{ height: 100, width:100, objectFit: "cover" ,position:"relative"}}      
           onCategoryChange={(e) => {
             const value = e.target.value;
             setCategoryName(value);
-            setFormErrors((prev) => ({ ...prev, categoryName: validateField("categoryName", sanitizeInput(value, true)) }));
+            setFormErrors((prev) => ({
+              ...prev,
+              categoryName: validateField(
+                "categoryName",
+                sanitizeInput(value, true)
+              ),
+            }));
           }}
           // onSlugChange={(e) => setCategorySlug(e.target.value)}
           onSlugChange={(e) => {
             const value = e.target.value;
             setCategorySlug(value);
-            setFormErrors((prev) => ({ ...prev, categorySlug: validateField("categorySlug", sanitizeInput(value)) }));
+            setFormErrors((prev) => ({
+              ...prev,
+              categorySlug: validateField("categorySlug", sanitizeInput(value)),
+            }));
           }}
           onSubmit={categorySubmit}
           submitLabel="Add Category"

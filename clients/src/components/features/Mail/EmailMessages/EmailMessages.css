@@ -382,3 +382,10 @@
     height: auto;
   }
 }
+
+/* Hide date/time on smaller screens (tablet and below) */
+@media (max-width: 1200px) {
+  .justinmaindiv .time-label {
+    display: none;
+  }
+}

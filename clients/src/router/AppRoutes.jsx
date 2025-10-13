@@ -77,6 +77,7 @@ import LanguageSwitcher from "../utils/LanguageSwitch/LanguageSwitcher.jsx";
 import DebitNote from "../components/features/creditDebit/debitNote/DebitNote.jsx";
 import CreditNote from "../components/features/creditDebit/creditNote/CreditNote.jsx";
 import Sales from "../components/features/sales/Sales.jsx";
+import SalesDashboard from "../components/features/sales/SalesDashboard.jsx";
 import SaleReturn from "../components/features/sales/return/SaleReturn.jsx";
 import AllCustomer from "../components/features/customers/AllCustomers.jsx";
 import AllSuppliers from "../components/features/suppliers/AllSuppliers.jsx";
@@ -292,6 +293,8 @@ const AppRoutes = () => {
  <Route path="/sales-log" element={<SaleHistory />} />
  <Route path="/sales-payment" element={<PaymentHistory />} />
  <Route path="/quotation-list" element={<Quotation />} />
+ <Route path="/sales-dashboard" element={<SalesDashboard />} />
+
 
  {/* stock */}
  <Route path="/stock" element={<ViewProductStock />} />

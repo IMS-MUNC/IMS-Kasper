@@ -1,24 +1,22 @@
-
-
-@import url('https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,100..900;1,100..900&display=swap');
+@import url("https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,100..900;1,100..900&display=swap");
 
 .cmmpyprofilesettinng {
-     border: 1px solid #E6E6E6;
-    background-color: #FFFFFF;
-    box-shadow: rgba(149, 157, 165, 0.2) 0px 8px 24px;
-    border-radius: 8px;
-    /* padding: 14px 16px 14px 16px; */
-    font-family: "Roboto", sans-serif;
+  border: 1px solid #e6e6e6;
+  background-color: #ffffff;
+  box-shadow: rgba(149, 157, 165, 0.2) 0px 8px 24px;
+  border-radius: 8px;
+  /* padding: 14px 16px 14px 16px; */
+  font-family: "Roboto", sans-serif;
 }
 .cfnnysthead {
-    font-family: "Roboto", sans-serif;
-    font-weight: 400;
-    color: #262626;
-    font-size: 14px;
-    line-height: 14px;
+  font-family: "Roboto", sans-serif;
+  font-weight: 400;
+  color: #262626;
+  font-size: 14px;
+  line-height: 14px;
 }
 .cfnnystheadlabel {
-      color: #262626;
+  color: #262626;
   font-family: "Roboto", sans-serif;
   font-weight: 400;
   font-size: 16px;
@@ -26,29 +24,59 @@
   letter-spacing: 0px;
 }
 .cfnnystheadinput {
-      background-color: #FBFBFB;
-  border: 1px solid #C2C2C2;
+  background-color: #fbfbfb;
+  border: 1px solid #c2c2c2;
   border-radius: 8px;
   padding: 10px;
   outline: none;
-    color: #676767;
+  color: #676767;
   font-size: 14px;
   font-weight: 400;
-  line-height: 18px
+  line-height: 18px;
 }
 .cfnnystheadlabeldesc {
-    color: #888888;
-    font-size: 12px;
-    font-weight: 400;
-    line-height: 14px;
-    font-family: "Roboto", sans-serif;
-    margin-top: 6px;
+  color: #888888;
+  font-size: 12px;
+  font-weight: 400;
+  line-height: 14px;
+  font-family: "Roboto", sans-serif;
+  margin-top: 6px;
 }
 .company-images-upload-btn {
-    font-family: "Roboto", sans-serif;
-    color: #1368EC;
-    font-weight: 400;
-    font-size: 14px;
-    line-height: 14px;
-    
+  font-family: "Roboto", sans-serif;
+  color: #1368ec;
+  font-weight: 400;
+  font-size: 14px;
+  line-height: 14px;
+}
+
+.company-info-input {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  padding: 10px 0;
+}
+
+/* Group of input fields (row) */
+.company-info-row {
+  display: flex;
+  gap: 20px;
+  flex-wrap: nowrap; /* Allow wrapping for smaller screens */
+}
+
+.company-info-row > div {
+  flex: 1;
+  min-width: 0; /* Ensures it shrinks but not too small */
+}
+
+/* Responsive: stack fields on smaller screens */
+@media (max-width: 991px) {
+  .company-info-row {
+    flex-wrap: wrap;
+    flex-direction: column;
+  }
+
+  .company-info-row > div {
+    width: 100%;
+  }
 }

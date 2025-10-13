@@ -35,9 +35,11 @@ import Upi from '../../assets/img/upi.png';
 import Banks from '../../assets/img/banks.png';
 import NoImage from '../../assets/img/products/no_image.png';
 // import NoImages from '../../assets/img/icons/no-image.png';
-
+import { FaHandPaper } from "react-icons/fa";
+import { GrPowerReset } from "react-icons/gr";
+import { FaExchangeAlt } from "react-icons/fa";
+import {  FaChevronDown, FaChevronUp } from "react-icons/fa";
 const Pos=() => {
-
   const userObj = JSON.parse(localStorage.getItem("user"));
     const userId = userObj?.id || userObj?._id; // Handle both id and _id
     const token = localStorage.getItem("token");
@@ -1462,9 +1464,17 @@ const handleSubmit = async (e) => {
     return () => clearInterval(timer);
   }, []);
 
+  
+  // 👇 new state for See More
+  const [showAllCategories, setShowAllCategories] = useState(false);
+
+  // By default first 5 categories
+  const visibleCategories = showAllCategories 
+    ? categories 
+    : categories.slice(0, 5);
   return ( //page code starts from here-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
-<div className="pos-five">
+<div className="pos-five " style={{overflowY:"hidden"}}>
 
   <div className="page-wrapper pos-pg-wrapper ms-0">
   <div className="content pos-design p-0">
@@ -1477,69 +1487,103 @@ const handleSubmit = async (e) => {
           <div className="content-wrap">
 
             {/* categories listing */}
-            <div className="tab-wrap" style={{width:'200px',}}>
-               <div className='tabs owl-carousel pos-category5' style={{display: "block", height: "100%", overflow: "hidden"}} >
-                <span style={{color:'#676767'}}><b>All Items</b></span>
-                <div 
-                  style={{
-                    // display:'flex',
-                    // flexDirection:'column',
-                    marginLeft:'10px',
-                    borderLeft: selectedCategory === null ? '1px solid #0051CF' : '',
-                    backgroundColor: selectedCategory === null ? 'white' : 'transparent',
-                    borderRadius:'8px',
-                    // padding:'2px 5px',
-                    fontWeight:'600',
-                    cursor:'pointer'
-                  }}
-                  onClick={handleAllItemsClick}
-                >
-                  &nbsp;All Items
-                </div>
+            <div className="tab-wrap" 
+  style={{
+    width:'240px',
+    backgroundColor:"#fff",
+    borderRight:"1px solid #e5e7eb",
+    boxShadow:"2px 0 6px rgba(0,0,0,0.05)",
+    borderRadius:"8px 0 0 8px"
+  }}
+>
+  <div 
+    className='tabs owl-carousel pos-category5 overflow-auto' 
+    style={{display: "block", height: "550px", overflow: "hidden", padding:"20px"}} 
+  >
+    {/* All Items Section */}
+    <span style={{color:'#374151', fontSize:"15px", fontWeight:"600", marginBottom:"12px", display:"block"}}>
+      All Items
+    </span>
+    <div 
+      style={{
+        display:"flex",
+        alignItems:"center",
+        gap:"10px",
+        padding:"10px 12px",
+        borderRadius:"8px",
+        cursor:"pointer",
+        color: selectedCategory === null ? '#2563eb' : '#374151',
+        backgroundColor: selectedCategory === null ? '#eff6ff' : 'transparent',
+        fontWeight: selectedCategory === null ? '600' : 'normal',
+        transition:"all 0.25s ease"
+      }}
+      onClick={handleAllItemsClick}
+      onMouseEnter={(e)=>e.currentTarget.style.background="#f3f4f6"}
+      onMouseLeave={(e)=>e.currentTarget.style.background= selectedCategory === null ? '#eff6ff' : 'transparent'}
+    >
+       
+      All Items
+    </div>
 
-              {/* categories */}
-              <div style={{lineHeight:'30px',marginTop:'10px',marginBottom:'20px'}}>
-                <span style={{color:'#676767'}}><b>Categories</b></span>
-                <div style={{display:'flex',flexDirection:'column',marginLeft:'10px'}}>
-                {categories.length === 0 ? (
-                <span>No Category Available</span>
-                ) : (
-                  categories.map((category) => (
-                  <span 
-                    key={category._id}
-                    style={{
-                      cursor:'pointer',
-                      // padding:'2px 5px',
-                      borderRadius:'8px',
-                      borderLeft:  selectedCategory && selectedCategory._id === category._id ? '1px solid #0051CF' : '',
-                      backgroundColor: selectedCategory && selectedCategory._id === category._id ? 'white' : 'transparent',
-                      fontWeight: selectedCategory && selectedCategory._id === category._id ? '600' : 'normal'
-                    }}
-                    onClick={() => handleCategoryClick(category)}
-                  >
-                    &nbsp;{category.categoryName}
-                  </span>
-                  )))}
-                </div>
+    {/* Categories Section */}
+    <div style={{lineHeight:'15px',marginTop:'24px',marginBottom:'12px'}}>
+      <span style={{color:'#374151', fontSize:"15px", fontWeight:"600"}}>Categories</span>
+      <div style={{display:'flex',flexDirection:'column',marginTop:"10px"}}>
+        {categories.length === 0 ? (
+          <span style={{fontSize:"13px", color:"#9ca3af"}}>No Category Available</span>
+        ) : (
+          <>
+            {visibleCategories.map((category) => (
+              <div
+                key={category._id}
+                style={{
+                  display:"flex",
+                  alignItems:"center",
+                  gap:"10px",
+                  padding:"10px 12px",
+                  margin:"3px 0",
+                  borderRadius:"8px",
+                  cursor:"pointer",
+                  transition:"all 0.25s ease",
+                  color: selectedCategory && selectedCategory._id === category._id ? '#2563eb' : '#374151',
+                  backgroundColor: selectedCategory && selectedCategory._id === category._id ? '#eff6ff' : 'transparent',
+                  fontWeight: selectedCategory && selectedCategory._id === category._id ? '600' : 'normal',
+                }}
+                onClick={() => handleCategoryClick(category)}
+                onMouseEnter={(e)=>e.currentTarget.style.background="rgb(239, 246, 255)"}
+                onMouseLeave={(e)=>e.currentTarget.style.background= selectedCategory && selectedCategory._id === category._id ? '#eff' : 'transparent'}
+              >
+               
+                {category.categoryName}
               </div>
+            ))}
 
-                </div>
-
-             
-              {/* <ul className="tabs owl-carousel pos-category5">
-                <li id="all" className="active">
-                  <a href="">
-                  </a>
-                  <h6><a href="">All</a></h6>
-                </li>
-                 <li id="headphones">
-                  <a href="">
-                  </a>
-                  <h6><a href="">Headset</a></h6>
-                </li>
-              
-              </ul> */}
-            </div>
+            {/* See More / See Less button */}
+            {categories.length > 5 && (
+              <div 
+                onClick={() => setShowAllCategories(!showAllCategories)}
+                style={{ 
+                  marginTop: '14px', 
+                  display:"flex",
+                  alignItems:"center",
+                  gap:"8px",
+                  cursor:'pointer', 
+                  color:'#2563eb', 
+                  fontWeight:'600',
+                  fontSize:"13px"
+                }}
+              >
+                {showAllCategories ? <FaChevronUp size={12}/> : <FaChevronDown size={12}/> }
+                {showAllCategories ? "See Less" : "See More"}
+              </div>
+            )}
+          </>
+        )}
+      </div>
+    </div>
+  </div>
+</div>
+            
 
             {/* products listing */}
             <div className="tab-content-wrap">
@@ -1784,7 +1828,7 @@ const handleSubmit = async (e) => {
       </div>
 
        {/* billing section */}
-      <div className="col-md-12 col-lg-5 col-xl-4 ps-0 theiaStickySidebar  position-relative">
+      <div className="col-md-12 col-lg-5 col-xl-4 ps-0 theiaStickySidebar  position-relative" style={{backgroundColor:"white"}}>
 
         <div style={{width:'100%',display:'flex',justifyContent:'space-between',alignItems:'center',padding:'0px 20px',borderBottom:'1px solid #ccc'}}>
           <div style={{fontSize:'20px',fontWeight:'600'}}>
@@ -1979,7 +2023,7 @@ const handleSubmit = async (e) => {
           </div>
 
           {/* selected items details */}
-          <div style={{flex:1,overflowY:'auto',padding:'10px',}}>
+          <div style={{flex:1,overflowY:'auto',padding:'10px',height:"300px"}}>
             <div style={{fontWeight:'600',color:'#333',marginBottom:'10px',fontSize:'16px'}}>
               Selected Items ({selectedItems.length})
             </div>
@@ -1989,7 +2033,7 @@ const handleSubmit = async (e) => {
                 <i>No items selected</i>
               </div>
             ) : (
-              <div style={{display:'flex',flexDirection:'column',gap:'8px',overflowY:'auto',height: updown ? 'calc(45vh - 18vh)' : '45vh'}}>
+              <div style={{display:'flex',flexDirection:'column',gap:'8px'}}>
                 {selectedItems.map((item) => (
                   <div 
                     key={item._id}
@@ -2241,11 +2285,12 @@ const handleSubmit = async (e) => {
     {/* footer section of pos */}
     <div className="pos-footer bg-white p-3 border-top">
       <div className="d-flex align-items-center justify-content-center flex-wrap gap-2">
-        <a href='/pos' target='_blank' className="btn btn-orange d-inline-flex align-items-center justify-content-center" ><i className="ti ti-player-pause me-2" />Hold</a>
+        <a href='/pos' target='_blank' className="btn btn-orange d-inline-flex align-items-center justify-content-center gap-1" ><FaHandPaper className='holdicon'/> Hold</a>
+        {/* <Link to="/pos"><button className='btn hold-btn'><FaHandPaper className='handhold'/> Hold</button></Link> */}
         {/* <a href="" className="btn btn-info d-inline-flex align-items-center justify-content-center"><i className="ti ti-trash me-2" />Void</a> */}
         {/* <a href="" className="btn btn-cyan d-flex align-items-center justify-content-center" data-bs-toggle="modal" data-bs-target="#payment-completed"><i className="ti ti-cash-banknote me-2" />Payment</a> */}
         {/* <a href="" className="btn btn-secondary d-inline-flex align-items-center justify-content-center" data-bs-toggle="modal" data-bs-target="#orders"><i className="ti ti-shopping-cart me-2" />View Orders</a> */}
-        <a href="" className="btn btn-indigo d-inline-flex align-items-center justify-content-center" data-bs-toggle="modal" data-bs-target="#reset"
+        <a href="" className="btn btn-indigo d-inline-flex align-items-center justify-content-center gap-1" data-bs-toggle="modal" data-bs-target="#reset"
         
               onClick={() => {
                 setSelectedItems([]);
@@ -2353,10 +2398,11 @@ const handleSubmit = async (e) => {
                     setAmountReceived('');
                   }}
         >
-          <i className="ti ti-reload me-2" />
-          Reset
+          {/* <i className="ti ti-reload me-2" /> */}
+          <GrPowerReset />
+           Reset
         </a>
-        <a onClick={handleTransactionPopupChange}  className="btn btn-danger d-inline-flex align-items-center justify-content-center" ><i className="ti ti-refresh-dot me-2"/>Transaction</a>
+        <a onClick={handleTransactionPopupChange}  className="btn btn-danger d-inline-flex align-items-center justify-content-center gap-1" ><FaExchangeAlt />Transaction</a>
       </div>
     </div>
 

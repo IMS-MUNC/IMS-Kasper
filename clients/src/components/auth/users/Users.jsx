@@ -571,12 +571,12 @@ const Users = () => {
             </li>
             <li>
               <button type="button" onClick={handleExportPDF} className="icon-btn" title="Pdf">
-                <FaFilePdf />
+                <FaFilePdf style={{ color: 'red' }} />
               </button>
             </li>
             <li>
               <button type="button" onClick={handleExportExcel} className="icon-btn" title="Export Excel">
-                <FaFileExcel />
+                <FaFileExcel style={{ color: 'green' }} />
               </button>
             </li>
           </div>
@@ -891,29 +891,33 @@ const Users = () => {
                             <span
                               href="javascript:void(0);"
                               className="avatar avatar-md me-2 no-underline"
-                              style={{
-                                width: "36px",
-                                height: "36px",
-                                borderRadius: "50%",
-                              }}
+                              style={{width:'25px', height:'25px', overflow:'hidden',borderRadius:'4px', display:'inline-block', justifyContent:'center', alignItems:'center', }}
                             >
                               {user.profileImage && user.profileImage.url ? (
+                                <>
+                                <div style={{width:'25px', height:'25px', overflow:'hidden',borderRadius:'4px', display:'inline-block', justifyContent:'center', alignItems:'center', }}>
                                 <img
                                   src={user.profileImage.url}
                                   alt="Profile"
                                   style={{
-                                    width: "36px",
-                                    height: "36px",
-                                    borderRadius: "50%",
+                                    width: "100%",
+                                    height: "100%",
+                                    objectFit:"cover"
                                   }}
                                 />
+                                </div>
+                                </>
                               ) : (
                                 <div
                                   className=" text-white  d-flex justify-content-center align-items-center"
                                   style={{
-                                    width: "36px",
-                                    height: "36px",
-                                    borderRadius: "50%",
+                                    width: "25px",
+                                    height: "25px",
+                                    overflow:"hidden",
+                                    borderRadius: "4px",
+                                    display:"inline-block",
+                                    justifyContent:'center',
+                                    alignItems:'center',
                                     border: "1px solid #E6E6E6",
                                     textDecoration: "none",
                                   }}
@@ -1016,6 +1020,7 @@ const Users = () => {
                               data-bs-toggle="modal"
                               data-bs-target="#edit-user"
                               onClick={() => handleOpenEditModal(user)}
+                              title="Edit"
                             >
                               <TbEdit />
                             </a>
@@ -1023,6 +1028,7 @@ const Users = () => {
                             <a
                               className="p-2"
                               onClick={() => handleDelete(user._id)}
+                              title="Delete"
                             >
                               <TbTrash />
                             </a>
@@ -1114,13 +1120,13 @@ const Users = () => {
         {/* /product list */}
 
         {/* Add User */}
-        <div className="modal" id="add-user">
+        <div className="modal usermdl" id="add-user">
           <div
-            className="modal-dialog modal-dialog-centered"
+            className="modal-dialog modal-dialog-centered usermdl-dialog"
             style={{ maxWidth: "970px" }}
           >
             <div
-              className="modal-content"
+              className="modal-content usermdl-content"
               style={{
                 padding: "10px",
               }}
@@ -1474,7 +1480,7 @@ const Users = () => {
                               name="phone"
                               value={phone}
                               onChange={(e) => setPhone(e.target.value)}
-                              placeholder="Enter your 10 digit number"
+                              placeholder="Enter 10 digit number"
                               required
                             />
                             {errors.phone && <p style={{ color: 'red', fontSize: '12px' }}>{errors.phone}</p>}
@@ -1929,12 +1935,12 @@ const Users = () => {
       /> */}
 
         {/* Edit User */}
-        <div className="modal" id="edit-user">
+        <div className="modal usermdl" id="edit-user">
           <div
-            className="modal-dialog modal-dialog-centered"
+            className="modal-dialog modal-dialog-centered usermdl-dialog"
             style={{ maxWidth: "970px" }}
           >
-            <div className="modal-content" style={{ padding: "10px" }}>
+            <div className="modal-content usermdl-content" style={{ padding: "10px" }}>
               <div className="page-wrapper-new p-0 pb-5">
                 <div className="">
                   <div className="page-title">

@@ -29,10 +29,10 @@ exports.getSalesReturnStats = async (req, res) => {
           if (Array.isArray(note.products)) {
             note.products.forEach(retProd => {
               totalReturnQty += Number(retProd.returnQty || 0);
-              totalReturnAmount += Number(retProd.returnAmount || 0);
+              totalReturnAmount += Number(retProd.lineTotal || 0);
             });
           }
-          // Fallback: add grandTotal if returnAmount not present
+          // Fallback: add grandTotal if lineTotal not present
           if (!note.products?.length && note.grandTotal) {
             totalReturnAmount += Number(note.grandTotal);
           }
@@ -715,7 +715,14 @@ exports.getSales = async (req, res) => {
     const total = await Sales.countDocuments(query);
     const salesRaw = await Sales.find(query)
       .populate({ path: "customer", select: "-password -__v" })
-      .populate({ path: "products.productId", select: "productName images" })
+      .populate({
+        path: "products.productId",
+        select: "productName sku warehouse images",
+        populate: {
+          path: "warehouse",
+          select: "warehouseName"
+        }
+      })
       .populate({
         path: "creditNotes",
         select: "creditNoteId total grandTotal createdAt products isDeleted",
@@ -866,7 +873,7 @@ exports.getSaleById = async (req, res) => {
     if (!sale) return res.status(404).json({ message: 'Sale not found' });
     // Map productName, image, and netQty to top-level for each product
 
-    res.json({ ...sale.toObject(), products });
+    res.json({ ...sale.toObject(), Product });
   } catch (err) {
     res.status(500).json({ message: err.message });
   }

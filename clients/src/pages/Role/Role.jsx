@@ -243,16 +243,16 @@ const Role = () => {
         year: "numeric",
       });
       return {
-      "Role Name": user.roleName,
-      "Created At":formattedDate
-    };
-  });
-    
+        "Role Name": user.roleName,
+        "Created At": formattedDate
+      };
+    });
+
     const worksheet = XLSX.utils.json_to_sheet(worksheetData);
     const workbook = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(workbook, worksheet, "Roles");
-    const excelBuffer = XLSX.write(workbook, {bookType:"xlsx", type:"array"});
-    const data  = new Blob([excelBuffer], {type:"application/octet-stream"});
+    const excelBuffer = XLSX.write(workbook, { bookType: "xlsx", type: "array" });
+    const data = new Blob([excelBuffer], { type: "application/octet-stream" });
     saveAs(data, "role_list.xlsx")
   }
 
@@ -260,24 +260,24 @@ const Role = () => {
   const handleExportPDF = () => {
     const doc = new jsPDF();
     doc.text("Role List", 14, 16);
-    const tableColumn = ["Role",  "Created At"];
+    const tableColumn = ["Role", "Created At"];
     const tableRows = [];
     filteredRoles.forEach((user) => {
       const formattedDate = new Date(user.createdAt).toLocaleDateString("en-GB", {
-      day: "2-digit",
-      month: "short",
-      year: "numeric",
+        day: "2-digit",
+        month: "short",
+        year: "numeric",
       })
       const RoleData = [
         user.roleName,
-       formattedDate
+        formattedDate
       ];
       tableRows.push(RoleData);
     })
     autoTable(doc, {
-      startY:20,
-      head:[tableColumn],
-      body:tableRows,
+      startY: 20,
+      head: [tableColumn],
+      body: tableRows,
     })
     doc.save('role_list.pdf')
   }
@@ -296,7 +296,7 @@ const Role = () => {
           <div className="table-top-head me-2">
             <li>
               <button type="button" onClick={handleExportPDF} className="icon-btn" title="Pdf">
-                <FaFilePdf />
+                <FaFilePdf style={{ color: 'red' }} />
               </button>
             </li>
             <li>
@@ -306,7 +306,7 @@ const Role = () => {
                 title="Export Excel"
                 onClick={handleExportExcel}
               >
-                <FaFileExcel />
+                <FaFileExcel style={{ color: 'green' }} />
               </button>
             </li>
           </div>
@@ -337,7 +337,7 @@ const Role = () => {
                 />
                 <input
                   type="text"
-                  placeholder="Search"
+                  placeholder="Search by role..."
                   className="search-inputsrch"
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
@@ -615,7 +615,7 @@ const Role = () => {
                               //   navigate(`/permissions/${role._id}`)
                               // }
                               onClick={() => handleViewPermissions(role.roleName)}
-
+                              title="View"
                             >
                               <TbEye />
                             </a>
@@ -626,6 +626,7 @@ const Role = () => {
                               data-bs-toggle="modal"
                               data-bs-target="#edit-role"
                               onClick={() => handleEditClick(role)}
+                              title="Edit"
                             >
                               <TbEdit />
                             </a>
@@ -633,6 +634,7 @@ const Role = () => {
                             <a
                               className="p-2"
                               onClick={() => handleDeleteRole(role._id)}
+                              title="Delete"
                             >
                               <TbTrash />
                             </a>

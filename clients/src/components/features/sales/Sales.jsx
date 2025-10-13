@@ -359,7 +359,7 @@ const handleExportExcel = () => {
               <a onClick={handleExportExcel} data-bs-toggle="tooltip" data-bs-placement="top" title="Excel"><img src={EXCEL} alt="img" /></a>
             </li>
             <li>
-              <a onClick={fetchSales} data-bs-toggle="tooltip" data-bs-placement="top" title="Refresh"><TbRefresh className="ti ti-refresh" /></a>
+              <a onClick={() => location.reload()} data-bs-toggle="tooltip" data-bs-placement="top" title="Refresh"><TbRefresh className="ti ti-refresh" /></a>
             </li>
            
           </ul>
@@ -524,7 +524,6 @@ const handleExportExcel = () => {
 <td>
   {Array.isArray(sale.creditNotes) && sale.creditNotes.length > 0 ? (
     <>
-      {/* पहला CreditNote full ID दिखे */}
       <span
         key={sale.creditNotes[0]._id}
         className="badge bg-info text-light me-1"
@@ -859,7 +858,7 @@ const handleExportExcel = () => {
 
           </div>
         </div>
-<SalesDashboard/>
+        {/* <SalesDashboard /> */}
       </div>
       {showModal && editSale && (
         <EditSalesModal

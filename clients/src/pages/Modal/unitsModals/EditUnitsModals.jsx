@@ -6,17 +6,28 @@ const EditUnitModal = ({ selectedUnit, onUnitUpdated }) => {
   const [unitsName, setUnitsName] = useState("");
   const [shortName, setShortName] = useState("");
   const [status, setStatus] = useState(true);
+  const [isUpdating, setIsUpdating] = useState(false);
   const token = localStorage.getItem("token");
   useEffect(() => {
     if (selectedUnit) {
       setUnitsName(selectedUnit.unitsName);
       setShortName(selectedUnit.shortName);
       setStatus(selectedUnit.status === "Active");
+      setIsUpdating(false); // Reset loading state when new unit is selected
     }
   }, [selectedUnit]);
 
+  const handleCancel = () => {
+    setIsUpdating(false); // Reset loading state on cancel
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
+    
+    if (isUpdating) return; // Prevent concurrent operations
+    
+    setIsUpdating(true);
+    
     try {
       const updatedData = {
         unitsName,
@@ -32,10 +43,26 @@ const EditUnitModal = ({ selectedUnit, onUnitUpdated }) => {
       }
       );
       console.log("Update response:", response.data);
-      onUnitUpdated(); // Refresh list or close modal
-      window.$("#edit-units").modal("hide"); // jQuery style close
+      
+      // Close modal first
+      window.$("#edit-units").modal("hide");
+      
+      // Then refresh data after a delay to prevent race conditions
+      setTimeout(() => {
+        onUnitUpdated();
+        setIsUpdating(false);
+      }, 150);
+      
     } catch (error) {
       console.error("Update failed", error);
+      
+      // Close modal first even on error
+      window.$("#edit-units").modal("hide");
+      
+      // Then reset loading state after a delay
+      setTimeout(() => {
+        setIsUpdating(false);
+      }, 150);
     }
   };
 
@@ -103,11 +130,12 @@ const EditUnitModal = ({ selectedUnit, onUnitUpdated }) => {
                 type="button"
                 className="btn me-2 btn-secondary"
                 data-bs-dismiss="modal"
+                onClick={handleCancel}
               >
                 Cancel
               </button>
-              <button type="submit" className="btn btn-primary">
-                Save Changes
+              <button type="submit" className="btn btn-primary" disabled={isUpdating}>
+                {isUpdating ? 'Updating...' : 'Save Changes'}
               </button>
             </div>
           </form>

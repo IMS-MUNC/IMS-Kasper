@@ -5,7 +5,8 @@ const {
   getAllCountries,
   updateCountry,
   deleteCountry,
-  bulkImportCountries
+  bulkImportCountries,
+  bulkDeleteCountry
 } = require("../controllers/countryController");
 const  {authMiddleware}=require("../middleware/auth.js")
 
@@ -23,4 +24,5 @@ router.delete("/:id",authMiddleware, deleteCountry);
 
 router.post('/import',authMiddleware, bulkImportCountries);
 
+router.post("/bulk-delete", authMiddleware, bulkDeleteCountry);
 module.exports = router;

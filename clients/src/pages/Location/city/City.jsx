@@ -6,20 +6,35 @@ import BASE_URL from "../../config/config";
 import { toast } from "react-toastify";
 import Select from "react-select";
 import CityModal from "../../Modal/CityModal";
+import { GrFormPrevious } from "react-icons/gr";
+import { MdNavigateNext } from "react-icons/md";
+import jsPDF from "jspdf";
+import autoTable from "jspdf-autotable";
+import Swal from "sweetalert2";
+import * as XLSX from "xlsx";
+import { saveAs } from "file-saver";
+import DeleteAlert from "../../../utils/sweetAlert/DeleteAlert";
 
 const City = () => {
   const [countries, setCountries] = useState([]);
   const [states, setStates] = useState([]);
   const [cities, setCities] = useState([]);
+  const [selectedCities, setSelectedCities] = useState([]);
+
 
   const [filteredStates, setFilteredStates] = useState([]);
-  const [selectedCountry, setSelectedCountry] = useState(null);
-  const [selectedState, setSelectedState] = useState(null);
+  const [selectedCountry, setSelectedCountry] = useState("");
+  const [selectedState, setSelectedState] = useState("");
+  const [searchTerm, setSearchTerm] = useState("");
+  const [sortOption, setSortOption] = useState("recent");
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(10);
+  const [selectedStates, setSelectedStates] = useState([])
   const [cityName, setCityName] = useState("");
-//   const [editId, setEditId] = useState(null);
+  //   const [editId, setEditId] = useState(null);
   const [editCityName, setEditCityName] = useState("");
   const [editCityCode, setEditCityCode] = useState("");
-const token = localStorage.getItem("token");
+  const token = localStorage.getItem("token");
 
   useEffect(() => {
     fetchCountries();
@@ -29,10 +44,10 @@ const token = localStorage.getItem("token");
 
   const fetchCountries = async () => {
     try {
-      const res = await axios.get(`${BASE_URL}/api/countries`,{
-          headers: {
-        Authorization: `Bearer ${token}`,
-      },
+      const res = await axios.get(`${BASE_URL}/api/countries`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
       });
       setCountries(res.data);
     } catch (err) {
@@ -43,10 +58,10 @@ const token = localStorage.getItem("token");
 
   const fetchStates = async () => {
     try {
-      const res = await axios.get(`${BASE_URL}/api/states`,{
-          headers: {
-        Authorization: `Bearer ${token}`,
-      },
+      const res = await axios.get(`${BASE_URL}/api/states`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
       });
       setStates(res.data);
     } catch (err) {
@@ -55,21 +70,12 @@ const token = localStorage.getItem("token");
     }
   };
 
-  //   const fetchCities = async () => {
-  //     try {
-  //       const res = await axios.get(`${BASE_URL}/api/city/cities`);
-  //       setCities(res.data);
-  //     } catch (err) {
-  //       console.error(err);
-  //       toast.error("Failed to fetch cities");
-  //     }
-  //   };
   const fetchCities = async () => {
     try {
-      const res = await axios.get(`${BASE_URL}/api/city/cities`,{
-          headers: {
-        Authorization: `Bearer ${token}`,
-      },
+      const res = await axios.get(`${BASE_URL}/api/city/cities`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
       });
       setCities(res.data);
     } catch (err) {
@@ -96,117 +102,84 @@ const token = localStorage.getItem("token");
     setSelectedState(selectedOption);
   };
 
-  // const handleSubmit = async (e) => {
-  //   e.preventDefault();
-
-  //   if (!selectedCountry || !selectedState || !cityName.trim()) {
-  //     toast.error("All fields are required");
-  //     return;
-  //   }
-
-  //   try {
-  //     await axios.post(`${BASE_URL}/api/city/cities`, {
-  //       cityName: cityName,
-  //       cityCode: cityName.slice(0, 2).toUpperCase(),
-  //       state: selectedState.value,
-  //       country: selectedCountry.value,
-  //         headers: {
-  //       Authorization: `Bearer ${token}`,
-  //     },
-  //     });
-
-  //     toast.success("City added successfully");
-
-  //     // Reset form
-  //     setCityName("");
-  //     setSelectedCountry(null);
-  //     setSelectedState(null);
-  //     setFilteredStates([]);
-
-  //     fetchCities(); // Refresh states if needed
-  //     window.$(`#add-city`).modal("hide");
-  //   } catch (err) {
-  //     console.error(err);
-  //     toast.error(err.response?.data?.message || "Error adding city");
-  //   }
-  // };
   const handleSubmit = async (e) => {
-  e.preventDefault();
+    e.preventDefault();
 
-  if (!selectedCountry || !selectedState || !cityName.trim()) {
-    toast.error("All fields are required");
-    return;
-  }
+    if (!selectedCountry || !selectedState || !cityName.trim()) {
+      toast.error("All fields are required");
+      return;
+    }
 
-  try {
-    await axios.post(
-      `${BASE_URL}/api/city/cities`,
-      {
-        cityName: cityName,
-        cityCode: cityName.slice(0, 2).toUpperCase(),
-        state: selectedState.value,
-        country: selectedCountry.value,
-      },
-      {
-        headers: {
-          Authorization: `Bearer ${token}`,
+    try {
+      await axios.post(
+        `${BASE_URL}/api/city/cities`,
+        {
+          cityName: cityName,
+          cityCode: cityName.slice(0, 2).toUpperCase(),
+          state: selectedState.value,
+          country: selectedCountry.value,
         },
-      }
-    );
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
 
-    toast.success("City added successfully");
+      toast.success("City added successfully");
 
-    // Reset form
-    setCityName("");
-    setSelectedCountry(null);
-    setSelectedState(null);
-    setFilteredStates([]);
+      // Reset form
+      setCityName("");
+      setSelectedCountry(null);
+      setSelectedState(null);
+      setFilteredStates([]);
 
-    fetchCities(); // Refresh states if needed
-    window.$(`#add-city`).modal("hide");
-  } catch (err) {
-    console.error(err);
-    toast.error(err.response?.data?.message || "Error adding city");
-  }
-};
+      fetchCities(); // Refresh states if needed
+      window.$(`#add-city`).modal("hide");
+    } catch (err) {
+      console.error(err);
+      toast.error(err.response?.data?.message || "Error adding city");
+    }
+  };
 
-const handleUpdate = async (e) => {
-  e.preventDefault();
-  if (!selectedCountry || !selectedState || !cityName.trim()) {
-    toast.error("All fields are required");
-    return;
-  }
+  const handleUpdate = async (e) => {
+    e.preventDefault();
+    if (!selectedCountry || !selectedState || !editCityName.trim()) {
+      toast.error("All fields are required");
+      return;
+    }
 
-  try {
-    await axios.put(
-      `${BASE_URL}/api/city/cities/${editCityData._id}`,
-      {
-        cityName: editCityName,
-        cityCode: editCityName.slice(0, 2).toUpperCase(),
-        state: selectedState.value,
-        country: selectedCountry.value,
-      },
-      {
-        headers: {
-          Authorization: `Bearer ${token}`,
+    try {
+      await axios.put(
+        `${BASE_URL}/api/city/cities/${editCityData._id}`,
+        {
+          cityName: editCityName,
+          cityCode: editCityCode || editCityName.slice(0, 2).toUpperCase(), // ✅ use code
+          state: selectedState.value,
+          country: selectedCountry.value,
         },
-      }
-    );
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
 
-    toast.success("City updated successfully");
-    fetchCities();
+      toast.success("City updated successfully");
+      fetchCities();
 
-    // Reset
-    setEditCityData(null);
-    setEditCityName("");
-    setSelectedCountry(null);
-    setSelectedState(null);
-    setFilteredStates([]);
-    window.$(`#edit-city`).modal("hide");
-  } catch (err) {
-    toast.error(err.response?.data?.message || "Error updating city");
-  }
-};
+      // Reset
+      setEditCityData(null);
+      setEditCityName("");
+      setEditCityCode("");
+      setSelectedCountry(null);
+      setSelectedState(null);
+      setFilteredStates([]);
+      window.$(`#edit-city`).modal("hide");
+    } catch (err) {
+      toast.error(err.response?.data?.message || "Error updating city");
+    }
+  };
 
   const countryOptions = countries.map((c) => ({
     value: c._id,
@@ -214,11 +187,13 @@ const handleUpdate = async (e) => {
   }));
 
   const handleDelete = async (id) => {
+     const confirmed = await DeleteAlert({});
+    if (!confirmed) return;
     try {
-      await axios.delete(`${BASE_URL}/api/city/cities/${id}`,{
-          headers: {
-        Authorization: `Bearer ${token}`,
-      },
+      await axios.delete(`${BASE_URL}/api/city/cities/${id}`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
       });
       toast.success("City deleted successfully");
       fetchCities(); // refresh list
@@ -245,43 +220,122 @@ const handleUpdate = async (e) => {
     setSelectedCountry(countryOption);
     setFilteredStates(filtered);
     setSelectedState(stateOption);
-    setCityName(city.cityName);
+    setEditCityName(city.cityName);
+    setEditCityCode(city.cityCode || "");
     setEditCityData(city);
   };
-  const [editCityData, setEditCityData] = useState("");
+  const [editCityData, setEditCityData] = useState(null);
 
-  // const handleUpdate = async (e) => {
-  //   e.preventDefault();
-  //   if (!selectedCountry || !selectedState || !cityName.trim()) {
-  //     toast.error("All fields are required");
-  //     return;
-  //   }
 
-  //   try {
-  //     await axios.put(`${BASE_URL}/api/city/cities/${editCityData._id}`, {
-  //       cityName: editCityName,
-  //       cityCode: editCityName.slice(0, 2).toUpperCase(),
-  //       state: selectedState.value,
-  //       country: selectedCountry.value,
-  //         headers: {
-  //       Authorization: `Bearer ${token}`,
-  //     },
-  //     });
+  const filteredCities = cities.filter(
+    (city) =>
+      (city?.cityName || "").toLowerCase().includes(searchTerm.toLowerCase())
+  );
 
-  //     toast.success("City updated successfully");
-  //     fetchCities();
+  const handleExportPDF = () => {
+    const doc = new jsPDF();
+    doc.text("City List", 14, 16);
+    const tableColumn = ["City Name", "State Name", "Country Name"];
+    const tableRows = [];
+    finalCities.forEach((city) => {  //from filteredstates
+      const cityData = [
+        city.cityName,
+        city.state?.stateName || "",
+        city.country?.name || "",
+      ];
+      tableRows.push(cityData);
+    });
+    autoTable(doc, {
+      startY: 20,
+      head: [tableColumn],
+      body: tableRows,
+    });
+    doc.save('city_list.pdf')
+  }
 
-  //     // Reset
-  //     setEditCityData(null);
-  //     setEditCityName("");
-  //     setSelectedCountry(null);
-  //     setSelectedState(null);
-  //     setFilteredStates([]);
-  //     window.$(`#edit-city`).modal("hide");
-  //   } catch (err) {
-  //     toast.error(err.response?.data?.message || "Error updating city");
-  //   }
-  // };
+  const handleExportExcel = () => {
+    const worksheetData = cities.map((city) => ({
+      "City Name": city.cityName,
+      "State Name": city.state?.stateName || "",
+      "Country Name": city.country?.name || "",
+    }));
+    const worksheet = XLSX.utils.json_to_sheet(worksheetData);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, "Cities");
+
+    const excelBuffer = XLSX.write(workbook, {
+      bookType: "xlsx",
+      type: "array",
+    });
+
+    const fileData = new Blob([excelBuffer], {
+      type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    });
+
+    saveAs(fileData, "Cities.xlsx");
+  };
+
+  const sortedCities = [...filteredCities].sort((a, b) => {
+    if (sortOption === "asc") {
+      return (a.cityName || "").localeCompare(b.cityName || "");
+    }
+    if (sortOption === "desc") {
+      return (b.cityName || "").localeCompare(a.cityName || "");
+    }
+
+    if (sortOption === "recent") {
+      return new Date(b.createdAt || 0) - new Date(a.createdAt || 0);
+    }
+    return 0;
+  });
+
+  // filter by time (if backend returns createdAt field)
+  let finalCities = sortedCities;
+  if (sortOption === "last7") {
+    const sevenDaysAgo = new Date();
+    sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+    finalCities = sortedCities.filter((c) => new Date(c.createdAt) >= sevenDaysAgo)
+  }
+
+  if (sortOption === "lastMonth") {
+    const oneMonthAgo = new Date();
+    oneMonthAgo.setMonth(oneMonthAgo.getMonth() - 1);
+    finalCities = sortedCities.filter((c) => new Date(c.createdAt) >= oneMonthAgo)
+  }
+
+  const totalPages = Math.ceil(finalCities.length / itemsPerPage) || 1;
+  const paginatedCities = finalCities.slice(
+    (currentPage - 1) * itemsPerPage,
+    currentPage * itemsPerPage
+  );
+
+  const handleBulkDelete = async () => {
+    const confirmed = await DeleteAlert({});
+    if (!confirmed) return;
+    try {
+      const token = localStorage.getItem("token");
+      await axios.post(`${BASE_URL}/api/city/bulk-delete`, {
+        ids: selectedCities,
+      }, {
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      });
+      toast.success("Selected Cities deleted");
+      setSelectedCities([]);
+      fetchCities();
+    } catch (error) {
+      console.log(error);
+      if (error.response?.status === 401) {
+        toast.error("Unauthorired. Please login again");
+      } else if (error.response?.status === 403) {
+        toast.error("You don't have permission to delete state");
+      } else {
+        toast.error("Bulk delete failed.Please try again")
+      }
+    }
+  }
+
 
   return (
     <div className="page-wrapper">
@@ -295,19 +349,27 @@ const handleUpdate = async (e) => {
           </div>
           <div className="table-top-head me-2">
             <li>
-              <button type="button" className="icon-btn" title="Pdf">
-                <FaFilePdf />
+              <button type="button" className="icon-btn" title="Pdf" onClick={handleExportPDF}>
+                <FaFilePdf  style={{color:'red'}}/>
               </button>
             </li>
             <li>
-              <label className="icon-btn m-0" title="Import Excel">
+              {/* <label className="icon-btn m-0" title="Import Excel">
                 <input type="file" accept=".xlsx, .xls" hidden />
                 <FaFileExcel style={{ color: "green" }} />
-              </label>
+              </label> */}
             </li>
             <li>
-              <button type="button" className="icon-btn" title="Export Excel">
-                <FaFileExcel />
+              <button
+                type="button"
+                data-bs-toggle="tooltip"
+                data-bs-placement="top"
+                title="Export Excel"
+                id="collapse-header"
+                className="icon-btn"
+                onClick={handleExportExcel}
+              >
+                <FaFileExcel style={{ color: "green" }} />
               </button>
             </li>
           </div>
@@ -323,22 +385,79 @@ const handleUpdate = async (e) => {
             </a>
           </div>
         </div>
+        {selectedCities.length > 0 && (
+          <div className="mb-3">
+            <div className="btn btn-danger" onClick={handleBulkDelete}>
+              Delete Selected({selectedCities.length})
+            </div>
+          </div>
+        )}
 
         {/* City Table */}
         <div className="card">
           <div className="card-header d-flex justify-content-between flex-wrap">
             <div className="search-set">
               <div className="search-input">
-                <span className="btn-searchset">
-                  <i className="ti ti-search fs-14 feather-search" />
-                </span>
+                <input
+                  type="text"
+                  placeholder="Search city..."
+                  className="form-control"
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                />
               </div>
+              <span className="btn-searchset">
+                <i className="ti ti-search fs-14 feather-search" />
+              </span>
             </div>
             <div className="d-flex align-items-center">
               <div className="dropdown">
-                <a href="#" className="dropdown-toggle btn btn-white btn-md">
-                  Sort By : Last 7 Days
+                <a
+                  href="javascript:void(0);"
+                  className="dropdown-toggle btn btn-white btn-md d-inline-flex align-items-center"
+                  data-bs-toggle="dropdown"
+                >
+                  Sort By : {
+                    sortOption === "recent" ? "Recently Added" :
+                      sortOption === "asc" ? "Ascending" :
+                        sortOption === "desc" ? "Descending" :
+                          sortOption === "lastMonth" ? "Last Month" :
+                            sortOption === "last7" ? "Last 7 Days" : ""
+                  }
                 </a>
+                <ul className="dropdown-menu  dropdown-menu-end p-3">
+                  <li>
+                    <a href="javascript:void(0);" className="dropdown-item rounded-1"
+                      onClick={() => setSortOption("recent")}>
+                      Recently Added
+                    </a>
+                  </li>
+                  <li>
+                    <a href="javascript:void(0);" className="dropdown-item rounded-1"
+                      onClick={() => setSortOption("asc")}>
+                      Ascending
+                    </a>
+                  </li>
+                  <li>
+                    <a href="javascript:void(0);" className="dropdown-item rounded-1"
+                      onClick={() => setSortOption("desc")}>
+                      Descending
+                    </a>
+                  </li>
+                  <li>
+                    <a href="javascript:void(0);" className="dropdown-item rounded-1"
+                      onClick={() => setSortOption("lastMonth")}>
+                      Last Month
+                    </a>
+                  </li>
+                  <li>
+                    <a href="javascript:void(0);" className="dropdown-item rounded-1"
+                      onClick={() => setSortOption("last7")}>
+                      Last 7 Days
+                    </a>
+                  </li>
+
+                </ul>
               </div>
             </div>
           </div>
@@ -347,67 +466,78 @@ const handleUpdate = async (e) => {
             <div className="table-responsive">
               <table className="table datatable">
                 <thead className="thead-light">
-                  <tr>
+                  <tr style={{ textAlign: 'center' }}>
                     <th>
                       <label className="checkboxs">
-                        <input type="checkbox" id="select-all" />
+                        <input type="checkbox"
+                          checked={paginatedCities.length > 0 && paginatedCities.every((city) => selectedCities.includes(city._id))}
+                          onChange={(e) => {
+                            if (e.target.checked) {
+                              const newIds = paginatedCities.map((city) => city._id);
+                              setSelectedCities((prev) => [
+                                ...new Set([...prev, ...newIds]),
+                              ])
+                            } else {
+                              const idsToRemove = paginatedCities.map((city) => city._id);
+                              setSelectedCities((prev) => prev.filter((id) => !idsToRemove.includes(id)))
+                            }
+                          }}
+                          id="select-all" />
                         <span className="checkmarks" />
                       </label>
                     </th>
                     <th>City Name</th>
                     <th>State Name</th>
                     <th>Country Name</th>
-                    <th />
+                    <th>Action</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {cities.map((city) => (
-                    <tr>
-                      <td>
-                        <label className="checkboxs">
-                          <input type="checkbox" />
-                          <span className="checkmarks" />
-                        </label>
-                      </td>
-                      <td className="text-gray-9">{city.cityName}</td>
-                      <td>{city.state?.stateName}</td>
-                      <td>{city.country?.name}</td>
-                      <td className="action-table-data">
-                        <div className="edit-delete-action">
-                          <a
-                            className="me-2 p-2"
-                            data-bs-toggle="modal"
-                            data-bs-target="#edit-city"
-                            onClick={() => handleEditClick(city)}
-                          >
-                            <TbEdit />
-                          </a>
-                          <a
-                            className="p-2"
-                            onClick={() => handleDelete(city._id)}
-                          >
-                            <TbTrash />
-                          </a>
-                        </div>
-                      </td>
-                    </tr>
-                    // <tr key={city._id}>
-                    //   <td>{city.cityName}</td>
-                    //   <td>{city.state?.stateName}</td>
-                    //   <td>{city.country?.name}</td>
-                    //   <td>
-                    //     <div className="edit-delete-action">
-                    //       <a className="me-2 p-2" onClick={() => handleEdit(city)}>
-                    //         <TbEdit />
-                    //       </a>
-                    //       <a className="p-2" onClick={() => handleDelete(city._id)}>
-                    //         <TbTrash />
-                    //       </a>
-                    //     </div>
-                    //   </td>
-                    // </tr>
-                  ))}
-                  {!cities.length && (
+                  {paginatedCities.length > 0 ? (
+                    paginatedCities.map((city) => (
+                      <tr key={city._id} style={{ textAlign: 'center' }}>
+                        <td>
+                          <label className="checkboxs">
+                            <input
+                              type="checkbox"
+                              checked={selectedCities.includes(city._id)}
+                              onChange={(e) => {
+                                if (e.target.checked) {
+                                  setSelectedCities((prev) => [...prev, city._id]);
+                                } else {
+                                  setSelectedCities((prev) => prev.filter((id) => id !== city._id));
+                                }
+                              }}
+                            />
+                            <span className="checkmarks" />
+                          </label>
+                        </td>
+                        <td className="text-gray-9">{city.cityName}</td>
+                        <td>{city.state?.stateName}</td>
+                        <td>{city.country?.name}</td>
+                        <td className="action-table-data">
+                          <div className="edit-delete-action">
+                            <a
+                              className="me-2 p-2"
+                              data-bs-toggle="modal"
+                              data-bs-target="#edit-city"
+                              onClick={() => handleEditClick(city)}
+                              title="Edit"
+                            >
+                              <TbEdit />
+                            </a>
+                            <a
+                              className="p-2"
+                              onClick={() => handleDelete(city._id)}
+                              title="Delete"
+                            >
+                              <TbTrash />
+                            </a>
+                          </div>
+                        </td>
+                      </tr>
+                    ))
+                  ) : (
                     <tr>
                       <td colSpan="4" className="text-center">
                         No cities found
@@ -420,17 +550,76 @@ const handleUpdate = async (e) => {
               </table>
             </div>
           </div>
+          {/* pagination start */}
+          <div
+            className="d-flex justify-content-end gap-3"
+            style={{ padding: "10px 20px" }}
+          >
+            <select
+              value={itemsPerPage}
+              onChange={(e) => {
+                setItemsPerPage(Number(e.target.value));
+                setCurrentPage(1);
+              }}
+              className="form-select w-auto"
+            >
+              <option value={10}>10 Per Page</option>
+              <option value={25}>25 Per Page</option>
+              <option value={50}>50 Per Page</option>
+              <option value={100}>100 Per Page</option>
+            </select>
+            <span
+              style={{
+                backgroundColor: "white",
+                boxShadow: "rgb(0 0 0 / 4%) 0px 3px 8px",
+                padding: "7px",
+                borderRadius: "5px",
+                border: "1px solid #e4e0e0ff",
+                color: "gray",
+              }}
+            >
+              {finalCities.length === 0
+                ? "0 of 0"
+                : `${(currentPage - 1) * itemsPerPage + 1}-${Math.min(
+                  currentPage * itemsPerPage,
+                  finalCities.length
+                )} of ${finalCities.length}`}
+              <button
+                style={{
+                  border: "none",
+                  color: "grey",
+                  backgroundColor: "white",
+                }}
+                onClick={() =>
+                  setCurrentPage((prev) => Math.max(prev - 1, 1))
+                }
+                disabled={currentPage === 1}
+              >
+                <GrFormPrevious />
+              </button>{" "}
+              <button
+                style={{ border: "none", backgroundColor: "white" }}
+                onClick={() =>
+                  setCurrentPage((prev) => Math.min(prev + 1, totalPages))
+                }
+                disabled={currentPage === totalPages}
+              >
+                <MdNavigateNext />
+              </button>
+            </span>
+          </div>
+          {/* pagination end */}
         </div>
 
         {/* Add City Modal */}
-        <div className="modal fade" id="add-city">
+        <div className="modal" id="add-city">
           <div className="modal-dialog modal-dialog-centered">
             <div className="modal-content">
               <div className="modal-header">
                 <h4>Add City</h4>
-                <button type="button" className="close" data-bs-dismiss="modal">
+                {/* <button type="button" className="close" data-bs-dismiss="modal">
                   ×
-                </button>
+                </button> */}
               </div>
               <form onSubmit={handleSubmit}>
                 <div className="modal-body">
@@ -472,7 +661,7 @@ const handleUpdate = async (e) => {
                   </div>
                 </div>
 
-                <div className="modal-footer">
+                <div className="modal-footer" style={{ display: 'flex', gap: '10px' }}>
                   <button
                     type="button"
                     className="btn btn-secondary"
@@ -491,13 +680,14 @@ const handleUpdate = async (e) => {
         <CityModal
           modalId="edit-city"
           title="Edit City"
-          editStateName={editCityName}
-          editStateCode={editCityCode}
+          editCityName={editCityName}
+          editCityCode={editCityCode}
           onNameChange={(e) => setEditCityName(e.target.value)}
           onCodeChange={(e) => setEditCityCode(e.target.value)}
           onSubmit={handleUpdate}
-          submitLabel="Update State"
+          submitLabel="Update City"
         />
+
       </div>
     </div>
   );

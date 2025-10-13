@@ -22,31 +22,31 @@ exports.addCountry = async (req, res) => {
   }
 };
 
-
 // POST /api/countries/import
 exports.bulkImportCountries = async (req, res) => {
-    try {
-      const { countries } = req.body;
-      if (!Array.isArray(countries) || countries.length === 0) {
-        return res.status(400).json({ message: "No countries provided" });
-      }
-  
-      const bulkOps = countries.map((item) => ({
-        updateOne: {
-          filter: { name: item.name }, // Or match by code
-          update: { $set: { name: item.name, code: item.code } },
-          upsert: true, // 👈 create if not exists
-        },
-      }));
-  
-      await Country.bulkWrite(bulkOps);
-  
-      res.status(200).json({ message: `${countries.length} countries processed successfully.` });
-    } catch (err) {
-      res.status(500).json({ message: "Bulk import error", error: err.message });
+  try {
+    const { countries } = req.body;
+    if (!Array.isArray(countries) || countries.length === 0) {
+      return res.status(400).json({ message: "No countries provided" });
     }
-  };
-  
+
+    const bulkOps = countries.map((item) => ({
+      updateOne: {
+        filter: { name: item.name }, // Or match by code
+        update: { $set: { name: item.name, code: item.code } },
+        upsert: true, // 👈 create if not exists
+      },
+    }));
+
+    await Country.bulkWrite(bulkOps);
+
+    res.status(200).json({
+      message: `${countries.length} countries processed successfully.`,
+    });
+  } catch (err) {
+    res.status(500).json({ message: "Bulk import error", error: err.message });
+  }
+};
 
 // ✅ Get All Countries
 exports.getAllCountries = async (req, res) => {
@@ -92,5 +92,23 @@ exports.deleteCountry = async (req, res) => {
     res.status(200).json({ message: "Country deleted successfully" });
   } catch (err) {
     res.status(500).json({ message: "Server error", error: err.message });
+  }
+};
+
+exports.bulkDeleteCountry = async (req, res) => {
+  try {
+    const { ids } = req.body;
+    if (!ids || !Array.isArray(ids)) {
+      return res
+        .status(400)
+        .json({ message: "Invalid or missing 'ids', array in request body" });
+    }
+  const result =  await Country.deleteMany({ _id: { $in: ids } });
+    return res.status(200).json({message: `${result.deletedCount} countries deleted successfully`,
+      deletedCount: result.deletedCount,})
+  } catch (error) {
+    res
+      .status(500)
+      .json({ message: "Bulk delete failed", error: error.message });
   }
 };
