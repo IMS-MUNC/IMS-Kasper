@@ -413,6 +413,9 @@ const Inbox = () => {
 
       if (res.data.success) {
         console.log("Backend confirmed email marked as read");
+        // update local state
+        setEmails((prevEmails) => prevEmails.map((email) => email._id === emailId ? {...email, isRead:true, status:{...email.status, dotColor:'transparent'}} : email));
+
         fetchInboxCount();
         // update local state
         updateEmailList((prevEmails) =>
@@ -422,9 +425,10 @@ const Inbox = () => {
               : email
           )
         );
-        console.log("📄 Updated local email list");
+        // console.log("📄 Updated local email list");
 
         setInboxCount((prev) => Math.max(prev - 1, 0));
+         setTimeout(fetchInboxCount, 500);
 
         // 3️⃣ Optional: fetch fresh count from backend to be sure
         // fetchInboxCount();

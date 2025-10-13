@@ -211,8 +211,14 @@ const ProductEdit = () => {
           // itemBarcode: sanitizeHtml(data.itemBarcode || "", sanitizeOptions),
           store: sanitizeHtml(data.store || "", sanitizeOptions),
         };
-        setFormData(sanitizedData);
-        setFormData({ ...formData, ...data });
+        // setFormData(sanitizedData);
+        // setFormData({ ...formData, ...data });
+        setFormData((prev) => ({
+  ...prev,
+  ...sanitizedData,
+  ...data,
+}));
+
         // if (data.brand)  setSelectedBrands({ value: data.brand._id || data.brand, label: data.brand.brandName || data.brand });
         if (data.brand) {
           setBrandId(data.brand._id || data.brand);
@@ -1010,7 +1016,7 @@ const validateStep = () => {
   if (formData.itemType) formPayload.append("itemType", formData.itemType);
   if (formData.isAdvanced) formPayload.append("isAdvanced", formData.isAdvanced ? true : false);
   if (formData.trackType) formPayload.append("trackType", formData.trackType);
-  if (formData.isReturnable) formPayload.append("isReturnable", formData.isReturnable ? true : false);
+   formPayload.append("isReturnable", formData.isReturnable ? true : false);
   if (formData.leadTime) formPayload.append("leadTime", formData.leadTime);
   if (formData.reorderLevel) formPayload.append("reorderLevel", formData.reorderLevel);
   if (formData.initialStock) formPayload.append("initialStock", formData.initialStock);
@@ -1145,6 +1151,9 @@ const validateStep = () => {
   console.log("Variants state:", variants);
   console.log("FormData variants:", formData.variants);
   if (loading) return <p>Loading...</p>;
+
+
+
   return (
     <div className="page-wrapper mt-4">
       <div className="content">
@@ -1163,7 +1172,7 @@ const validateStep = () => {
                 data-bs-placement="top"
                 title="Refresh"
                 className="icon-btn"
-                onClick={() => location.reload()}
+                onClick={() => window.location.reload()}
               >
                 <TbRefresh />
               </button>
@@ -1367,23 +1376,23 @@ const validateStep = () => {
                                 borderTopRightRadius: "12px",
                               }}
                             >
-                              <h5 className="modal-title">HSN Details</h5>
-                              <button
+                              <h5 className="modal-title" style={{color:'white'}}>HSN Details</h5>
+                              {/* <button
                                 type="button"
                                 className="btn-close"
                                 onClick={() => setShowHSNModal(false)}
-                              ></button>
+                              ></button> */}
                             </div>
                             <div className="modal-body">
                               <div className="mb-3">
                                 <label className="fw-bold">HSN Code:</label>
-                                <div className="fs-5 text-primary">
+                                <div className="fs-14 text-primary">
                                   {selectedHSN.label.split(" - ")[0]}
                                 </div>
                               </div>
                               <div className="mb-3">
                                 <label className="fw-bold">Description:</label>
-                                <div className="fs-6 text-secondary">
+                                <div className="fs-14 text-secondary">
                                   {selectedHSN.label.split(" - ")[1] || "N/A"}
                                 </div>
                               </div>
