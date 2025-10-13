@@ -11,6 +11,7 @@ import { sanitizeInput } from "../../../../utils/sanitize";
 import axios from "axios";
 import { GrFormPrevious } from "react-icons/gr";
 import { MdNavigateNext } from "react-icons/md";
+import DeleteAlert from "../../../../utils/sweetAlert/DeleteAlert";
 
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
@@ -116,11 +117,16 @@ const SubCategory = () => {
       return;
     }
 
-    if (
-      !window.confirm("Are you sure you want to delete selected subcategories?")
-    ) {
-      return;
-    }
+    // if (
+    //   !window.confirm("Are you sure you want to delete selected subcategories?")
+    // ) {
+    //   return;
+    // }
+
+    
+    const confirmed = await DeleteAlert({});
+    if (!confirmed) return;
+
 
     try {
       const token = localStorage.getItem("token");
@@ -352,9 +358,13 @@ const SubCategory = () => {
   };
 
   const handleDelete = async (id) => {
-    if (!window.confirm("Are you sure you want to delete this subcategory?")) {
-      return;
-    }
+    // if (!window.confirm("Are you sure you want to delete this subcategory?")) {
+    //   return;
+    // }
+    
+        const confirmed = await DeleteAlert({});
+        if (!confirmed) return;
+    
     try {
       const token = localStorage.getItem("token");
       const res = await axios.delete(
