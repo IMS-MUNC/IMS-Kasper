@@ -8,10 +8,8 @@ import CategoryModal from "../../../pages/Modal/categoryModals/CategoryModal";
 import DeleteAlert from "../../../utils/sweetAlert/DeleteAlert";
 import Swal from "sweetalert2";
 import { sanitizeInput } from "../../../utils/sanitize";
-import { BiChevronDown } from "react-icons/bi";
 import { GrFormPrevious } from "react-icons/gr";
 import { MdNavigateNext } from "react-icons/md";
-
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import Papa from "papaparse";
@@ -26,17 +24,55 @@ const Category = () => {
   const nameRegex = /^[A-Za-z]{2,}$/;
   const slugRegex = /^[a-z0-9-]{2,}$/;
 
-  // edit
+  // Edit state
   const [editingCategories, setEditingCategories] = useState(null);
   const [editCategoryName, setEditCategoryName] = useState("");
   const [editCategorySlug, setEditCategorySlug] = useState("");
-  const [, setEditMode] = useState(false);
-
-  // Control modal mode
   const [isEditMode, setIsEditMode] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(10);
   const [selectedCategories, setSelectedCategories] = useState([]);
+
+  // Real-time validation for categoryName
+  const validateCategoryName = (value) => {
+    if (!value) {
+      return "Category name is required";
+    }
+    if (!nameRegex.test(value)) {
+      return "Category name must contain only letters (min 2 characters)";
+    }
+    return "";
+  };
+
+  // Handle category name change with real-time validation
+  const handleCategoryNameChange = (e) => {
+    const value = e.target.value;
+    if (isEditMode) {
+      setEditCategoryName(value);
+    } else {
+      setCategoryName(value);
+    }
+    setErrors((prev) => ({
+      ...prev,
+      categoryName: validateCategoryName(value),
+    }));
+  };
+
+  // Handle slug change with real-time validation
+  const handleSlugChange = (e) => {
+    const value = e.target.value;
+    if (isEditMode) {
+      setEditCategorySlug(value);
+    } else {
+      setCategorySlug(value);
+    }
+    setErrors((prev) => ({
+      ...prev,
+      categorySlug: value && !slugRegex.test(value)
+        ? "Enter a valid slug (lowercase letters, numbers, hyphens, min 2 chars)"
+        : "",
+    }));
+  };
 
   const handleBulkDelete = async () => {
     const confirmed = await DeleteAlert({});
@@ -44,20 +80,16 @@ const Category = () => {
 
     try {
       const token = localStorage.getItem("token");
-      await axios.post(`${BASE_URL}/api/category/categories/bulk-delete`, {
-        ids: selectedCategories,
-      }, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
+      await axios.post(
+        `${BASE_URL}/api/category/categories/bulk-delete`,
+        { ids: selectedCategories },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
       toast.success("Selected categories deleted");
       setSelectedCategories([]);
       fetchCategories();
     } catch (err) {
-      console.log(err);
-
-      // Handle specific error cases
+      console.error(err);
       if (err.response?.status === 401) {
         toast.error("Unauthorized. Please login again");
       } else if (err.response?.status === 403) {
@@ -70,11 +102,9 @@ const Category = () => {
 
   const fetchCategories = async () => {
     try {
-      const token = localStorage.getItem("token")
+      const token = localStorage.getItem("token");
       const res = await fetch(`${BASE_URL}/api/category/categories`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
+        headers: { Authorization: `Bearer ${token}` },
       });
       const data = await res.json();
       setCategories(data);
@@ -90,18 +120,16 @@ const Category = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     let newErrors = {};
-    if (!nameRegex.test(categoryName)) {
-      newErrors.categoryName =
-        "Enter a valid category name (letters only, min 2 chars)";
+    newErrors.categoryName = validateCategoryName(categoryName);
+    if (categorySlug && !slugRegex.test(categorySlug)) {
+      newErrors.categorySlug =
+        "Enter a valid slug (lowercase letters, numbers, hyphens, min 2 chars)";
     }
-    // if(!slugRegex.test(categorySlug)) {
-    //   newErrors.categorySlug = "Enter a valid slug (lowercase letters, numbers, hyphens, min 2 chars)";
-    // }
     setErrors(newErrors);
-    if (Object.keys(newErrors).length > 0) return;
+    if (Object.keys(newErrors).some((key) => newErrors[key])) return;
 
     try {
-      const token = localStorage.getItem("token")
+      const token = localStorage.getItem("token");
       const cleanName = sanitizeInput(categoryName);
       const cleanSlug = sanitizeInput(categorySlug);
 
@@ -111,20 +139,15 @@ const Category = () => {
       }
 
       await axios.post(`${BASE_URL}/api/category/categories`, payload, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
+        headers: { Authorization: `Bearer ${token}` },
       });
 
       toast.success("Category created successfully!");
-
-      // Reset form
       setCategoryName("");
       setCategorySlug("");
-      // Refresh list
+      setErrors({});
       fetchCategories();
-      // Close modal
-      // window.$("#categoryModal").modal("hide");
+      window.$("#categoryModal").modal("hide");
     } catch (err) {
       console.error("Error creating category:", err);
       toast.error(err.response?.data?.message || "Error creating category");
@@ -133,22 +156,17 @@ const Category = () => {
 
   const handleUpdate = async (e) => {
     e.preventDefault();
-
     let newErrors = {};
-    if (!nameRegex.test(editCategoryName)) {
-      newErrors.categoryName =
-        "Enter a valid category name (letters only, min 2 chars)";
-    }
+    newErrors.categoryName = validateCategoryName(editCategoryName);
     if (!slugRegex.test(editCategorySlug)) {
       newErrors.categorySlug =
         "Enter a valid slug (lowercase letters, numbers, hyphens, min 2 chars)";
     }
     setErrors(newErrors);
+    if (Object.keys(newErrors).some((key) => newErrors[key])) return;
 
-    // Stop update if validation fails
-    if (Object.keys(newErrors).length > 0) return;
     try {
-      const token = localStorage.getItem("token")
+      const token = localStorage.getItem("token");
       const cleanName = sanitizeInput(editCategoryName);
       const cleanSlug = sanitizeInput(editCategorySlug);
 
@@ -158,21 +176,17 @@ const Category = () => {
           categoryName: cleanName,
           categorySlug: cleanSlug,
         },
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
+        { headers: { Authorization: `Bearer ${token}` } }
       );
-      // console.log("Editing Countries ID:", editingCategories?._id);
 
       toast.success("Category updated successfully");
-      setEditMode(false);
       setEditingCategories(null);
       setEditCategoryName("");
       setEditCategorySlug("");
-      fetchCategories(); // Call state list refresh, not fetchCountries
-      window.$(`#categoryModal`).modal("hide");
+      setErrors({});
+      setIsEditMode(false);
+      fetchCategories();
+      window.$("#categoryModal").modal("hide");
     } catch (err) {
       console.error(err);
       toast.error("Failed to update");
@@ -180,11 +194,11 @@ const Category = () => {
   };
 
   const filteredCategories = categories.filter(
-    (categories) =>
-      (categories?.categoryName || "")
+    (category) =>
+      (category?.categoryName || "")
         .toLowerCase()
         .includes(searchTerm.toLowerCase()) ||
-      (categories?.categorySlug || "")
+      (category?.categorySlug || "")
         .toLowerCase()
         .includes(searchTerm.toLowerCase())
   );
@@ -203,14 +217,12 @@ const Category = () => {
     if (!confirmed) return;
 
     try {
-      const token = localStorage.getItem("token")
+      const token = localStorage.getItem("token");
       await axios.delete(`${BASE_URL}/api/category/categories/${id}`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
+        headers: { Authorization: `Bearer ${token}` },
       });
       toast.success("Category deleted successfully");
-      fetchCategories(); // refresh list
+      fetchCategories();
       Swal.fire(
         "Deleted!",
         `Category "${categoryName}" has been deleted.`,
@@ -222,8 +234,7 @@ const Category = () => {
     }
   };
 
-  //csv upload--------------------------------------------------------------------------------------------------------------------------------------------------
-
+  // CSV, Excel, and PDF export functions (unchanged)
   const handleCSV = () => {
     const tableHeader = [
       "Category Code",
@@ -238,7 +249,6 @@ const Category = () => {
       ),
     ];
     const csvContent = "data:text/csv;charset=utf-8," + csvRows.join("\n");
-
     const encodedUri = encodeURI(csvContent);
     const link = document.createElement("a");
     link.setAttribute("href", encodedUri);
@@ -248,38 +258,25 @@ const Category = () => {
     document.body.removeChild(link);
   };
 
-  //excel export--------------------------------------------------------------------------------------------------------------------------------------------------
-
   const handleExcel = () => {
-    // Prepare data for Excel export
     const excelData = categories.map((category) => ({
       "Category Code": category.categoryCode,
       "Category": category.categoryName,
       "Category Slug": category.categorySlug,
       "Created On": new Date(category.createdAt).toLocaleDateString(),
     }));
-
-    // Create a new workbook and worksheet
     const workbook = XLSX.utils.book_new();
     const worksheet = XLSX.utils.json_to_sheet(excelData);
-
-    // Set column widths for better formatting
     const columnWidths = [
-      { wch: 15 }, // Category Code
-      { wch: 25 }, // Category
-      { wch: 25 }, // Category Slug
-      { wch: 15 }, // Created On
+      { wch: 15 },
+      { wch: 25 },
+      { wch: 25 },
+      { wch: 15 },
     ];
     worksheet["!cols"] = columnWidths;
-
-    // Add the worksheet to the workbook
     XLSX.utils.book_append_sheet(workbook, worksheet, "Categories");
-
-    // Generate Excel file and trigger download
     XLSX.writeFile(workbook, "categories.xlsx");
   };
-
-  //excell file upload--------------------------------------------------------------------------------------------------------------------------------------------------
 
   const fileInputRef = React.useRef();
 
@@ -291,7 +288,7 @@ const Category = () => {
     const file = e.target.files[0];
     if (!file) return;
     if (!file.name.endsWith(".xlsx")) {
-      alert("Please select a valid file");
+      toast.error("Please select a valid Excel file");
       return;
     }
     Papa.parse(file, {
@@ -308,23 +305,23 @@ const Category = () => {
           requiredFields.every((f) => f in row && row[f] !== "")
         );
         if (!valid) {
-          alert("structure does not match the required schema.");
+          toast.error("File structure does not match the required schema.");
           return;
         }
-        // Optionally: convert types (grandTotal, orderTax, orderDiscount, shipping to Number, date to Date)
-
-        // Send to backend
         try {
-          await axios.post(`${BASE_URL}/api/category/categories`, payload);
+          const token = localStorage.getItem("token");
+          await axios.post(`${BASE_URL}/api/category/categories`, results.data, {
+            headers: { Authorization: `Bearer ${token}` },
+          });
           toast.success("Imported successfully!");
+          fetchCategories();
         } catch (err) {
-          alert("Error while Import");
+          console.error("Error while importing:", err);
+          toast.error("Error while importing categories");
         }
       },
     });
   };
-
-  //pdf download----------------------------------------------------------------------------------------------------------------------------------------
 
   const handlePdf = () => {
     const doc = new jsPDF();
@@ -335,28 +332,20 @@ const Category = () => {
       "Category slug",
       "Created On",
     ];
-
     const tableRows = categories.map((e) => [
       e.categoryCode,
       e.categoryName,
       e.categorySlug,
       e.createdAt,
     ]);
-
     autoTable(doc, {
       head: [tableColumns],
       body: tableRows,
       startY: 20,
-      styles: {
-        fontSize: 8,
-      },
-      headStyles: {
-        fillColor: [155, 155, 155],
-        textColor: "white",
-      },
+      styles: { fontSize: 8 },
+      headStyles: { fillColor: [155, 155, 155], textColor: "white" },
       theme: "striped",
     });
-
     doc.save("categories.pdf");
   };
 
@@ -370,49 +359,53 @@ const Category = () => {
               <h6>Manage your categories</h6>
             </div>
           </div>
-          {/* <ul className="table-top-head">
-        <li>
-          <a data-bs-toggle="tooltip" data-bs-placement="top" title="Pdf"><img src="assets/img/icons/pdf.svg" alt="img" /></a>
-        </li>
-        <li>
-          <a data-bs-toggle="tooltip" data-bs-placement="top" title="Excel"><img src="assets/img/icons/excel.svg" alt="img" /></a>
-        </li>
-        <li>
-          <a data-bs-toggle="tooltip" data-bs-placement="top" title="Refresh"><i className="ti ti-refresh" /></a>
-        </li>
-        <li>
-          <a data-bs-toggle="tooltip" data-bs-placement="top" title="Collapse" id="collapse-header"><i className="ti ti-chevron-up" /></a>
-        </li>
-      </ul> */}
-          <div className="table-top-head me-2" style={{ display: "flex", alignItems: "center", gap: '10px' }}>
-
+          <div
+            className="table-top-head me-2"
+            style={{ display: "flex", alignItems: "center", gap: "10px" }}
+          >
             {selectedCategories.length > 0 && (
-          <div className="">
-            <button className="btn btn-danger" onClick={handleBulkDelete}>
-              Delete Selected ({selectedCategories.length})
-            </button>
-          </div>
+              <div>
+                <button className="btn btn-danger" onClick={handleBulkDelete}>
+                  Delete Selected ({selectedCategories.length})
+                </button>
+              </div>
             )}
-
-            <div style={{ display: "flex", alignItems: "center", gap: '5px' }} className="icon-btn">
-              <label className="" title="">Export : </label>
-              <button onClick={handlePdf} title="Download PDF" style={{
-                backgroundColor: "white",
-                display: "flex",
-                alignItems: "center",
-                border: "none",
-              }}><FaFilePdf className="fs-20" style={{ color: "red" }} /></button>
-              <button onClick={handleExcel} title="Download Excel" style={{
-                backgroundColor: "white",
-                display: "flex",
-                alignItems: "center",
-                border: "none",
-              }}><FaFileExcel className="fs-20" style={{ color: "orange" }} /></button>
+            <div
+              style={{ display: "flex", alignItems: "center", gap: "5px" }}
+              className="icon-btn"
+            >
+              <label title="">Export : </label>
+              <button
+                onClick={handlePdf}
+                title="Download PDF"
+                style={{
+                  backgroundColor: "white",
+                  display: "flex",
+                  alignItems: "center",
+                  border: "none",
+                }}
+              >
+                <FaFilePdf className="fs-20" style={{ color: "red" }} />
+              </button>
+              <button
+                onClick={handleExcel}
+                title="Download Excel"
+                style={{
+                  backgroundColor: "white",
+                  display: "flex",
+                  alignItems: "center",
+                  border: "none",
+                }}
+              >
+                <FaFileExcel className="fs-20" style={{ color: "orange" }} />
+              </button>
             </div>
-
-            <div style={{ display: "flex", alignItems: "center", gap: '5px' }} className="icon-btn">
-              <label className="" title="">Import : </label>
-              <label className="" title="Import Excel">
+            <div
+              style={{ display: "flex", alignItems: "center", gap: "5px" }}
+              className="icon-btn"
+            >
+              <label title="">Import : </label>
+              <label title="Import Excel">
                 <button
                   type="button"
                   onClick={handleImportClick}
@@ -434,33 +427,8 @@ const Category = () => {
                 />
               </label>
             </div>
-            {/* <li>
-              <button
-                type="button"
-                className="icon-btn"
-                title="Export Excel"
-                onClick={handleExcel}
-              >
-                <FaFileExcel />
-              </button>
-            </li> */}
           </div>
           <div className="page-btn">
-            {/* <a
-              href="#"
-              className="btn btn-primary"
-              data-bs-toggle="modal"
-              data-bs-target="#categoryModal  "
-              onClick={() => {
-                setIsEditMode(false);
-                setCategoryName("");
-                setCategorySlug("");
-                setEditMode(false);
-              }}
-            >
-              <i className="ti ti-circle-plus me-1" />
-              Add Category
-            </a> */}
             <a
               href="#"
               className="btn btn-primary"
@@ -470,6 +438,7 @@ const Category = () => {
                 setIsEditMode(false);
                 setCategoryName("");
                 setCategorySlug("");
+                setErrors({});
               }}
             >
               <i className="ti ti-circle-plus me-1" />
@@ -478,7 +447,6 @@ const Category = () => {
           </div>
         </div>
 
-        {/* /product list */}
         <div className="card">
           <div className="card-header d-flex align-items-center justify-content-between flex-wrap row-gap-3">
             <div className="search-set">
@@ -492,36 +460,6 @@ const Category = () => {
                 />
               </div>
             </div>
-            {/* status */}
-            {/* <div className="d-flex table-dropdown my-xl-auto right-content align-items-center flex-wrap row-gap-3">
-              <div className="dropdown">
-                <a
-                  href="javascript:void(0);"
-                  className="dropdown-toggle btn btn-white btn-md d-inline-flex align-items-center"
-                  data-bs-toggle="dropdown"
-                >
-                  Status
-                </a>
-                <ul className="dropdown-menu  dropdown-menu-end p-3">
-                  <li>
-                    <a
-                      href="javascript:void(0);"
-                      className="dropdown-item rounded-1"
-                    >
-                      Active
-                    </a>
-                  </li>
-                  <li>
-                    <a
-                      href="javascript:void(0);"
-                      className="dropdown-item rounded-1"
-                    >
-                      Inactive
-                    </a>
-                  </li>
-                </ul>
-              </div>
-            </div> */}
           </div>
           <div className="card-body p-0">
             <div className="table-responsive">
@@ -563,7 +501,6 @@ const Category = () => {
                     <th>Category</th>
                     <th>Category slug</th>
                     <th>Created On</th>
-                    {/* <th className="no-sort" /> */}
                     <th>Action</th>
                   </tr>
                 </thead>
@@ -575,9 +512,7 @@ const Category = () => {
                           <label className="checkboxs">
                             <input
                               type="checkbox"
-                              checked={selectedCategories.includes(
-                                category._id
-                              )}
+                              checked={selectedCategories.includes(category._id)}
                               onChange={(e) => {
                                 if (e.target.checked) {
                                   setSelectedCategories((prev) => [
@@ -605,27 +540,18 @@ const Category = () => {
                           </span>
                         </td>
                         <td>{category.categorySlug}</td>
-                        <td>{new Date(category.createdAt).toLocaleDateString("en-GB", {
-                          day: "2-digit",
-                          month: "short",
-                          year: "numeric"
-                        })}</td>
-
+                        <td>
+                          {new Date(category.createdAt).toLocaleDateString(
+                            "en-GB",
+                            {
+                              day: "2-digit",
+                              month: "short",
+                              year: "numeric",
+                            }
+                          )}
+                        </td>
                         <td className="action-table-data">
                           <div className="edit-delete-action">
-                            {/* <a
-                              className="me-2 p-2"
-                              data-bs-toggle="modal"
-                              data-bs-target="#categoryModal"
-                              onClick={() => {
-                                setIsEditMode(true);
-                                setEditingCategories(category);
-                                setEditCategoryName(category.categoryName);
-                                setEditCategorySlug(category.categorySlug);
-                              }}
-                            >
-                              <TbEdit />
-                            </a> */}
                             <a
                               className="me-2 p-2"
                               data-bs-toggle="modal"
@@ -635,11 +561,11 @@ const Category = () => {
                                 setEditingCategories(category);
                                 setEditCategoryName(category.categoryName);
                                 setEditCategorySlug(category.categorySlug);
+                                setErrors({});
                               }}
                             >
                               <TbEdit />
                             </a>
-
                             <a
                               className="p-2"
                               onClick={() =>
@@ -657,7 +583,7 @@ const Category = () => {
                     ))
                   ) : (
                     <tr>
-                      <td colSpan="4" className="text-center text-muted">
+                      <td colSpan="5" className="text-center text-muted">
                         No categories found.
                       </td>
                     </tr>
@@ -665,13 +591,6 @@ const Category = () => {
                 </tbody>
               </table>
             </div>
-            {/* pagination */}
-
-            {/* <div>
-            Showing {indexOfFirstItem + 1}-
-            {Math.min(indexOfLastItem, filteredCategories.length)} of{" "}
-            {filteredCategories.length}
-          </div> */}
             <div
               className="d-flex justify-content-end gap-3"
               style={{ padding: "10px 20px" }}
@@ -702,22 +621,20 @@ const Category = () => {
                 {filteredCategories.length === 0
                   ? "0 of 0"
                   : `${(currentPage - 1) * itemsPerPage + 1}-${Math.min(
-                    currentPage * itemsPerPage,
-                    filteredCategories.length
-                  )} of ${filteredCategories.length}`}
+                      currentPage * itemsPerPage,
+                      filteredCategories.length
+                    )} of ${filteredCategories.length}`}
                 <button
                   style={{
                     border: "none",
                     color: "grey",
                     backgroundColor: "white",
                   }}
-                  onClick={() =>
-                    setCurrentPage((prev) => Math.max(prev - 1, 1))
-                  }
+                  onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
                   disabled={currentPage === 1}
                 >
                   <GrFormPrevious />
-                </button>{" "}
+                </button>
                 <button
                   style={{ border: "none", backgroundColor: "white" }}
                   onClick={() =>
@@ -729,31 +646,9 @@ const Category = () => {
                 </button>
               </span>
             </div>
-
-            {/* rece */}
-
           </div>
         </div>
-        {/* /product list */}
       </div>
-      {/* <CategoryModal
-        modalId="categoryModal"
-        title={isEditMode ? "Edit Category" : "Add Category"}
-        categoryName={isEditMode ? editCategoryName : setCategoryName}
-        categorySlug={isEditMode ? editCategorySlug : setCategorySlug}
-        onCategoryChange={
-          isEditMode
-            ? (e) => setEditCategoryName(e.target.value)
-            : (e) => setCategoryName(e.target.value)
-        }
-        onSlugChange={
-          isEditMode
-            ? (e) => setEditCategorySlug(e.target.value)
-            : (e) => setCategorySlug(e.target.value)
-        }
-        onSubmit={isEditMode ? handleUpdate : handleSubmit}
-        submitLabel={isEditMode ? "Update" : "Submit"}
-      /> */}
 
       <CategoryModal
         modalId="categoryModal"
@@ -761,16 +656,8 @@ const Category = () => {
         isEditMode={isEditMode}
         categoryName={isEditMode ? editCategoryName : categoryName}
         categorySlug={isEditMode ? editCategorySlug : categorySlug}
-        onCategoryChange={
-          isEditMode
-            ? (e) => setEditCategoryName(e.target.value)
-            : (e) => setCategoryName(e.target.value)
-        }
-        onSlugChange={
-          isEditMode
-            ? (e) => setEditCategorySlug(e.target.value)
-            : (e) => setCategorySlug(e.target.value)
-        }
+        onCategoryChange={handleCategoryNameChange}
+        onSlugChange={handleSlugChange}
         onSubmit={isEditMode ? handleUpdate : handleSubmit}
         submitLabel={isEditMode ? "Update" : "Submit"}
         errors={errors}
