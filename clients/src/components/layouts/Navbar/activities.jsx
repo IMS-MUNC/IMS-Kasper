@@ -3,14 +3,14 @@ import { Link } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { TbBell, TbCirclePlus, TbCommand, TbDeviceLaptop, TbDotsVertical, TbFileText, TbLanguage, TbLogout, TbMail, TbMaximize, TbSearch, TbSettings, TbUserCircle } from 'react-icons/tb';
 import { FaTrash } from 'react-icons/fa';
-import { io } from 'socket.io-client';
+import { useSocket } from '../../../Context/SocketContext';
 
 import './activities.css'; // Import your CSS file for styles
 
 import BASE_URL from "../../../pages/config/config";
 import axios from "axios";
 
-const Activities = ({ onNotificationsRead }) => {
+const Activities = ({ onUnreadCountChange }) => {
   const { t } = useTranslation();
   const [notifications, setNotifications] = useState([]);
   const [unreadCount, setUnreadCount] = useState(0);
@@ -26,7 +26,7 @@ const Activities = ({ onNotificationsRead }) => {
     }
   }, []);
   const backendurl = BASE_URL;
-  const socket = useRef(null);
+  const { connectSocket, getSocket, isSocketConnected } = useSocket();
 
   // Fetch notifications
   const fetchNotifications = async () => {
@@ -65,7 +65,11 @@ const Activities = ({ onNotificationsRead }) => {
 
       if (response.ok) {
         const data = await response.json();
-        setUnreadCount(data.count || 0);
+        const count = data.count || 0;
+        setUnreadCount(count);
+        if (onUnreadCountChange) {
+          onUnreadCountChange(count);
+        }
       }
     } catch (error) {
       console.error('Error fetching unread count:', error);
@@ -97,12 +101,12 @@ const Activities = ({ onNotificationsRead }) => {
       );
 
       // Update unread count
-      const newUnreadCount = unreadCount - 1;
-      setUnreadCount(Math.max(0, newUnreadCount));
+      const newUnreadCount = Math.max(0, unreadCount - 1);
+      setUnreadCount(newUnreadCount);
 
-      // Call the callback to update navbar badge
-      if (onNotificationsRead && newUnreadCount === 0) {
-        onNotificationsRead();
+      // Inform Navbar of the updated count
+      if (onUnreadCountChange) {
+        onUnreadCountChange(newUnreadCount);
       }
     } catch (error) {
       console.error('Error marking notification as read:', error);
@@ -129,9 +133,9 @@ const Activities = ({ onNotificationsRead }) => {
       setNotifications(prev => prev.map(notif => ({ ...notif, read: true })));
       setUnreadCount(0);
 
-      // Call the callback to update navbar badge
-      if (onNotificationsRead) {
-        onNotificationsRead();
+      // Inform Navbar of the updated count
+      if (onUnreadCountChange) {
+        onUnreadCountChange(0);
       }
     } catch (error) {
       console.error('Error marking all notifications as read:', error);
@@ -170,9 +174,9 @@ const Activities = ({ onNotificationsRead }) => {
           const newUnreadCount = Math.max(0, unreadCount - 1);
           setUnreadCount(newUnreadCount);
 
-          // Call the callback if no more unread notifications
-          if (onNotificationsRead && newUnreadCount === 0) {
-            onNotificationsRead();
+          // Inform Navbar of the updated count
+          if (onUnreadCountChange) {
+            onUnreadCountChange(newUnreadCount);
           }
         }
       }
@@ -221,6 +225,27 @@ const Activities = ({ onNotificationsRead }) => {
         // Don't disconnect here, let the Navbar manage the socket
       };
     }
+  }, [user]);
+
+  useEffect(() => {
+    if (!user) return;
+    const userId = user?.id || user?._id;
+    let socket = getSocket();
+    if (!socket || !isSocketConnected()) {
+      socket = connectSocket(BASE_URL);
+    }
+    if (!socket) return;
+    if (userId) {
+      socket.emit('add-user', userId);
+    }
+    const handleNewNotification = () => {
+      fetchNotifications();
+      fetchUnreadCount();
+    };
+    socket.on('new-notification', handleNewNotification);
+    return () => {
+      socket.off('new-notification', handleNewNotification);
+    };
   }, [user]);
 
 

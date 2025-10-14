@@ -631,7 +631,8 @@ const Chat = () => {
                 fileUrl: msg.fileUrl,
                 fileType: msg.fileType,
                 fileName: msg.fileName,
-                replyTo: msg.replyTo
+                replyTo: msg.replyTo,
+                isDeleted: msg.isDeleted
               }));
             }
           });
@@ -772,15 +773,19 @@ const Chat = () => {
         });
       });
 
-      // Listen for real-time message deletion
+      // Listen for real-time message deletion (soft-delete instead of removing)
       socketInstance.on('delete-msg', (data) => {
         setMessages(prev => {
-          // Update messages for the conversation between current user and the sender
+          // The event is sent to the recipient; conversation key is the sender's id
           const conversationKey = data.from;
           const userMessages = prev[conversationKey] || [];
           return {
             ...prev,
-            [conversationKey]: userMessages.filter(msg => String(msg.timestamp) !== String(data.messageTimestamp))
+            [conversationKey]: userMessages.map(msg =>
+              String(msg.timestamp) === String(data.messageTimestamp)
+                ? { ...msg, message: 'This message was deleted', isDeleted: true }
+                : msg
+            )
           };
         });
       });
@@ -853,7 +858,8 @@ const Chat = () => {
             fileUrl: msg.fileUrl,
             fileType: msg.fileType,
             fileName: msg.fileName,
-            replyTo: msg.replyTo
+            replyTo: msg.replyTo,
+            isDeleted: msg.isDeleted
           }));
 
           return {
@@ -921,6 +927,15 @@ const Chat = () => {
 
   const handleMessageSelection = (messageIndex) => {
     if (!isSelectionMode) return;
+    if (!selectedUser) return;
+
+    const userMessages = messages[selectedUser._id] || [];
+    const msg = userMessages[messageIndex];
+    if (!msg) return;
+
+    // Only allow selecting your own, non-deleted messages
+    if (normalizeUserId(msg.from) !== normalizedCurrentUserId) return;
+    if (msg.isDeleted || msg.message === 'This message was deleted') return;
 
     setSelectedMessages(prev => {
       const newSet = new Set(prev);
@@ -996,7 +1011,8 @@ const Chat = () => {
               fileUrl: msg.fileUrl,
               fileType: msg.fileType,
               fileName: msg.fileName,
-              replyTo: msg.replyTo
+              replyTo: msg.replyTo,
+              isDeleted: msg.isDeleted
             }))
           }));
         } else {
@@ -1072,10 +1088,12 @@ const Chat = () => {
         throw new Error(responseData.message || 'Failed to delete message');
       }
 
-      // Remove from local state
+      // Optimistically mark as deleted locally (soft-delete)
       setMessages(prev => ({
         ...prev,
-        [selectedUser._id]: (prev[selectedUser._id] || []).filter((_, i) => i !== idx)
+        [selectedUser._id]: (prev[selectedUser._id] || []).map((m, i) =>
+          i === idx ? { ...m, message: 'This message was deleted', isDeleted: true } : m
+        )
       }));
 
       // Emit socket event for real-time deletion
@@ -1084,6 +1102,35 @@ const Chat = () => {
         to: selectedUser._id,
         messageTimestamp: msg.timestamp
       });
+
+      // Refresh messages from server to ensure consistency
+      try {
+        const refreshRes = await fetch(
+          `${BASE_URL}/api/messages?from=${currentUserId}&to=${selectedUser._id}`,
+          {
+            headers: { Authorization: `Bearer ${token}` },
+          }
+        );
+        const refreshData = await refreshRes.json();
+        if (refreshRes.ok) {
+          setMessages(prev => ({
+            ...prev,
+            [selectedUser._id]: refreshData.map((srvMsg) => ({
+              from: srvMsg.from,
+              message: srvMsg.message,
+              read: srvMsg.read,
+              timestamp: srvMsg.timestamp,
+              fileUrl: srvMsg.fileUrl,
+              fileType: srvMsg.fileType,
+              fileName: srvMsg.fileName,
+              replyTo: srvMsg.replyTo
+            }))
+          }));
+        }
+      } catch (e) {
+        // If refresh fails, rely on optimistic local update
+        // console.warn('Failed to refresh messages after delete:', e);
+      }
 
       // console.log('Message deleted successfully');
     } catch (error) {
@@ -1909,7 +1956,7 @@ const Chat = () => {
                             onClick={() => handleMessageSelection(idx)}
                           >
                             {/* Checkbox for selection mode */}
-                            {isSelectionMode && normalizeUserId(msg.from) === normalizedCurrentUserId && (
+                            {isSelectionMode && normalizeUserId(msg.from) === normalizedCurrentUserId && !(msg.isDeleted || msg.message === 'This message was deleted') && (
                               <input
                                 type="checkbox"
                                 checked={selectedMessages.has(idx)}
@@ -2059,10 +2106,10 @@ const Chat = () => {
                                     maxWidth: '100%',
                                     minWidth: 0,
                                   }}
-                                  onClick={msg.fileUrl ? () => window.open(msg.fileUrl, '_blank') : undefined}
+                                  onClick={msg.fileUrl && !(msg.isDeleted || msg.message === 'This message was deleted') ? () => window.open(msg.fileUrl, '_blank') : undefined}
                                 >
                                   {msg.message}
-                                  {msg.fileUrl && (
+                                  {msg.fileUrl && !(msg.isDeleted || msg.message === 'This message was deleted') && (
                                     <div style={{ marginTop: '8px' }}>
                                       {msg.fileType?.startsWith('image/') && (
                                         <img
@@ -2108,7 +2155,6 @@ const Chat = () => {
                                             gap: '8px'
                                           }}
                                           onClick={(e) => {
-
                                             e.stopPropagation();
                                             window.open(msg.fileUrl, '_blank');
                                           }}
@@ -2139,8 +2185,9 @@ const Chat = () => {
                                 </div>
 
                               </div>
-                              {/* Show three-dots icon for all messages (not in selection mode) */}
-                              {!isSelectionMode && (
+                              {/* Show three-dots icon when not in selection mode.
+                                  Hide only for your own deleted messages; still show for others' deleted messages */}
+                              {!isSelectionMode && !(normalizeUserId(msg.from) === normalizedCurrentUserId && (msg.isDeleted || msg.message === 'This message was deleted')) && (
                                 <button
                                   style={{
                                     background: 'none',
