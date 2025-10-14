@@ -353,8 +353,11 @@ const Activities = ({ onNotificationsRead }) => {
           )}
         </ul>
       </div>
-      <div className="" style={{ padding: '8px', backgroundColor: '#FDFDFD', borderBottomLeftRadius: '10px', borderBottomRightRadius: '10px', textAlign: 'center' }}>
-        <Link to="/ViewAllNotifications" className="" style={{ width: '100%', color: '#1368EC', backgroundColor: '#F9F9F9', textAlign: 'center', textDecoration: 'none' }}>View All</Link>
+      <div className="" style={{ padding: '8px', backgroundColor: '#FDFDFD', borderBottomLeftRadius: '10px', borderBottomRightRadius: '10px', textAlign: 'center' }} onClick={(e) => {
+          e.preventDefault();
+          markAllAsRead();
+        }}>
+        <Link to="/ViewAllNotifications" className="" style={{ width: '100%', color: '#1368EC', backgroundColor: '#F9F9F9', textAlign: 'center', textDecoration: 'none' }} >View All</Link>
       </div>
     </div>
   )

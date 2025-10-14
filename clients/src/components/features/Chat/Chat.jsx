@@ -473,8 +473,8 @@ const Chat = () => {
     const lastMessage = userMessages[userMessages.length - 1];
     const isFromCurrentUser = lastMessage.from === currentUserId;
     const prefix = isFromCurrentUser ? 'You: ' : '';
-    const messageText = lastMessage.message && lastMessage.message.length > 20
-      ? lastMessage.message.substring(0, 20) + '...'
+    const messageText = lastMessage.message && lastMessage.message.length > 10
+      ? lastMessage.message.substring(0, 10) + '...'
       : lastMessage.message || '';
 
     return prefix + messageText;
@@ -1452,15 +1452,16 @@ const Chat = () => {
                             key={userItem._id}
                             className="chat-list-user"
                             style={{
-                              padding: '12px 15px',
-                              cursor: 'pointer',
                               background: selectedUser && selectedUser._id === userItem._id ? '#E3F3FF' : 'transparent',
+                              // padding: '12px 15px',
+                              cursor: 'pointer',
                               display: 'flex',
                               alignItems: 'center',
                               justifyContent: 'space-between',
-                              margin: '12px',
+                              // margin: '12px',
                               borderRadius: '5px',
                               borderBottom: '1px solid #f0f0f0',
+                              overflowY: 'hidden',
                             }}
                             onClick={() => {
                               setSelectedUser(userItem);
@@ -1479,8 +1480,7 @@ const Chat = () => {
                                 <>
                                   <div>
                                     <div style={{
-                                      width: '40px',
-                                      height: '40px',
+                                     
                                       borderRadius: '50%',
                                       backgroundColor: '#007AFF',
                                       color: 'white',
@@ -1492,16 +1492,16 @@ const Chat = () => {
                                       display: 'flex',
                                       position: 'relative',
                                       textAlign: 'center',
-                                    }}>
+                                    }} className='chat-list-user-img'>
                                       <img
                                         src={userItem.profileImage}
                                         alt={userItem.firstName}
                                         style={{
-                                          width: '40px',
-                                          height: '40px',
+                                          
                                           borderRadius: '50%',
                                           objectFit: 'cover',
                                         }}
+                                        className='chat-list-user-img'
                                         onError={(e) => {
                                           e.target.style.display = 'none';
                                           e.target.nextSibling.style.display = 'flex';
@@ -1530,8 +1530,7 @@ const Chat = () => {
                                   <div>
                                     <div
                                       style={{
-                                        width: '40px',
-                                        height: '40px',
+                                        
                                         borderRadius: '50%',
                                         backgroundColor: '#007AFF',
                                         color: 'white',
@@ -1544,6 +1543,7 @@ const Chat = () => {
                                         position: 'relative',
                                         textAlign: 'center',
                                       }}
+                                      className='chat-list-user-img'
                                     >
                                       {(userItem.firstName || userItem.email || 'U').slice(0, 2).toUpperCase()}
 
@@ -1569,19 +1569,18 @@ const Chat = () => {
                               {/* name and message */}
                               <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', flex: 1 }}>
                                 <div style={{ display: 'flex', alignItems: 'center' }}>
-                                  <span style={{ fontWeight: 'bold' }}>
+                                  <span style={{ fontWeight: 'bold' }} className='chat-list-user-name'>
                                     {(userItem.firstName || userItem.email || 'User')} {userItem.lastName || ''}
                                   </span>
                                 </div>
                                 <span style={{
-                                  fontSize: '12px',
                                   color: '#666',
                                   marginTop: '2px',
                                   overflow: 'hidden',
                                   textOverflow: 'ellipsis',
                                   whiteSpace: 'nowrap',
                                   maxWidth: '150px'
-                                }}>
+                                }} className='chat-list-user-msg'>
                                   {getLastMessage(userItem._id)}
                                 </span>
                               </div>
@@ -1590,10 +1589,10 @@ const Chat = () => {
 
                             <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '4px' }}>
                               <span style={{
-                                fontSize: '10px',
+                                
                                 color: '#999',
                                 whiteSpace: 'nowrap'
-                              }}>
+                              }} className='chat-list-user-time'>
                                 {getLastMessageTime(userItem._id)}
                               </span>
                               <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
