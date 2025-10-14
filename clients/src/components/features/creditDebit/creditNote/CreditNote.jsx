@@ -227,6 +227,7 @@ const CreditNote = () => {
                                 <th>Customer</th>
                                 <th>Products</th>
                                 <th>HSN</th>
+                                <th>Qyt</th>
                                 <th>Amount</th>
                                 <th>Status</th>
                                 <th />
@@ -368,12 +369,23 @@ const CreditNote = () => {
                                             </td>
 
                                             <td>
-
                                                 {note.products && note.products.length > 0 ? (
                                                     note.products.map((product, idx) => (
                                                         <div key={idx} className="d-flex align-items-center">
 
                                                             {product.hsnCode}
+                                                        </div>
+                                                    ))
+                                                ) : (
+                                                    <span className="text-muted">-</span>
+                                                )}
+                                            </td>
+                                            <td>
+                                                {note.products && note.products.length > 0 ? (
+                                                    note.products.map((product, idx) => (
+                                                        <div key={idx} className="d-flex align-items-center">
+
+                                                            {product.returnQty}
                                                         </div>
                                                     ))
                                                 ) : (

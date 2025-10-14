@@ -146,26 +146,46 @@ const AddCreditNoteModal = ({ creditData, onAddCredit, onClose }) => {
                 customer: selectedCustomer?.value ? String(selectedCustomer.value) : "",
                 billing,
                 shipping,
-                products: selectedProducts.map(p => ({
-                    productId: p.productId || p._id,
-                    productName: (p.productName || p.name || "").trim(),
-                    hsnCode: (p.hsnCode || p.hsn || (p.hsnDetails ? p.hsnDetails.hsnCode : "")).trim(),
-                    saleQty: p.saleQty || p.quantity || 1,
-                    quantity: p.returnQty || p.quantity || 1,
-                    sellingPrice: p.sellingPrice,
-                    discount: p.discount,
-                    discountType: p.discountType,
-                    tax: p.tax,
-                    unit: (p.unit || p.unitName || "").trim(),
-                    images: p.images || [],
-                    subTotal: p.subTotal,
-                    discountAmount: p.discountAmount,
-                    taxableAmount: p.taxableAmount,
-                    taxAmount: p.taxAmount,
-                    lineTotal: p.lineTotal,
-                    unitCost: p.unitCost,
-                    returnQty: p.returnQty || p.quantity || 1,
-                })),
+                      products: selectedProducts.map(p => ({
+        productId: p.productId || p._id,
+        productName: (p.productName || p.name || "").trim(),
+        hsnCode: (p.hsnCode || p.hsn || (p.hsnDetails ? p.hsnDetails.hsnCode : "")).trim(),
+        saleQty: p.saleQty || p.quantity || 1, // original sale quantity (for reference)
+        quantity: p.returnQty || 1,            // ONLY the returned quantity
+        returnQty: p.returnQty || 1,           // ONLY the returned quantity
+        sellingPrice: p.sellingPrice,
+        discount: p.discount,
+        discountType: p.discountType,
+        tax: p.tax,
+        unit: (p.unit || p.unitName || "").trim(),
+        images: p.images || [],
+        subTotal: p.subTotal,
+        discountAmount: p.discountAmount,
+        taxableAmount: p.taxableAmount,
+        taxAmount: p.taxAmount,
+        lineTotal: p.lineTotal,
+        unitCost: p.unitCost,
+      })),
+                // products: selectedProducts.map(p => ({
+                //     productId: p.productId || p._id,
+                //     productName: (p.productName || p.name || "").trim(),
+                //     hsnCode: (p.hsnCode || p.hsn || (p.hsnDetails ? p.hsnDetails.hsnCode : "")).trim(),
+                //     saleQty: p.saleQty || p.quantity || 1,
+                //     quantity: p.returnQty || p.quantity || 1,
+                //     sellingPrice: p.sellingPrice,
+                //     discount: p.discount,
+                //     discountType: p.discountType,
+                //     tax: p.tax,
+                //     unit: (p.unit || p.unitName || "").trim(),
+                //     images: p.images || [],
+                //     subTotal: p.subTotal,
+                //     discountAmount: p.discountAmount,
+                //     taxableAmount: p.taxableAmount,
+                //     taxAmount: p.taxAmount,
+                //     lineTotal: p.lineTotal,
+                //     unitCost: p.unitCost,
+                //     returnQty: p.returnQty || p.quantity || 1,
+                // })),
                 sale: creditData?.sale?._id || creditData?.sale || "",
                 saleDate,
                 labourCost,
@@ -473,63 +493,146 @@ useEffect(() => {
         return () => clearTimeout(delayDebounce);
     }, [searchTerm]);
 
-   
-    // Handler for selecting a product from search results
-    const handleProductSelect = (product) => {
-        const alreadyExists = selectedProducts.some((p) => p._id === product._id);
-        if (!alreadyExists) {
-            let taxValue = 0;
-            if (typeof product.tax === 'number') {
-                taxValue = product.tax;
-            } else if (typeof product.tax === 'string') {
-                const match = product.tax.match(/(\d+(?:\.\d+)?)%?/);
-                taxValue = match ? parseFloat(match[1]) : 0;
-            }
-            // Discount logic
-            let discountValue = 0;
-            let discountType = 'Fixed';
-            if (product.discountType === 'Percentage') {
-                discountType = 'Percentage';
-                if (typeof product.discountValue === 'number') {
-                    discountValue = product.discountValue;
-                } else if (typeof product.discountValue === 'string') {
-                    const percentMatch = product.discountValue.match(/(\d+(?:\.\d+)?)/);
-                    discountValue = percentMatch ? parseFloat(percentMatch[1]) : 0;
-                }
-            } else {
-                discountType = 'Fixed';
-                if (typeof product.discountValue === 'number') {
-                    discountValue = product.discountValue;
-                } else if (typeof product.discountValue === 'string') {
-                    const flatMatch = product.discountValue.match(/(\d+(?:\.\d+)?)/);
-                    discountValue = flatMatch ? parseFloat(flatMatch[1]) : 0;
-                }
-            }
+//    old main code
+    // // Handler for selecting a product from search results
+    // const handleProductSelect = (product) => {
+    //     const alreadyExists = selectedProducts.some((p) => p._id === product._id);
+    //     if (!alreadyExists) {
+    //         let taxValue = 0;
+    //         if (typeof product.tax === 'number') {
+    //             taxValue = product.tax;
+    //         } else if (typeof product.tax === 'string') {
+    //             const match = product.tax.match(/(\d+(?:\.\d+)?)%?/);
+    //             taxValue = match ? parseFloat(match[1]) : 0;
+    //         }
+    //         // Discount logic
+    //         let discountValue = 0;
+    //         let discountType = 'Fixed';
+    //         if (product.discountType === 'Percentage') {
+    //             discountType = 'Percentage';
+    //             if (typeof product.discountValue === 'number') {
+    //                 discountValue = product.discountValue;
+    //             } else if (typeof product.discountValue === 'string') {
+    //                 const percentMatch = product.discountValue.match(/(\d+(?:\.\d+)?)/);
+    //                 discountValue = percentMatch ? parseFloat(percentMatch[1]) : 0;
+    //             }
+    //         } else {
+    //             discountType = 'Fixed';
+    //             if (typeof product.discountValue === 'number') {
+    //                 discountValue = product.discountValue;
+    //             } else if (typeof product.discountValue === 'string') {
+    //                 const flatMatch = product.discountValue.match(/(\d+(?:\.\d+)?)/);
+    //                 discountValue = flatMatch ? parseFloat(flatMatch[1]) : 0;
+    //             }
+    //         }
 
-            setSelectedProducts((prev) => {
-                if (prev.some((p) => p._id === product._id)) return prev;
-                return [
-                    ...prev,
-                    {
-                        ...product,
-                        productName: product.productName || product.name || "",
-                        quantity: 1,
-                        availableQty: product.quantity || 0,
-                        discount: discountValue,
-                        discountType: discountType,
-                        tax: taxValue,
-                        unitName: product.unit || "",
-                        purchasePrice: product.purchasePrice || product.price || 0,
-                        images: product.images || [],
-                        hsnCode: product.hsnCode || "",
-                        returnQty: 1, // default returnQty
-                    },
-                ];
-            });
+    //         setSelectedProducts((prev) => {
+    //             if (prev.some((p) => p._id === product._id)) return prev;
+    //             return [
+    //                 ...prev,
+    //                 {
+    //                     ...product,
+    //                     productName: product.productName || product.name || "",
+    //                     quantity: 1,
+    //                     availableQty: product.quantity || 0,
+    //                     discount: discountValue,
+    //                     discountType: discountType,
+    //                     tax: taxValue,
+    //                     unitName: product.unit || "",
+    //                     purchasePrice: product.purchasePrice || product.price || 0,
+    //                     images: product.images || [],
+    //                     hsnCode: product.hsnCode || "",
+    //                     returnQty: 1, // default returnQty
+    //                 },
+    //             ];
+    //         });
+    //     }
+    //     setProducts([]);
+    //     setSearchTerm("");
+    // };
+
+
+const handleProductSelect = (product) => {
+  const alreadyExists = selectedProducts.some((p) => p._id === product._id);
+  if (alreadyExists) return;
+
+  // --- TAX ---
+  let taxValue = 0;
+  if (typeof product.tax === "number") {
+    taxValue = product.tax;
+  } else if (typeof product.tax === "string") {
+    const match = product.tax.match(/(\d+(?:\.\d+)?)%?/);
+    taxValue = match ? parseFloat(match[1]) : 0;
+  }
+
+  // --- DISCOUNT ---
+  let discountValue = 0;
+  let discountType = product.discountType === "Percentage" ? "Percentage" : "Fixed";
+  const discountStr = product.discountValue?.toString() || "0";
+  const match = discountStr.match(/(\d+(?:\.\d+)?)/);
+  discountValue = match ? parseFloat(match[1]) : 0;
+
+  // --- Build Previous Credit Notes for this Product ---
+  let previousCreditNotes = [];
+  let totalReturnedQty = 0;
+  if (creditData?.creditNotes?.length) {
+    previousCreditNotes = creditData.creditNotes
+      .map((cn) => {
+        const prod = cn.products?.find(
+          (p) => p.productId?.toString() === product._id?.toString()
+        );
+        const saleMatch =
+          cn.referenceNumber === creditData.referenceNumber ||
+          cn.sale?._id?.toString() === creditData._id?.toString();
+
+        if (prod && saleMatch) {
+          return {
+            creditNoteId: cn._id,
+            quantity: Number(prod.returnQty || prod.quantity || 0),
+          };
         }
-        setProducts([]);
-        setSearchTerm("");
-    };
+        return null;
+      })
+      .filter(Boolean);
+
+    // Calculate total returned quantity
+    totalReturnedQty = previousCreditNotes.reduce(
+      (total, cn) => total + Number(cn.quantity || 0),
+      0
+    );
+  }
+
+
+  // Set saleQty as original sale quantity minus total returned
+  const originalSaleQty = Number(product.saleQty || product.quantity || 0);
+  const availableQty = originalSaleQty - totalReturnedQty;
+
+
+  setSelectedProducts((prev) => [
+    ...prev,
+    {
+      ...product,
+      productName: product.productName || product.name || "",
+      quantity: originalSaleQty,
+      saleQty: originalSaleQty, // keep for reference
+      availableQty: availableQty,
+      discount: discountValue,
+      discountType,
+      tax: taxValue,
+      unitName: product.unit || "",
+      purchasePrice: Number(product.purchasePrice || product.price || 0),
+      images: product.images || [],
+      hsnCode: product.hsnCode || "",
+      returnQty: 1,
+      creditNotes: previousCreditNotes,
+      totalReturnedQty, // attach for calculation/debug
+    },
+  ]);
+
+  setProducts([]);
+  setSearchTerm("");
+};
+
 
     const handleRemoveProduct = (id) => {
         setSelectedProducts((prev) => prev.filter((p) => p._id !== id));
@@ -548,41 +651,102 @@ useEffect(() => {
         return acc + total;
     }, 0);
 
-    function getProductRowCalculation(item) {
-        // Use returnQty for calculation, fallback to 1 if not set
-        const availableQty = item.saleQty || item.quantity || 0;
-        const saleQty = Number(item.returnQty || 1);
-        const price = Number(item.sellingPrice || 0);
-        const discount = Number(item.discount || 0);
-        const tax = Number(item.tax || 0);
-        const subTotal = saleQty * price;
-        // 🔧 Fixed discount logic
-        let discountAmount = 0;
-        if (item.discountType === "Percentage") {
-            discountAmount = (subTotal * discount) / 100;
-        } else if (item.discountType === "Rupees" || item.discountType === "Fixed") {
-            discountAmount = saleQty * discount; // ✅ per unit ₹ discount
-        } else {
-            discountAmount = 0;
-        }
-        // const discountAmount = discount;
-        const taxableAmount = subTotal - discountAmount;
-        const taxAmount = (taxableAmount * tax) / 100;
-        const lineTotal = taxableAmount + taxAmount;
-        const unitCost = saleQty > 0 ? lineTotal / saleQty : 0;
+    // function getProductRowCalculation(item) {
+    //     // Use returnQty for calculation, fallback to 1 if not set
+    //     const availableQty = item.saleQty || item.quantity || 0;
+    //     const saleQty = Number(item.returnQty || 1);
+    //     const price = Number(item.sellingPrice || 0);
+    //     const discount = Number(item.discount || 0);
+    //     const tax = Number(item.tax || 0);
+    //     const subTotal = saleQty * price;
+    //     // 🔧 Fixed discount logic
+    //     let discountAmount = 0;
+    //     if (item.discountType === "Percentage") {
+    //         discountAmount = (subTotal * discount) / 100;
+    //     } else if (item.discountType === "Rupees" || item.discountType === "Fixed") {
+    //         discountAmount = saleQty * discount; // ✅ per unit ₹ discount
+    //     } else {
+    //         discountAmount = 0;
+    //     }
+    //     // const discountAmount = discount;
+    //     const taxableAmount = subTotal - discountAmount;
+    //     const taxAmount = (taxableAmount * tax) / 100;
+    //     const lineTotal = taxableAmount + taxAmount;
+    //     const unitCost = saleQty > 0 ? lineTotal / saleQty : 0;
 
-        return {
-            subTotal,
-            discountAmount,
-            taxableAmount,
-            taxAmount,
-            lineTotal,
-            unitCost,
-            tax,
-            saleQty, // This is now returnQty
-            price
-        };
-    }
+    //     return {
+    //         subTotal,
+    //         discountAmount,
+    //         taxableAmount,
+    //         taxAmount,
+    //         lineTotal,
+    //         unitCost,
+    //         tax,
+    //         saleQty, // This is now returnQty
+    //         price
+    //     };
+    // }
+
+function getProductRowCalculation(item) {
+  const originalQty = Number(item.saleQty || item.quantity || 0);
+
+  // 🧮 Sum of all previous returns from credit notes
+  const totalReturnedQty = Array.isArray(item.creditNotes)
+    ? item.creditNotes.reduce(
+        (total, cn) => total + Number(cn.quantity || 0),
+        0
+      )
+    : 0;
+
+  console.log("🧮 Calculating for item:", item.productName || item.name, {
+    originalQty,
+    totalReturnedQty,
+    creditNotes: item.creditNotes,
+  });
+
+  const availableQtys = originalQty - totalReturnedQty;
+  const saleQty = Number(item.returnQty || 1);
+  const price = Number(item.sellingPrice || item.purchasePrice || 0);
+  const discount = Number(item.discount || 0);
+  const tax = Number(item.tax || 0);
+
+  const subTotal = saleQty * price;
+  const discountAmount =
+    item.discountType === "Percentage"
+      ? (subTotal * discount) / 100
+      : saleQty * discount;
+
+  const taxableAmount = subTotal - discountAmount;
+  const taxAmount = (taxableAmount * tax) / 100;
+  const lineTotal = taxableAmount + taxAmount;
+  const unitCost = saleQty > 0 ? lineTotal / saleQty : 0;
+
+  return {
+    originalQty,
+    totalReturnedQty,
+    availableQtys,
+    subTotal,
+    discountAmount,
+    taxableAmount,
+    taxAmount,
+    lineTotal,
+    unitCost,
+    saleQty,
+    price,
+    tax,
+  };
+}
+
+
+
+    const handleQtyChange = (id, value) => {
+  setSelectedProducts((prev) =>
+    prev.map((p) =>
+      p._id === id ? { ...p, returnQty: Number(value) } : p
+    )
+  );
+};
+
 
     return (
         <div className="modal fade" id="add-sales-credit">
@@ -819,8 +983,7 @@ useEffect(() => {
                                     <div className="table-responsive rounded border-bottom-0 border mb-3">
                                         <table className="table table-nowrap add-table mb-0">
                                             <thead className="table-dark">
-                                                <tr>
-                                                 
+                                                <tr>                                                 
                                                     <th>Product/Service</th>
                                                     <th>HSN Code</th>
                                                     <th>Qty</th>
@@ -831,70 +994,32 @@ useEffect(() => {
                                                     <th>Discount Amount</th>
                                                     <th>Tax (%)</th>
                                                     <th>Tax Amount</th>
-                                                    <th />
+                                                    <th>Action</th>
                                                 </tr>
                                             </thead>
                                             <tbody>
                                                 {selectedProducts.length > 0 ? (
                                                     selectedProducts.map((item, index) => {
+
                                                         const d = getProductRowCalculation(item);
+                                                        console.log("Calculations for", item.productName, d);
                                                         return (
-                                                            // <tr key={product._id}>
-                                                            //     <td>{product.productName}</td>
-                                                            //     <td>{product.hsnCode || ''}</td>
-                                                            //     <td>{product.saleQtyBefore}</td>
-                                                            //     <td>
-                                                            //         <input type="number" className="form-control form-control-sm" style={{ width: "70px", textAlign: "center" }} min="1" max={product.saleQtyBefore}
-                                                            //             value={qty} onChange={(e) => {
-                                                            //                 let val = parseInt(e.target.value, 10);
-                                                            //                 if (isNaN(val)) val = 1;
-                                                            //                 if (val < 1) val = 1; if (val >product.saleQtyBefore) val = product.saleQtyBefore;
-                                                            //                 setSelectedProducts((prev) =>
-                                                            //                     prev.map((item, i) =>
-                                                            //                         i === index ? { ...item, returnQty: val } : item
-                                                            //                     )
-                                                            //                 );
-                                                            //             }}
-                                                            //         />
-                                                            //         <span className="text-muted">{product.unit}</span>
-                                                            //     </td>
-                                                            //     <td>{product.saleQtyAfter}</td>
-                                                            //     <td>
-                                                            //         <input type="number" className="form-control form-control-sm" style={{ width: "90px" }} min="0"
-                                                            //             value={price} onChange={(e) => {
-                                                            //                 const val = parseFloat(e.target.value);
-                                                            //                 setSelectedProducts((prev) =>
-                                                            //                     prev.map((item, i) =>
-                                                            //                         i === index
-                                                            //                             ? { ...item, sellingPrice: isNaN(val) ? 0 : val }
-                                                            //                             : item
-                                                            //                     )
-                                                            //                 );
-                                                            //             }}
-                                                            //         />
-                                                            //     </td>
-                                                            //     {/* <td>₹{taxAmount.toFixed(2)}</td> */}
-                                                            //     <td>₹{unitCost.toFixed(2)}</td>
-                                                            //     <td className="fw-semibold text-success">₹{lineTotal.toFixed(2)}</td>
-                                                            //     <td>
-                                                            //         <button className="btn btn-sm btn-danger" onClick={() => handleRemoveProduct(product._id)} type="button">
-                                                            //             <TbTrash />
-                                                            //         </button>
-                                                            //     </td>
-                                                            // </tr>
+
                                                             <tr key={item._id}>
-                                                                {/* <td><h6>{item.productId?.productName || '-'}</h6></td> */}
+
                                                                 <td>
                                                                     {item.productName}
                                                                     <br />
-                                                                    <small className="text-muted" >
-                                                                        Available Qyt: {item.availableQty} {item.unit}
-                                                                        {/* (Before Sale: {d.availableQty}) */}
+                                                                    <small className="text-muted">
+                                                                        Original: {d.originalQty} {item.unitName} |{" "}
+                                                                        Returned: {d.totalReturnedQty} {item.unitName} |{" "}
+                                                                        Available: {d.availableQtys} {item.unitName}
                                                                     </small>
                                                                 </td>
+
                                                                 <td>{item.hsnCode || '-'}</td>
-                                                                <td>{item.saleQty}</td>
-                                                                <td>
+                                                                <td>{item.availableQty}</td>
+                                                                {/* <td>
                                                                     <input
                                                                         type="number"
                                                                         className="form-control form-control-sm"
@@ -915,7 +1040,54 @@ useEffect(() => {
                                                                         }}
                                                                     />
                                                                     <span className="text-muted">{item.unit}</span>
+                                                                </td> */}
+                                                                <td>
+                                                                    <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "8px" }}>
+                                                                        <input
+                                                                            type="number"
+                                                                            className="form-control form-control-sm"
+                                                                            style={{ width: "70px", textAlign: "center" }}
+                                                                            min="1"
+                                                                            max={item.availableQty || 0}
+                                                                            value={item.returnQty === 0 ? "" : item.returnQty} // 👈 blank if zero
+                                                                            onChange={(e) => {
+                                                                                const val = e.target.value;
+
+                                                                                // Allow blank temporarily (when deleting digits)
+                                                                                if (val === "") {
+                                                                                    setSelectedProducts((prev) =>
+                                                                                        prev.map((p, i) =>
+                                                                                            i === index ? { ...p, returnQty: 0 } : p
+                                                                                        )
+                                                                                    );
+                                                                                    return;
+                                                                                }
+
+                                                                                let num = parseInt(val, 10);
+                                                                                if (isNaN(num) || num < 1) num = 1;
+                                                                                if (num > (item.availableQty || 0)) num = item.availableQty;
+
+                                                                                setSelectedProducts((prev) =>
+                                                                                    prev.map((p, i) =>
+                                                                                        i === index ? { ...p, returnQty: num } : p
+                                                                                    )
+                                                                                );
+                                                                            }}
+                                                                            onBlur={(e) => {
+                                                                                // When focus leaves, if field is empty, reset to 1
+                                                                                if (e.target.value === "") {
+                                                                                    setSelectedProducts((prev) =>
+                                                                                        prev.map((p, i) =>
+                                                                                            i === index ? { ...p, returnQty: 1 } : p
+                                                                                        )
+                                                                                    );
+                                                                                }
+                                                                            }}
+                                                                        />
+                                                                        <span className="text-muted ms-1">{item.unit}</span>
+                                                                    </div>
                                                                 </td>
+
                                                                 <td>₹{d.price}</td>
                                                                 <td>
                                                                     <div style={{ display: "flex", alignItems: "center" }}>
@@ -931,6 +1103,12 @@ useEffect(() => {
                                                                 <td>₹{d.discountAmount}</td>
                                                                 <td>{d.tax}%</td>
                                                                 <td>₹{d.taxAmount}</td>
+                                                                <td>
+
+                                                                    <button className="btn btn-sm btn-danger" onClick={() => handleRemoveProduct(item._id)} type="button">
+                                                                        <TbTrash />
+                                                                    </button>
+                                                                </td>
                                                             </tr>
                                                         );
                                                     })
@@ -944,493 +1122,11 @@ useEffect(() => {
                                     </div>
 
                                     {/* Table list end
-           </div>
-
-                                <div className="extra-info mt-3">
+                                        
                                     {/* start row */}
                                     <div className="row">
-                                        {/* <div className="col-md-7">
-                                            <div className="mb-3">
-                                                <h6 className="mb-3">Extra Information</h6>
-                                                <div>
-                                                    <ul className="nav nav-tabs nav-solid-primary mb-3" role="tablist">
-                                                        <li className="nav-item me-2" role="presentation">
-                                                            <a className="nav-link active border fs-12 fw-semibold rounded" data-bs-toggle="tab"
-                                                                data-bs-target="#notes" aria-current="page" href=""><i
-                                                                    className="isax isax-document-text me-1" />Add Notes</a>
-                                                        </li>
-                                                        {formState.enableAddCharges && (<li className="nav-item me-2" role="presentation">
-                                                            <a className="nav-link border fs-12 fw-semibold rounded" data-bs-toggle="tab"
-                                                                data-bs-target="#addCharges" href=""><i
-                                                                    className="isax isax-document me-1" />Additional Charges</a>
-                                                        </li>)}
-
-                                                        {formState.enableTax && (
-                                                            <li className="nav-item me-2" role="presentation">
-                                                                <a className="nav-link border fs-12 fw-semibold rounded" data-bs-toggle="tab" data-bs-target="#tax"
-                                                                    href=""><i className="isax isax-document me-1" />Tax</a>
-                                                            </li>)}
-
-                                                        <li className="nav-item" role="presentation">
-                                                            <a className="nav-link border fs-12 fw-semibold rounded" data-bs-toggle="tab" data-bs-target="#bank"
-                                                                href=""><i className="isax isax-bank me-1" />Bank Details</a>
-                                                        </li>
-                                                    </ul>
-
-                                                    <div className="tab-content">
-                                                        <div className="tab-pane active show" id="notes" role="tabpanel">
-                                                            <label className="form-label">Additional Notes</label>
-                                                            <textarea className="form-control" name="notes" value={formState.notes || ""}
-                                                                onChange={handleChange} />
-                                                        </div>
-
-                                                        {formState.enableAddCharges && (<div className="tab-pane fade" id="addCharges" role="tabpanel">
-                                                            <div className="row">
-                                                                <div className="col-lg-6 col-md-6 col-sm-12">
-                                                                    <div className="mb-3">
-                                                                        <label className="form-label">
-                                                                            Labour Cost
-                                                                        </label>
-                                                                        <input type="text" className="form-control" value={labourCost} onChange={(e) =>
-                                                                            setLabourCost(parseFloat(e.target.value) || 0)} />
-                                                                    </div>
-                                                                </div>
-                                                                <div className="col-lg-6 col-md-6 col-sm-12">
-                                                                    <div className="mb-3">
-                                                                        <label className="form-label">
-                                                                            Discount
-                                                                        </label>
-                                                                        <input type="text" className="form-control" value={orderDiscount} onChange={(e) =>
-                                                                            setOrderDiscount(parseFloat(e.target.value) || 0)} />
-                                                                    </div>
-                                                                </div>
-                                                                <div className="col-lg-6 col-md-6 col-sm-12">
-                                                                    <div className="mb-3">
-                                                                        <label className="form-label">
-                                                                            Shipping
-                                                                        </label>
-                                                                        <input type="text" className="form-control" value={shippingCost} onChange={(e) =>
-                                                                            setShippingCost(parseFloat(e.target.value) || 0)} />
-                                                                    </div>
-                                                                </div>
-                                                            </div>
-                                                        </div>)}
-
-                                                        {formState.enableTax && (<div className="tab-pane fade" id="tax" role="tabpanel">
-                                                            <div className="row">
-                                                                <div className="col-lg-12 col-md-6 col-sm-12">
-                                                                    <div className="d-flex align-items-center justify-content-between">
-                                                                        <p className="fw-semibold fs-14 text-gray-9 mb-0">CGST</p>
-                                                                        <div className="d-flex align-items-center gap-2">
-                                                                            <input type="text" className="form-control form-control-sm w-auto d-inline-block" style={{ minWidth: 80 }}
-                                                                                name="cgst" value={formState.cgst || ""} onChange={handleChange} placeholder="% or value" />
-                                                                            <span className="ms-2">₹ {cgstValue ? cgstValue.toFixed(2) : '0.00'}</span>
-                                                                        </div>
-                                                                    </div>
-                                                                </div>
-                                                                <div className="col-lg-12 col-md-6 col-sm-12">
-                                                                    <div className="mb-3">
-                                                                        <div className="d-flex align-items-center justify-content-between">
-                                                                            <p className="fw-semibold fs-14 text-gray-9 mb-0">SGST</p>
-                                                                            <div className="d-flex align-items-center gap-2">
-                                                                                <input type="text" className="form-control form-control-sm w-auto d-inline-block" style={{ minWidth: 80 }}
-                                                                                    name="sgst" value={formState.sgst || ""} onChange={handleChange} placeholder="% or value" />
-                                                                                <span className="ms-2">₹ {sgstValue ? sgstValue.toFixed(2) : '0.00'}</span>
-                                                                            </div>
-                                                                        </div>
-                                                                    </div>
-                                                                </div>
-                                                            </div>
-                                                        </div>)}
-
-
-                                                        <div className="tab-pane fade" id="bank" role="tabpanel">
-                                                            <div className="row mt-3">
-                                                                <div className="col-lg-4">
-                                                                    <label>Payment Type</label>
-                                                                    <select className="form-select" value={paymentType} onChange={e => {
-                                                                        setPaymentType(e.target.value);
-                                                                        setPaymentMethod(""); // reset payment method when payment type changes
-                                                                    }}
-                                                                    >
-                                                                        <option value="Full">Full Payment</option>
-                                                                        <option value="Partial">Partial Payment</option>
-                                                                    </select>
-                                                                </div>
-
-                                                                <div className="col-lg-4"><label>Payment Status</label>
-                                                                    <select className="form-select" value={paymentStatus} onChange={e => setPaymentStatus(e.target.value)}>
-                                                                        <option>Select</option>
-                                                                        <option value="Paid">Paid</option>
-                                                                        <option value="Unpaid">Unpaid</option>
-                                                                        <option value="Partial">Partial</option>
-                                                                        <option value="Pending">Pending</option>
-
-                                                                    </select>
-                                                                </div>
-
-                                                                {(paymentType === "Full" || paymentType === "Partial") && (
-                                                                    <>
-                                                                        {paymentType === "Full" && (
-                                                                            <div className="col-lg-4">
-                                                                                <label>Total Amount</label>
-                                                                                <input type="number" className="form-control" value={grandTotal} readOnly />
-                                                                            </div>
-                                                                        )}
-
-                                                                        {paymentType === "Partial" && (
-                                                                            <>
-                                                                                <div className="col-lg-4">
-                                                                                    <label>Total Amount</label>
-                                                                                    <input type="number" className="form-control" value={grandTotal} readOnly />
-                                                                                </div>
-
-                                                                                <div className="col-lg-4">
-                                                                                    <label>Paid Amount</label>
-                                                                                    <input
-                                                                                        type="number"
-                                                                                        className="form-control"
-                                                                                        value={paidAmount}
-                                                                                        min="0"
-                                                                                        max={grandTotal}
-                                                                                        onChange={(e) => {
-                                                                                            const n = Number(e.target.value) || 0;
-                                                                                            const clamped = Math.max(0, Math.min(n, grandTotal));
-                                                                                            setPaidAmount(clamped);
-                                                                                        }}
-                                                                                    />
-                                                                                </div>
-
-                                                                                <div className="col-lg-4">
-                                                                                    <label>Due Amount</label>
-                                                                                    <input type="number" className="form-control" value={dueAmount.toFixed(2)} readOnly />
-                                                                                </div>
-
-                                                                                <div className="col-lg-4 mt-2">
-                                                                                    <label>Due Date</label>
-                                                                                    <input type="date" className="form-control" value={dueDate} onChange={e => setDueDate(e.target.value)}
-                                                                                    />
-                                                                                </div>
-                                                                            </>
-                                                                        )}
-
-                                                                        <div className="col-lg-12 mt-3">
-                                                                            <label>Payment Method</label>
-                                                                            <div className="d-flex gap-4">
-                                                                                {["Cash", "Online", "Cheque"].map((method) => (
-                                                                                    <div className="form-check" key={method}>
-                                                                                        <input
-                                                                                            type="radio"
-                                                                                            className="form-check-input"
-                                                                                            name="paymentMethod"             // <-- add this
-                                                                                            id={method}
-                                                                                            checked={paymentMethod === method}
-                                                                                            onChange={() => setPaymentMethod(method)}
-                                                                                        />
-                                                                                        <label className="form-check-label" htmlFor={method}>{method}</label>
-                                                                                    </div>
-                                                                                ))}
-
-                                                                            </div>
-                                                                        </div>
-
-                                                                        {(paymentMethod === "Online") && (
-                                                                            <>
-                                                                                <div className="col-lg-4 mt-2">
-                                                                                    <label>Online Payment Method</label>
-                                                                                    <select
-                                                                                        className="form-control"
-                                                                                        value={onlineMod}
-                                                                                        onChange={e => setOnlineMod(e.target.value)}
-                                                                                    >
-                                                                                        <option value="">-- Select Payment Method --</option>
-                                                                                        <option value="UPI">UPI</option>
-                                                                                        <option value="NEFT">NEFT</option>
-                                                                                        <option value="RTGS">RTGS</option>
-                                                                                        <option value="IMPS">IMPS</option>
-                                                                                        <option value="Net Banking">Net Banking</option>
-                                                                                        <option value="Credit Card">Credit Card</option>
-                                                                                        <option value="Debit Card">Debit Card</option>
-                                                                                        <option value="Wallet">Wallet</option>
-                                                                                    </select>
-                                                                                </div>
-
-
-                                                                                <div className="col-lg-4 mt-2">
-                                                                                    <label>Transaction ID</label>
-                                                                                    <input type="text" className="form-control" value={transactionId} onChange={e =>
-                                                                                        setTransactionId(e.target.value)}
-                                                                                        placeholder="Enter Transaction ID"
-                                                                                    />
-                                                                                </div>
-
-                                                                                <div className="col-lg-4 mt-2">
-                                                                                    <label>Transaction Date</label>
-                                                                                    <input type="date" className="form-control" value={transactionDate} onChange={e =>
-                                                                                        setTransactionDate(e.target.value)}
-                                                                                    />
-                                                                                </div>
-                                                                            </>
-                                                                        )}
-                                                                        {(paymentMethod === "Cheque") && (
-                                                                            <>
-                                                                                <div className="col-lg-4 mt-2">
-                                                                                    <label>Cheque No</label>
-                                                                                    <input type="text" className="form-control" value={transactionId} onChange={e =>
-                                                                                        setTransactionId(e.target.value)}
-                                                                                        placeholder="Enter Cheque No"
-                                                                                    />
-                                                                                </div>
-
-                                                                                <div className="col-lg-4 mt-2">
-                                                                                    <label>Transaction Date</label>
-                                                                                    <input type="date" className="form-control" value={transactionDate} onChange={e =>
-                                                                                        setTransactionDate(e.target.value)}
-                                                                                    />
-                                                                                </div>
-
-
-                                                                            </>
-                                                                        )}
-
-                                                                    </>
-                                                                )}
-                                                            </div>
-                                                        </div>
-
-                                                    </div>
-                                                </div>
-                                            </div>
-
-                                        </div> */}
-                                              <div className="col-md-7">
-                                                              <div className="mb-3">
-                                                                <h6 className="mb-3">Extra Information</h6>
-                                                                <div>
-                                                                  <ul className="nav nav-tabs nav-solid-primary mb-3" role="tablist">
-                                                                    <li className="nav-item me-2" role="presentation">
-                                                                      <a className="nav-link active border fs-12 fw-semibold rounded" data-bs-toggle="tab"
-                                                                        data-bs-target="#notes" aria-current="page" Shipping Address><i
-                                                                          className="isax isax-document-text me-1" />Add Notes</a>
-                                                                    </li>
-                                                                     {/* {formState.enableAddCharges && (
-                                                                   <li className="nav-item me-2" role="presentation">
-                                                                      <a className="nav-link border fs-12 fw-semibold rounded" data-bs-toggle="tab"
-                                                                        data-bs-target="#addCharges" Shipping Address><i
-                                                                          className="isax isax-document me-1" />Additional Charges</a>
-                                                                    </li>)} */}
-                                        
-                                                                    {/* {formState.enableTax && (
-                                                                      <li className="nav-item me-2" role="presentation">
-                                                                        <a className="nav-link border fs-12 fw-semibold rounded" data-bs-toggle="tab" data-bs-target="#tax"
-                                                                          Shipping Address><i className="isax isax-document me-1" />Tax</a>
-                                                                      </li>)} */}
-                                        
-                                                                    <li className="nav-item" role="presentation">
-                                                                      <a className="nav-link border fs-12 fw-semibold rounded" data-bs-toggle="tab" data-bs-target="#bank"
-                                                                        Shipping Address><i className="isax isax-bank me-1" />Payments Details</a>
-                                                                    </li>
-                                                                  </ul>
-                                        
-                                                                  <div className="tab-content">
-                                                                    <div className="tab-pane active show" id="notes" role="tabpanel">
-                                                                      <label className="form-label">Additional Notes</label>
-                                                                      <textarea className="form-control" name="notes" value={formState.notes || ""}
-                                                                        onChange={handleChange} />
-                                                                    </div>
-                                                                    {formState.enableAddCharges && (<div className="tab-pane fade" id="addCharges" role="tabpanel">
-                                                                      <div className="row">
-                                                                        <div className="col-lg-6 col-md-6 col-sm-12">
-                                                                          <div className="mb-3">
-                                                                            <label className="form-label">
-                                                                              Labour Cost
-                                                                            </label>
-                                                                            <input type="text" className="form-control" value={labourCost} onChange={(e) =>
-                                                                              setLabourCost(parseFloat(e.target.value) || 0)} />
-                                                                          </div>
-                                                                        </div>
-                                                                        {/* <div className="col-lg-6 col-md-6 col-sm-12">
-                                                                          <div className="mb-3">
-                                                                            <label className="form-label">
-                                                                              Discount
-                                                                            </label>
-                                                                            <input type="text" className="form-control" value={orderDiscount} onChange={(e) =>
-                                                                              setOrderDiscount(parseFloat(e.target.value) || 0)} />
-                                                                          </div>
-                                                                        </div> */}
-                                                                        <div className="col-lg-6 col-md-6 col-sm-12">
-                                                                          <div className="mb-3">
-                                                                            <label className="form-label">
-                                                                              Shipping
-                                                                            </label>
-                                                                            <input type="text" className="form-control" value={shippingCost} onChange={(e) =>
-                                                                              setShippingCost(parseFloat(e.target.value) || 0)} />
-                                                                          </div>
-                                                                        </div>
-                                                                      </div>
-                                                                    </div>)}
                                         
                                         
-                                                                    <div className="tab-pane fade" id="bank" role="tabpanel">
-                                                                      <div className="row mt-3">
-                                                                        <div className="col-lg-4">
-                                                                          <label>Payment Type</label>
-                                                                          <select className="form-select" value={paymentType} onChange={e => {
-                                                                            setPaymentType(e.target.value);
-                                                                            setPaymentMethod(""); // reset payment method when payment type changes
-                                                                          }}
-                                                                          >
-                                                                            <option value="Full">Full Payment</option>
-                                                                            <option value="Partial">Partial Payment</option>
-                                                                          </select>
-                                                                        </div>
-                                        
-                                                                        <div className="col-lg-4"><label>Payment Status</label>
-                                                                          <select className="form-select" value={paymentStatus} onChange={e => setPaymentStatus(e.target.value)}>
-                                                                            <option>Select</option>
-                                                                            <option value="Paid">Paid</option>
-                                                                            <option value="Unpaid">Unpaid</option>
-                                                                            <option value="Partial">Partial</option>
-                                                                            <option value="Pending">Pending</option>
-                                        
-                                                                          </select>
-                                                                        </div>
-                                        
-                                                                        {(paymentType === "Full" || paymentType === "Partial") && (
-                                                                          <>
-                                                                            {paymentType === "Full" && (
-                                                                              <div className="col-lg-4">
-                                                                                <label>Total Amount</label>
-                                                                                <input type="number" className="form-control" value={grandTotals} readOnly />
-                                                                              </div>
-                                                                            )}
-                                        
-                                                                            {paymentType === "Partial" && (
-                                                                              <>
-                                                                                {/* Partial payment fields */}
-                                                                                <div className="col-lg-4">
-                                                                                  <label>Total Amount</label>
-                                                                                  <input type="number" className="form-control" value={grandTotals} readOnly />
-                                                                                </div>
-                                        
-                                                                                <div className="col-lg-4">
-                                                                                  <label>Paid Amount</label>
-                                                                                  <input
-                                                                                    type="number"
-                                                                                    className="form-control"
-                                                                                    value={paidAmount}
-                                                                                    min="0"
-                                                                                    max={grandTotals}
-                                                                                    onChange={(e) => {
-                                                                                      const n = Number(e.target.value) || 0;
-                                                                                      const clamped = Math.max(0, Math.min(n, grandTotals));
-                                                                                      setPaidAmount(clamped);
-                                                                                    }}
-                                                                                  />
-                                                                                </div>
-                                        
-                                                                                <div className="col-lg-4">
-                                                                                  <label>Due Amount</label>
-                                                                                  <input type="number" className="form-control" value={dueAmount.toFixed(2)} readOnly />
-                                                                                </div>
-                                        
-                                                                                <div className="col-lg-4 mt-2">
-                                                                                  <label>Due Date</label>
-                                                                                  <input type="date" className="form-control" value={dueDate} onChange={e => setDueDate(e.target.value)}
-                                                                                  />
-                                                                                </div>
-                                                                              </>
-                                                                            )}
-                                        
-                                                                            <div className="col-lg-12 mt-3">
-                                                                              <label>Payment Method</label>
-                                                                              <div className="d-flex gap-4">
-                                                                                {["Cash", "Online", "Cheque"].map((method) => (
-                                                                                  <div className="form-check" key={method}>
-                                                                                    <input
-                                                                                      type="radio"
-                                                                                      className="form-check-input"
-                                                                                      name="paymentMethod"             // <-- add this
-                                                                                      id={method}
-                                                                                      checked={paymentMethod === method}
-                                                                                      onChange={() => setPaymentMethod(method)}
-                                                                                    />
-                                                                                    <label className="form-check-label" htmlFor={method}>{method}</label>
-                                                                                  </div>
-                                                                                ))}
-                                        
-                                                                              </div>
-                                                                            </div>
-                                        
-                                                                            {(paymentMethod === "Online") && (
-                                                                              <>
-                                                                                <div className="col-lg-4 mt-2">
-                                                                                  <label>Online Payment Method</label>
-                                                                                  <select
-                                                                                    className="form-control"
-                                                                                    value={onlineMod}
-                                                                                    onChange={e => setOnlineMod(e.target.value)}
-                                                                                  >
-                                                                                    <option value="">-- Select Payment Method --</option>
-                                                                                    <option value="UPI">UPI</option>
-                                                                                    <option value="NEFT">NEFT</option>
-                                                                                    <option value="RTGS">RTGS</option>
-                                                                                    <option value="IMPS">IMPS</option>
-                                                                                    <option value="Net Banking">Net Banking</option>
-                                                                                    <option value="Credit Card">Credit Card</option>
-                                                                                    <option value="Debit Card">Debit Card</option>
-                                                                                    <option value="Wallet">Wallet</option>
-                                                                                  </select>
-                                                                                </div>
-                                        
-                                        
-                                                                                <div className="col-lg-4 mt-2">
-                                                                                  <label>Transaction ID</label>
-                                                                                  <input type="text" className="form-control" value={transactionId} onChange={e =>
-                                                                                    setTransactionId(e.target.value)}
-                                                                                    placeholder="Enter Transaction ID"
-                                                                                  />
-                                                                                </div>
-                                        
-                                                                                <div className="col-lg-4 mt-2">
-                                                                                  <label>Transaction Date</label>
-                                                                                  <input type="date" className="form-control" value={transactionDate} onChange={e =>
-                                                                                    setTransactionDate(e.target.value)}
-                                                                                  />
-                                                                                </div>
-                                                                              </>
-                                                                            )}
-                                                                            {(paymentMethod === "Cheque") && (
-                                                                              <>
-                                                                                <div className="col-lg-4 mt-2">
-                                                                                  <label>Cheque No</label>
-                                                                                  <input type="text" className="form-control" value={transactionId} onChange={e =>
-                                                                                    setTransactionId(e.target.value)}
-                                                                                    placeholder="Enter Cheque No"
-                                                                                  />
-                                                                                </div>
-                                        
-                                                                                <div className="col-lg-4 mt-2">
-                                                                                  <label>Transaction Date</label>
-                                                                                  <input type="date" className="form-control" value={transactionDate} onChange={e =>
-                                                                                    setTransactionDate(e.target.value)}
-                                                                                  />
-                                                                                </div>
-                                        
-                                        
-                                                                              </>
-                                                                            )}
-                                        
-                                                                          </>
-                                                                        )}
-                                                                      </div>
-                                                                    </div>
-                                        
-                                                                  </div>
-                                                                </div>
-                                                              </div>
-                                        
-                                                            </div>
 
                                         {/* summary calculation*/}
                                         <div className="col-md-5 ms-auto mb-3">
@@ -1457,69 +1153,13 @@ useEffect(() => {
                                             <div className="d-flex justify-content-between border-bottom mb-2 pe-3">
                                                 <p>SGST</p>
                                                 <p>₹ {Number(summary.sgst || 0).toFixed(2)}</p>
-                                            </div>
-                                            {/* <div className="pb-2 border-gray border-bottom">
-                          <div className="p-2 d-flex justify-content-between">
-                            <div className="d-flex align-items-center">
-                              <div className="form-check form-switch me-4">
-                                <input
-                                  className="form-check-input"
-                                  type="checkbox"
-                                  role="switch"
-                                  id="roundOffSwitch"
-                                  name="roundOff"
-                                  checked={!!formState.roundOff}
-                                  onChange={handleChange}
-                                />
-                                <label className="form-check-label" htmlFor="enabe_tax1">Round Off Total</label>
-                              </div>
-                            </div>
-                            <div>
-                              <h6 className="fs-14">₹ {roundOffValue ? finalTotal.toFixed(2) : "0.00"}</h6>
-                            </div>
-                          </div>
-                        </div> */}
-                                            {/* <div className="form-check form-switch me-4 mb-3">
-                          <input
-                            className="form-check-input"
-                            type="checkbox"
-                            role="switch"
-                            id="enableAddChargesSwitch"
-                            name="enableAddCharges"
-                            checked={!!formState.enableAddCharges}
-                            onChange={handleChange}
-                          />
-                          <label className="form-check-label"
-                            htmlFor="enabe_tax">Add Additional Charges</label>
-                        </div>
-{formState.enableAddCharges && (
-  <>
-                      <div className="d-flex justify-content-between mb-2 pe-3">
-                        <p>Shipping Cost</p>
-                        <p>₹ {Number(summary.shippingCost || 0).toFixed(2)}</p>
-                      </div>
-                    
-                      <div className="d-flex justify-content-between mb-2 pe-3">
-                        <p>Labour Cost</p>
-                        <p>₹ {Number(summary.labourCost || 0).toFixed(2)}</p>
-                      </div>
-                      </>
-                      )} */}
-
+                                            </div>    
                                             <div className="d-flex justify-content-between fw-bold mb-2 pe-3">
                                                 <h5>Total Invoice Amount</h5>
                                                 <h5>₹ {Number(summary.grandTotal || 0).toFixed(2)}</h5>
                                             </div>
-
-                                            {/* <p className="fs-12">
-                        Amount in Words: <strong>Indian Rupees Only</strong>
-                      </p> */}
                                         </div>
-
                                     </div>
-
-
-
                                 </div>
 
                             </div>

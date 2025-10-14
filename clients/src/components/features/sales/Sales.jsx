@@ -21,6 +21,7 @@ import * as XLSX from "xlsx";
 import { saveAs } from "file-saver";
 import { IoMdArrowDropdown } from 'react-icons/io';
 import SalesDashboard from './SalesDashboard';
+import { toast } from 'react-toastify';
 
 const Sales = () => {
   // Fix Bootstrap modal config error
@@ -127,46 +128,90 @@ const Sales = () => {
   //       setCreditShow(true);
   //     };
 
-  const handleCredit = (sale) => {
-    // Calculate returnable products with remaining qty
-    const updatedProducts = sale.products.map(prod => {
-      let returnedQty = 0;
+  // const handleCredit = (sale) => {
+  //   // Calculate returnable products with remaining qty
+  //   const updatedProducts = sale.products.map(prod => {
+  //     let returnedQty = 0;
 
-      if (Array.isArray(sale.creditNotes)) {
-        sale.creditNotes.forEach(note => {
-          if (Array.isArray(note.products)) {
-            note.products.forEach(retProd => {
-              if ((retProd.productId?._id || retProd.productId) === (prod.productId?._id || prod.productId || prod._id)) {
-                returnedQty += Number(retProd.returnQty || 0);
-              }
-            });
-          }
-        });
-      }
+  //     if (Array.isArray(sale.creditNotes)) {
+  //       sale.creditNotes.forEach(note => {
+  //         if (Array.isArray(note.products)) {
+  //           note.products.forEach(retProd => {
+  //             if ((retProd.productId?._id || retProd.productId) === (prod.productId?._id || prod.productId || prod._id)) {
+  //               returnedQty += Number(retProd.returnQty || 0);
+  //             }
+  //           });
+  //         }
+  //       });
+  //     }
 
-      const saleQty = Number(prod.saleQty || prod.quantity || 0);
-      const remainingQty = saleQty - returnedQty;
+  //     const saleQty = Number(prod.saleQty || prod.quantity || 0);
+  //     const remainingQty = saleQty - returnedQty;
 
-      return {
-        ...prod,
-        returnedQty,     // already returned
-        remainingQty,    // available to return
-        returnAmount: remainingQty * Number(prod.sellingPrice || 0) // calculate refund
-      };
-    });
+  //     return {
+  //       ...prod,
+  //       returnedQty,     // already returned
+  //       remainingQty,    // available to return
+  //       returnAmount: remainingQty * Number(prod.sellingPrice || 0) // calculate refund
+  //     };
+  //   });
 
-    // Filter only products where return is still possible
-    const returnableProducts = updatedProducts.filter(p => p.remainingQty > 0);
+  //   // Filter only products where return is still possible
+  //   const returnableProducts = updatedProducts.filter(p => p.remainingQty > 0);
 
-    const calculatedSale = {
-      ...sale,
-      returnableProducts,
-      totalReturnAmount: returnableProducts.reduce((sum, p) => sum + p.returnAmount, 0)
+  //   const calculatedSale = {
+  //     ...sale,
+  //     returnableProducts,
+  //     totalReturnAmount: returnableProducts.reduce((sum, p) => sum + p.returnAmount, 0)
+  //   };
+
+  //   setAddCreditSale(calculatedSale);
+  //   setCreditShow(true);
+  // };
+
+  function handleCredit(sale) {
+  // Prepare products with correct quantities
+  const productsWithReturns = (sale.products || []).map(prod => {
+    const prodId = prod.productId?._id || prod.productId || prod._id;
+    // Sum returned qty for this product across all credit notes
+    let totalReturned = 0;
+    let creditNotesArr = [];
+    if (Array.isArray(sale.creditNotes)) {
+      sale.creditNotes.forEach(note => {
+        const returnedProd = note.products?.find(p =>
+          (p.productId?._id || p.productId || p._id) === prodId
+        );
+        if (returnedProd) {
+          const qty = Number(returnedProd.returnQty || returnedProd.quantity || 0);
+          totalReturned += qty;
+          creditNotesArr.push({
+            creditNoteId: note._id,
+            quantity: qty,
+          });
+        }
+      });
+    }
+    const originalQty = Number(prod.saleQty ?? prod.quantity ?? 0);
+    const availableQty = Math.max(0, originalQty - totalReturned);
+
+    return {
+      ...prod,
+      saleQty: originalQty,
+      originalQty,
+      totalReturnedQty: totalReturned,
+      availableQty,
+      returnQty: availableQty > 0 ? 1 : 0, // default for modal
+      creditNotes: creditNotesArr,
     };
+  });
 
-    setAddCreditSale(calculatedSale);
-    setCreditShow(true);
-  };
+  // Pass productsWithReturns to AddCreditNoteModal
+  setAddCreditSale({
+    ...sale,
+    products: productsWithReturns,
+  });
+  setCreditShow(true);
+}
 
 
 
@@ -731,7 +776,47 @@ useEffect(() => {
                           </td>         
                           <td>{sale.saleDate ? new Date(sale.saleDate).toLocaleDateString() : '-'}</td>
                           <td> <span className={`badge table-badge fw-medium fs-10 ${sale.status === "Complete" ? "bg-success" : "bg-danger"}`}>{sale.status}</span></td>
+                          
                           <td>
+                            <div className="d-flex flex-column">
+                              {sale.products && sale.products.length > 0 ? (
+                                sale.products.map((p, idx) => {
+                                  // canonical product id for matching
+                                  const prodId = p.productId?._id || p.productId || p._id;
+                                  // sum returned qty for this product across all credit notes
+                                  let totalReturned = 0;
+                                  if (Array.isArray(sale.creditNotes)) {
+                                    sale.creditNotes.forEach((note) => {
+                                      if (Array.isArray(note.products)) {
+                                        note.products.forEach((retProd) => {
+                                          const retPid = retProd.productId?._id || retProd.productId || retProd._id;
+                                          if (retPid && prodId && String(retPid) === String(prodId)) {
+                                            totalReturned += Number(retProd.returnQty ?? retProd.quantity ?? 0);
+                                          }
+                                        });
+                                      }
+                                    });
+                                  }
+                                  const originalQty = Number(p.saleQty ?? p.quantity ?? 0);
+                                  const remainingQty = Math.max(0, originalQty - totalReturned);
+                                  return (
+                                    <div key={idx}>
+                                      {remainingQty} {p.unit || ""}
+                                      {totalReturned > 0 && (
+                                        <small className="text-muted ms-2" style={{ fontSize: 12 }}>
+                                          (returned {totalReturned})
+                                        </small>
+                                      )}
+                                    </div>
+                                  );
+                                })
+                              ) : (
+                                <span className="text-muted">-</span>
+                              )}
+                            </div>
+                          </td>
+                          
+                          {/* <td>
                             <div className="d-flex flex-column">
                               {sale.products && sale.products.length > 0 ? (
                                 sale.products.map((p, idx) => (
@@ -741,7 +826,7 @@ useEffect(() => {
                                 <span className="text-muted">-</span>
                               )}
                             </div>
-                          </td>
+                          </td> */}
                           <td>
                             <div className="d-flex flex-column">
                               {sale.products && sale.products.length > 0 ? (
@@ -774,6 +859,7 @@ useEffect(() => {
                             </span>
                           </td>
                           <td>{sale.createdBy ? `${sale.createdBy.name}` : '--'}</td>
+                        {/* action button */}
                           <td className="text-center">
                             <a className="action-set" data-bs-toggle="dropdown" aria-expanded="true">
                               <TbDotsVertical />
@@ -785,18 +871,19 @@ useEffect(() => {
                               <li>
                                 <a className="dropdown-item" data-bs-toggle="modal" data-bs-target="#add-sales-edits" onClick={() => handleEdit(sale)}><TbEdit className="info-img" />Edit Sale</a>
                               </li>
-                              {!sale.invoiceId && (
+                                {sale.status === "Complete" && (() => {  {!sale.invoiceId && (
                                 <li>
                                   <a className="dropdown-item" onClick={() => handleConvertToInvoice(sale)}><TbDownload className="info-img" />Convert to Invoice</a>
                                 </li>
-                              )}
+                              )}})}
+                            
                               {sale.invoiceId && (
                                 <li>
                                   <a className="dropdown-item" onClick={() => navigate(`/invoice/${sale.invoiceId}`)}><TbDownload className="info-img" />View Invoice</a>
                                 </li>
                               )}
                               <li>
-                                <a className="dropdown-item" data-bs-toggle="modal" data-bs-target="#showpayment"><TbCurrency className="info-img" />Show Payments</a>
+                                {/* <a className="dropdown-item" data-bs-toggle="modal" data-bs-target="#showpayment"><TbCurrency className="info-img" />Show Payments</a> */}
                               </li>
 
                               {sale.status === "Complete" && (() => {
@@ -898,7 +985,7 @@ useEffect(() => {
                                           </td>
                                            <td>{prod.hsnCode || "-"}</td>
                                           <td>{prod.returnQty || prod.quantity || "-"}</td>
-                                          <td>{prod.lineTotal ? `₹${prod.lineTotal}` : "-"}</td>
+                                          <td>{note.grandTotal ? `₹${note.grandTotal}` : "-"}</td>
                                         </tr>
                                       ))
                                     ) : (

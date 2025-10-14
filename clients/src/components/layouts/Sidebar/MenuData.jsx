@@ -29,6 +29,7 @@ import {
   TbGiftCard,
   TbBrandAppleArcade,
   TbFileInvoice,
+  TbTrash,
 } from "react-icons/tb";
 import { GoPackage } from "react-icons/go";
 import { CiBarcode } from "react-icons/ci";
@@ -266,7 +267,7 @@ const canAccess = (module, action = "read") => {
           path: "/pos",
           icon: <MdOutlinePointOfSale className="icons" />,
         },
-          {
+          canAccess("Invoices", "read") &&  {
           label: t("invoices"),
           path: "/invoice",
           icon: <TbFileInvoice className="icons" />,
@@ -392,8 +393,19 @@ const canAccess = (module, action = "read") => {
         },
       ].filter(Boolean),
     },
-    // FINANCE & ACCOUNTS
-
+  
+    {
+      section: t("Recycle Bin"),
+      key: "delete",
+      items: [
+        {
+          label: t("Trash"),
+          path: "/delete",
+          icon: <TbTrash className="icons" />,
+        },
+      ],
+    },
+  // FINANCE & ACCOUNTS
     {
       section: "Finance & Accounts",
       key: "Finance & Accounts",
@@ -435,6 +447,7 @@ const canAccess = (module, action = "read") => {
         },
       ].filter(Boolean),
     },
+    
 {
   section: "Logout",
   key: "Logout",

@@ -360,7 +360,7 @@ const AppRoutes = () => {
  <Route path="/credit&debit-note" element={<CreditDebitNotes />} />
  <Route path="/credit" element={<Credit />} />
  <Route path="/debit" element={<Debit />} />
-
+ <Route path="/payment" element={<SalePaymentHistory />} />
 
 
  </Route>

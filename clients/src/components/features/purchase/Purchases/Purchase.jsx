@@ -826,11 +826,12 @@ const token = localStorage.getItem("token");
                         </td>
 
                         <td>
-                          <ul>
+                          {/* <ul>
                             {purchase.products.map((p, idx) => (
-                              <li key={idx}>{p.totalCost}</li>
+                              <li key={idx}>{p.grandTotal}</li>
                             ))}
-                          </ul>
+                          </ul> */}
+                          {purchase.grandTotal}
                         </td>
 
                         {/* <td><ul>{purchase.products.map((p, idx) => (<li key={idx}>{p.quantity} {p.unit}</li>))}</ul></td>
