@@ -108,9 +108,15 @@ function Navbar() {
     const socket = connectSocket(BASE_URL);
     
     if (socket) {
+      // Register current user so server can route events correctly
+      try {
+        socket.emit('add-user', userId);
+      } catch (e) {
+        console.error('Failed to register user on socket:', e);
+      }
+
       // Listen for new notifications
       socket.on('new-notification', (notificationData) => {
-        // console.log('🔔 New notification received in navbar:', notificationData);
         setNotificationCount(prev => prev + 1);
       });
     }
@@ -209,9 +215,9 @@ function Navbar() {
     setCurrentLang(lang);
   };
 
-  // Handle notifications read
-  const handleNotificationsRead = () => {
-    setNotificationCount(0);
+  // Handle unread count changes coming from Activities
+  const handleUnreadCountChange = (count) => {
+    setNotificationCount(Math.max(0, Number(count) || 0));
   };
 
    // fetch company details
@@ -453,7 +459,7 @@ function Navbar() {
               )}
             </a>
             <div className="dropdown-menu notifications" style={{border:'1px solid #E6E6E6', borderRadius: '8px',}}>
-              <Activities onNotificationsRead={handleNotificationsRead} />
+              <Activities onUnreadCountChange={handleUnreadCountChange} />
             </div>
           </li>
           {/* Settings */}

@@ -12,6 +12,7 @@ import {
 import { CiClock2 } from 'react-icons/ci';
 import './activities.css';
 import { ObjectId } from 'bson'; // Import bson for ObjectId validation
+import { useSocket } from '../../../Context/SocketContext';
 
 const ViewAllNotifications = () => {
   const [notifications, setNotifications] = useState([]);
@@ -22,6 +23,7 @@ const ViewAllNotifications = () => {
   const [error, setError] = useState(null);
   const [deleteConfirm, setDeleteConfirm] = useState(null);
   const [selectedNotifications, setSelectedNotifications] = useState([]);
+  const { connectSocket, getSocket } = useSocket();
 
   const user = JSON.parse(localStorage.getItem('user'));
   const userId = user?.id || user?._id;
@@ -272,10 +274,33 @@ const ViewAllNotifications = () => {
     if (userId) {
       fetchNotifications();
       fetchUnreadCount();
+
+      // Attach real-time listener for new notifications
+      const socket = connectSocket(BASE_URL);
+      if (socket) {
+        try {
+          // Ensure user is registered (safe to emit again)
+          socket.emit('add-user', userId);
+        } catch (e) {
+          console.error('Socket user registration failed in ViewAllNotifications:', e);
+        }
+
+        const handleNewNotification = () => {
+          // Refresh notifications and unread count to reflect latest state
+          fetchNotifications(currentPage);
+          fetchUnreadCount();
+        };
+
+        socket.on('new-notification', handleNewNotification);
+
+        return () => {
+          socket.off('new-notification', handleNewNotification);
+        };
+      }
     } else {
       setLoading(false);
     }
-  }, [userId]);
+  }, [userId, currentPage]);
 
   return (
     <div className='page-wrapper'

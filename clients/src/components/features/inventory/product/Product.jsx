@@ -515,7 +515,7 @@ const Product = () => {
                 <th>Unit</th>
                 <th>Qty</th>
                 {/* <th>Created By</th> */}
-                <th className="no-sort" />
+                <th style={{textAlign:'center'}}>Action</th>
               </tr>
             </thead>
             <tbody>
