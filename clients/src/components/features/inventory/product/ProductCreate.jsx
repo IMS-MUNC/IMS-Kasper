@@ -411,9 +411,37 @@ const ProductForm = () => {
     if (step > 0) setStep((prev) => prev - 1);
   };
 
-  const handleSaveDraft = () => {
-    toast.info("Saved as draft!");
+ useEffect(() => {
+  const savedDraft = localStorage.getItem("draftForm");
+  if (savedDraft) {
+    const parsedDraft = JSON.parse(savedDraft);
+
+    if (parsedDraft.formData) setFormData(parsedDraft.formData);
+    if (parsedDraft.selectedCategory) setSelectedCategory(parsedDraft.selectedCategory);
+    if (parsedDraft.selectedsubCategory) setSelectedsubCategory(parsedDraft.selectedsubCategory);
+    if (parsedDraft.selectedBrands) setSelectedBrands(parsedDraft.selectedBrands);
+    if (parsedDraft.selectedUnits) setSelectedUnits(parsedDraft.selectedUnits);
+    if (parsedDraft.selectedWarehouse) setSelectedWarehouse(parsedDraft.selectedWarehouse);
+  }
+}, []);
+
+
+
+const handleSaveDraft = () => {
+  const draft = {
+    formData,
+    selectedCategory,
+    selectedsubCategory,
+    selectedBrands,
+    selectedUnits,
+    selectedWarehouse,
   };
+
+  localStorage.setItem("draftForm", JSON.stringify(draft));
+  toast.info("Draft Saved!");
+};
+
+
 
   // const onDrop = (acceptedFiles) => {
   //   const mapped = acceptedFiles.map((file) =>
@@ -738,7 +766,7 @@ const ProductForm = () => {
   const fetchSubcategoriesByCategory = async (categoryId) => {
     try {
       const token = localStorage.getItem("token");
-      // console.log("Fetching subcategories for category ID:", categoryId);
+      console.log("Fetching subcategories for category ID:", categoryId);
       // const res = await fetch(`${BASE_URL}/api/category/by-category/${categoryId}`);
       const res = await fetch(
         `${BASE_URL}/api/subcategory/by-category/${categoryId}`,
@@ -764,7 +792,7 @@ const ProductForm = () => {
         value: subcat._id,
         label: sanitizeInput(subcat.subCategoryName, true),
       }));
-      // setSubcategories(options);
+      setSubcategories(options);
       // console.log("ferere subcategories", data);
     } catch (error) {
       console.error("Error fetching subcategories:", error);

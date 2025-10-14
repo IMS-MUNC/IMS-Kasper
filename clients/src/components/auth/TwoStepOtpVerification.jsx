@@ -6,6 +6,8 @@ import { toast } from 'react-toastify';
 import '../../styles/OtpVerification.css'
 import TwoStepImage from '../../assets/images/twostep.png';
 import Munc from '../../assets/img/logo/munclogotm.png';
+import { jwtDecode } from "jwt-decode";
+
 
 //two step otp verification component
 const OtpVerification = () => {
@@ -16,6 +18,29 @@ const OtpVerification = () => {
   const [timer, setTimer] = useState(30); // 30s cooldown
   const [isResending, setIsResending] = useState(false);
   const inputRefs = useRef([]);
+
+
+  useEffect(() => {
+  const check2FA = async () => {
+    const twoFAToken = localStorage.getItem("twoFAToken");
+    if (twoFAToken) {
+      try {
+        const decoded = jwtDecode(twoFAToken);
+        if (decoded.exp > Date.now() / 1000) {
+          toast.success("2FA already verified. Redirecting...");
+          navigate("/dashboard");
+          return;
+        } else {
+          localStorage.removeItem("twoFAToken");
+        }
+      } catch (error) {
+        console.error("Invalid 2FA token", error);
+        localStorage.removeItem("twoFAToken");
+      }
+    }
+  };
+  check2FA();
+}, [navigate]);
 
 
   useEffect(() => {
