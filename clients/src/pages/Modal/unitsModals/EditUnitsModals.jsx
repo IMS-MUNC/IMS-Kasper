@@ -46,6 +46,7 @@ const EditUnitModal = ({ selectedUnit, onUnitUpdated }) => {
       
       // Close modal first
       window.$("#edit-units").modal("hide");
+      cleanUpModal();
       
       // Then refresh data after a delay to prevent race conditions
       setTimeout(() => {
@@ -65,6 +66,15 @@ const EditUnitModal = ({ selectedUnit, onUnitUpdated }) => {
       }, 150);
     }
   };
+
+  const cleanUpModal = () => {
+  document.body.classList.remove("modal-open");
+  document.querySelectorAll(".modal-backdrop").forEach(el => el.remove());
+  setTimeout(() => {
+    document.body.style.overflow = "";
+    document.body.style.paddingRight = "";
+  }, 50);
+};
 
 
 
@@ -121,7 +131,9 @@ const EditUnitModal = ({ selectedUnit, onUnitUpdated }) => {
                     checked={status}
                     onChange={(e) => setStatus(e.target.checked)}
                   />
-                  <label htmlFor="user3" className="checktoggle" />
+                  <label htmlFor="user3" className="checktoggle"
+                  title={status ? "Active" : "Inactive"}
+                  />
                 </div>
               </div>
             </div>
@@ -130,7 +142,10 @@ const EditUnitModal = ({ selectedUnit, onUnitUpdated }) => {
                 type="button"
                 className="btn me-2 btn-secondary"
                 data-bs-dismiss="modal"
-                onClick={handleCancel}
+                onClick={() => {
+                  handleCancel();
+                  cleanUpModal();
+                }}
               >
                 Cancel
               </button>

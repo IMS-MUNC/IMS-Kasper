@@ -668,6 +668,10 @@ const Warranty = ({ show, handleClose }) => {
     });
   }, [Warrantydata, searchTerm, statusFilter]);
 
+  useEffect(() => {
+          setCurrentPage(1); // Reset to first page on filter change
+        }, [searchTerm, statusFilter]);
+
   // Sync selectAll state with selectedWarranties (only for current page)
   useEffect(() => {
     if (filteredWarranties.length > 0) {

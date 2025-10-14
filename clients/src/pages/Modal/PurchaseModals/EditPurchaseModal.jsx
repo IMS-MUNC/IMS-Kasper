@@ -249,7 +249,7 @@ const token = localStorage.getItem("token");
         <div className="modal-content">
           <div className="modal-header">
             <h4 className="modal-title">Edit Purchase</h4>
-            <button type="button" className="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            {/* <button type="button" className="btn-close" data-bs-dismiss="modal" aria-label="Close"></button> */}
           </div>
           <form onSubmit={handleSubmit}>
             <div className="modal-body">

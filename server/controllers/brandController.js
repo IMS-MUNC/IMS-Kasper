@@ -83,7 +83,10 @@ exports.addBrand = async (req, res) => {
       });
     } catch (error) {
       console.error("Update Brand Error:", error);
-      res.status(500).json({ message: "Server error" });
+      if (error.code === 11000) {
+    return res.status(400).json({ message: "Brand name must be unique" });
+  }
+   res.status(500).json({ message: "Server error" });
     }
   };
 

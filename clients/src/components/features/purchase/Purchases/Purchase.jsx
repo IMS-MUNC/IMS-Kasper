@@ -26,6 +26,8 @@ import DeleteAlert from "../../../../utils/sweetAlert/DeleteAlert";
 const Purchase = () => {
   const [purchases, setPurchases] = useState([]);
   const [viewPurchaseId, setViewPurchaseId] = useState(null);
+  const [perPage, setPerPage] = useState(10);
+
 
     const [selectedReturnData, setSelectedReturnData] = useState(null);
 
@@ -463,7 +465,7 @@ const token = localStorage.getItem("token");
           ...filters,
           // status: "Received",  // force only received
           page,
-          limit: 10,
+          limit: perPage,
         },
         headers: {
           Authorization: `Bearer ${token}`,
@@ -478,7 +480,7 @@ const token = localStorage.getItem("token");
 
   useEffect(() => {
     fetchPurchases();
-  }, [filters, page]);
+  }, [filters, page, perPage]);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -514,6 +516,8 @@ const token = localStorage.getItem("token");
       setPage(newPage);
     }
   };
+
+  
 
   // const convertCurrency = (value) => {
   //   const rate = settings.conversionRates?.[settings.currencyCode] || 1;
@@ -1097,8 +1101,10 @@ const token = localStorage.getItem("token");
 
               <select
                 className="form-select w-auto"
-                value={page}
-                onChange={e => { totalPages(Number(e.target.value)); }}
+                value={perPage}
+                onChange={e => { setPerPage(Number(e.target.value));
+                  setPage(1);
+                 }}
               >
                 {[10, 20, 50, 100].map(n => <option key={n} value={n}>{n} per page</option>)}
               </select>

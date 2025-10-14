@@ -28,7 +28,8 @@ const Brand = () => {
   const [editImagePreview, setEditImagePreview] = useState("");
   const [brands, setBrands] = useState([]);
   const [errors, setErrors] = useState({});
-  const [isAdding, setIsAdding] = useState(false)
+  const [isAdding, setIsAdding] = useState(false);
+  const [isUpdating, setIsUpdating] = useState(false);
 
   const [selectedBrands, setSelectedBrands] = useState([]);
 
@@ -125,6 +126,7 @@ const Brand = () => {
       // fetchBrands to refresh list
       fetchBrands();
       window.$(`#add-brand`).modal("hide");
+      cleanUpModal();
 
       toast.success("Brand added successfully!");
     } catch (error) {
@@ -143,6 +145,9 @@ const Brand = () => {
   // ==================================================================================================
   const handleEditBrand = async (e) => {
     e.preventDefault();
+     // Prevent multiple simultaneous operations
+    if (isUpdating) return;
+    setIsUpdating(true);
     let newErrors = {};
     if (!brandNameRegex.test(editBrandName)) {
       newErrors.editBrandName =
@@ -151,6 +156,7 @@ const Brand = () => {
 
     if (Object.keys(newErrors).length > 0) {
       setErrors(newErrors);
+       setIsUpdating(false);
       return;
     }
 
@@ -178,14 +184,16 @@ const Brand = () => {
 
       fetchBrands();
       window.$(`#edit-brand`).modal("hide");
+      cleanUpModal();
       toast.success("Brand updated successfully!");
     } catch (error) {
-      console.error(
-        "Update brand failed:",
-        error.response?.data || error.message
-      );
-      toast.error("Failed to update brand");
+      const errMsg = error.response?.data?.message || "Failed to update brand"
+     toast.error(errMsg);
+      setIsUpdating(false);
     }
+    finally {
+  setIsUpdating(false); // ✅ always reset
+}
   };
 
   const handleOpenEditModal = (brand) => {
@@ -403,6 +411,15 @@ const Brand = () => {
       setErrors({});
     }
     
+    const cleanUpModal = () => {
+  document.body.classList.remove("modal-open");
+  document.querySelectorAll(".modal-backdrop").forEach(el => el.remove());
+  setTimeout(() => {
+    document.body.style.overflow = "";
+    document.body.style.paddingRight = "";
+  }, 50);
+};
+
   return (
     <div className="page-wrapper">
       <div className="content">
@@ -747,7 +764,12 @@ const Brand = () => {
                             <img
                               src={URL.createObjectURL(selectedImages[0])}
                               alt="Preview"
-                              height="60"
+                              height="40"
+                              style={{
+                              height: "102px",
+                              width: "106px",
+                              borderRadius: "4px",
+                            }}
                             />
                           ) : (
                             <>
@@ -805,7 +827,9 @@ const Brand = () => {
                         {errors.editBrandName && (
                           <p className="text-danger">{errors.editBrandName}</p>
                         )}
-                        <label htmlFor="user2" className="checktoggle" />
+                        <label htmlFor="user2" className="checktoggle"
+                        title={status ? "Active" : "Inactive"}
+                        />
                       </div>
                     </div>
                   </div>
@@ -814,7 +838,10 @@ const Brand = () => {
                       type="button"
                       className="btn me-2 btn-secondary"
                       data-bs-dismiss="modal"
-                      onClick={handleClose}
+                      onClick={() => {
+                        handleClose();
+                        cleanUpModal();
+                      }}
                     >
                       Cancel
                     </button>
@@ -864,7 +891,12 @@ const Brand = () => {
                           <img
                             src={editImagePreview}
                             alt="Current"
-                            height="60"
+                            height="40"
+                            style={{
+                              height: "102px",
+                              width: "106px",
+                              borderRadius: "4px",
+                            }}
                           />
                         )}
                       </span>
@@ -925,7 +957,9 @@ const Brand = () => {
                         checked={editStatus}
                         onChange={(e) => setEditStatus(e.target.checked)}
                       />
-                      <label htmlFor="user4" className="checktoggle" />
+                      <label htmlFor="user4" className="checktoggle"
+                      title={editStatus ? "Active" : "Inactive"}
+                      />
                     </div>
                   </div>
                 </div>
@@ -934,6 +968,10 @@ const Brand = () => {
                     type="button"
                     className="btn me-2 btn-secondary"
                     data-bs-dismiss="modal"
+                    onClcik={() => {
+                      handleClose();
+                      cleanUpModal();
+                    }}
                   >
                     Cancel
                   </button>
