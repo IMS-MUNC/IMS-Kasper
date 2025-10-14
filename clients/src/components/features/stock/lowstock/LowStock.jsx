@@ -570,7 +570,7 @@ const LowStock = () => {
               <a data-bs-toggle="tooltip" data-bs-placement="top" title="Excel" onClick={handleExcel}><img src={EXCEL} alt="excel" /></a>
             </li> */}
             <li>
-              <button data-bs-toggle="tooltip" data-bs-placement="top" title="Refresh" onClick={() => location.reload()} className="fs-20" style={{ backgroundColor: 'white', color: '', padding: '5px 5px', display: 'flex', alignItems: 'center', border: '1px solid #e8eaebff', cursor: 'pointer', borderRadius: '4px' }}><TbRefresh className="ti ti-refresh" /></button>
+              <button data-bs-toggle="tooltip" data-bs-placement="top" title="Refresh" onClick={() => window.location.reload()} className="fs-20" style={{ backgroundColor: 'white', color: '', padding: '5px 5px', display: 'flex', alignItems: 'center', border: '1px solid #e8eaebff', cursor: 'pointer', borderRadius: '4px' }}><TbRefresh className="ti ti-refresh" /></button>
             </li>
             {/* <li>
           <a data-bs-toggle="tooltip" data-bs-placement="top" title="Collapse" id="collapse-header"><i className="ti ti-chevron-up" /></a>
