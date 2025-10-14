@@ -14,6 +14,7 @@ import { RiDeleteBinLine } from "react-icons/ri";
 import { FaAngleLeft } from "react-icons/fa6";
 import { FaChevronRight, FaFileCsv } from "react-icons/fa";
 import { TbEdit, TbEye, TbRefresh, TbTrash } from 'react-icons/tb';
+import DeleteAlert from "../../../../utils/sweetAlert/DeleteAlert";
 
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
@@ -214,10 +215,15 @@ const Product = () => {
   //delete product--------------------------------------------------------------------------------------------------------------------------------------------------------
 
   const handleDelete = async (product) => {
-    console.log("Deleting product:", product);
-    if (
-      window.confirm(`Are you sure you want to delete ${product.productName}?`)
-    ) {
+    // console.log("Deleting product:", product);
+    // if (
+    //   window.confirm(`Are you sure you want to delete ${product.productName}?`)
+    // ) 
+
+    const confirmed = await DeleteAlert({});
+    if (!confirmed) return;
+
+    {
       try {
         const token = localStorage.getItem("token");
         await axios.delete(`${BASE_URL}/api/products/pro/${product._id}`, {
@@ -228,10 +234,10 @@ const Product = () => {
         setProducts((prevProducts) =>
           prevProducts.filter((p) => p._id !== product._id)
         );
-        if (paginatedData.length === 1 && currentPage > 1) {
-          setCurrentPage((prev) => prev - 1);
-        }
-        alert("Product deleted successfully!");
+        await fetchProducts();
+        // alert("Product deleted successfully!");
+        toast.success("Product deleted successfully!");
+
       } catch (err) {
         console.error("Failed to delete product:", err.response?.data || err);
         alert(
@@ -533,17 +539,17 @@ const Product = () => {
                   </label>
                 </td> */}
                 <td>{product.sku} </td>
-                <td  onClick={() => handlePopupOpen(product)}>
+                <td>
                   <div className="d-flex align-items-center">
                     {product.images?.[0] && (
-                      <a href="" className="avatar avatar-md me-2">
+                      <div className="avatar avatar-md me-2">
                       <img  src={product.images[0].url} 
                        alt={product.productName || "No Image"}
                         style={{ objectFit: "cover" }}
                        />
-                    </a>
+                    </div>
                     )}
-                    <a className="text-capitalize">{product.productName} </a>
+                    <div className="text-capitalize">{product.productName} </div>
                   </div>												
                 </td>							
                 <td className="text-capitalize">{product.category?.categoryName}</td>
@@ -1096,7 +1102,7 @@ const Product = () => {
                                 marginTop: "-20px",
                               }}
                             >
-                              {selectedProduct.isReturnable === 'true' ? 'Returnable' : 'Non-Returnable'}
+                              {selectedProduct.isReturnable === true ? 'Returnable' : 'Non-Returnable'}
                             </p>
                           </div>
                         </div>

@@ -946,7 +946,7 @@ function Godown() {
             <div
               style={{
                 backgroundColor: "#fff",
-                padding: "0px 16px",
+                padding: "0px 0px",
                 border: "1px solid #e6e6e6",
                 borderRadius: "8px",
                 width: "20%",
@@ -957,7 +957,7 @@ function Godown() {
                 name="zone"
                 value={selectedZone}
                 onChange={handleZoneChange}
-                style={{ border: "none", outline: "none" }}
+                style={{ border: "none", outline: "none", backgroundColor:'#fff' }}
               >
                 <option
                   value=""
@@ -997,7 +997,8 @@ function Godown() {
               .map((block, idx) => {
                 return (
                   <>
-                    <div key={idx}>
+                  <div style={{display: selectedZone ? 'flex': ''}}>
+                    <div key={idx} style={{width: '40%', margin: '0 auto' }}>
                       <div
                         style={{
                           margin: "0 auto",
@@ -1017,7 +1018,7 @@ function Godown() {
                             borderRadius: "8px",
                             marginTop: "40px",
                             marginBottom: "20px",
-                            width: "40%",
+                            width: selectedZone ? "100%" : "100%",
                           }}
                         >
                           <span className="invisible">hg</span>
@@ -1030,7 +1031,7 @@ function Godown() {
 
                       <main
                         style={{
-                          width: "40%",
+                          width: selectedZone ? "100%" : "100%",
                           margin: "0 auto",
                           display: "grid",
                           gridTemplateRows: `repeat(${warehousesDetails?.layout?.columns || 4}, 1fr)`,
@@ -1066,13 +1067,11 @@ function Godown() {
                       </main>
                     </div>
 
-                    <div style={{ width: '40%', margin: '0 auto' }}>
-
-
                       {/* Table - Only show when a specific zone is selected */}
                       {selectedZone && selectedZone !== "" && (
                         <>
                           {/* table */}
+                          <div style={{ width: '40%', margin: '0 auto', marginTop:'20px' }}>
                           <div
                             style={{
                               display: 'flex',
@@ -1187,13 +1186,11 @@ function Godown() {
                               </tbody>
                             </table>
                           </div>
+                          </div>
                         </>
                       )}
 
                     </div>
-
-
-
                   </>
                 );
               })

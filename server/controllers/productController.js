@@ -153,14 +153,24 @@ exports.getAllProducts = async (req, res) => {
       filter.productName = { $regex: req.query.search, $options: "i" };
     }
 
-    const products = await Product.find(filter)
-      .populate("brand")
-      .populate("category")
-      .populate("subcategory")
-      .populate("hsn")
-      // .populate("supplier")
-      .populate("warehouse")
-      .sort({ createdAt: -1 });
+    // Pagination parameters
+    const page = parseInt(req.query.page) || 1; // Default to page 1
+    const limit = parseInt(req.query.limit) || 10; // Default to 10 items per page
+    const skip = (page - 1) * limit; // Calculate documents to skip
+
+    // Fetch paginated products and total count
+    const [products, total] = await Promise.all([
+      Product.find(filter)
+        .populate("brand")
+        .populate("category")
+        .populate("subcategory")
+        .populate("hsn")
+        .populate("warehouse")
+        .sort({ createdAt: -1 })
+        .skip(skip)
+        .limit(limit),
+      Product.countDocuments(filter), // Get total number of products matching the filter
+    ]);
 
     // Ensure hsnCode, warehouseName are always present for frontend
     const productsWithDetails = products.map(prod => {
@@ -188,7 +198,8 @@ exports.getAllProducts = async (req, res) => {
       return { ...rest, hsnCode, warehouseName };
     });
     res.status(200).json({
-      products: productsWithDetails
+      products: productsWithDetails,
+      total,
     });
   } catch (err) {
     res.status(500).json({ message: err.message });
