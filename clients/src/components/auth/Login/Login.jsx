@@ -155,6 +155,22 @@ const Login = () => {
     setLoading(true);
 
     try {
+      // step 1: Check if twoFAToken already valid before login
+      const saved2FAToken = localStorage.getItem("twoFAToken");
+      if(saved2FAToken) {
+          try {
+            const decoded = jwtDecode(saved2FAToken);
+            if(decoded.exp > Date.now() / 1000){
+              toast.success("2FA still valid. Logging you in...");
+              navigate("/dashboard");
+              return;
+            }
+          }catch(error) {
+            console.error("Invalid 2FA token", error)
+          }
+        }
+
+        //ste 2: Proceed with normal login
       const res = await axios.post(`${BASE_URL}/api/auth/login`, {
         email: formData.email,
         password: formData.password,
@@ -171,12 +187,14 @@ const Login = () => {
         localStorage.setItem("token", res.data.token);
         localStorage.setItem("user", JSON.stringify(normalizedUser)); // <-- Add this
       }
-      // for two factor
+      // step 3: for two factor
       if (res.data.twoFactor === true) {
         toast.info("Otp sent to you email")
         navigate("/otp", { state: { email: formData.email } })
         return;
       }
+    
+      // step 4: Normal login success
       // const userId = res.data?.user?._id || res.data?.user?.id;
       localStorage.setItem("userId", normalizedUser._id)
 

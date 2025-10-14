@@ -169,7 +169,8 @@ const PphnneChangePassword = ({ isOpen, onClose }) => {
   const [showCurrent, setShowCurrent] = useState(false);
   const [showNew, setShowNew] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
-
+  const [errors, setErrors] = useState({});
+ 
   const toggleCurrent = () => setShowCurrent(!showCurrent);
   const toggleNew = () => setShowNew(!showNew);
   const toggleConfirm = () => setShowConfirm(!showConfirm);
@@ -180,6 +181,25 @@ const token = localStorage.getItem("token");
     newpassword: '',
     confirmpassword: '',
   });
+   const currentPasswordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&]).{8,}$/;
+  const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&]).{8,}$/;
+
+  const validateForm = () => {
+    let newErrors = {};
+
+     if (!currentPasswordRegex.test(formData.currentpassword)){
+      newErrors.currentpassword = "Current Password must be 8+ chars, include uppercase, lowercase, number & symbol";
+  }
+    if (!passwordRegex.test(formData.newpassword)){
+      newErrors.newpassword = "New Password must be 8+ chars, include uppercase, lowercase, number & symbol";
+  }
+    if (formData.confirmpassword !== formData.newpassword){
+      newErrors.confirmpassword = "Passwords do not match";
+  }
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -188,6 +208,7 @@ const token = localStorage.getItem("token");
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if(!validateForm()) return;
     const userData = JSON.parse(localStorage.getItem('user'));
     const userId = userData.id;
 
@@ -240,6 +261,11 @@ const token = localStorage.getItem("token");
                 onChange={handleInputChange}
                 required
               />
+              {errors.currentpassword && (
+                  <p style={{ color: "red", fontSize: "12px" }}>
+                    {errors.currentpassword}
+                  </p>
+                )}
               <span onClick={toggleCurrent}>
                 {showCurrent ? <FiEye /> : <FiEyeOff />}
               </span>
@@ -258,6 +284,11 @@ const token = localStorage.getItem("token");
                 onChange={handleInputChange}
                 required
               />
+              {errors.newpassword && (
+                  <p style={{ color: "red", fontSize: "12px" }}>
+                    {errors.newpassword}
+                  </p>
+                )}
               <span onClick={toggleNew}>
                 {showNew ? <FiEye /> : <FiEyeOff />}
               </span>
@@ -275,6 +306,11 @@ const token = localStorage.getItem("token");
                 onChange={handleInputChange}
                 required
               />
+              {errors.confirmpassword && (
+                  <p style={{ color: "red", fontSize: "12px" }}>
+                    {errors.confirmpassword}
+                  </p>
+                )}
               <span onClick={toggleConfirm}>
                 {showConfirm ? <FiEye /> : <FiEyeOff />}
               </span>

@@ -232,10 +232,17 @@ exports.verifyotp = async (req, res) => {
     const token = jwt.sign(tokenPayload, process.env.JWT_SECRET, {
       expiresIn: "1d",
     });
+    // two factor session token (valid 7 days - adjust as you like)
+    const twoFAToken = jwt.sign(
+      {id: user._id},
+      process.env.JWT_SECRET,
+      {expiresIn:"7d"}
+    )
 
     res.status(200).json({
       message: "OTP Verified successfully",
       token,
+      twoFAToken,
       user: {
         _id: user._id,
         firstName: user.firstName,
