@@ -708,6 +708,15 @@ const [selectedPaymentMethod, setSelectedPaymentMethod] = useState(null);
   const [loading, setLoading] = useState(false);
   const [selectedSale, setSelectedSale] = useState(null);
 
+  useEffect(() => {
+    // Filter for only the bag items and sum their totalPrice
+    const total = selectedItems
+      .filter(item => item.isBag)
+      .reduce((sum, currentBag) => sum + currentBag.totalPrice, 0);
+      
+    setBagCharge(total);
+  }, [selectedItems]); // The dependency array ensures this runs only when needed
+
   const handleProductClick = (product) => {
     const existingItemIndex = selectedItems.findIndex(item => item._id === product._id);
     
@@ -732,33 +741,47 @@ const [selectedPaymentMethod, setSelectedPaymentMethod] = useState(null);
     }
   };
 
-  const handleBagSelection = (bagPrice, bagType) => {
-    // Remove any existing bag from selectedItems
-    const itemsWithoutBag = selectedItems.filter(item => !item.isBag);
-    
-    if (bagCharge === bagPrice) {
-      // If same bag is selected, remove it
-      setBagCharge(0);
-      setSelectedItems(itemsWithoutBag);
-    } else {
-      // Add new bag to selectedItems
-      setBagCharge(bagPrice);
-      const bagItem = {
-        _id: `bag-${bagPrice}`,
-        productName: bagType,
-        sellingPrice: bagPrice,
-        quantity: 1,
-        totalPrice: bagPrice,
-        totalDiscount: 0,
-        totalTax: 0,
-        tax: 0,
-        discountValue: 0,
-        isBag: true, // Flag to identify bag items
-        unit: 'piece'
-      };
-      setSelectedItems([...itemsWithoutBag, bagItem]);
-    }
-  };
+  // NEW handleBagSelection function
+const handleBagSelection = (bagPrice, bagType) => {
+  // 1. Create a unique ID for this specific type of bag
+  const clickedBagId = `bag-${bagType.replace(/\s+/g, '-').toLowerCase()}-${bagPrice}`;
+  
+  // 2. Check if this specific bag already exists in the cart
+  const existingBag = selectedItems.find(item => item._id === clickedBagId);
+
+  if (existingBag) {
+    // 3. IF IT EXISTS: Increment its quantity and price
+    const updatedItems = selectedItems.map(item => {
+      if (item._id === clickedBagId) {
+        return {
+          ...item,
+          quantity: item.quantity + 1,
+          // Recalculate totalPrice based on the new quantity
+          totalPrice: item.sellingPrice * (item.quantity + 1),
+        };
+      }
+      return item;
+    });
+    setSelectedItems(updatedItems);
+
+  } else {
+    // 4. IF IT DOESN'T EXIST: Add it as a new item
+    const newBagItem = {
+      _id: clickedBagId,
+      productName: bagType,
+      sellingPrice: bagPrice,
+      quantity: 1,
+      totalPrice: bagPrice,
+      totalDiscount: 0,
+      totalTax: 0,
+      tax: 0,
+      discountValue: 0,
+      isBag: true, // Flag to identify bag items
+      unit: 'piece'
+    };
+    setSelectedItems([...selectedItems, newBagItem]);
+  }
+};
 
   const updateItemQuantity = (itemId, newQuantity) => {
     if (newQuantity <= 0) {
@@ -776,10 +799,10 @@ const [selectedPaymentMethod, setSelectedPaymentMethod] = useState(null);
 
   const removeItem = (itemId) => {
     // Check if the item being removed is a bag
-    const itemToRemove = selectedItems.find(item => item._id === itemId);
-    if (itemToRemove && itemToRemove.isBag) {
-      setBagCharge(0); // Reset bag charge when bag is removed
-    }
+    // const itemToRemove = selectedItems.find(item => item._id === itemId);
+    // if (itemToRemove && itemToRemove.isBag) {
+    //   setBagCharge(0); // Reset bag charge when bag is removed
+    // }
     setSelectedItems(selectedItems.filter(item => item._id !== itemId));
   };
 
@@ -2023,7 +2046,7 @@ const handleSubmit = async (e) => {
           </div>
 
           {/* selected items details */}
-          <div style={{flex:1,overflowY:'auto',padding:'10px',height:"300px"}}>
+          <div style={{flex:1,overflowY:'auto',padding:'10px',height: updown ? "25vh" : "45vh"}}>
             <div style={{fontWeight:'600',color:'#333',marginBottom:'10px',fontSize:'16px'}}>
               Selected Items ({selectedItems.length})
             </div>
@@ -2046,7 +2069,7 @@ const handleSubmit = async (e) => {
                   >
                     <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:'8px'}}>
                       
-                    <div style={{display:'flex',justifyContent:'center',backgroundColor:'white',width:'50px',height:'50px',alignItems:'center',borderRadius:'8px',overflow:'hidden',cursor:'pointer'}} onClick={() => handleProductDiscountClick(item)}>
+                    <div style={{display:'flex',justifyContent:'center',backgroundColor:'white',width:'50px',height:'50px',alignItems:'center',borderRadius:'8px',overflow:'hidden',cursor:'pointer'}} >
                     {item.isBag ? (
                       // Show bag icons for bag items
                       <div style={{
@@ -2096,6 +2119,19 @@ const handleSubmit = async (e) => {
                     )}
                   </div>
 
+                      {item.isBag ? (
+                        <div style={{flex:1,gap:'10px',display:'flex',flexDirection:'column',marginLeft:'10px',cursor:'pointer'}} onClick={handleBagPopupChange}>
+                        <div style={{fontWeight:'600',fontSize:'14px',color:'#333'}}>
+                          {item.productName}
+                        </div>
+                        <div style={{fontSize:'12px',marginTop:'-8px', display:'flex',gap:'20px'}}>
+                          <div>
+                            <span style={{color:'black'}}>Price: </span>
+                            <span style={{color:'#666'}}>₹{item.sellingPrice.toFixed(2)} / {item.unit}</span>
+                          </div>
+                        </div>
+                      </div>
+                      ) : (
                       <div style={{flex:1,gap:'10px',display:'flex',flexDirection:'column',marginLeft:'10px',cursor:'pointer'}} onClick={() => handleProductDiscountClick(item)}>
                         <div style={{fontWeight:'600',fontSize:'14px',color:'#333'}}>
                           {item.productName}
@@ -2111,6 +2147,7 @@ const handleSubmit = async (e) => {
                           </div>
                         </div>
                       </div>
+                      )}
 
                       <button
                         onClick={() => removeItem(item._id)}
@@ -2146,7 +2183,7 @@ const handleSubmit = async (e) => {
           </div>
 
           {/* price */}
-          <div style={{backgroundColor:'#F1F1F1',border:'1px solid #E6E6E6',borderTopLeftRadius:'16px',borderTopRightRadius:'16px',position:'absolute',bottom:'0px',width:'100%',padding:'10px',}}>
+          <div style={{backgroundColor:'#F1F1F1',border:'1px solid #E6E6E6',borderTopLeftRadius:'16px',borderTopRightRadius:'16px',position:'absolute',bottom:'0px',width:'100%',padding:'10px',height: updown ? "44vh" : "24vh"}}>
 
             {/* sales summary */}
             {updown && (
@@ -2818,7 +2855,7 @@ const handleSubmit = async (e) => {
                   alignItems:'center',
                   cursor:'pointer',
                   gap:'0px',
-                  backgroundColor: bagCharge == 10 ? '#E3F3FF' : '#BCBCBC',
+                  backgroundColor:'#BCBCBC',
                   borderRadius: '8px',
                   padding: '20px 25px',
                   border: '1px solid #E6E6E6',
@@ -2838,7 +2875,7 @@ const handleSubmit = async (e) => {
                   alignItems:'center',
                   cursor:'pointer',
                   gap:'0px',
-                  backgroundColor: bagCharge == 20 ? '#E3F3FF' : '#BCBCBC',
+                  backgroundColor: '#BCBCBC',
                   borderRadius: '8px',
                   padding: '20px 25px',
                   border: '1px solid #E6E6E6',
@@ -2858,7 +2895,7 @@ const handleSubmit = async (e) => {
                   alignItems:'center',
                   cursor:'pointer',
                   gap:'0px',
-                  backgroundColor: bagCharge == 30 ? '#E3F3FF' : '#BCBCBC',
+                  backgroundColor: '#BCBCBC',
                   borderRadius: '8px',
                   padding: '20px 25px',
                   border: '1px solid #E6E6E6',
@@ -3764,7 +3801,7 @@ const handleSubmit = async (e) => {
       {paymentpopup && (
         <>
         <div style={{
-            position: 'fixed',
+            position: 'absolute',
             top: '0',
             left: '0',
             width: '100%',
@@ -3775,10 +3812,9 @@ const handleSubmit = async (e) => {
             justifyContent: 'center',
             zIndex: '10',
             overflowY: 'auto',
-            alignItems:'center',
           }}
           >
-          <div ref={PaymentRef} style={{width:'400px',padding:'10px 16px',overflowY:'auto',backgroundColor:'#fff',border:'1px solid #E1E1E1',borderRadius:'8px'}}>
+          <div ref={PaymentRef} style={{width:'400px',padding:'10px 16px',overflowY:'auto',backgroundColor:'#fff',border:'1px solid #E1E1E1',borderRadius:'8px',position:'absolute',top:'100px',bottom:'100px'}}>
             
             <div style={{display:'flex',justifyContent:'center',borderBottom:'1px solid #E1E1E1',padding:'10px 0px',alignContent:'center'}}>
               <div style={{display:'flex',flexDirection:'column',alignItems:'center',gap:'10px'}}>

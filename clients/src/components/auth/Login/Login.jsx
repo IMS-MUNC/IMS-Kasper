@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import "../../../styles/login.css";
 import { MdOutlineEmail } from "react-icons/md";
@@ -8,6 +8,9 @@ import { Link } from 'react-router-dom';
 import axios from 'axios';
 import BASE_URL from '../../../pages/config/config';
 import { toast } from 'react-toastify';
+import { jwtDecode } from "jwt-decode";
+
+
 
 const Login = () => {
   const navigate = useNavigate();
@@ -148,6 +151,30 @@ const Login = () => {
     }
   }
 
+useEffect(() => {
+  const check2FA = async () => {
+    const twoFAToken = localStorage.getItem("twoFAToken");
+    if(twoFAToken) {
+      try {
+        const decoded = jwtDecode(twoFAToken);
+        if(decoded.exp > Date.now() / 1000) {
+          //still valid -> skip login and OTP
+          toast.success("2FA still valid. Redirecting...");
+          navigate("/dashboard");
+          return;
+        }else {
+           // expired → remove it
+          localStorage.removeItem("twoFAToken");
+        }
+      }
+      catch (error) {
+        console.error("Invalid 2FA token", error);
+        localStorage.removeItem("twoFAToken");
+      }
+    }
+  };
+  check2FA();
+}, [navigate]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();

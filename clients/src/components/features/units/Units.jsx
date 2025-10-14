@@ -83,6 +83,7 @@ const Units = () => {
       resetForm();
       fetchUnits(); // Refresh unit list
       window.$(`#add-units`).modal("hide");
+      cleanUpModal();
     } catch (error) {
       console.error("Error creating unit:", error);
       toast.error("Failed to create unit.");
@@ -114,6 +115,7 @@ const Units = () => {
   const handleEditClick = (unit) => {
     setSelectedUnit(unit);
     window.$("#edit-units").modal("show"); // If using Bootstrap modal
+    cleanUpModal(); 
   };
 
   const [selectedUnits, setSelectedUnits] = useState([]);
@@ -270,11 +272,24 @@ const Units = () => {
       return dateB - dateA;
     })
 
+      useEffect(() => {
+        setCurrentPage(1); // Reset to first page on filter change
+      }, [searchTerm, selectedStatus]);
+
   const totalPages = Math.ceil(filteredUnits.length / itemsPerPage);
   const paginatedUnits = filteredUnits.slice(
     (currentPage - 1) * itemsPerPage,
     currentPage * itemsPerPage
   );
+
+  const cleanUpModal = () => {
+  document.body.classList.remove("modal-open");
+  document.querySelectorAll(".modal-backdrop").forEach(el => el.remove());
+  setTimeout(() => {
+    document.body.style.overflow = "";
+    document.body.style.paddingRight = "";
+  }, 50);
+};
 
 
   return (
@@ -633,7 +648,8 @@ const Units = () => {
                       checked={status}
                       onChange={() => setStatus(!status)}
                     />
-                    <label htmlFor="unitStatus" className="checktoggle" />
+                    <label htmlFor="unitStatus" className="checktoggle"
+                    title={status ? "Active" : "Inactive"} />
                   </div>
                 </div>
               </div>
@@ -642,7 +658,10 @@ const Units = () => {
                   type="button"
                   className="btn me-2 btn-secondary"
                   data-bs-dismiss="modal"
-                  onClick={resetForm}
+                  onClick={() => {
+                    resetForm();
+                    cleanUpModal();
+                  }}
                 >
                   Cancel
                 </button>

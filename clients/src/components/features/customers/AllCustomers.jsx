@@ -584,7 +584,14 @@ function AllCustomers({ onClose }) {
                       {/* <td>{customer.orders}</td> */}
                       <td>{customerStats[customer._id]?.orderCount || 0} times</td>
 
-                      <td>₹ {(customerStats[customer._id]?.totalAmount || 0)}</td>
+                      {/* <td>₹ {(customerStats[customer._id]?.totalAmount || 0)}</td> */}
+                      <td>
+                         ₹ {(customerStats[customer._id]?.totalAmount || 0).toLocaleString('en-IN', {
+                           minimumFractionDigits: 2,
+                            maximumFractionDigits: 2,
+                          })} 
+                      </td>
+
                       <td>
                         <span
                           className={`badge table-badge fw-medium fs-10 ${customer.status == true

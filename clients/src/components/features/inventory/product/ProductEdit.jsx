@@ -2248,13 +2248,13 @@ const validateStep = () => {
               {t("previous")}
             </button>
             <div>
-              <button
+              {/* <button
                 type="button"
                 className="btn btn-outline-secondary me-2"
                 onClick={handleSaveDraft}
               >
                 {t("saveAsDraft")}
-              </button>
+              </button> */}
 
               {step < steps.length - 1 ? (
                 <button
