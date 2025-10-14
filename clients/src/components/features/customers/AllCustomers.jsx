@@ -301,7 +301,7 @@ function AllCustomers({ onClose }) {
       doc.setFontSize(18);
       doc.text("Customer List with Order Statistics", 14, 20);
 
-      const tableColumn = ["#", "Name", "Phone", "Email", "Address", "Total Orders", "Total Spent", "Status"];
+      const tableColumn = ["S.No", "Name", "Phone", "Email", "Address", "Total Orders", "Total Spent", "Status"];
       const tableRows = customers.map((c, i) => [
         i + 1,
         c.name || "N/A",
@@ -319,7 +319,7 @@ function AllCustomers({ onClose }) {
         startY: 30,
         head: [tableColumn],
         body: tableRows,
-        styles: { fontSize: 9 },
+        styles: { fontSize: 6 },
       });
 
       doc.save("customers-with-order-stats.pdf");
@@ -330,7 +330,7 @@ function AllCustomers({ onClose }) {
   };
   const handleExcel = () => {
     try {
-      const tableColumn = ["#", "Name", "Phone", "Email", "Address", "Total Orders", "Total Spent", "Status"];
+      const tableColumn = ["S.No", "Name", "Phone", "Email", "Address", "Total Orders", "Total Spent", "Status"];
 
       const tableRows = customers.map((c, i) => [
         i + 1,

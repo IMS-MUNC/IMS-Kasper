@@ -204,11 +204,11 @@ const EditCustomerModal = ({ customer, onClose, onSuccess }) => {
   const sanitizeInput = (input) => {
     if (typeof input !== "string") return input;
     return input
-      .replace(/&/g, "&amp;")
-      .replace(/</g, "&lt;")
-      .replace(/>/g, "&gt;")
-      .replace(/"/g, "&quot;")
-      .replace(/'/g, "&#x27;");
+      // .replace(/&/g, "&amp;")
+      // .replace(/</g, "&lt;")
+      // .replace(/>/g, "&gt;")
+      // .replace(/"/g, "&quot;")
+      // .replace(/'/g, "&#x27;");
   };
 
   // Validation function with regex patterns
@@ -303,7 +303,7 @@ const EditCustomerModal = ({ customer, onClose, onSuccess }) => {
     setErrors((prev) => ({ ...prev, [name]: error }));
     setForm((prev) => ({ ...prev, [name]: sanitizedValue }));
     if (error) {
-      toast.error(error);
+      // toast.error(error);
     }
   };
 
@@ -321,7 +321,7 @@ const EditCustomerModal = ({ customer, onClose, onSuccess }) => {
       billing: { ...prev.billing, [name]: sanitizedValue },
     }));
     if (error) {
-      toast.error(error);
+      // toast.error(error);
     }
   };
 
@@ -339,7 +339,7 @@ const EditCustomerModal = ({ customer, onClose, onSuccess }) => {
       shipping: { ...prev.shipping, [name]: sanitizedValue },
     }));
     if (error) {
-      toast.error(error);
+      // toast.error(error);
     }
   };
 
@@ -357,7 +357,7 @@ const EditCustomerModal = ({ customer, onClose, onSuccess }) => {
       bank: { ...prev.bank, [name]: sanitizedValue },
     }));
     if (error) {
-      toast.error(error);
+      // toast.error(error);
     }
   };
 
