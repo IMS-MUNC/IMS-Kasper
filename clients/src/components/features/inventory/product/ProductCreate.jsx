@@ -38,7 +38,7 @@ const ProductForm = () => {
     productName: /^[A-Za-z0-9\s\-]{2,50}$/,
     sku: /^[A-Z0-9\-]{3,20}$/,
     price: /^\d+(\.\d{1,2})?$/,
-       quantity: /^(?:[1-9]\d*)$/,
+    quantity: /^(?:[1-9]\d*)$/,
     description: /^[\w\s.,!?\-]{0,300}$/,
     seoTitle: /^[a-zA-Z0-9\s\-]{2,60}$/,
     seoDescription: /^[a-zA-Z0-9\s\-,.]{2,160}$/,
@@ -246,7 +246,7 @@ const ProductForm = () => {
       if (!selectedWarehouse) newErrors.warehouse = "Warehouse is required";
       if (!selectedHSN) newErrors.hsn = "HSN Code is required";
       if (formData.itemType === "Good" && !selectedBrands)
-      newErrors.brand = "Brand is required";
+        newErrors.brand = "Brand is required";
       if (formData.isAdvanced) {
         if (!formData.leadTime) newErrors.leadTime = "Lead Time is required";
         if (
@@ -294,7 +294,7 @@ const ProductForm = () => {
         formData.quantity &&
         !validationPatterns.quantity.test(formData.quantity)
       )
-        newErrors.quantity =  "Quantity atleast should be 1";
+        newErrors.quantity = "Quantity atleast should be 1";
       if (!formData.sellingPrice) newErrors.sellingPrice = "Selling Price is required";
       if (
         formData.sellingPrice &&
@@ -324,7 +324,7 @@ const ProductForm = () => {
         !validationPatterns.discountValue.test(formData.discountValue)
       )
         newErrors.discountValue = "Discount Value must be a positive number with up to 2 decimal places";
-      if (!formData.quantityAlert) newErrors.quantityAlert ="Quantity Alert is required";
+      if (!formData.quantityAlert) newErrors.quantityAlert = "Quantity Alert is required";
       if (
         formData.quantityAlert &&
         !validationPatterns.quantityAlert.test(formData.quantityAlert)
@@ -1266,11 +1266,11 @@ const ProductForm = () => {
       prev.map((v, i) =>
         i === index
           ? {
-              ...v,
-              selectedVariant: value,
-              selectedValue: "",
-              valueDropdown: [],
-            }
+            ...v,
+            selectedVariant: value,
+            selectedValue: "",
+            valueDropdown: [],
+          }
           : v
       )
     );
@@ -1405,11 +1405,12 @@ const ProductForm = () => {
           </div>
 
           <div className="page-btn mt-0">
-            <button className="btn" style={{ backgroundColor: "#007BFF" }}>
-              <Link to="/product" style={{ color: "white" }}>
-                {t("backToProduct")}
+            <div className="d-flex gap-2">
+              {/* <Link to="/product"></Link>{t("backToProduct")} */}
+              <Link to={location.state?.from || "/product"}>
+                <a className="btn btn-primary">Back to {location.state?.from == '/expired-products' ? "Expired Products" : location.state?.from == '/low-stocks' ? "Low Stocks" : "Product"}</a>
               </Link>
-            </button>
+            </div>
           </div>
         </div>
         {/* <h5 className="mb-3">{steps[step]}</h5> */}
@@ -1424,28 +1425,26 @@ const ProductForm = () => {
             return (
               <div key={index} className="step-wrapper">
                 <div
-                  className={`circle ${
-                    isComplete
+                  className={`circle ${isComplete
                       ? "complete"
                       : isIncomplete
-                      ? "incomplete"
-                      : isActive
-                      ? "active"
-                      : ""
-                  }`}
+                        ? "incomplete"
+                        : isActive
+                          ? "active"
+                          : ""
+                    }`}
                 >
                   {index + 1}
                 </div>
                 <div className="step-text">{label}</div>
                 {index < steps.length - 1 && (
                   <div
-                    className={`progress-line ${
-                      status === "complete"
+                    className={`progress-line ${status === "complete"
                         ? "line-complete"
                         : status === "incomplete"
-                        ? "line-incomplete"
-                        : "line-pending"
-                    }`}
+                          ? "line-incomplete"
+                          : "line-pending"
+                      }`}
                   />
                 )}
               </div>
@@ -1588,41 +1587,42 @@ const ProductForm = () => {
                             }}
                           >
                             <div
-                              className="modal-header mb-0"
+                              className="modal-header bg-info text-white"
                               style={{
                                 borderTopLeftRadius: "12px",
                                 borderTopRightRadius: "12px",
                               }}
                             >
-                              <h5 className="modal-title">HSN Details</h5>
-                              {/* <button type="button" className="btn-close" onClick={() => setShowHSNModal(false)}></button> */}
-                              <button
+                              <h5 className="modal-title" style={{color:'white'}}>HSN Details</h5>
+                              {/* <button
                                 type="button"
-                                className="close"
-                                data-bs-dismiss="modal"
-                                aria-label="Close"
+                                className="btn-close"
                                 onClick={() => setShowHSNModal(false)}
-                              >
-                                <span aria-hidden="true">×</span>
-                              </button>
+                              ></button> */}
                             </div>
                             <div className="modal-body">
                               <div className="mb-3">
                                 <label className="fw-bold">HSN Code:</label>
-                                <div className="fs-20 text-primary">
+                                <div className="fs-14 text-primary">
                                   {selectedHSN.label.split(" - ")[0]}
                                 </div>
                               </div>
-                              <div className="mb-2">
+                              <div className="mb-3">
                                 <label className="fw-bold">Description:</label>
-                                <div className="fs-12 text-secondary">
+                                <div className="fs-14 text-secondary">
                                   {selectedHSN.label.split(" - ")[1] || "N/A"}
                                 </div>
                               </div>
                             </div>
-                            {/* <div className="modal-footer">
-                              <button type="button" className="btn btn-secondary" onClick={() => setShowHSNModal(false)}>Close</button>
-                            </div> */}
+                            <div className="modal-footer">
+                              <button
+                                type="button"
+                                className="btn btn-secondary"
+                                onClick={() => setShowHSNModal(false)}
+                              >
+                                Close
+                              </button>
+                            </div>
                           </div>
                         </div>
                       </div>
@@ -1687,8 +1687,8 @@ const ProductForm = () => {
                         placeholder={t("searchOrSelectBrands")}
                       />
                       {formErrors.brand && (
-    <div className="text-danger">{formErrors.brand}</div>
-  )}
+                        <div className="text-danger">{formErrors.brand}</div>
+                      )}
                     </div>
 
                     {/* Category */}
@@ -2095,9 +2095,8 @@ const ProductForm = () => {
                       value={formData[field.name] || ""}
                       onChange={handleChange}
                       placeholder={t(
-                        `enter${
-                          field.name.charAt(0).toUpperCase() +
-                          field.name.slice(1)
+                        `enter${field.name.charAt(0).toUpperCase() +
+                        field.name.slice(1)
                         }`
                       )}
                     />

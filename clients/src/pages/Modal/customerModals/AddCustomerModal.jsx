@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import axios from "axios";
 import BASE_URL from "../../config/config";
@@ -7,6 +6,7 @@ import { IoIosArrowForward } from "react-icons/io";
 import { TbCopy } from "react-icons/tb";
 import { Country, State, City } from "country-state-city";
 import Select from "react-select";
+import DOMPurify from "dompurify";
 
 const AddCustomerModal = ({ onClose, onSuccess }) => {
   const fileInputRef = React.useRef(null);
@@ -26,13 +26,12 @@ const AddCustomerModal = ({ onClose, onSuccess }) => {
   const [selectedShippingState, setSelectedShippingState] = useState(null);
   const [selectedShippingCity, setSelectedShippingCity] = useState(null);
 
-  const [gstType, setGstType] = useState(""); // register/unregister
-  const [gstStates, setGstStates] = useState([]); // states from API
+  const [gstType, setGstType] = useState("");
+  const [gstStates, setGstStates] = useState([]);
   const [selectedGstState, setSelectedGstState] = useState(null);
   const [gstLoading, setGstLoading] = useState(false);
   const [validationErrors, setValidationErrors] = useState({});
   const [isGstinVerified, setIsGstinVerified] = useState(false);
-
 
   const [form, setForm] = useState({
     name: "",
@@ -80,7 +79,7 @@ const AddCustomerModal = ({ onClose, onSuccess }) => {
     };
   }, [imagePreviewUrl]);
 
-  // Country, State, City options from country-state-city
+  // Country, State, City options
   const countryOptions = Country.getAllCountries().map((c) => ({
     value: c.isoCode,
     label: c.name,
@@ -88,136 +87,166 @@ const AddCustomerModal = ({ onClose, onSuccess }) => {
 
   const stateOptions = selectedCountry
     ? State.getStatesOfCountry(selectedCountry.value).map((s) => ({
-      value: s.isoCode,
-      label: s.name,
-    }))
+        value: s.isoCode,
+        label: s.name,
+      }))
     : [];
 
   const cityOptions = selectedState
     ? City.getCitiesOfState(selectedCountry.value, selectedState.value).map(
-      (ci) => ({
-        value: ci.name,
-        label: ci.name,
-      })
-    )
+        (ci) => ({
+          value: ci.name,
+          label: ci.name,
+        })
+      )
     : [];
 
   const shippingStateOptions = selectedShippingCountry
     ? State.getStatesOfCountry(selectedShippingCountry.value).map((s) => ({
-      value: s.isoCode,
-      label: s.name,
-    }))
+        value: s.isoCode,
+        label: s.name,
+      }))
     : [];
 
   const shippingCityOptions = selectedShippingState
     ? City.getCitiesOfState(
-      selectedShippingCountry.value,
-      selectedShippingState.value
-    ).map((ci) => ({
-      value: ci.name,
-      label: ci.name,
-    }))
+        selectedShippingCountry.value,
+        selectedShippingState.value
+      ).map((ci) => ({
+        value: ci.name,
+        label: ci.name,
+      }))
     : [];
 
-  // Sanitization function to prevent XSS
-  const sanitizeInput = (input) => {
+  // Sanitization function aligned with ProductForm
+  const sanitizeInput = (input, isName = false) => {
     if (typeof input !== "string") return input;
-    return input
-      .replace(/&/g, "&amp;")
-      .replace(/</g, "&lt;")
-      .replace(/>/g, "&gt;")
-      .replace(/"/g, "&quot;")
-      .replace(/'/g, "&#x27;");
+    let sanitized = DOMPurify.sanitize(input, {
+      ALLOWED_TAGS: [],
+      ALLOWED_ATTR: [],
+    });
+    if (isName) {
+      sanitized = sanitized.replace(/[^a-zA-Z0-9\s.,'-]/g, "");
+    }
+    return sanitized;
   };
 
-  // Validation function with updated regex patterns
+  // Validation patterns aligned with ProductForm
+  const validationPatterns = {
+    name: /^[a-zA-Z\s.,'-]{2,100}$/, // Aligned with productName
+    email: /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/,
+    phone: /^\+?[0-9\s()-]{7,15}$/,
+    website: /^(https?:\/\/)?[\w.-]+\.[a-zA-Z]{2,}(\/.*)?$/,
+    notes: /^[\w\s.,!?-]{0,500}$/,
+    gstin: /^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}Z[0-9A-Z]{1}$/, // Aligned with ProductForm's stricter GSTIN
+    address1: /^[a-zA-Z0-9\s.,'-]{1,100}$/,
+    address2: /^[a-zA-Z0-9\s.,'-]{0,100}$/,
+    postalCode: /^\d{6}$/,
+    pincode: /^\d{6}$/,
+    bankName: /^[a-zA-Z\s.,'-]{2,100}$/,
+    branch: /^[a-zA-Z0-9\s.,'-]{2,100}$/,
+    accountHolder: /^[a-zA-Z\s.,'-]{2,100}$/,
+    accountNumber: /^[0-9]{9,18}$/, // Aligned with stricter numeric account numbers
+    ifsc: /^[A-Z]{4}0[A-Z0-9]{6}$/, // Aligned with ProductForm
+  };
+
   const validateField = (name, value) => {
-    const regexPatterns = {
-      name: /^[a-zA-Z\s.,'-]{1,100}$/,
-      email: /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/,
-      phone: /^\+?[0-9\s()-]{7,15}$/, // Updated: Allows +,-,(),spaces, 7-15 digits
-      website: /^(https?:\/\/)?[\w.-]+\.[a-zA-Z]{2,}(\/.*)?$/, // Updated: Optional protocol, flexible
-      postalCode: /^\d{6}$/,
-      pincode: /^\d{6}$/,
-      bankName: /^[a-zA-Z0-9\s.,'-]{2,100}$/,
-      branch: /^[a-zA-Z0-9\s.,'-]{2,100}$/,
-      accountHolder: /^[a-zA-Z0-9\s.,'-]{2,100}$/,
-      accountNumber: /^[a-zA-Z0-9\s-]{8,20}$/, // Updated: Alphanumeric, spaces, dashes
-      // ifsc: /^[A-Za-z]{4}0[A-Za-z0-9]{6}$/, // Updated: Case-insensitive
-      ifsc: /^[A-Z]{4}0[A-Z0-9]{6}$/, // Updated: Case-insensitive
-      notes: /^[\w\s.,!?-]{0,500}$/,
-      gstin: /^[0-9A-Z]{15}$/,
-      address1: /^[a-zA-Z0-9\s.,'-]{1,100}$/,
-      address2: /^[a-zA-Z0-9\s.,'-]{0,100}$/,
+    const fieldLabels = {
+      name: "Name",
+      email: "Email",
+      phone: "Phone Number",
+      website: "Website",
+      notes: "Notes",
+      gstin: "GSTIN",
+      address1: "Address Line 1",
+      address2: "Address Line 2",
+      postalCode: "Postal Code",
+      pincode: "Pincode",
+      bankName: "Bank Name",
+      branch: "Branch",
+      accountHolder: "Account Holder",
+      accountNumber: "Account Number",
+      ifsc: "IFSC Code",
     };
 
     // Required fields
-    if (name === "name" && !value) return "Name is required.";
-    if (name === "email" && !value) return "Email is required.";
-    if (name === "phone" && !value) return "Phone number is required.";
-    if (name === "currency" && !value) return "Currency is required.";
+    const requiredFields = ["name", "email", "phone", "currency"];
+    if (requiredFields.includes(name) && !value) {
+      return `${fieldLabels[name]} is required.`;
+    }
 
-    // Optional fields (allow empty)
-    if (!value && ["website", "notes", "postalCode", "pincode", "bankName", "branch", "accountHolder", "accountNumber", "ifsc", "address1", "address2"].includes(name)) {
+    // Optional fields
+    if (
+      !value &&
+      [
+        "website",
+        "notes",
+        "gstin",
+        "address1",
+        "address2",
+        "postalCode",
+        "pincode",
+        "bankName",
+        "branch",
+        "accountHolder",
+        "accountNumber",
+        "ifsc",
+      ].includes(name)
+    ) {
       return "";
     }
 
     // Regex validation
-    if (name in regexPatterns && value && !regexPatterns[name].test(value)) {
+    if (name in validationPatterns && value && !validationPatterns[name].test(value)) {
       switch (name) {
+        case "name":
+          return `${fieldLabels[name]} must be 2-100 characters, using letters, spaces, and common punctuation.`;
         case "email":
-          return "Please enter a valid email address.";
+          return "Please enter a valid email address (e.g., user@example.com).";
         case "phone":
-          return "Please enter a valid phone number (e.g., +1234567890 or 123-456-7890).";
+          return "Please enter a valid phone number (7-15 digits, may include +, -, (), spaces).";
         case "website":
           return "Please enter a valid URL (e.g., example.com or https://example.com).";
-        case "postalCode":
-          return "Please enter a valid postal code.";
-        case "pincode":
-          return "Please enter a valid pincode.";
-        case "bankName":
-          return "Please enter a valid bank name.";
-        case "branch":
-          return "Please enter a valid branch name.";
-        case "accountHolder":
-          return "Please enter a valid account holder name.";
-        case "accountNumber":
-          return "Please enter a valid account number (8-20 characters, alphanumeric).";
-        case "ifsc":
-          return "Please enter a valid IFSC code (e.g., ABCD0123456).";
         case "notes":
           return "Notes can only contain letters, numbers, spaces, and common punctuation (max 500 characters).";
         case "gstin":
-          return "Please enter a valid GSTIN (15 alphanumeric characters).";
-        case "name":
-          return "Please enter a valid name (1-100 characters, letters and common punctuation only).";
+          return "Please enter a valid GSTIN (15 characters, e.g., 22AAAAA0000A1Z5).";
         case "address1":
-          return "Please enter a valid address (1-100 characters, alphanumeric and common punctuation).";
+          return `${fieldLabels[name]} must be 1-100 characters, using alphanumeric characters and common punctuation.`;
         case "address2":
-          return "Please enter a valid address (0-100 characters, alphanumeric and common punctuation).";
+          return `${fieldLabels[name]} must be 0-100 characters, using alphanumeric characters and common punctuation.`;
+        case "postalCode":
+        case "pincode":
+          return `${fieldLabels[name]} must be a 6-digit number.`;
+        case "bankName":
+        case "branch":
+        case "accountHolder":
+          return `${fieldLabels[name]} must be 2-100 characters, using letters, spaces, and common punctuation.`;
+        case "accountNumber":
+          return `${fieldLabels[name]} must be 9-18 digits.`;
+        case "ifsc":
+          return `${fieldLabels[name]} must be in format ABCD0XXXXXX (4 letters, 0, 6 alphanumeric).`;
         default:
           return "Invalid input.";
       }
     }
+
     return "";
   };
 
-  // Input handlers with updated logic to always set input
+  // Input handlers
   const handleInputChange = (e) => {
     const { name, value } = e.target;
-    const sanitizedValue = sanitizeInput(value);
+    const sanitizedValue = sanitizeInput(value, name === "name" || name === "billing.name" || name === "shipping.name");
     const error = validateField(name, sanitizedValue);
 
     setErrors((prev) => ({ ...prev, [name]: error }));
     setForm((prev) => ({ ...prev, [name]: sanitizedValue }));
-    // if (error) {
-    //   toast.error(error);
-    // }
   };
 
   const handleBillingChange = (e) => {
     const { name, value } = e.target;
-    const sanitizedValue = sanitizeInput(value);
+    const sanitizedValue = sanitizeInput(value, name === "name");
     const error = validateField(name, sanitizedValue);
 
     setErrors((prev) => ({
@@ -228,15 +257,11 @@ const AddCustomerModal = ({ onClose, onSuccess }) => {
       ...prev,
       billing: { ...prev.billing, [name]: sanitizedValue },
     }));
-    // if (error) {
-    //   toast.error(error);
-
-    // }
   };
 
   const handleShippingChange = (e) => {
     const { name, value } = e.target;
-    const sanitizedValue = sanitizeInput(value);
+    const sanitizedValue = sanitizeInput(value, name === "name");
     const error = validateField(name, sanitizedValue);
 
     setErrors((prev) => ({
@@ -247,14 +272,11 @@ const AddCustomerModal = ({ onClose, onSuccess }) => {
       ...prev,
       shipping: { ...prev.shipping, [name]: sanitizedValue },
     }));
-    // if (error) {
-    //   toast.error(error);
-    // }
   };
 
   const handleBankChange = (e) => {
     const { name, value } = e.target;
-    const sanitizedValue = sanitizeInput(value);
+    const sanitizedValue = sanitizeInput(value, name === "accountHolder");
     const error = validateField(name, sanitizedValue);
 
     setErrors((prev) => ({
@@ -265,9 +287,6 @@ const AddCustomerModal = ({ onClose, onSuccess }) => {
       ...prev,
       bank: { ...prev.bank, [name]: sanitizedValue },
     }));
-    if (error) {
-      toast.error(error);
-    }
   };
 
   const handleCountryChange = (option) => {
@@ -356,7 +375,7 @@ const AddCustomerModal = ({ onClose, onSuccess }) => {
 
   const handleCopyFromBilling = () => {
     const sanitizedBilling = {
-      name: sanitizeInput(form.billing.name),
+      name: sanitizeInput(form.billing.name, true),
       address1: sanitizeInput(form.billing.address1),
       address2: sanitizeInput(form.billing.address2),
       country: form.billing.country,
@@ -384,7 +403,6 @@ const AddCustomerModal = ({ onClose, onSuccess }) => {
     setForm((prev) => ({ ...prev, status: !prev.status }));
   };
 
-  // File upload handler
   const handleUploadClick = (e) => {
     e.preventDefault();
     if (fileInputRef.current) fileInputRef.current.click();
@@ -393,9 +411,8 @@ const AddCustomerModal = ({ onClose, onSuccess }) => {
   const handleFileChange = (e) => {
     const file = e.target.files[0];
     if (file) {
-      // Validate image type and size
       const validTypes = ["image/jpeg", "image/png"];
-      const maxSize = 1 * 1024 * 1024; // 5MB
+      const maxSize = 1 * 1024 * 1024; // 1MB, aligned with ProductForm
       if (!validTypes.includes(file.type)) {
         toast.error("Please upload a JPEG or PNG image.");
         setErrors((prev) => ({ ...prev, image: "Invalid image type" }));
@@ -413,31 +430,39 @@ const AddCustomerModal = ({ onClose, onSuccess }) => {
     }
   };
 
-  // Validate form before submission
   const validateForm = () => {
     const newErrors = {};
     newErrors.name = validateField("name", form.name);
     newErrors.email = validateField("email", form.email);
     newErrors.phone = validateField("phone", form.phone);
     newErrors.currency = validateField("currency", form.currency);
+    newErrors.website = validateField("website", form.website);
+    newErrors.notes = validateField("notes", form.notes);
     newErrors.gstType = gstType ? "" : "GST Type is required.";
     if (gstType === "register") {
       newErrors.gstState = selectedGstState ? "" : "GST State is required.";
       newErrors.gstin = validateField("gstin", form.gstin);
+      if (newErrors.gstin === "" && !isGstinVerified) {
+        newErrors.gstin = "Please verify GSTIN.";
+      }
     } else {
       newErrors.gstState = "";
       newErrors.gstin = "";
     }
-    newErrors.website = validateField("website", form.website);
-    newErrors.notes = validateField("notes", form.notes);
     newErrors["billing.name"] = validateField("name", form.billing.name);
     newErrors["billing.address1"] = validateField("address1", form.billing.address1);
     newErrors["billing.address2"] = validateField("address2", form.billing.address2);
     newErrors["billing.postalCode"] = validateField("postalCode", form.billing.postalCode);
+    newErrors["billing.country"] = selectedCountry ? "" : "Billing Country is required.";
+    newErrors["billing.state"] = selectedState ? "" : "Billing State is required.";
+    newErrors["billing.city"] = selectedCity ? "" : "Billing City is required.";
     newErrors["shipping.name"] = validateField("name", form.shipping.name);
     newErrors["shipping.address1"] = validateField("address1", form.shipping.address1);
     newErrors["shipping.address2"] = validateField("address2", form.shipping.address2);
     newErrors["shipping.pincode"] = validateField("pincode", form.shipping.pincode);
+    newErrors["shipping.country"] = selectedShippingCountry ? "" : "Shipping Country is required.";
+    newErrors["shipping.state"] = selectedShippingState ? "" : "Shipping State is required.";
+    newErrors["shipping.city"] = selectedShippingCity ? "" : "Shipping City is required.";
     newErrors["bank.bankName"] = validateField("bankName", form.bank.bankName);
     newErrors["bank.branch"] = validateField("branch", form.bank.branch);
     newErrors["bank.accountHolder"] = validateField("accountHolder", form.bank.accountHolder);
@@ -448,7 +473,6 @@ const AddCustomerModal = ({ onClose, onSuccess }) => {
     return Object.values(newErrors).every((error) => !error);
   };
 
-  // Submit handler
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!validateForm()) {
@@ -552,6 +576,8 @@ const AddCustomerModal = ({ onClose, onSuccess }) => {
       setGstStates([]);
       setSelectedGstState(null);
       setErrors({});
+      setValidationErrors({});
+      setIsGstinVerified(false);
       if (fileInputRef.current) fileInputRef.current.value = "";
       if (onSuccess) onSuccess();
       if (onClose) onClose();
@@ -565,15 +591,16 @@ const AddCustomerModal = ({ onClose, onSuccess }) => {
 
   useEffect(() => {
     if (gstType === "register") {
-      axios.get(`${BASE_URL}/api/gst`) // your GST API
+      axios
+        .get(`${BASE_URL}/api/gst`)
         .then((res) => {
-          // Assuming API returns an array of states like [{name: 'Bihar', gstinCode: '10'}, ...]
           const stateOptions = res.data.map((s) => ({ value: s.gstinCode, label: s.gstinCode }));
           setGstStates(stateOptions);
         })
         .catch((err) => {
           console.error("Failed to fetch GST states", err);
           setGstStates([]);
+          toast.error("Failed to fetch GST states");
         });
     } else {
       setGstStates([]);
@@ -584,8 +611,8 @@ const AddCustomerModal = ({ onClose, onSuccess }) => {
   const handleGstTypeChange = (e) => {
     const value = e.target.value;
     setGstType(value);
-
-    // If unregister, save N/A in state
+    setForm((prev) => ({ ...prev, gstin: "" }));
+    setIsGstinVerified(false);
     if (value === "unregister") {
       setSelectedGstState({ value: "N/A", label: "N/A" });
     } else {
@@ -598,20 +625,28 @@ const AddCustomerModal = ({ onClose, onSuccess }) => {
       toast.error("Please enter GSTIN and select state");
       return;
     }
+    if (!validationPatterns.gstin.test(form.gstin)) {
+      setValidationErrors((prev) => ({ ...prev, gstin: "Invalid GSTIN format" }));
+      toast.error("Invalid GSTIN format");
+      return;
+    }
     setGstLoading(true);
     try {
-      // Check if first 2 digits match selectedGstState.value
       const gstinPrefix = form.gstin.substring(0, 2);
       if (gstinPrefix === selectedGstState.value) {
-        setValidationErrors(prev => ({ ...prev, gstin: "" }));
+        setValidationErrors((prev) => ({ ...prev, gstin: "" }));
         setIsGstinVerified(true);
         toast.success("GSTIN verified successfully");
       } else {
-        setValidationErrors(prev => ({ ...prev, gstin: "GSTIN does not match the selected state" }));
+        setValidationErrors((prev) => ({
+          ...prev,
+          gstin: "GSTIN does not match the selected state",
+        }));
         setIsGstinVerified(false);
         toast.error("GSTIN verification failed");
       }
     } catch (err) {
+      setValidationErrors((prev) => ({ ...prev, gstin: "Verification failed" }));
       setIsGstinVerified(false);
       toast.error("Verification failed");
     } finally {
@@ -821,9 +856,11 @@ const AddCustomerModal = ({ onClose, onSuccess }) => {
                           <option value="register">Register</option>
                           <option value="unregister">Unregister</option>
                         </select>
+                        {errors.gstType && (
+                          <span className="text-danger fs-12">{errors.gstType}</span>
+                        )}
                       </div>
                     </div>
-
                     {gstType === "register" && (
                       <>
                         <div className="col-lg-4 col-md-6">
@@ -840,11 +877,10 @@ const AddCustomerModal = ({ onClose, onSuccess }) => {
                             )}
                           </div>
                         </div>
-                        <div className="col-lg-4 col-md-4 mt-4">
+                        <div className="col-lg-4 col-md-4">
                           <div className="mb-3">
+                            <label className="form-label">GSTIN</label>
                             <div className="d-flex gap-2">
-                              <span className="form-label">GSTIN</span>
-                              <br />
                               <input
                                 type="text"
                                 placeholder="Enter GSTIN"
@@ -859,17 +895,18 @@ const AddCustomerModal = ({ onClose, onSuccess }) => {
                                 onClick={handleVerifyGstin}
                                 disabled={!form.gstin || gstLoading || !selectedGstState}
                               >
-                                {gstLoading ? 'Verifying...' : 'Verify'}
+                                {gstLoading ? "Verifying..." : "Verify"}
                               </button>
                             </div>
                             {(errors.gstin || validationErrors.gstin) && (
-                              <span className="text-danger fs-12">{errors.gstin || validationErrors.gstin}</span>
+                              <span className="text-danger fs-12">
+                                {errors.gstin || validationErrors.gstin}
+                              </span>
                             )}
                           </div>
                         </div>
                       </>
                     )}
-
                   </div>
 
                   <div className="border-top my-2">
@@ -1174,10 +1211,7 @@ const AddCustomerModal = ({ onClose, onSuccess }) => {
                           )}
                         </div>
                       </div>
-
-                      <div className="col-lg-4 col-md-6" style={{ display: 'flex', gap: '5px', marginTop: '35px' }}>
-
-
+                      <div className="col-lg-4 col-md-6" style={{ display: "flex", gap: "5px", marginTop: "35px" }}>
                         <label className="">Status</label>
                         <div className="form-check form-switch mb-3">
                           <input
@@ -1187,7 +1221,6 @@ const AddCustomerModal = ({ onClose, onSuccess }) => {
                             onChange={handleStatusChange}
                           />
                         </div>
-
                       </div>
                     </div>
                   </div>
@@ -1209,8 +1242,8 @@ const AddCustomerModal = ({ onClose, onSuccess }) => {
             </div>
           </div>
         </div>
-      </div >
-    </div >
+      </div>
+    </div>
   );
 };
 

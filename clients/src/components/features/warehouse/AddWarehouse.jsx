@@ -1253,8 +1253,6 @@
 
 // export default AddWarehouse;
 
-
-
 import React, { useState, useEffect } from "react";
 import Popup from "reactjs-popup";
 import { MdArrowForwardIos } from "react-icons/md";
@@ -1265,7 +1263,7 @@ import { Country, State, City } from "country-state-city";
 import { toast } from "react-toastify";
 import BASE_URL from "../../../pages/config/config";
 import axios from "axios";
-import sanitizeHtml from 'sanitize-html';
+import sanitizeHtml from "sanitize-html";
 
 // Regex patterns for validation
 const VALIDATION_PATTERNS = {
@@ -1354,7 +1352,7 @@ function AddWarehouse() {
     setState("");
     setPinCode("");
     navigate("/warehouse");
-  }
+  };
 
   // Retrieve token
   const token = localStorage.getItem("token");
@@ -1377,7 +1375,11 @@ function AddWarehouse() {
 
   // Validation function
   const validateInput = (name, value) => {
-    if (!VALIDATION_PATTERNS[name] && !["country", "state", "city"].includes(name)) return "";
+    if (
+      !VALIDATION_PATTERNS[name] &&
+      !["country", "state", "city"].includes(name)
+    )
+      return "";
 
     if (!value) {
       return `${name.charAt(0).toUpperCase() + name.slice(1)} is required`;
@@ -1385,20 +1387,20 @@ function AddWarehouse() {
 
     if (VALIDATION_PATTERNS[name] && !VALIDATION_PATTERNS[name].test(value)) {
       switch (name) {
-        case 'warehouseName':
-          return 'Warehouse name must be 1-50 characters (letters, spaces, -, _)';
-        case 'phone':
-          return 'Phone number must be a valid format (e.g., +1234567890, 123-456-7890)';
-        case 'warehouseCode':
-          return 'Warehouse code must be 3-10 uppercase letters or numbers';
-        case 'warehouseOwner':
-          return 'Contact person must be 2-50 letters and spaces';
-        case 'address':
-          return 'Address must be 5-200 characters (letters, numbers, spaces, common punctuation)';
-        case 'pinCode':
-          return 'Pin code must be 4-10 digits';
+        case "warehouseName":
+          return "Warehouse name must be 1-50 characters (letters, spaces, -, _)";
+        case "phone":
+          return "Phone number must be a valid format (e.g., +1234567890, 123-456-7890)";
+        case "warehouseCode":
+          return "Warehouse code must be 3-10 uppercase letters or numbers";
+        case "warehouseOwner":
+          return "Contact person must be 2-50 letters and spaces";
+        case "address":
+          return "Address must be 5-200 characters (letters, numbers, spaces, common punctuation)";
+        case "pinCode":
+          return "Pin code must be 4-10 digits";
         default:
-          return 'Invalid input';
+          return "Invalid input";
       }
     }
     return "";
@@ -1425,15 +1427,27 @@ function AddWarehouse() {
   const handleImport = (close) => {
     // Validate popup inputs
     const newPopupErrors = {
-      zones: VALIDATION_PATTERNS.zones.test(zones) && parseInt(zones) >= 0 ? "" : "Zones must be a non-negative integer",
-      rows: VALIDATION_PATTERNS.rows.test(rows) && parseInt(rows) >= 1 ? "" : "Rows must be an integer >= 1",
-      columns: VALIDATION_PATTERNS.columns.test(columns) && parseInt(columns) >= 1 ? "" : "Columns must be an integer >= 1",
-      width: VALIDATION_PATTERNS.width.test(width) && parseInt(width) >= 1 ? "" : "Width must be an integer >= 1",
+      zones:
+        VALIDATION_PATTERNS.zones.test(zones) && parseInt(zones) >= 0
+          ? ""
+          : "Zones atleast 1 ",
+      rows:
+        VALIDATION_PATTERNS.rows.test(rows) && parseInt(rows) >= 1
+          ? ""
+          : "Rows atleast 1",
+      columns:
+        VALIDATION_PATTERNS.columns.test(columns) && parseInt(columns) >= 1
+          ? ""
+          : "Columns atleast 1",
+      width:
+        VALIDATION_PATTERNS.width.test(width) && parseInt(width) >= 1
+          ? ""
+          : "Width atleast 1",
     };
 
     setPopupErrors(newPopupErrors);
 
-    if (Object.values(newPopupErrors).some(error => error !== "")) {
+    if (Object.values(newPopupErrors).some((error) => error !== "")) {
       toast.error("Please fix all layout validation errors before importing");
       return;
     }
@@ -1465,7 +1479,7 @@ function AddWarehouse() {
     setWidth("");
     setZones("0");
     close();
-  }
+  };
 
   // Handler for Draft button
   const handleDraft = () => {
@@ -1476,10 +1490,13 @@ function AddWarehouse() {
       warehouseOwner: sanitizeHtml(warehouseOwner, SANITIZE_CONFIG),
       address: sanitizeHtml(address, SANITIZE_CONFIG),
       country: selectedCountry
-        ? Country.getAllCountries().find((c) => c.isoCode === selectedCountry)?.name || ""
+        ? Country.getAllCountries().find((c) => c.isoCode === selectedCountry)
+            ?.name || ""
         : "",
       state: selectedState
-        ? State.getStatesOfCountry(selectedCountry).find((s) => s.isoCode === selectedState)?.name || ""
+        ? State.getStatesOfCountry(selectedCountry).find(
+            (s) => s.isoCode === selectedState
+          )?.name || ""
         : "",
       city: sanitizeHtml(selectedCity, SANITIZE_CONFIG),
       pinCode: sanitizeHtml(pinCode, SANITIZE_CONFIG),
@@ -1497,12 +1514,12 @@ function AddWarehouse() {
   // Handler for Save button
   const handleSave = async () => {
     const newErrors = {
-      warehouseName: validateInput('warehouseName', warehouseName),
-      phone: validateInput('phone', phone),
-      warehouseCode: validateInput('warehouseCode', warehouseCode),
-      warehouseOwner: validateInput('warehouseOwner', warehouseOwner),
-      address: validateInput('address', address),
-      pinCode: validateInput('pinCode', pinCode),
+      warehouseName: validateInput("warehouseName", warehouseName),
+      phone: validateInput("phone", phone),
+      warehouseCode: validateInput("warehouseCode", warehouseCode),
+      warehouseOwner: validateInput("warehouseOwner", warehouseOwner),
+      address: validateInput("address", address),
+      pinCode: validateInput("pinCode", pinCode),
       country: selectedCountry ? "" : "Country is required",
       state: selectedState ? "" : "State is required",
       city: selectedCity ? "" : "City is required",
@@ -1524,7 +1541,7 @@ function AddWarehouse() {
 
     setErrors(newErrors);
 
-    if (Object.values(newErrors).some(error => error !== "")) {
+    if (Object.values(newErrors).some((error) => error !== "")) {
       toast.error("Please fix all validation errors before saving");
       return;
     }
@@ -1541,10 +1558,13 @@ function AddWarehouse() {
       warehouseOwner: sanitizeHtml(warehouseOwner, SANITIZE_CONFIG),
       address: sanitizeHtml(address, SANITIZE_CONFIG),
       country: selectedCountry
-        ? Country.getAllCountries().find((c) => c.isoCode === selectedCountry)?.name || ""
+        ? Country.getAllCountries().find((c) => c.isoCode === selectedCountry)
+            ?.name || ""
         : "",
       state: selectedState
-        ? State.getStatesOfCountry(selectedCountry).find((s) => s.isoCode === selectedState)?.name || ""
+        ? State.getStatesOfCountry(selectedCountry).find(
+            (s) => s.isoCode === selectedState
+          )?.name || ""
         : "",
       city: sanitizeHtml(selectedCity, SANITIZE_CONFIG),
       pinCode: sanitizeHtml(pinCode, SANITIZE_CONFIG),
@@ -1564,7 +1584,12 @@ function AddWarehouse() {
       });
       toast.success("Warehouse saved successfully");
     } catch (error) {
-      console.error("Error saving warehouse:", error.response?.data, error.response?.status, error.message);
+      console.error(
+        "Error saving warehouse:",
+        error.response?.data,
+        error.response?.status,
+        error.message
+      );
       toast.error(
         error.response?.status === 409
           ? error.response.data.message
@@ -1610,12 +1635,12 @@ function AddWarehouse() {
     setLoading(true);
 
     const newErrors = {
-      warehouseName: validateInput('warehouseName', warehouseName),
-      phone: validateInput('phone', phone),
-      warehouseCode: validateInput('warehouseCode', warehouseCode),
-      warehouseOwner: validateInput('warehouseOwner', warehouseOwner),
-      address: validateInput('address', address),
-      pinCode: validateInput('pinCode', pinCode),
+      warehouseName: validateInput("warehouseName", warehouseName),
+      phone: validateInput("phone", phone),
+      warehouseCode: validateInput("warehouseCode", warehouseCode),
+      warehouseOwner: validateInput("warehouseOwner", warehouseOwner),
+      address: validateInput("address", address),
+      pinCode: validateInput("pinCode", pinCode),
       country: selectedCountry ? "" : "Country is required",
       state: selectedState ? "" : "State is required",
       city: selectedCity ? "" : "City is required",
@@ -1637,7 +1662,7 @@ function AddWarehouse() {
 
     setErrors(newErrors);
 
-    if (Object.values(newErrors).some(error => error !== "")) {
+    if (Object.values(newErrors).some((error) => error !== "")) {
       toast.error("Please fix all validation errors before submitting");
       setLoading(false);
       return;
@@ -1656,10 +1681,13 @@ function AddWarehouse() {
       warehouseOwner: sanitizeHtml(warehouseOwner, SANITIZE_CONFIG),
       address: sanitizeHtml(address, SANITIZE_CONFIG),
       country: selectedCountry
-        ? Country.getAllCountries().find((c) => c.isoCode === selectedCountry)?.name || ""
+        ? Country.getAllCountries().find((c) => c.isoCode === selectedCountry)
+            ?.name || ""
         : "",
       state: selectedState
-        ? State.getStatesOfCountry(selectedCountry).find((s) => s.isoCode === selectedState)?.name || ""
+        ? State.getStatesOfCountry(selectedCountry).find(
+            (s) => s.isoCode === selectedState
+          )?.name || ""
         : "",
       city: sanitizeHtml(selectedCity, SANITIZE_CONFIG),
       pinCode: sanitizeHtml(pinCode, SANITIZE_CONFIG),
@@ -1698,7 +1726,12 @@ function AddWarehouse() {
 
       navigate("/warehouse");
     } catch (error) {
-      console.error("Error adding warehouse:", error.response?.data, error.response?.status, error.message);
+      console.error(
+        "Error adding warehouse:",
+        error.response?.data,
+        error.response?.status,
+        error.message
+      );
       toast.error(
         error.response?.status === 409
           ? error.response.data.message
@@ -1754,7 +1787,9 @@ function AddWarehouse() {
           <div
             style={{
               display: "grid",
-              gridTemplateColumns: `repeat(${gridColumns || 3}, ${cellWidthPx}px)`,
+              gridTemplateColumns: `repeat(${
+                gridColumns || 3
+              }, ${cellWidthPx}px)`,
               gridTemplateRows: `repeat(${gridRows || 3}, ${cellWidthPx}px)`,
               gap: "8px",
               width: `${totalGridContentWidth}px`,
@@ -1777,8 +1812,7 @@ function AddWarehouse() {
                     color: "#4A5A6B",
                     fontSize: "12px",
                   }}
-                >
-                </div>
+                ></div>
               )
             )}
           </div>
@@ -1809,13 +1843,18 @@ function AddWarehouse() {
             <span>
               <MdArrowForwardIos style={{ color: "#b0afafff" }} />
             </span>
-            <Link to="/warehouse" style={{ color: "#676767", textDecoration: "none" }}>
+            <Link
+              to="/warehouse"
+              style={{ color: "#676767", textDecoration: "none" }}
+            >
               <span>All Warehouse</span>
             </Link>
             <span>
               <MdArrowForwardIos style={{ color: "#b0afafff" }} />
             </span>
-            <span style={{fontWeight:'600',color:'black'}}>Add Warehouse</span>
+            <span style={{ fontWeight: "600", color: "black" }}>
+              Add Warehouse
+            </span>
           </div>
         </div>
         <div
@@ -1852,7 +1891,9 @@ function AddWarehouse() {
                 boxShadow: "0 2px 4px rgba(0, 0, 0, 0.1)",
               }}
             >
-              <div style={{ display: "flex", gap: "16px", marginBottom: "20px" }}>
+              <div
+                style={{ display: "flex", gap: "16px", marginBottom: "20px" }}
+              >
                 <div style={{ flex: 1 }}>
                   <label
                     style={{
@@ -1868,12 +1909,17 @@ function AddWarehouse() {
                   <input
                     type="text"
                     value={warehouseName}
-                    onChange={handleInputChange(setWarehouseName, 'warehouseName')}
+                    onChange={handleInputChange(
+                      setWarehouseName,
+                      "warehouseName"
+                    )}
                     style={{
                       width: "100%",
                       padding: "12px",
                       borderRadius: "8px",
-                      border: `1px solid ${errors.warehouseName ? '#EF4444' : '#D1D5DB'}`,
+                      border: `1px solid ${
+                        errors.warehouseName ? "#EF4444" : "#D1D5DB"
+                      }`,
                       backgroundColor: "#F9FAFB",
                       color: "#6B7280",
                       fontSize: "14px",
@@ -1882,7 +1928,13 @@ function AddWarehouse() {
                     placeholder="Enter Warehouse Name"
                   />
                   {errors.warehouseName && (
-                    <div style={{ color: "#EF4444", fontSize: "12px", marginTop: "4px" }}>
+                    <div
+                      style={{
+                        color: "#EF4444",
+                        fontSize: "12px",
+                        marginTop: "4px",
+                      }}
+                    >
                       {errors.warehouseName}
                     </div>
                   )}
@@ -1902,12 +1954,14 @@ function AddWarehouse() {
                   <input
                     type="number"
                     value={phone}
-                    onChange={handleInputChange(setPhone, 'phone')}
+                    onChange={handleInputChange(setPhone, "phone")}
                     style={{
                       width: "100%",
                       padding: "12px",
                       borderRadius: "8px",
-                      border: `1px solid ${errors.phone ? '#EF4444' : '#D1D5DB'}`,
+                      border: `1px solid ${
+                        errors.phone ? "#EF4444" : "#D1D5DB"
+                      }`,
                       backgroundColor: "#F9FAFB",
                       color: "#6B7280",
                       fontSize: "14px",
@@ -1916,14 +1970,22 @@ function AddWarehouse() {
                     placeholder="Enter Contact Number"
                   />
                   {errors.phone && (
-                    <div style={{ color: "#EF4444", fontSize: "12px", marginTop: "4px" }}>
+                    <div
+                      style={{
+                        color: "#EF4444",
+                        fontSize: "12px",
+                        marginTop: "4px",
+                      }}
+                    >
                       {errors.phone}
                     </div>
                   )}
                 </div>
               </div>
 
-              <div style={{ display: "flex", gap: "16px", marginBottom: "20px" }}>
+              <div
+                style={{ display: "flex", gap: "16px", marginBottom: "20px" }}
+              >
                 <div style={{ flex: 1 }}>
                   <label
                     style={{
@@ -1939,12 +2001,17 @@ function AddWarehouse() {
                   <input
                     type="text"
                     value={warehouseCode}
-                    onChange={handleInputChange(setWarehouseCode, 'warehouseCode')}
+                    onChange={handleInputChange(
+                      setWarehouseCode,
+                      "warehouseCode"
+                    )}
                     style={{
                       width: "100%",
                       padding: "12px",
                       borderRadius: "8px",
-                      border: `1px solid ${errors.warehouseCode ? '#EF4444' : '#D1D5DB'}`,
+                      border: `1px solid ${
+                        errors.warehouseCode ? "#EF4444" : "#D1D5DB"
+                      }`,
                       backgroundColor: "#F9FAFB",
                       color: "#6B7280",
                       fontSize: "14px",
@@ -1952,7 +2019,13 @@ function AddWarehouse() {
                     }}
                   />
                   {errors.warehouseCode && (
-                    <div style={{ color: "#EF4444", fontSize: "12px", marginTop: "4px" }}>
+                    <div
+                      style={{
+                        color: "#EF4444",
+                        fontSize: "12px",
+                        marginTop: "4px",
+                      }}
+                    >
                       {errors.warehouseCode}
                     </div>
                   )}
@@ -1967,17 +2040,23 @@ function AddWarehouse() {
                       display: "block",
                     }}
                   >
-                    Warehouse Contact Person (Manager) <span className="text-danger">*</span>
+                    Warehouse Contact Person (Manager){" "}
+                    <span className="text-danger">*</span>
                   </label>
                   <input
                     type="text"
                     value={warehouseOwner}
-                    onChange={handleInputChange(setWarehouseOwner, 'warehouseOwner')}
+                    onChange={handleInputChange(
+                      setWarehouseOwner,
+                      "warehouseOwner"
+                    )}
                     style={{
                       width: "100%",
                       padding: "12px",
                       borderRadius: "8px",
-                      border: `1px solid ${errors.warehouseOwner ? '#EF4444' : '#D1D5DB'}`,
+                      border: `1px solid ${
+                        errors.warehouseOwner ? "#EF4444" : "#D1D5DB"
+                      }`,
                       backgroundColor: "#F9FAFB",
                       color: "#6B7280",
                       fontSize: "14px",
@@ -1985,7 +2064,13 @@ function AddWarehouse() {
                     }}
                   />
                   {errors.warehouseOwner && (
-                    <div style={{ color: "#EF4444", fontSize: "12px", marginTop: "4px" }}>
+                    <div
+                      style={{
+                        color: "#EF4444",
+                        fontSize: "12px",
+                        marginTop: "4px",
+                      }}
+                    >
                       {errors.warehouseOwner}
                     </div>
                   )}
@@ -2006,12 +2091,14 @@ function AddWarehouse() {
                 </label>
                 <textarea
                   value={address}
-                  onChange={handleInputChange(setAddress, 'address')}
+                  onChange={handleInputChange(setAddress, "address")}
                   style={{
                     width: "100%",
                     padding: "12px",
                     borderRadius: "8px",
-                    border: `1px solid ${errors.address ? '#EF4444' : '#D1D5DB'}`,
+                    border: `1px solid ${
+                      errors.address ? "#EF4444" : "#D1D5DB"
+                    }`,
                     backgroundColor: "#F9FAFB",
                     color: "#6B7280",
                     fontSize: "14px",
@@ -2021,7 +2108,13 @@ function AddWarehouse() {
                   }}
                 ></textarea>
                 {errors.address && (
-                  <div style={{ color: "#EF4444", fontSize: "12px", marginTop: "4px" }}>
+                  <div
+                    style={{
+                      color: "#EF4444",
+                      fontSize: "12px",
+                      marginTop: "4px",
+                    }}
+                  >
                     {errors.address}
                   </div>
                 )}
@@ -2049,7 +2142,7 @@ function AddWarehouse() {
                       setSelectedCity("");
                       setErrors((prev) => ({
                         ...prev,
-                        country: validateInput('country', value),
+                        country: validateInput("country", value),
                         state: "",
                         city: "",
                       }));
@@ -2058,7 +2151,9 @@ function AddWarehouse() {
                       width: "100%",
                       padding: "12px",
                       borderRadius: "8px",
-                      border: `1px solid ${errors.country ? '#EF4444' : '#D1D5DB'}`,
+                      border: `1px solid ${
+                        errors.country ? "#EF4444" : "#D1D5DB"
+                      }`,
                       backgroundColor: "#F9FAFB",
                       color: "#6B7280",
                       fontSize: "14px",
@@ -2072,7 +2167,13 @@ function AddWarehouse() {
                     ))}
                   </select>
                   {errors.country && (
-                    <div style={{ color: "#EF4444", fontSize: "12px", marginTop: "4px" }}>
+                    <div
+                      style={{
+                        color: "#EF4444",
+                        fontSize: "12px",
+                        marginTop: "4px",
+                      }}
+                    >
                       {errors.country}
                     </div>
                   )}
@@ -2097,7 +2198,7 @@ function AddWarehouse() {
                       setSelectedCity("");
                       setErrors((prev) => ({
                         ...prev,
-                        state: validateInput('state', value),
+                        state: validateInput("state", value),
                         city: "",
                       }));
                     }}
@@ -2106,7 +2207,9 @@ function AddWarehouse() {
                       width: "100%",
                       padding: "12px",
                       borderRadius: "8px",
-                      border: `1px solid ${errors.state ? '#EF4444' : '#D1D5DB'}`,
+                      border: `1px solid ${
+                        errors.state ? "#EF4444" : "#D1D5DB"
+                      }`,
                       backgroundColor: "#F9FAFB",
                       color: "#6B7280",
                       fontSize: "14px",
@@ -2120,7 +2223,13 @@ function AddWarehouse() {
                     ))}
                   </select>
                   {errors.state && (
-                    <div style={{ color: "#EF4444", fontSize: "12px", marginTop: "4px" }}>
+                    <div
+                      style={{
+                        color: "#EF4444",
+                        fontSize: "12px",
+                        marginTop: "4px",
+                      }}
+                    >
                       {errors.state}
                     </div>
                   )}
@@ -2140,18 +2249,23 @@ function AddWarehouse() {
                   <select
                     value={selectedCity}
                     onChange={(e) => {
-                      const value = sanitizeHtml(e.target.value, SANITIZE_CONFIG);
+                      const value = sanitizeHtml(
+                        e.target.value,
+                        SANITIZE_CONFIG
+                      );
                       setSelectedCity(value);
                       setErrors((prev) => ({
                         ...prev,
-                        city: validateInput('city', value),
+                        city: validateInput("city", value),
                       }));
                     }}
                     style={{
                       width: "100%",
                       padding: "12px",
                       borderRadius: "8px",
-                      border: `1px solid ${errors.city ? '#EF4444' : '#D1D5DB'}`,
+                      border: `1px solid ${
+                        errors.city ? "#EF4444" : "#D1D5DB"
+                      }`,
                       backgroundColor: "#F9FAFB",
                       color: "#6B7280",
                       fontSize: "14px",
@@ -2165,7 +2279,13 @@ function AddWarehouse() {
                     ))}
                   </select>
                   {errors.city && (
-                    <div style={{ color: "#EF4444", fontSize: "12px", marginTop: "4px" }}>
+                    <div
+                      style={{
+                        color: "#EF4444",
+                        fontSize: "12px",
+                        marginTop: "4px",
+                      }}
+                    >
                       {errors.city}
                     </div>
                   )}
@@ -2184,13 +2304,15 @@ function AddWarehouse() {
                   </label>
                   <input
                     value={pinCode}
-                    onChange={handleInputChange(setPinCode, 'pinCode')}
+                    onChange={handleInputChange(setPinCode, "pinCode")}
                     type="number"
                     style={{
                       width: "100%",
                       padding: "12px",
                       borderRadius: "8px",
-                      border: `1px solid ${errors.pinCode ? '#EF4444' : '#D1D5DB'}`,
+                      border: `1px solid ${
+                        errors.pinCode ? "#EF4444" : "#D1D5DB"
+                      }`,
                       backgroundColor: "#F9FAFB",
                       color: "#6B7280",
                       fontSize: "14px",
@@ -2198,7 +2320,13 @@ function AddWarehouse() {
                     }}
                   />
                   {errors.pinCode && (
-                    <div style={{ color: "#EF4444", fontSize: "12px", marginTop: "4px" }}>
+                    <div
+                      style={{
+                        color: "#EF4444",
+                        fontSize: "12px",
+                        marginTop: "4px",
+                      }}
+                    >
                       {errors.pinCode}
                     </div>
                   )}
@@ -2217,7 +2345,9 @@ function AddWarehouse() {
                 boxShadow: "0 2px 4px rgba(0, 0, 0, 0.1)",
               }}
             >
-              <div style={{ width: "100%", maxWidth: "900px", margin: "0 auto" }}>
+              <div
+                style={{ width: "100%", maxWidth: "900px", margin: "0 auto" }}
+              >
                 {mainZones > 0 ? (
                   <>
                     <div
@@ -2294,7 +2424,7 @@ function AddWarehouse() {
                           (e.target.style.backgroundColor = "#3B82F6")
                         }
                       >
-                        Customize Layout
+                        Customize Layout <span className="text-danger">*</span>
                       </button>
                     }
                     modal
@@ -2308,20 +2438,22 @@ function AddWarehouse() {
                     }}
                   >
                     {(close) => (
-                      <div style={{
-                        position: 'fixed',
-                        top: '0',
-                        left: '0',
-                        width: '100%',
-                        height: '100%',
-                        backgroundColor: 'rgba(199, 197, 197, 0.4)',
-                        backdropFilter: 'blur(1px)',
-                        display: 'flex',
-                        justifyContent: 'center',
-                        zIndex: '10',
-                        overflowY: 'auto',
-                        alignItems: 'center',
-                      }}>
+                      <div
+                        style={{
+                          position: "fixed",
+                          top: "0",
+                          left: "0",
+                          width: "100%",
+                          height: "100%",
+                          backgroundColor: "rgba(199, 197, 197, 0.4)",
+                          backdropFilter: "blur(1px)",
+                          display: "flex",
+                          justifyContent: "center",
+                          zIndex: "10",
+                          overflowY: "auto",
+                          alignItems: "center",
+                        }}
+                      >
                         <div
                           style={{
                             backgroundColor: "#FFFFFF",
@@ -2388,33 +2520,49 @@ function AddWarehouse() {
                                     fontSize: "16px",
                                   }}
                                 >
-                                  No. of Zones <span className="text-danger">*</span>
+                                  No. of Zones{" "}
+                                  <span className="text-danger">*</span>
                                 </label>
                                 <input
                                   type="number"
                                   required
-
                                   value={zones}
                                   onChange={(e) => {
-                                    const val = e.target.value === "" ? "" : Math.max(0, parseInt(e.target.value));
+                                    const val =
+                                      e.target.value === ""
+                                        ? ""
+                                        : Math.max(0, parseInt(e.target.value));
                                     setZones(val);
                                     setPopupErrors((prev) => ({
                                       ...prev,
-                                      zones: VALIDATION_PATTERNS.zones.test(val.toString()) && val >= 0 ? "" : "Zones must be a non-negative integer",
+                                      zones:
+                                        VALIDATION_PATTERNS.zones.test(
+                                          val.toString()
+                                        ) && val >= 0
+                                          ? ""
+                                          : "Zones must be a non-negative integer",
                                     }));
                                   }}
                                   style={{
                                     width: "100%",
                                     padding: "12px",
                                     borderRadius: "8px",
-                                    border: `1px solid ${popupErrors.zones ? '#EF4444' : '#D1D5DB'}`,
+                                    border: `1px solid ${
+                                      popupErrors.zones ? "#EF4444" : "#D1D5DB"
+                                    }`,
                                     backgroundColor: "#F9FAFB",
                                     color: "#6B7280",
                                     fontSize: "14px",
                                   }}
                                 />
                                 {popupErrors.zones && (
-                                  <div style={{ color: "#EF4444", fontSize: "12px", marginTop: "4px" }}>
+                                  <div
+                                    style={{
+                                      color: "#EF4444",
+                                      fontSize: "12px",
+                                      marginTop: "4px",
+                                    }}
+                                  >
                                     {popupErrors.zones}
                                   </div>
                                 )}
@@ -2442,25 +2590,50 @@ function AddWarehouse() {
                                     type="number"
                                     value={rows}
                                     onChange={(e) => {
-                                      const val = e.target.value === "" ? "" : Math.max(1, parseInt(e.target.value));
+                                      const val =
+                                        e.target.value === ""
+                                          ? ""
+                                          : Math.max(
+                                              1,
+                                              parseInt(e.target.value)
+                                            );
                                       setRows(val);
                                       setPopupErrors((prev) => ({
                                         ...prev,
-                                        rows: VALIDATION_PATTERNS.rows.test(val.toString()) && val >= 1 ? "" : "Rows must be an integer >= 1",
+                                        rows:
+                                          val === ""
+                                            ? "Rows is required"
+                                            : VALIDATION_PATTERNS.rows.test(
+                                                val.toString()
+                                              ) && val >= 1
+                                            ? ""
+                                            : "Rows must be an integer >= 1",
                                       }));
                                     }}
                                     style={{
                                       width: "100%",
                                       padding: "12px",
                                       borderRadius: "8px",
-                                      border: `1px solid ${popupErrors.rows ? '#EF4444' : '#D1D5DB'}`,
+                                      border: `1px solid ${
+                                        popupErrors.rows ? "#EF4444" : "#D1D5DB"
+                                      }`,
                                       backgroundColor: "#F9FAFB",
                                       color: "#6B7280",
                                       fontSize: "14px",
                                     }}
                                     required
                                   />
-
+                                  {popupErrors.rows && (
+                                    <div
+                                      style={{
+                                        color: "#EF4444",
+                                        fontSize: "12px",
+                                        marginTop: "4px",
+                                      }}
+                                    >
+                                      {popupErrors.rows}
+                                    </div>
+                                  )}
                                 </div>
                                 <div style={{ flex: 1 }}>
                                   <label
@@ -2472,32 +2645,56 @@ function AddWarehouse() {
                                       display: "block",
                                     }}
                                   >
-                                    Column <span className="text-danger">*</span>
+                                    Column{" "}
+                                    <span className="text-danger">*</span>
                                   </label>
                                   <input
                                     type="number"
                                     required
                                     value={columns}
                                     onChange={(e) => {
-                                      const val = e.target.value === "" ? "" : Math.max(1, parseInt(e.target.value));
+                                      const val =
+                                        e.target.value === ""
+                                          ? ""
+                                          : Math.max(
+                                              1,
+                                              parseInt(e.target.value)
+                                            );
                                       setColumns(val);
                                       setPopupErrors((prev) => ({
                                         ...prev,
-                                        columns: VALIDATION_PATTERNS.columns.test(val.toString()) && val >= 1 ? "" : "Columns must be an integer >= 1",
+                                        columns:
+                                          val === ""
+                                            ? "Columns is required"
+                                            : VALIDATION_PATTERNS.columns.test(
+                                                val.toString()
+                                              ) && val >= 1
+                                            ? ""
+                                            : "Columns must be an integer >= 1",
                                       }));
                                     }}
                                     style={{
                                       width: "100%",
                                       padding: "12px",
                                       borderRadius: "8px",
-                                      border: `1px solid ${popupErrors.columns ? '#EF4444' : '#D1D5DB'}`,
+                                      border: `1px solid ${
+                                        popupErrors.columns
+                                          ? "#EF4444"
+                                          : "#D1D5DB"
+                                      }`,
                                       backgroundColor: "#F9FAFB",
                                       color: "#6B7280",
                                       fontSize: "14px",
                                     }}
                                   />
                                   {popupErrors.columns && (
-                                    <div style={{ color: "#EF4444", fontSize: "12px", marginTop: "4px" }}>
+                                    <div
+                                      style={{
+                                        color: "#EF4444",
+                                        fontSize: "12px",
+                                        marginTop: "4px",
+                                      }}
+                                    >
                                       {popupErrors.columns}
                                     </div>
                                   )}
@@ -2520,32 +2717,54 @@ function AddWarehouse() {
                                       display: "block",
                                     }}
                                   >
-                                    Width (mtr)
+                                    Width (mtr){" "}
+                                    <span className="text-danger">*</span>
                                   </label>
                                   <input
                                     type="number"
                                     min="1"
                                     value={width}
                                     onChange={(e) => {
-                                      const val = e.target.value === "" ? "" : Math.max(1, parseInt(e.target.value));
+                                      const val =
+                                        e.target.value === ""
+                                          ? ""
+                                          : Math.max(
+                                              1,
+                                              parseInt(e.target.value)
+                                            );
                                       setWidth(val);
                                       setPopupErrors((prev) => ({
                                         ...prev,
-                                        width: VALIDATION_PATTERNS.width.test(val.toString()) && val >= 1 ? "" : "Width must be an integer >= 1",
+                                        width:
+                                          VALIDATION_PATTERNS.width.test(
+                                            val.toString()
+                                          ) && val >= 1
+                                            ? ""
+                                            : "Width must be an integer >= 1",
                                       }));
                                     }}
                                     style={{
                                       width: "100%",
                                       padding: "12px",
                                       borderRadius: "8px",
-                                      border: `1px solid ${popupErrors.width ? '#EF4444' : '#D1D5DB'}`,
+                                      border: `1px solid ${
+                                        popupErrors.width
+                                          ? "#EF4444"
+                                          : "#D1D5DB"
+                                      }`,
                                       backgroundColor: "#F9FAFB",
                                       color: "#6B7280",
                                       fontSize: "14px",
                                     }}
                                   />
                                   {popupErrors.width && (
-                                    <div style={{ color: "#EF4444", fontSize: "12px", marginTop: "4px" }}>
+                                    <div
+                                      style={{
+                                        color: "#EF4444",
+                                        fontSize: "12px",
+                                        marginTop: "4px",
+                                      }}
+                                    >
                                       {popupErrors.width}
                                     </div>
                                   )}
@@ -2628,8 +2847,8 @@ function AddWarehouse() {
                                 Layout Preview
                               </span>
                               {parseInt(zones) > 0 &&
-                                rows !== "" &&
-                                columns !== "" ? (
+                              rows !== "" &&
+                              columns !== "" ? (
                                 <div
                                   style={{
                                     display: "flex",
@@ -2658,8 +2877,8 @@ function AddWarehouse() {
                                     textAlign: "center",
                                   }}
                                 >
-                                  Please enter the number of zones, rows, and columns
-                                  to preview the layout.
+                                  Please enter the number of zones, rows, and
+                                  columns to preview the layout.
                                 </div>
                               )}
                             </div>
@@ -2700,7 +2919,9 @@ function AddWarehouse() {
                     onMouseOver={(e) =>
                       (e.target.style.backgroundColor = "#4B5563")
                     }
-                    onMouseOut={(e) => (e.target.style.backgroundColor = "#6B7280")}
+                    onMouseOut={(e) =>
+                      (e.target.style.backgroundColor = "#6B7280")
+                    }
                   >
                     Cancel
                   </button>
@@ -2722,14 +2943,16 @@ function AddWarehouse() {
                     onMouseOver={(e) =>
                       (e.target.style.backgroundColor = "#2563EB")
                     }
-                    onMouseOut={(e) => (e.target.style.backgroundColor = "#3B82F6")}
+                    onMouseOut={(e) =>
+                      (e.target.style.backgroundColor = "#3B82F6")
+                    }
                   >
                     Done
                   </button>
                 </>
               ) : (
                 <>
-                <button
+                  <button
                     type="button"
                     onClick={handleCancel}
                     style={{
@@ -2747,30 +2970,36 @@ function AddWarehouse() {
                     onMouseOver={(e) =>
                       (e.target.style.backgroundColor = "#4B5563")
                     }
-                    onMouseOut={(e) => (e.target.style.backgroundColor = "#6B7280")}
+                    onMouseOut={(e) =>
+                      (e.target.style.backgroundColor = "#6B7280")
+                    }
                   >
                     Cancel
                   </button>
-                <button
-                  type="button"
-                  onClick={handleSubmit}
-                  style={{
-                    backgroundColor: "#3B82F6",
-                    color: "#FFFFFF",
-                    border: "none",
-                    borderRadius: "8px",
-                    padding: "12px 24px",
-                    fontWeight: "500",
-                    fontSize: "16px",
-                    cursor: "pointer",
-                    boxShadow: "0 2px 4px rgba(0, 0, 0, 0.1)",
-                    transition: "background-color 0.3s",
-                  }}
-                  onMouseOver={(e) => (e.target.style.backgroundColor = "#2563EB")}
-                  onMouseOut={(e) => (e.target.style.backgroundColor = "#3B82F6")}
-                >
-                  Done
-                </button>
+                  <button
+                    type="button"
+                    onClick={handleSubmit}
+                    style={{
+                      backgroundColor: "#3B82F6",
+                      color: "#FFFFFF",
+                      border: "none",
+                      borderRadius: "8px",
+                      padding: "12px 24px",
+                      fontWeight: "500",
+                      fontSize: "16px",
+                      cursor: "pointer",
+                      boxShadow: "0 2px 4px rgba(0, 0, 0, 0.1)",
+                      transition: "background-color 0.3s",
+                    }}
+                    onMouseOver={(e) =>
+                      (e.target.style.backgroundColor = "#2563EB")
+                    }
+                    onMouseOut={(e) =>
+                      (e.target.style.backgroundColor = "#3B82F6")
+                    }
+                  >
+                    Done
+                  </button>
                 </>
               )}
             </div>

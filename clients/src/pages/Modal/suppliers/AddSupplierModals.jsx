@@ -131,6 +131,8 @@ const AddSupplierModals = ({ onClose, onSuccess, editSupplier }) => {
     accountHolder: /^[a-zA-Z\s]{1,100}$/,
     accountNumber: /^\d{9,18}$/,
     ifsc: /^[A-Z]{4}0[A-Z0-9]{6}$/,
+     name: /^[a-zA-Z\s'-]{1,50}$/, // For billing.name, shipping.name
+    address1: /^[a-zA-Z0-9\s,.#-]{1,100}$/,
   };
 
   // Sanitization function
@@ -650,14 +652,14 @@ const AddSupplierModals = ({ onClose, onSuccess, editSupplier }) => {
                    <div className="row">
                      <div className="col-12">
                        <div className="mb-3">
-                         <label className="form-label">Name</label>
+                         <label className="form-label">Name</label><span className="text-danger ms-1">*</span>
                          <input type="text" className="form-control" name="name" value={form.billing.name} onChange={e=>
                          setForm(prev => ({ ...prev, billing: { ...prev.billing, name: e.target.value } }))} />
                        </div>
                      </div>
                      <div className="col-12">
                        <div className="mb-3">
-                         <label className="form-label">Address Line 1</label>
+                         <label className="form-label">Address Line 1</label><span className="text-danger ms-1">*</span>
                          <input type="text" className="form-control" name="address1" value={form.billing.address1}
                            onChange={e=> setForm(prev => ({ ...prev, billing: { ...prev.billing, address1:
                          e.target.value } }))} />
@@ -674,23 +676,23 @@ const AddSupplierModals = ({ onClose, onSuccess, editSupplier }) => {
                      <div className="mb-3">
                        <div className="row">
                          <div className="col-md-6 mb-3">
-                           <label className="form-label">Country</label>
+                           <label className="form-label">Country</label><span className="text-danger ms-1">*</span>
                            <Select options={countries} value={form.billing.country} onChange={option=>
                              handleSelectChange('billing', 'country', option)} placeholder="Select Country" />
                          </div>
                          <div className="col-md-6 mb-3">
-                           <label className="form-label">State</label>
+                           <label className="form-label">State</label><span className="text-danger ms-1">*</span>
                            <Select options={filteredStates} value={form.billing.state} onChange={option=>
                              handleSelectChange('billing', 'state', option)} isDisabled={!form.billing.country}
                              placeholder="Select State" />
                          </div>
                          <div className="col-md-6 mb-3">
-                           <label className="form-label">City</label>
+                           <label className="form-label">City</label><span className="text-danger ms-1">*</span>
                            <Select options={filteredCities} value={form.billing.city} onChange={option=>
                              handleSelectChange('billing', 'city', option)} isDisabled={!form.billing.state}
                              placeholder="Select City" />
                          </div>
-                         <div className="col-md-6 mb-3">
+                         <div className="col-md-6 mb-3"><span className="text-danger ms-1">*</span>
                            <label className="form-label">Postal Code</label>
                            <input type="text" className={`form-control ${validationErrors.postalCode ? 'is-invalid' : ''}`} name="postalCode" value={form.billing.postalCode}
                              onChange={e=> {
@@ -721,7 +723,7 @@ const AddSupplierModals = ({ onClose, onSuccess, editSupplier }) => {
                    <div className="row">
                      <div className="col-12">
                        <div className="mb-3">
-                         <label className="form-label">Name</label>
+                         <label className="form-label">Name</label><span className="text-danger ms-1">*</span>
                          <input type="text" className="form-control" name="name" value={form.shipping.name}
                            onChange={e=> setForm(prev => ({ ...prev, shipping: { ...prev.shipping, name: e.target.value
                          } }))} />
@@ -729,7 +731,7 @@ const AddSupplierModals = ({ onClose, onSuccess, editSupplier }) => {
                      </div>
                      <div className="col-12">
                        <div className="mb-3">
-                         <label className="form-label">Address Line 1</label>
+                         <label className="form-label">Address Line 1</label><span className="text-danger ms-1">*</span>
                          <input type="text" className="form-control" name="address1" value={form.shipping.address1}
                            onChange={e=> setForm(prev => ({ ...prev, shipping: { ...prev.shipping, address1:
                          e.target.value } }))} />
@@ -744,25 +746,25 @@ const AddSupplierModals = ({ onClose, onSuccess, editSupplier }) => {
                        </div>
                      </div>
                      <div className="col-md-6 mb-3">
-                       <label className="form-label">Country</label>
+                       <label className="form-label">Country</label><span className="text-danger ms-1">*</span>
                        <Select options={countries} value={form.shipping.country} onChange={option=>
                          handleSelectChange('shipping', 'country', option)} placeholder="Select Country" />
                      </div>
                      <div className="col-md-6 mb-3">
-                       <label className="form-label">State</label>
+                       <label className="form-label">State</label><span className="text-danger ms-1">*</span>
                        <Select options={filteredShippingStates} value={form.shipping.state} onChange={option=>
                          handleSelectChange('shipping', 'state', option)} isDisabled={!form.shipping.country}
                          placeholder="Select State" />
                      </div>
                      <div className="col-md-6 mb-3">
-                       <label className="form-label">City</label>
+                       <label className="form-label">City</label><span className="text-danger ms-1">*</span>
                        <Select options={filteredShippingCities} value={form.shipping.city} onChange={option=>
                          handleSelectChange('shipping', 'city', option)} isDisabled={!form.shipping.state}
                          placeholder="Select City" />
                      </div>
                      <div className="col-md-6">
                        <div className="mb-3">
-                         <label className="form-label">Pincode</label>
+                         <label className="form-label">Pincode</label><span className="text-danger ms-1">*</span>
                          <input type="text" className={`form-control ${validationErrors.pincode ? 'is-invalid' : ''}`} name="pincode" value={form.shipping.pincode}
                            onChange={e=> {
                              const sanitizedValue = sanitizeInput(e.target.value);
