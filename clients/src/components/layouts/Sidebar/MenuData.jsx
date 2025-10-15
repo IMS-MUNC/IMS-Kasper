@@ -222,7 +222,7 @@ const canAccess = (module, action = "read") => {
           icon: <TbShoppingBag className="icons" />,
         },
         canAccess("DebitNote", "read") && {
-          label: "Debit Note",
+          label: t("Debit Note"),
           path: "/debit-note",
           icon: <MdQrCode className="icons" />,
         },
@@ -258,7 +258,7 @@ const canAccess = (module, action = "read") => {
           icon: <TbShoppingBag className="icons" />,
         },
         canAccess("CreditNote", "read") && {
-          label: "Credit Note",
+          label: t("Credit Note"),
           path: "/credit-note",
           icon: <MdQrCode className="icons" />,
         },
@@ -355,22 +355,22 @@ const canAccess = (module, action = "read") => {
               path: `/profile/${id}`,
             },
             canAccess("Security", "read") && {
-              label: "Security",
+              label: t("Security"),
               path: "/security-settings",
             },
           ].filter(Boolean),
         },
         canAccess("Website", "read") && {
-          title: "Website Settings",
+          title: t("Website Settings"),
           icon: <TbWorld className="icons" />,
           key: "websiteSettings",
           subItems: [
             canAccess("CompanySettings", "read") && {
-              label: "Company Settings",
+              label: t("Company Settings"),
               path: "/company-settings",
             },
             canAccess("Localization", "read") && {
-              label: "Localization",
+              label: t("Localization"),
               path: "/language-settings",
             },
           ].filter(Boolean),
@@ -383,11 +383,11 @@ const canAccess = (module, action = "read") => {
 
     // REPORTS
     {
-      section: "Reports",
+      section: t("Reports"),
       key: "reports",
       items: [
         canAccess("Reports", "read") && {
-          label: "Purchase Report",
+          label: t("Purchase Report"),
           path: "/purchase-report",
           icon: <FaRegFileAlt className="icons" />,
         },
@@ -407,41 +407,41 @@ const canAccess = (module, action = "read") => {
     },
   // FINANCE & ACCOUNTS
     {
-      section: "Finance & Accounts",
+      section: t("Finance & Accounts"),
       key: "Finance & Accounts",
       items: [
         canAccess("Finance", "read") && {
-          label: "Balance Sheet",
+          label: t("Balance Sheet"),
           path: "/balance-sheet",
           icon: <TbReportMoney className="icons" />,
         },
         canAccess("Finance", "read") && {
-          label: "Profit & Loss",
+          label: t("Profit & Loss"),
           path: "/profit&loss",
           icon: <SiFuturelearn className="icons" />,
         },
         canAccess("Finance", "read") && {
-          label: "Overdue Report",
+          label: t("Overdue Report"),
           path: "/overdue-report",
           icon: <FaStackOverflow className="icons" />,
         },
         canAccess("Finance", "read") && {
-          label: "Expense Report",
+          label: t("Expense Report"),
           path: "/expense-report",
           icon: <GiExpense className="icons" />,
         },
         canAccess("Finance", "read") && {
-          label: "B2B & B2C",
+          label: t("B2B & B2C"),
           path: "/bc",
           icon: <IoLogoWebComponent className="icons" />,
         },
         canAccess("Finance", "read") && {
-          label: "Payment History",
+          label: t("Payment History"),
           path: "/payment-history",
           icon: <MdOutlinePayments className="icons" />,
         },
         canAccess("Finance", "read") && {
-          label: "Credit & Debit Note",
+          label: t("Credit & Debit Note"),
           path: "/credit&debit-note",
           icon: <MdOutlineSpeakerNotes className="icons" />,
         },
@@ -449,10 +449,10 @@ const canAccess = (module, action = "read") => {
     },
     
 {
-  section: "Logout",
+  section: t("Logout"),
   key: "Logout",
   items: [
-    { label: "Logout", icon: <TbLogout className="icons" />, path: "/logout" },
+    { label: t("logout"), icon: <TbLogout className="icons" />, path: "/logout" },
   ],
 },
 
