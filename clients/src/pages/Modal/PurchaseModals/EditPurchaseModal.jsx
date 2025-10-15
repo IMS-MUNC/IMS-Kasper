@@ -1,5 +1,3 @@
-
-
 import axios from "axios";
 import React, { useEffect, useState } from "react";
 import Select from "react-select";
@@ -126,9 +124,26 @@ const token = localStorage.getItem("token");
 
 
   const totalItemCost = selectedProducts.reduce((acc, p) => {
-    const subTotal = p.quantity * (p.purchasePrice || 0) - (p.discount || 0);
-    const taxAmount = (subTotal * (p.tax || 0)) / 100;
-    return acc + subTotal + taxAmount;
+    const price = p.purchasePrice || 0;
+    const qty = p.quantity || 0;
+    const discount = p.discount || 0;
+    const tax = p.tax || 0;
+    const discountType = p.discountType || "percent";
+
+    // const subTotal = p.quantity * (p.purchasePrice || 0) - (p.discount || 0);
+    const subTotal = price * qty;
+    let discountAmount = 0;
+  if (discountType === "percent") {
+    discountAmount = (subTotal * discount) / 100;
+  } else if (discountType === "fixed") {
+    discountAmount = discount * qty; // per unit fixed discount
+  }
+    const afterDiscount = subTotal-discountAmount
+    // const taxAmount = (subTotal * (p.tax || 0)) / 100;
+    const taxAmount = (afterDiscount * tax)/100;
+    const total = afterDiscount + taxAmount;
+    // return acc + subTotal + taxAmount;
+    return acc + total;
   }, 0);
   const grandTotal = totalItemCost + (orderTax || 0) + (shippingCost || 0) - (orderDiscount || 0);
 
@@ -181,7 +196,15 @@ const token = localStorage.getItem("token");
 
     selectedProducts.forEach((p, i) => {
       const subTotal = p.quantity * p.purchasePrice;
-      const afterDiscount = subTotal - p.discount;
+       const discountType = p.discountType || "percent";
+  let discountAmount = 0;
+
+  if (discountType === "percent") {
+    discountAmount = (subTotal * p.discount) / 100;
+  } else if (discountType === "fixed") {
+    discountAmount = p.discount * p.quantity;
+  }
+      const afterDiscount = subTotal - discountAmount;
       const taxAmount = (afterDiscount * p.tax) / 100;
       const totalCost = afterDiscount + taxAmount;
       const unitCost = totalCost / p.quantity;

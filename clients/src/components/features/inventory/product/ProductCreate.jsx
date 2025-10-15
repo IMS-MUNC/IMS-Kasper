@@ -13,6 +13,7 @@ import { TbChevronUp, TbEye, TbRefresh } from "react-icons/tb";
 import { useTranslation } from "react-i18next";
 import DOMPurify from "dompurify";
 
+
 const ProductForm = () => {
   const { t } = useTranslation();
 
@@ -34,6 +35,7 @@ const ProductForm = () => {
   // Example: categoryName: "Electronics"
   // Example: categorySlug: "electronics"
   // Example: variantValue: "Red, Blue, Green"
+
   const validationPatterns = {
     productName: /^[A-Za-z0-9\s\-]{2,50}$/,
     sku: /^[A-Z0-9\-]{3,20}$/,
@@ -59,6 +61,7 @@ const ProductForm = () => {
 
   // Improved sanitization: strips HTML, trims, and normalizes whitespace
   // Example: sanitizeInput('<b>  Apple  </b>') => 'Apple'
+
   const sanitizeInput = (value, preserveSpaces = false) => {
     if (typeof value !== "string") return value;
     let input = value;
@@ -412,17 +415,71 @@ const ProductForm = () => {
   };
 
  useEffect(() => {
+   const restoreDraft = async () => {
   const savedDraft = localStorage.getItem("draftForm");
+  if(!savedDraft) return;
   if (savedDraft) {
     const parsedDraft = JSON.parse(savedDraft);
 
     if (parsedDraft.formData) setFormData(parsedDraft.formData);
+    if(parsedDraft.formData) setSelectedHSN(parsedDraft.selectedHSN);
     if (parsedDraft.selectedCategory) setSelectedCategory(parsedDraft.selectedCategory);
     if (parsedDraft.selectedsubCategory) setSelectedsubCategory(parsedDraft.selectedsubCategory);
     if (parsedDraft.selectedBrands) setSelectedBrands(parsedDraft.selectedBrands);
     if (parsedDraft.selectedUnits) setSelectedUnits(parsedDraft.selectedUnits);
     if (parsedDraft.selectedWarehouse) setSelectedWarehouse(parsedDraft.selectedWarehouse);
+   if (parsedDraft.images) {
+      const restored = await Promise.all(
+        parsedDraft.images.map(async (img) => {
+          if (img.isUploaded && img.url) {
+            return { ...img, preview: img.url, uploaded: true };
+          } else {
+            const res = await fetch(img.preview);
+            const blob = await res.blob();
+            const file = new File([blob], img.name || "draft-image.jpg", { type: blob.type });
+            return Object.assign(file, { preview: img.preview, uploaded: false });
+          }
+        })
+      );
+      setImages(restored);
+    }
+
+   if (parsedDraft.variants) {
+  const token = localStorage.getItem("token");
+
+  parsedDraft.variants.forEach(async (v, index) => {
+    if (v.selectedVariant) {
+      try {
+        const res = await fetch(
+          `${BASE_URL}/api/variant-attributes/values/${encodeURIComponent(v.selectedVariant)}`,
+          { headers: { Authorization: `Bearer ${token}` } }
+        );
+        const data = await res.json();
+        let values = [];
+        data.forEach((val) => {
+          if (typeof val === "string") {
+            values.push(...val.split(",").map((v) => v.trim()).filter(Boolean));
+          }
+        });
+        setVariants((prev) => {
+          const newVariants = [...prev];
+          newVariants[index] = {
+            selectedVariant: v.selectedVariant,
+            selectedValue: v.selectedValue,
+            valueDropdown: values,
+          };
+          return newVariants;
+        });
+      } catch (err) {
+        console.error("Error restoring variant dropdown:", err);
+      }
+    }
+  });
+}
+
   }
+}
+  restoreDraft();
 }, []);
 
 
@@ -430,15 +487,27 @@ const ProductForm = () => {
 const handleSaveDraft = () => {
   const draft = {
     formData,
+    selectedHSN,
     selectedCategory,
     selectedsubCategory,
     selectedBrands,
     selectedUnits,
     selectedWarehouse,
+    images: images.map((img) => ({
+      name:img.name,
+      preview:img.preview,
+      url:img.url || "",
+      isUploaded: !!img.url
+    })),
+    variants:variants.map((v) => ({
+      selectedVariant:v.selectedVariant,
+      selectedValue: v.selectedValue
+    }))
   };
 
   localStorage.setItem("draftForm", JSON.stringify(draft));
   toast.info("Draft Saved!");
+  navigate("/product");
 };
 
 
@@ -1007,6 +1076,7 @@ const handleSaveDraft = () => {
       );
 
       toast.success("Product created successfully!");
+      localStorage.removeItem("draftForm");
       navigate("/product");
     } catch (error) {
       toast.error("Failed to create product");
@@ -1726,7 +1796,7 @@ const handleSaveDraft = () => {
                           {t("category")}
                           <span className="text-danger">*</span>
                         </label>
-                        <a
+                        <a 
                           href="javascript:void(0);"
                           data-bs-toggle="modal"
                           data-bs-target="#categoryModal"
@@ -2684,35 +2754,35 @@ const handleSaveDraft = () => {
           </div>
         </form>
 
-        <CategoryModal
-          modalId="add-category"
-          title="Add Category"
-          categoryName={categoryName}
-          categorySlug={categorySlug}
-          // onCategoryChange={(e) => setCategoryName(e.target.value)}
-          onCategoryChange={(e) => {
-            const value = e.target.value;
-            setCategoryName(value);
-            setFormErrors((prev) => ({
-              ...prev,
-              categoryName: validateField(
-                "categoryName",
-                sanitizeInput(value, true)
-              ),
-            }));
-          }}
-          // onSlugChange={(e) => setCategorySlug(e.target.value)}
-          onSlugChange={(e) => {
-            const value = e.target.value;
-            setCategorySlug(value);
-            setFormErrors((prev) => ({
-              ...prev,
-              categorySlug: validateField("categorySlug", sanitizeInput(value)),
-            }));
-          }}
-          onSubmit={categorySubmit}
-          submitLabel="Add Category"
-        />
+          <CategoryModal
+            modalId="categoryModal"
+            title="Add Category"
+            categoryName={categoryName}
+            categorySlug={categorySlug}
+            // onCategoryChange={(e) => setCategoryName(e.target.value)}
+            onCategoryChange={(e) => {
+              const value = e.target.value;
+              setCategoryName(value);
+              setFormErrors((prev) => ({
+                ...prev,
+                categoryName: validateField(
+                  "categoryName",
+                  sanitizeInput(value, true)
+                ),
+              }));
+            }}
+            // onSlugChange={(e) => setCategorySlug(e.target.value)}
+            onSlugChange={(e) => {
+              const value = e.target.value;
+              setCategorySlug(value);
+              setFormErrors((prev) => ({
+                ...prev,
+                categorySlug: validateField("categorySlug", sanitizeInput(value)),
+              }));
+            }}
+            onSubmit={categorySubmit}
+            submitLabel="Add Category"
+          />
       </div>
     </div>
   );

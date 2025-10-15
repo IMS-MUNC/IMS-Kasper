@@ -1482,7 +1482,7 @@ const validateStep = () => {
                             data-feather="plus-circle"
                             className="plus-down-add"
                           />
-                          <span>{t("addNew")}</span>
+                          {/* <span>{t("addNew")}</span> */}
                         </a>
                       </div>
                       <Select
