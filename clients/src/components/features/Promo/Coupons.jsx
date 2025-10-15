@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useRef } from "react";
 import { RxUpdate } from "react-icons/rx";
-import { RiArrowDropUpLine } from "react-icons/ri";
+import { RiArrowDownSLine } from "react-icons/ri";
 import { IoIosAddCircleOutline } from "react-icons/io";
 // import pdf_logo from "../../assets/image/pdf-icon.png";
 // import excel_logo from "../../assets/image/excel-logo.png";
@@ -34,9 +34,9 @@ const Coupons = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [typeFilter, setTypeFilter] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
-  const [sortFilter, setSortFilter] = useState("");
+  const [sortOrder, setSortOrder] = useState("Latest");
   const [modalMode, setModalMode] = useState("add");
-  
+
   // Pagination state
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(10);
@@ -73,7 +73,7 @@ const Coupons = () => {
   // Function to check and update expired coupons
   const checkAndUpdateExpiredCoupons = async () => {
     const currentDate = new Date();
-    
+
     // Find expired coupons that are still active
     const expiredCoupons = coupons.filter((coupon) => {
       const validDate = new Date(coupon.valid);
@@ -83,7 +83,7 @@ const Coupons = () => {
     if (expiredCoupons.length > 0) {
       try {
         const token = localStorage.getItem("token");
-        
+
         // Update each expired coupon
         for (const coupon of expiredCoupons) {
           const validDate = new Date(coupon.valid);
@@ -101,7 +101,7 @@ const Coupons = () => {
             });
 
             if (response.ok) {
-              console.log(`Coupon ${coupon.name} has been automatically set to inactive due to expiry.`);
+              // console.log(`Coupon ${coupon.name} has been automatically set to inactive due to expiry.`);
             }
           }
         }
@@ -141,6 +141,10 @@ const Coupons = () => {
       checkAndUpdateExpiredCoupons();
     }
   }, [coupons]);
+
+   useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm, typeFilter, statusFilter, sortOrder]);
 
   const handleCouponSaved = () => {
     fetchCoupons(); // Re-fetch data after save
@@ -286,7 +290,7 @@ const Coupons = () => {
 
   const handlePdf = () => {
     const doc = new jsPDF();
-    
+
     // Prepare data for PDF
     const pdfData = coupons.map(item => [
       item.name || '',
@@ -387,24 +391,42 @@ const Coupons = () => {
   };
 
   // Pagination logic
-  const filteredCoupons = coupons.filter((item) => {
-    const matchesSearch =
-      item.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      item.code.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      item.description.toLowerCase().includes(searchTerm.toLowerCase());
-
-    const matchesType = typeFilter ? item.type === typeFilter : true;
-    const matchesStatus = statusFilter ? item.validStatus === statusFilter : true;
-
-    return matchesSearch && matchesType && matchesStatus;
-  }).sort((a, b) => {
-    if (sortFilter === "5" || sortFilter === "2") {
-      const dateA = new Date(a.valid);
-      const dateB = new Date(b.valid);
-      return dateB - dateA; // newest first
-    }
-    return 0;
-  });
+  // Pagination logic
+  const filteredCoupons = coupons
+    .filter((coupon) => {
+      // Status Filter
+      if (statusFilter === "" || statusFilter === "All") return true;
+      return coupon.validStatus === statusFilter;
+    })
+    .filter((coupon) => {
+      // Type Filter
+      if (typeFilter === "" || typeFilter === "All") return true;
+      return coupon.type === typeFilter;
+    })
+    .filter((coupon) => {
+      // Search Term Filter
+      const term = searchTerm.toLowerCase();
+      return (
+        coupon.name.toLowerCase().includes(term) ||
+        coupon.code.toLowerCase().includes(term) ||
+        coupon.description.toLowerCase().includes(term)
+      );
+    })
+    .sort((a, b) => {
+      // Sorting Logic
+      if (sortOrder === "Latest") {
+        const dateA = new Date(a.valid);
+        const dateB = new Date(b.valid);
+        return dateB - dateA; // Newest first
+      }
+      if (sortOrder === "Ascending") {
+        return a.name.localeCompare(b.name); // A-Z
+      }
+      if (sortOrder === "Descending") {
+        return b.name.localeCompare(a.name); // Z-A
+      }
+      return 0; // Default: no sorting
+    });
 
   const totalPages = Math.ceil(filteredCoupons.length / itemsPerPage);
   const paginatedCoupons = filteredCoupons.slice(
@@ -412,121 +434,190 @@ const Coupons = () => {
     currentPage * itemsPerPage
   );
 
+  const sortOrderLabels = {
+    Latest: 'Latest',
+    Ascending: 'A-Z',
+    Descending: 'Z-A'
+  };
+
   return (
     <div className="page-wrapper">
       <div className="content" >
-        
-          <div className="page-header">
-            <div className="add-item d-flex">
-              <div className="page-title">
-                <h4 className="fw-bold">Coupons</h4>
-                <h6 className="text-secondary">Manage Your Coupons</h6>
+
+        <div className="page-header">
+          <div className="add-item d-flex">
+            <div className="page-title">
+              <h4 className="fw-bold">Coupons</h4>
+              <h6 className="text-secondary">Manage Your Coupons</h6>
+            </div>
+          </div>
+          <div className="table-top-head me-2">
+            <li>
+              {selectedCoupons.length > 0 && (
+                <button className="btn btn-danger me-2" onClick={handleBulkDelete}>
+                  Delete ({selectedCoupons.length}) Selected
+                </button>
+              )}
+            </li>
+            <li style={{ display: "flex", alignItems: "center", gap: '5px' }} className="icon-btn">
+              <label className="" title="">Export : </label>
+              <button onClick={handlePdf} title="Download PDF" style={{
+                backgroundColor: "white",
+                display: "flex",
+                alignItems: "center",
+                border: "none",
+              }}><FaFilePdf className="fs-20" style={{ color: "red" }} /></button>
+              <button onClick={handleExcel} title="Download Excel" style={{
+                backgroundColor: "white",
+                display: "flex",
+                alignItems: "center",
+                border: "none",
+              }}><FaFileExcel className="fs-20" style={{ color: "orange" }} /></button>
+            </li>
+            <li style={{ display: "flex", alignItems: "center", gap: '5px' }} className="icon-btn">
+              <label className="" title="">Import : </label>
+              <label className="" title="Import Excel">
+                <input
+                  type="file"
+                  accept=".xlsx,.xls,.csv"
+                  hidden
+                  onChange={handleImport}
+                  ref={fileInputRef}
+                />
+                <FaFileExcel style={{ color: 'green', cursor: 'pointer' }} />
+              </label>
+            </li>
+          </div>
+          <div className="page-btn">
+            <a onClick={handleShowAdd} className="btn btn-primary">
+              <IoIosAddCircleOutline className="me-1" />
+              Add Coupons
+            </a>
+          </div>
+        </div>
+
+        <div className="card table-list-card" style={{}}>
+
+          <div className="table-top">
+            <div className="searchfiler d-flex align-items-center gap-2">
+              <IoIosSearch />
+              <input
+                style={{ border: "none", outline: "none" }}
+                type="search"
+                placeholder="Search by coupon name..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+              />
+            </div>
+            <div className="d-flex table-dropdown my-xl-auto right-content align-items-center flex-wrap row-gap-3">
+              <div className="dropdown me-2">
+                <a
+                  className="btn btn-white btn-md d-inline-flex align-items-center"
+                  data-bs-toggle="dropdown"
+                  aria-expanded="false"
+                >
+                  Type : {typeFilter || "All"} <RiArrowDownSLine  className="ms-1" />
+                </a>
+                <ul className="dropdown-menu dropdown-menu-end">
+                  <li>
+                    <a onClick={() => setTypeFilter("")} className="dropdown-item">
+                      All
+                    </a>
+                  </li>
+                  <li>
+                    <a onClick={() => setTypeFilter("percentage")} className="dropdown-item">
+                      Percentage
+                    </a>
+                  </li>
+                  <li>
+                    <a onClick={() => setTypeFilter("flat")} className="dropdown-item">
+                      Flat
+                    </a>
+                  </li>
+                </ul>
               </div>
-            </div>
-            <div className="table-top-head me-2">
-              <li>
-                {selectedCoupons.length > 0 && (
-                  <button className="btn btn-danger me-2" onClick={handleBulkDelete}>
-                    Delete ({selectedCoupons.length}) Selected
-                  </button>
-                )}
-              </li>
-              <li style={{ display: "flex", alignItems: "center", gap: '5px' }} className="icon-btn">
-                <label className="" title="">Export : </label>
-                <button onClick={handlePdf} title="Download PDF" style={{
-                  backgroundColor: "white",
-                  display: "flex",
-                  alignItems: "center",
-                  border: "none",
-                }}><FaFilePdf className="fs-20" style={{ color: "red" }} /></button>
-                <button onClick={handleExcel} title="Download Excel" style={{
-                  backgroundColor: "white",
-                  display: "flex",
-                  alignItems: "center",
-                  border: "none",
-                }}><FaFileExcel className="fs-20" style={{ color: "orange" }} /></button>
-              </li>
-              <li style={{ display: "flex", alignItems: "center", gap: '5px' }} className="icon-btn">
-                <label className="" title="">Import : </label>
-                <label className="" title="Import Excel">
-                  <input
-                    type="file"
-                    accept=".xlsx,.xls,.csv"
-                    hidden
-                    onChange={handleImport}
-                    ref={fileInputRef}
-                  />
-                  <FaFileExcel style={{ color: 'green', cursor: 'pointer' }} />
-                </label>
-              </li>
-            </div>
-            <div className="page-btn">
-              <a onClick={handleShowAdd} className="btn btn-primary">
-                <IoIosAddCircleOutline className="me-1" />
-                Add Coupons
-              </a>
+
+              <div className="dropdown me-2">
+                <a
+                  className="btn btn-white btn-md d-inline-flex align-items-center"
+                  data-bs-toggle="dropdown"
+                  aria-expanded="false"
+                >
+                  Status : {statusFilter || "All"} <RiArrowDownSLine  className="ms-1" />
+                </a>
+                <ul className="dropdown-menu dropdown-menu-end">
+                  <li>
+                    <a onClick={() => setStatusFilter("")} className="dropdown-item">
+                      All
+                    </a>
+                  </li>
+                  <li>
+                    <a onClick={() => setStatusFilter("Active")} className="dropdown-item">
+                      Active
+                    </a>
+                  </li>
+                  <li>
+                    <a onClick={() => setStatusFilter("Inactive")} className="dropdown-item">
+                      Inactive
+                    </a>
+                  </li>
+                </ul>
+              </div>
+
+              <div className="dropdown me-2">
+                <a
+                  className="btn btn-white btn-md d-inline-flex align-items-center"
+                  data-bs-toggle="dropdown"
+                  aria-expanded="false"
+                >
+                  Sort By: {sortOrderLabels[sortOrder]} <RiArrowDownSLine  className="ms-1" />
+                </a>
+                <ul className="dropdown-menu dropdown-menu-end">
+                  <li>
+                    <a onClick={() => setSortOrder("Latest")} className="dropdown-item">
+                      Latest
+                    </a>
+                  </li>
+                  <li>
+                    <a onClick={() => setSortOrder("Ascending")} className="dropdown-item">
+                      A-Z
+                    </a>
+                  </li>
+                  <li>
+                    <a onClick={() => setSortOrder("Descending")} className="dropdown-item">
+                      Z-A
+                    </a>
+                  </li>
+                </ul>
+              </div>
             </div>
           </div>
 
-          <div className="card table-list-card" style={{}}>
-          
-            <div className="table-top">
-              <div className="searchfiler d-flex align-items-center gap-2">
-                <IoIosSearch />
-                <input
-                  style={{ border: "none", outline: "none" }}
-                  type="text"
-                  placeholder="Search"
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                />
-              </div>
-              <div className="d-flex gap-3 select-filter">
-                <select value={typeFilter} onChange={(e) => setTypeFilter(e.target.value)}>
-                  <option value="">Type</option>
-                  <option value="percentage">Percentage</option>
-                  <option value="flat">Flat</option>
-                </select>
-
-                <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)}>
-                  <option value="">Status</option>
-                  <option value="Active">Active</option>
-                  <option value="Inactive">Inactive</option>
-                </select>
-
-                <select value={sortFilter} onChange={(e) => setSortFilter(e.target.value)}>
-                  <option value="">Sort By:</option>
-                  <option value="5">Sort By: Last 5 Days</option>
-                  <option value="2">Sort By: Last 2 Days</option>
-                </select>
-              </div>
-            </div>
-
-            <div className="table-responsive">
-              <table className="table datanew">
-                <thead>
-                  <tr className="table-head">
-                    <th className="no-sort">
-                      <label className="checkboxs">
-                        <input
-                          type="checkbox"
-                          id="select-all"
-                          checked={paginatedCoupons.length > 0 && selectedCoupons.length === paginatedCoupons.length}
-                          onChange={handleSelectAll}
-                        />
-                        <span className="checkmarks" />
-                      </label>
-                    </th>
-                    <th>Name</th>
-                    <th>Code</th>
-                    <th>Description</th>
-                    <th>Type</th>
-                    <th>Discount</th>
-                    <th>Limit</th>
-                    <th>Valid</th>
-                    <th>Status</th>
-                    <th className="text-center">
-                      {/* <span
+          <div className="table-responsive">
+            <table className="table datanew">
+              <thead>
+                <tr className="table-head">
+                  <th className="no-sort">
+                    <label className="checkboxs">
+                      <input
+                        type="checkbox"
+                        id="select-all"
+                        checked={paginatedCoupons.length > 0 && selectedCoupons.length === paginatedCoupons.length}
+                        onChange={handleSelectAll}
+                      />
+                      <span className="checkmarks" />
+                    </label>
+                  </th>
+                  <th>Name</th>
+                  <th>Code</th>
+                  <th>Description</th>
+                  <th>Type</th>
+                  <th>Discount</th>
+                  <th>Limit</th>
+                  <th>Valid</th>
+                  <th>Status</th>
+                  <th className="text-center">
+                    {/* <span
                         style={{
                           backgroundColor: "#ff9d42",
                           color: "white",
@@ -541,167 +632,148 @@ const Coupons = () => {
                       >
                         <IoMdSettings />
                       </span> */}
-                      Action
-                    </th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {paginatedCoupons.length > 0 ? (
-                    paginatedCoupons.map((item, index) => (
-                      <tr key={index} className="table-body">
-                        <td>
-                          <label className="checkboxs">
-                            <input
-                              type="checkbox"
-                              checked={selectedCoupons.includes(item._id)}
-                              onChange={() => handleCheckboxChange(item._id)}
-                            />
-                            <span className="checkmarks" />
-                          </label>
-                        </td>
-                        <td>{item.name}</td>
-                        <td>
-                          <span
-                            style={{
-                              backgroundColor: "#f5eefe",
-                              color: "#9d88d9",
-                              padding: "5px 8px",
-                              borderRadius: "5px",
-                            }}
+                    Action
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                {paginatedCoupons.length > 0 ? (
+                  paginatedCoupons.map((item, index) => (
+                    <tr key={index} className="table-body">
+                      <td>
+                        <label className="checkboxs">
+                          <input
+                            type="checkbox"
+                            checked={selectedCoupons.includes(item._id)}
+                            onChange={() => handleCheckboxChange(item._id)}
+                          />
+                          <span className="checkmarks" />
+                        </label>
+                      </td>
+                      <td>{item.name}</td>
+                      <td>
+                        <span
+                          style={{
+                            backgroundColor: "#f5eefe",
+                            color: "#9d88d9",
+                            padding: "5px 8px",
+                            borderRadius: "5px",
+                            textTransform:'uppercase'
+                          }}
+                        >
+                          {item.code}
+                        </span>
+                      </td>
+                      <td>{item.description.length > 0 ? item.description : "-"}</td>
+                      <td>{item.type}</td>
+                      <td>{item.discount}</td>
+                      <td>{item.limit}</td>
+                      <td>
+                        {(() => {
+                          const date = new Date(item.valid);
+                          const day = date.getDate();
+                          const month = date.getMonth() + 1;
+                          const year = date.getFullYear();
+                          return `${year}-${month}-${day}`;
+                        })()}
+                      </td>
+                      <td>
+
+                        <span
+                        className={`badge table-badge fw-medium fs-10 ${item.validStatus === "Active"
+                            ? "bg-success"
+                            : "bg-danger"
+                            }`}
+                        >
+                          {item.validStatus}
+                        </span>
+                      </td>
+                      <td className="action-table-data">
+                        <div className="iconsms" style={{ display: 'flex', justifyContent: 'center', gap: '10px' }}>
+                          <button className=""
+                            title="Edit"
                           >
-                            {item.code}
-                          </span>
-                        </td>
-                        <td>{item.description}</td>
-                        <td>{item.type}</td>
-                        <td>{item.discount}</td>
-                        <td>{item.limit}</td>
-                        <td>
-                          {(() => {
-                            const date = new Date(item.valid);
-                            const day = date.getDate();
-                            const month = date.getMonth() + 1;
-                            const year = date.getFullYear();
-                            return `${year}-${month}-${day}`;
-                          })()}
-                        </td>
-                        <td>
-
-                          <span
-                            style={{
-                              width: "80px",
-                              height: "30px",
-                              padding: "4px 8px",
-                              borderRadius: "4px",
-                              fontWeight: 500,
-                              display: "flex",
-                              alignItems: "center",
-                              justifyContent: "center",
-                              backgroundColor:
-                                item.validStatus === "Active"
-                                  ? "#3db983"
-                                  : item.validStatus === "Inactive"
-                                    ? "#f90502"
-                                    : "#f3f3f3",
-                              color:
-                                item.validStatus === "Active" ||
-                                  item.validStatus === "Inactive"
-                                  ? "#ffffff"
-                                  : "#000000",
-                            }}
+                            <FaRegEdit onClick={() => handleEdit(item)} />
+                          </button>
+                          <button className=""
+                            title="Delete"
                           >
-                            <span style={{ color: "white" }}><GoDotFill /></span>
-                            {item.validStatus}
-
-
-                          </span>
-                        </td>
-                        <td  className="action-table-data">
-                          <div className="iconsms" style={{display:'flex', justifyContent:'center', gap:'10px'}}>
-                            <button className="" 
-                            title="Edit" 
-                            >
-                              <FaRegEdit onClick={() => handleEdit(item)}/>
-                            </button>
-                            <button className="" 
-                            title="Delete" 
-                            >
-                              <RiDeleteBin6Line onClick={() => handleDeleteClick(item)}/>
-                            </button> 
-                          </div>
-                        </td>
-                      </tr>
-                    ))
-                  ) : (
-                    <tr>
-                      <td colSpan="10" className="text-center text-muted">
-                        No Coupons found.
+                            <RiDeleteBin6Line onClick={() => handleDeleteClick(item)} />
+                          </button>
+                        </div>
                       </td>
                     </tr>
-                  )}
-                </tbody>
-              </table>
-            </div>
-
-            <div
-              className="d-flex justify-content-end gap-3"
-              style={{ padding: "10px 20px" }}
-            >
-              <select
-                value={itemsPerPage}
-                onChange={(e) => {
-                  setItemsPerPage(Number(e.target.value));
-                  setCurrentPage(1);
-                }}
-                className="form-select w-auto"
-              >
-                <option value={10}>10 Per Page</option>
-                <option value={25}>25 Per Page</option>
-                <option value={50}>50 Per Page</option>
-                <option value={100}>100 Per Page</option>
-              </select>
-              <span
-                style={{
-                  backgroundColor: "white",
-                  boxShadow: "rgb(0 0 0 / 4%) 0px 3px 8px",
-                  padding: "7px",
-                  borderRadius: "5px",
-                  border: "1px solid #e4e0e0ff",
-                  color: "gray",
-                }}
-              >
-                {filteredCoupons.length === 0
-                  ? "0 of 0"
-                  : `${(currentPage - 1) * itemsPerPage + 1}-${Math.min(
-                    currentPage * itemsPerPage,
-                    filteredCoupons.length
-                  )} of ${filteredCoupons.length}`}
-                <button
-                  style={{
-                    border: "none",
-                    color: "grey",
-                    backgroundColor: "white",
-                  }}
-                  onClick={() =>
-                    setCurrentPage((prev) => Math.max(prev - 1, 1))
-                  }
-                  disabled={currentPage === 1}
-                >
-                  <GrFormPrevious />
-                </button>{" "}
-                <button
-                  style={{ border: "none", backgroundColor: "white" }}
-                  onClick={() =>
-                    setCurrentPage((prev) => Math.min(prev + 1, totalPages))
-                  }
-                  disabled={currentPage === totalPages}
-                >
-                  <MdNavigateNext />
-                </button>
-              </span>
-            </div>
-          
+                  ))
+                ) : (
+                  <tr>
+                    <td colSpan="10" className="text-center text-muted">
+                      No Coupons found.
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
           </div>
+
+          <div
+            className="d-flex justify-content-end gap-3"
+            style={{ padding: "10px 20px" }}
+          >
+            <select
+              value={itemsPerPage}
+              onChange={(e) => {
+                setItemsPerPage(Number(e.target.value));
+                setCurrentPage(1);
+              }}
+              className="form-select w-auto"
+            >
+              <option value={10}>10 Per Page</option>
+              <option value={25}>25 Per Page</option>
+              <option value={50}>50 Per Page</option>
+              <option value={100}>100 Per Page</option>
+            </select>
+            <span
+              style={{
+                backgroundColor: "white",
+                boxShadow: "rgb(0 0 0 / 4%) 0px 3px 8px",
+                padding: "7px",
+                borderRadius: "5px",
+                border: "1px solid #e4e0e0ff",
+                color: "gray",
+              }}
+            >
+              {filteredCoupons.length === 0
+                ? "0 of 0"
+                : `${(currentPage - 1) * itemsPerPage + 1}-${Math.min(
+                  currentPage * itemsPerPage,
+                  filteredCoupons.length
+                )} of ${filteredCoupons.length}`}
+              <button
+                style={{
+                  border: "none",
+                  color: "grey",
+                  backgroundColor: "white",
+                }}
+                onClick={() =>
+                  setCurrentPage((prev) => Math.max(prev - 1, 1))
+                }
+                disabled={currentPage === 1}
+              >
+                <GrFormPrevious />
+              </button>{" "}
+              <button
+                style={{ border: "none", backgroundColor: "white" }}
+                onClick={() =>
+                  setCurrentPage((prev) => Math.min(prev + 1, totalPages))
+                }
+                disabled={currentPage === totalPages}
+              >
+                <MdNavigateNext />
+              </button>
+            </span>
+          </div>
+
+        </div>
 
       </div>
       <AddCouponModal

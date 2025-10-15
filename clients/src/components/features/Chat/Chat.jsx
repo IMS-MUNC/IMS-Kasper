@@ -25,6 +25,8 @@ import { useSocket } from '../../../Context/SocketContext';
 import ChatIcon from '../../../assets/img/icons/chat.png';
 import BASE_URL from '../../../pages/config/config';
 
+import DeleteAlert from "../../../utils/sweetAlert/DeleteAlert";
+
 import axios from "axios";
 
 const SOCKET_URL = BASE_URL;
@@ -294,7 +296,7 @@ const Chat = () => {
             console.warn('Failed to save message to backend:', errorData);
             // Continue with local state update even if backend save fails
           } else {
-            console.log('Message saved to backend successfully');
+            // console.log('Message saved to backend successfully');
           }
         } catch (saveError) {
           console.warn('Error saving message to backend:', saveError);
@@ -1057,7 +1059,8 @@ const Chat = () => {
     const userMessages = messages[selectedUser._id] || [];
     const msg = userMessages[idx];
     if (!msg || msg.from !== currentUserId) return;
-    if (!window.confirm('Delete this message?')) return;
+    const confirmed = await DeleteAlert({});
+        if (!confirmed) return;
     try {
       const token = localStorage.getItem('token');
       const requestBody = {

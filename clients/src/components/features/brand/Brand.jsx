@@ -35,7 +35,7 @@ const Brand = () => {
 
   const brandNameRegex = /^[A-Za-z0-9\s]{2,50}$/;
 
-  console.log(brands);
+  // console.log(brands);
 
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("All");
@@ -48,10 +48,10 @@ const Brand = () => {
   }, []);
 
   useEffect(() => {
-    console.log("Create Permission:", hasPermission("brand", "create"));
-    console.log("Read Permission:", hasPermission("brand", "read"));
-    console.log("Update Permission:", hasPermission("brand", "update"));
-    console.log("Delete Permission:", hasPermission("brand", "delete"));
+    // console.log("Create Permission:", hasPermission("brand", "create"));
+    // console.log("Read Permission:", hasPermission("brand", "read"));
+    // console.log("Update Permission:", hasPermission("brand", "update"));
+    // console.log("Delete Permission:", hasPermission("brand", "delete"));
   }, []);
 
   //======================================================================================================
@@ -66,7 +66,7 @@ const Brand = () => {
       });
 
       setBrands(res.data.brands);
-      console.log("Brnad :", res.data.brands);
+      // console.log("Brnad :", res.data.brands);
     } catch (error) {
       console.error(
         "Fetch Brands Error:",
@@ -116,7 +116,7 @@ const Brand = () => {
         }
       );
 
-      console.log("Brand Added:", res.data);
+      // console.log("Brand Added:", res.data);
 
       // Reset form
       setBrandName("");
@@ -197,7 +197,7 @@ const Brand = () => {
   };
 
   const handleOpenEditModal = (brand) => {
-    console.log("Editing brand:", brand); // ✅ Debug log
+    // console.log("Editing brand:", brand); // ✅ Debug log
     setEditBrandId(brand._id);
     setEditBrandName(brand.brandName);
     setEditStatus(brand.status === "Active");
