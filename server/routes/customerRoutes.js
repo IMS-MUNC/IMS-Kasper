@@ -14,6 +14,7 @@ router.post('/', authMiddleware, upload.array('images', 5), customerController.c
 router.get('/',authMiddleware, customerController.getAllCustomers);
 router.get('/:id',authMiddleware, customerController.getCustomerById);
 router.put('/:id', authMiddleware,customerController.updateCustomer);
+router.post('/:id/upload-image', authMiddleware, upload.single('images'), customerController.uploadCustomerImage);
 router.delete('/:id',authMiddleware, customerController.deleteCustomer);
 
 module.exports = router;
