@@ -170,48 +170,48 @@ const Sales = () => {
   // };
 
   function handleCredit(sale) {
-  // Prepare products with correct quantities
-  const productsWithReturns = (sale.products || []).map(prod => {
-    const prodId = prod.productId?._id || prod.productId || prod._id;
-    // Sum returned qty for this product across all credit notes
-    let totalReturned = 0;
-    let creditNotesArr = [];
-    if (Array.isArray(sale.creditNotes)) {
-      sale.creditNotes.forEach(note => {
-        const returnedProd = note.products?.find(p =>
-          (p.productId?._id || p.productId || p._id) === prodId
-        );
-        if (returnedProd) {
-          const qty = Number(returnedProd.returnQty || returnedProd.quantity || 0);
-          totalReturned += qty;
-          creditNotesArr.push({
-            creditNoteId: note._id,
-            quantity: qty,
-          });
-        }
-      });
-    }
-    const originalQty = Number(prod.saleQty ?? prod.quantity ?? 0);
-    const availableQty = Math.max(0, originalQty - totalReturned);
+    // Prepare products with correct quantities
+    const productsWithReturns = (sale.products || []).map(prod => {
+      const prodId = prod.productId?._id || prod.productId || prod._id;
+      // Sum returned qty for this product across all credit notes
+      let totalReturned = 0;
+      let creditNotesArr = [];
+      if (Array.isArray(sale.creditNotes)) {
+        sale.creditNotes.forEach(note => {
+          const returnedProd = note.products?.find(p =>
+            (p.productId?._id || p.productId || p._id) === prodId
+          );
+          if (returnedProd) {
+            const qty = Number(returnedProd.returnQty || returnedProd.quantity || 0);
+            totalReturned += qty;
+            creditNotesArr.push({
+              creditNoteId: note._id,
+              quantity: qty,
+            });
+          }
+        });
+      }
+      const originalQty = Number(prod.saleQty ?? prod.quantity ?? 0);
+      const availableQty = Math.max(0, originalQty - totalReturned);
 
-    return {
-      ...prod,
-      saleQty: originalQty,
-      originalQty,
-      totalReturnedQty: totalReturned,
-      availableQty,
-      returnQty: availableQty > 0 ? 1 : 0, // default for modal
-      creditNotes: creditNotesArr,
-    };
-  });
+      return {
+        ...prod,
+        saleQty: originalQty,
+        originalQty,
+        totalReturnedQty: totalReturned,
+        availableQty,
+        returnQty: availableQty > 0 ? 1 : 0, // default for modal
+        creditNotes: creditNotesArr,
+      };
+    });
 
-  // Pass productsWithReturns to AddCreditNoteModal
-  setAddCreditSale({
-    ...sale,
-    products: productsWithReturns,
-  });
-  setCreditShow(true);
-}
+    // Pass productsWithReturns to AddCreditNoteModal
+    setAddCreditSale({
+      ...sale,
+      products: productsWithReturns,
+    });
+    setCreditShow(true);
+  }
 
 
 
@@ -384,89 +384,89 @@ const Sales = () => {
   const toggleExpand = (saleId) => {
     setExpandedRow(expandedRow === saleId ? null : saleId);
   };
-// convert to sale creditnote modal
+  // convert to sale creditnote modal
   useEffect(() => {
-  if (!creditShowl || !addCreditSale) return;
+    if (!creditShowl || !addCreditSale) return;
 
-  const modalEl = document.getElementById('add-sales-credit');
-  if (!modalEl) return;
+    const modalEl = document.getElementById('add-sales-credit');
+    if (!modalEl) return;
 
-  // create or reuse the bootstrap modal instance
-  const bs = window.bootstrap;
-  let bsModal = null;
-  try {
-    if (bs && bs.Modal) {
-      bsModal = new bs.Modal(modalEl, { backdrop: 'static', keyboard: false });
-      bsModal.show();
-    } else if (window.$) {
-      // fallback for jQuery bootstrap
-      window.$(modalEl).modal('show');
-    }
-  } catch (err) {
-    console.warn('Failed to show bootstrap modal programmatically', err);
-  }
-
-  const handleHidden = () => {
-    // keep UI state in sync when user closes the modal manually
-    setCreditShow(false);
-    setAddCreditSale(null);
-    // refresh list if needed
-    fetchSales();
-  };
-
-  modalEl.addEventListener && modalEl.addEventListener('hidden.bs.modal', handleHidden);
-
-  return () => {
-    modalEl.removeEventListener && modalEl.removeEventListener('hidden.bs.modal', handleHidden);
+    // create or reuse the bootstrap modal instance
+    const bs = window.bootstrap;
+    let bsModal = null;
     try {
-      bsModal && bsModal.hide();
-    } catch (err) { /* ignore */ }
-  };
-}, [creditShowl, addCreditSale]);
-
-const [salesModalKey, setSalesModalKey] = useState(null);
-
-// call this on click of Add Sales button
-const openAddSalesModal = () => {
-  // use timestamp so key changes each open
-  setSalesModalKey(Date.now());
-};
-
-useEffect(() => {
-  if (!salesModalKey) return;
-
-  const modalEl = document.getElementById('add-sales-new');
-  if (!modalEl) return;
-
-  const bs = window.bootstrap;
-  let bsModal = null;
-
-  try {
-    if (bs && bs.Modal) {
-      bsModal = new bs.Modal(modalEl, { backdrop: 'static' });
-      bsModal.show();
-    } else if (window.$) {
-      // jQuery bootstrap fallback
-      window.$(modalEl).modal('show');
+      if (bs && bs.Modal) {
+        bsModal = new bs.Modal(modalEl, { backdrop: 'static', keyboard: false });
+        bsModal.show();
+      } else if (window.$) {
+        // fallback for jQuery bootstrap
+        window.$(modalEl).modal('show');
+      }
+    } catch (err) {
+      console.warn('Failed to show bootstrap modal programmatically', err);
     }
-  } catch (err) {
-    console.warn('show modal failed', err);
-  }
 
-  const handleHidden = () => {
-    // reset key so AddSalesModal will be remounted next time
-    setSalesModalKey(null);
-    // optional: refresh list after modal closed
-    fetchSales();
+    const handleHidden = () => {
+      // keep UI state in sync when user closes the modal manually
+      setCreditShow(false);
+      setAddCreditSale(null);
+      // refresh list if needed
+      fetchSales();
+    };
+
+    modalEl.addEventListener && modalEl.addEventListener('hidden.bs.modal', handleHidden);
+
+    return () => {
+      modalEl.removeEventListener && modalEl.removeEventListener('hidden.bs.modal', handleHidden);
+      try {
+        bsModal && bsModal.hide();
+      } catch (err) { /* ignore */ }
+    };
+  }, [creditShowl, addCreditSale]);
+
+  const [salesModalKey, setSalesModalKey] = useState(null);
+
+  // call this on click of Add Sales button
+  const openAddSalesModal = () => {
+    // use timestamp so key changes each open
+    setSalesModalKey(Date.now());
   };
 
-  modalEl.addEventListener && modalEl.addEventListener('hidden.bs.modal', handleHidden);
+  useEffect(() => {
+    if (!salesModalKey) return;
 
-  return () => {
-    modalEl.removeEventListener && modalEl.removeEventListener('hidden.bs.modal', handleHidden);
-    try { bsModal && bsModal.hide(); } catch (e) {}
-  };
-}, [salesModalKey]);
+    const modalEl = document.getElementById('add-sales-new');
+    if (!modalEl) return;
+
+    const bs = window.bootstrap;
+    let bsModal = null;
+
+    try {
+      if (bs && bs.Modal) {
+        bsModal = new bs.Modal(modalEl, { backdrop: 'static' });
+        bsModal.show();
+      } else if (window.$) {
+        // jQuery bootstrap fallback
+        window.$(modalEl).modal('show');
+      }
+    } catch (err) {
+      console.warn('show modal failed', err);
+    }
+
+    const handleHidden = () => {
+      // reset key so AddSalesModal will be remounted next time
+      setSalesModalKey(null);
+      // optional: refresh list after modal closed
+      fetchSales();
+    };
+
+    modalEl.addEventListener && modalEl.addEventListener('hidden.bs.modal', handleHidden);
+
+    return () => {
+      modalEl.removeEventListener && modalEl.removeEventListener('hidden.bs.modal', handleHidden);
+      try { bsModal && bsModal.hide(); } catch (e) { }
+    };
+  }, [salesModalKey]);
 
   return (
     <div className="page-wrapper">
@@ -493,10 +493,18 @@ useEffect(() => {
           </ul>
           <div className="page-btn">
             <button type="button" className="btn btn-primary" onClick={openAddSalesModal}>
-  <i className="ti ti-circle-plus me-1" />Add Sales
-</button>
-            {/* <a href="#" className="btn btn-primary" data-bs-toggle="modal" data-bs-target="#add-sales-new"><i className="ti ti-circle-plus me-1" />Add Sales</a> */}
+              <i className="ti ti-circle-plus me-1" />Add Sales
+            </button>
           </div>
+             {/* <div className="page-btn">
+            <button
+              type="button"
+              className="btn btn-primary"
+              onClick={() => navigate('/add-sales')}
+            >
+              <i className="ti ti-circle-plus me-1" />Add Sales
+            </button>
+          </div> */}
         </div>
         <div className="card">
 
@@ -632,7 +640,7 @@ useEffect(() => {
                               )}
                             </div>
                           </td>
-                          
+
                           <td>{sale.referenceNumber}</td>
                           <td>{sale.invoiceId || "Not Generated"} </td>
                           <td>
@@ -661,10 +669,10 @@ useEffect(() => {
                             ) : (
                               "N/A"
                             )}
-                          </td>         
+                          </td>
                           <td>{sale.saleDate ? new Date(sale.saleDate).toLocaleDateString() : '-'}</td>
                           <td> <span className={`badge table-badge fw-medium fs-10 ${sale.status === "Complete" ? "bg-success" : "bg-danger"}`}>{sale.status}</span></td>
-                          
+
                           <td>
                             <div className="d-flex flex-column">
                               {sale.products && sale.products.length > 0 ? (
@@ -692,7 +700,7 @@ useEffect(() => {
                                       {remainingQty} {p.unit || ""}
                                       {totalReturned > 0 && (
                                         <small className="text-muted ms-2" style={{ fontSize: 12 }}>
-                                          (returned {totalReturned})
+                                          (Return: {totalReturned})
                                         </small>
                                       )}
                                     </div>
@@ -703,18 +711,8 @@ useEffect(() => {
                               )}
                             </div>
                           </td>
-                          
-                          {/* <td>
-                            <div className="d-flex flex-column">
-                              {sale.products && sale.products.length > 0 ? (
-                                sale.products.map((p, idx) => (
-                                  <div key={idx}>{(p.saleQty || p.quantity || 0)} {p.unit || ""}</div>
-                                ))
-                              ) : (
-                                <span className="text-muted">-</span>
-                              )}
-                            </div>
-                          </td> */}
+
+                     
                           <td>
                             <div className="d-flex flex-column">
                               {sale.products && sale.products.length > 0 ? (
@@ -747,7 +745,7 @@ useEffect(() => {
                             </span>
                           </td>
                           <td>{sale.createdBy ? `${sale.createdBy.name}` : '--'}</td>
-                        {/* action button */}
+                          {/* action button */}
                           <td className="text-center">
                             <a className="action-set" data-bs-toggle="dropdown" aria-expanded="true">
                               <TbDotsVertical />
@@ -759,12 +757,16 @@ useEffect(() => {
                               <li>
                                 <a className="dropdown-item" data-bs-toggle="modal" data-bs-target="#add-sales-edits" onClick={() => handleEdit(sale)}><TbEdit className="info-img" />Edit Sale</a>
                               </li>
-                                {sale.status === "Complete" && (() => {  {!sale.invoiceId && (
-                                <li>
-                                  <a className="dropdown-item" onClick={() => handleConvertToInvoice(sale)}><TbDownload className="info-img" />Convert to Invoice</a>
-                                </li>
-                              )}})}
-                            
+                              {sale.status === "Complete" && (() => {
+                                {
+                                  !sale.invoiceId && (
+                                    <li>
+                                      <a className="dropdown-item" onClick={() => handleConvertToInvoice(sale)}><TbDownload className="info-img" />Convert to Invoice</a>
+                                    </li>
+                                  )
+                                }
+                              })}
+
                               {sale.invoiceId && (
                                 <li>
                                   <a className="dropdown-item" onClick={() => navigate(`/invoice/${sale.invoiceId}`)}><TbDownload className="info-img" />View Invoice</a>
@@ -808,7 +810,7 @@ useEffect(() => {
                                 );
                               })()}
 
-                       
+
                               <li>
                                 <a className="dropdown-item mb-0" data-bs-toggle="modal" data-bs-target="#delete" onClick={() => handleDelete(sale._id)}><TbTrash className="info-img" />Delete Sale</a>
                               </li>
@@ -827,7 +829,7 @@ useEffect(() => {
                                     <th>Return ID</th>
                                     <th>Date</th>
                                     <th>Product</th>
-                                     <th>HSN</th>
+                                    <th>HSN</th>
                                     <th>Returned Qty</th>
                                     <th>Total Amount</th>
                                   </tr>
@@ -871,7 +873,7 @@ useEffect(() => {
                                               <span>{prod.productId?.productName || "-"}</span>
                                             </div>
                                           </td>
-                                           <td>{prod.hsnCode || "-"}</td>
+                                          <td>{prod.hsnCode || "-"}</td>
                                           <td>{prod.returnQty || prod.quantity || "-"}</td>
                                           <td>{note.grandTotal ? `₹${note.grandTotal}` : "-"}</td>
                                         </tr>
@@ -893,7 +895,7 @@ useEffect(() => {
                             </td>
                           </tr>
                         )}
-                    
+
                       </React.Fragment>
                     ))
                   ) : (

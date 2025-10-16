@@ -251,9 +251,10 @@ function Navbar() {
   //   document.documentElement.dir = lang === "ar" ? "rtl" : "ltr";
   // };
 
+
   const languageOptions = {
     en: { name: t("english"), flag: English },
-    hi: { name: t("hindi"), flag: Hindi }, // Replace with Hindi flag if available
+    hi: { name: t("hindi"), flag: Hindi },
     ar: { name: t("arabic"), flag: Arabic },
   };
 
@@ -264,6 +265,9 @@ function Navbar() {
     document.documentElement.dir = lang === "ar" ? "rtl" : "ltr";
     setCurrentLang(lang);
   };
+
+  // Defensive fallback for languageOptions[currentLang]
+  const langObj = languageOptions[currentLang] || languageOptions["en"];
 
   // Handle unread count changes coming from Activities
   const handleUnreadCountChange = (count) => {
@@ -571,8 +575,8 @@ function Navbar() {
                   data-bs-toggle="dropdown"
                 >
                   <img
-                    src={languageOptions[currentLang].flag}
-                    alt={languageOptions[currentLang].name}
+                    src={langObj.flag}
+                    alt={langObj.name}
                     style={{ width: "20px" }}
                   />
                   {/* <span>{languageOptions[currentLang].name}</span> */}
