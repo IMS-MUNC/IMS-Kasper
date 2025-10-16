@@ -39,8 +39,8 @@ const PosHeader = () => {
     }
     fetchCompanyDetails();
   }, []);
-  console.log("Token:", token)
-console.log("Fetching from:", `${BASE_URL}/api/companyprofile/get`)
+  // console.log("Token:", token)
+// console.log("Fetching from:", `${BASE_URL}/api/companyprofile/get`)
 
   return (
     <div className="header pos-header">

@@ -122,7 +122,7 @@ const State = () => {
           },
         }
       );
-      console.log("Editing state ID:", editingState?._id);
+      // console.log("Editing state ID:", editingState?._id);
 
       toast.success("State updated");
       setEditMode(false);
@@ -301,7 +301,7 @@ const State = () => {
     }
   };
 
-  console.log("State opening:", states);
+  // console.log("State opening:", states);
 
   const handleBulkDelete = async () => {
     const confirmed = await DeleteAlert({});
@@ -319,7 +319,7 @@ const State = () => {
       setSelectedStates([]);
       fetchStates();
     } catch (error) {
-      console.log(error);
+      // console.log(error);
       if (error.response?.status === 401) {
         toast.error("Unauthorired. Please login again");
       } else if (error.response?.status === 403) {
@@ -526,7 +526,7 @@ const State = () => {
                                 setEditingState(state); // state is the object you're editing
                                 setEditStateName(state.stateName); // ✅ Set this correctly
                                 setEditStateCode(state.stateCode); // ✅ Set this correctly
-                                console.log("Edit Clicked:", state); // ✅ Debug log
+                                // console.log("Edit Clicked:", state); // ✅ Debug log
                               }}
                               title="Edit"
                             >

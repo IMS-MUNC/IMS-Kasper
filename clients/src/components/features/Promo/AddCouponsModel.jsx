@@ -73,7 +73,7 @@ const AddCouponModal = ({ show, handleClose, onSave, editCoupon = null, mode }) 
     const requiredFields = ['name', 'code', 'type', 'discount', 'limit', 'valid', 'validStatus'];
     const isValid = requiredFields.every(field => finalData[field] && finalData[field].toString().trim() !== '');
     if (!isValid) {
-      alert("Please fill all required fields marked with * before submitting.");
+      toast.error("Please fill all the required fields marked with * before submitting.");
       return;
     }
 
@@ -98,7 +98,7 @@ const AddCouponModal = ({ show, handleClose, onSave, editCoupon = null, mode }) 
       const result = await res.json();
 
       if (!res.ok) {
-        alert(`Error: ${result.message || 'Failed to save coupon'}`);
+        toast.error(`Error: ${result.message || 'Failed to save coupon'}`);
         return;
       }
       
@@ -107,7 +107,7 @@ const AddCouponModal = ({ show, handleClose, onSave, editCoupon = null, mode }) 
       handleClose();
     } catch (err) {
       console.error("Coupon submission error:", err);
-      alert("Something went wrong while saving the coupon.");
+      toast.error("Something went wrong while saving the coupon.");
     }
   };
 
@@ -176,6 +176,7 @@ const AddCouponModal = ({ show, handleClose, onSave, editCoupon = null, mode }) 
                 placeholder="e.g. 20% or ₹100"
                 value={formData.discount}
                 onChange={handleChange}
+                min={1}
               />
             </div>
 
@@ -187,8 +188,9 @@ const AddCouponModal = ({ show, handleClose, onSave, editCoupon = null, mode }) 
                 placeholder="Enter usage limit"
                 value={formData.limit}
                 onChange={handleChange}
+                min={1}
               />
-              <small className="text-muted">Enter 0 for Unlimited</small>
+              <small className="text-muted">Enter 1 for Unlimited</small>
             </div>
 
             <div className="col-md-6">

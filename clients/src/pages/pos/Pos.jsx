@@ -1521,7 +1521,7 @@ const handleSubmit = async (e) => {
 >
   <div 
     className='tabs owl-carousel pos-category5 overflow-auto' 
-    style={{display: "block", height: "550px", overflow: "hidden", padding:"20px"}} 
+    style={{display: "block", height: "80vh", overflow: "hidden", padding:"20px"}} 
   >
     {/* All Items Section */}
     <span style={{color:'#374151', fontSize:"15px", fontWeight:"600", marginBottom:"12px", display:"block"}}>
@@ -1571,6 +1571,7 @@ const handleSubmit = async (e) => {
                   color: selectedCategory && selectedCategory._id === category._id ? '#2563eb' : '#374151',
                   backgroundColor: selectedCategory && selectedCategory._id === category._id ? '#eff6ff' : 'transparent',
                   fontWeight: selectedCategory && selectedCategory._id === category._id ? '600' : 'normal',
+                  textTransform:"capitalize",
                 }}
                 onClick={() => handleCategoryClick(category)}
                 onMouseEnter={(e)=>e.currentTarget.style.background="rgb(239, 246, 255)"}

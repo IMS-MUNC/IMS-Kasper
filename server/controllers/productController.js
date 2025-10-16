@@ -210,7 +210,7 @@ exports.getAllProducts = async (req, res) => {
 exports.searchProductsByName = async (req, res) => {
   try {
     const { name } = req.query;
-    console.log("Search query received:", name);
+    // console.log("Search query received:", name);
 
     const query = name
       ? { productName: { $regex: name, $options: "i" } } // ✅ Fixed field name

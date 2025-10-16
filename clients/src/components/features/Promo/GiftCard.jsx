@@ -1,7 +1,7 @@
 import React, { useMemo, useRef, useState } from "react";
 import { BiSolidFilePdf } from "react-icons/bi";
 import { HiOutlineRefresh } from "react-icons/hi";
-import { IoIosArrowUp } from "react-icons/io";
+import { IoIosArrowUp, IoIosSearch } from "react-icons/io";
 import Button from "react-bootstrap/Button";
 import { LuCirclePlus } from "react-icons/lu";
 import { IoEyeOutline } from "react-icons/io5";
@@ -38,10 +38,11 @@ const GiftCard = ({ show, handleClose }) => {
   const [showCustomerModal, setShowCustomerModal] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
-  const [sortOption, setSortOption] = useState("all");
+  const [sortOrder, setSortOrder] = useState("Latest");
+  const [dateFilter, setDateFilter] = useState("all");
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(10);
-  
+
   // Bulk delete state management
   const [selectedGiftCards, setSelectedGiftCards] = useState([]);
   const [selectAll, setSelectAll] = useState(false);
@@ -57,7 +58,7 @@ const GiftCard = ({ show, handleClose }) => {
     if (expiredCards.length > 0) {
       try {
         const token = localStorage.getItem("token");
-        
+
         // Update each expired card
         for (const card of expiredCards) {
           await fetch(`${BASE_URL}/api/giftcard/${card._id}`, {
@@ -72,7 +73,7 @@ const GiftCard = ({ show, handleClose }) => {
             }),
           });
         }
-        
+
         // Update local state to reflect changes
         const updatedCards = giftCards.map(card => {
           const expiryDate = new Date(card.expiryDate);
@@ -81,14 +82,14 @@ const GiftCard = ({ show, handleClose }) => {
           }
           return card;
         });
-        
+
         return updatedCards;
       } catch (error) {
         console.error('Error updating expired gift cards:', error);
         return giftCards;
       }
     }
-    
+
     return giftCards;
   };
 
@@ -106,11 +107,11 @@ const GiftCard = ({ show, handleClose }) => {
           throw new Error("Failed to fetch giftcard data");
         }
         const data = await response.json();
-        console.log(data);
-        
+        // console.log(data);
+
         // Check and update expired gift cards
         const updatedData = await checkAndUpdateExpiredGiftCards(data);
-        
+
         const finalData = updatedData.map((item) => ({
           ...item,
           id: item._id, // Mapping _id to id
@@ -351,7 +352,7 @@ const GiftCard = ({ show, handleClose }) => {
       !formData.customer ||
       !formData.issuedDate ||
       !formData.expiryDate ||
-      !formData.amount 
+      !formData.amount
     ) {
       setError("All fields are required.");
       console.error("Form data is missing required fields:", formData);
@@ -413,7 +414,7 @@ const GiftCard = ({ show, handleClose }) => {
 
 
   const handleEditOpen = (card) => {
-    console.log("Selected Gift Card:", card);
+    // console.log("Selected Gift Card:", card);
     setEditFormData(card); // preload data
     setShowEditModal(true);
   };
@@ -496,7 +497,7 @@ const GiftCard = ({ show, handleClose }) => {
       }
 
       const result = await response.json();
-      console.log("Updated Gift Card:", result);
+      // console.log("Updated Gift Card:", result);
 
       // Update the state with the updated gift card data
       setGiftCardDatas((prevData) =>
@@ -538,12 +539,12 @@ const GiftCard = ({ show, handleClose }) => {
       }
 
       const result = await response.json();
-      
+
       // Remove the deleted gift card from the state
       setGiftCardDatas((prevData) =>
         prevData.filter((card) => card._id !== id)
       );
-      
+
       toast.success(result.message || "Gift card deleted successfully");
     } catch (err) {
       console.error("Error deleting gift card:", err);
@@ -598,7 +599,7 @@ const GiftCard = ({ show, handleClose }) => {
       setGiftCardDatas((prevData) =>
         prevData.filter((card) => !selectedGiftCards.includes(card._id))
       );
-      
+
       toast.success(`${selectedGiftCards.length} gift card${selectedGiftCards.length > 1 ? 's' : ''} deleted successfully`);
       setSelectedGiftCards([]);
       setSelectAll(false);
@@ -615,39 +616,60 @@ const GiftCard = ({ show, handleClose }) => {
     return customer?.name || "Unknown Customer";
   };
 
-  const filteredGiftCards = useMemo(() => {
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm, statusFilter, sortOrder, dateFilter]);
 
-    const now = dayjs();
-    const sevenDaysAgo = now.subtract(7, "day");
-    const threeDaysAgo = now.subtract(3, "day");
-    const twoDaysAgo = now.subtract(2, "day");
-    const oneDaysAgo = now.subtract(1, "day");
-
-    return GiftCardDatas.filter((item) => {
-      const customerName = getCustomerName(item.customer);
-
-      const searchMatch =
-        item.giftCard.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        customerName.toLowerCase().includes(searchTerm.toLowerCase());
-
-      const statusMatch =
-        statusFilter === "all" ||
-        (statusFilter === "active" && item.status) ||
-        (statusFilter === "inactive" && !item.status);
-
-      const sortMatch =
-        sortOption === "all" ||
-        (sortOption === "last7days" && dayjs(item.issuedDate).isAfter(sevenDaysAgo)) ||
-        (sortOption === "last3days" && dayjs(item.issuedDate).isAfter(threeDaysAgo)) ||
-        (sortOption === "last2days" && dayjs(item.issuedDate).isAfter(twoDaysAgo)) ||
-        (sortOption === "last1days" && dayjs(item.issuedDate).isAfter(oneDaysAgo));
-
-      return searchMatch && statusMatch && sortMatch;
+  // Filtering and Sorting Logic
+  // Filtering and Sorting Logic
+  const filteredGiftCards = GiftCardDatas
+    .filter((card) => {
+      // Date Range Filter
+      if (dateFilter === "all") return true;
+      const issuedDate = dayjs(card.issuedDate);
+      const now = dayjs();
+      if (dateFilter === "last1day") return issuedDate.isAfter(now.subtract(1, 'day'));
+      if (dateFilter === "last2days") return issuedDate.isAfter(now.subtract(2, 'day'));
+      if (dateFilter === "last7days") return issuedDate.isAfter(now.subtract(7, 'day'));
+      return true;
+    })
+    .filter((card) => {
+      // Status Filter
+      if (statusFilter === "all") return true;
+      if (statusFilter === "active") return card.status === true;
+      if (statusFilter === "inactive") return card.status === false;
+      return true;
+    })
+    .filter((card) => {
+      // Search Term Filter
+      const term = searchTerm.toLowerCase();
+      const customerName = getCustomerName(card.customer).toLowerCase();
+      return (
+        card.giftCard.toLowerCase().includes(term) ||
+        customerName.includes(term)
+      );
+    })
+    .sort((a, b) => {
+      // Sorting Logic
+      switch (sortOrder) {
+        case "Latest":
+          return new Date(b.issuedDate) - new Date(a.issuedDate);
+        case "Oldest":
+          return new Date(a.issuedDate) - new Date(b.issuedDate);
+        case "Ascending":
+          return a.giftCard.localeCompare(b.giftCard);
+        case "Descending":
+          return b.giftCard.localeCompare(a.giftCard);
+        default:
+          return 0;
+      }
     });
-  }, [GiftCardDatas, Customers, searchTerm, statusFilter, sortOption]);
 
   const totalPages = Math.ceil(filteredGiftCards.length / itemsPerPage);
-
+  const paginatedGiftCards = filteredGiftCards.slice(
+    (currentPage - 1) * itemsPerPage,
+    currentPage * itemsPerPage
+  );
 
   const fetchGiftDataref = async () => {
     try {
@@ -673,6 +695,14 @@ const GiftCard = ({ show, handleClose }) => {
 
 
   const handleShow = () => setShowModal(true);
+
+  const sortOrderLabels = {
+    Latest: 'Latest',
+    Oldest: 'Oldest',
+    Ascending: 'A-Z',
+    Descending: 'Z-A'
+  };
+
   return (
     <div className="page-wrapper">
       <div className="content">
@@ -737,35 +767,101 @@ const GiftCard = ({ show, handleClose }) => {
         <div className="card table-list-card">
 
           <div className="table-top">
-            <div className="d-flex gap-3 align-items-center">
-              {" "}
-              <div className="input-group rounded">
-                <input
-                  type="search"
-                  className="form-control rounded"
-                  placeholder="🔍︎ Search"
-                  aria-label="Search"
-                  aria-describedby="search-addon"
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                />
-              </div>
+            <div className="searchfiler d-flex align-items-center gap-2">
+              <IoIosSearch />
+              <input
+                style={{ border: "none", outline: "none" }}
+                type="search"
+                placeholder="Search by gift cards..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+              />
             </div>
 
-            <div className="d-flex gap-3">
-              <select className="form-select" value={statusFilter} aria-label="Default select example" onChange={(e) => setStatusFilter(e.target.value)}>
-                
-                <option value="all">Status</option>
-                <option value="active">Active</option>
-                <option value="inactive">Inactive</option>
-              </select>
-              <select className="form-select" value={sortOption} onChange={(e) => setSortOption(e.target.value)} aria-label="Default select example">
-                <option value="all">Sort</option>
-                <option value="last7days">Last 7 Days</option>
-                <option value="last1days">Last 1 Days</option>
-                <option value="last2days">Last 2 Days</option>
-                <option value="last3days">Last 3 Days</option>
-              </select>
+            <div className="d-flex table-dropdown my-xl-auto right-content align-items-center flex-wrap row-gap-3">
+              {/* Status Filter Dropdown */}
+              <div className="dropdown me-2">
+                <a
+                  className="btn btn-white btn-md d-inline-flex align-items-center"
+                  data-bs-toggle="dropdown"
+                  aria-expanded="false"
+                >
+                  Status : {statusFilter.charAt(0).toUpperCase() + statusFilter.slice(1)} <GoChevronDown className="ms-1" />
+                </a>
+                <ul className="dropdown-menu dropdown-menu-end">
+                  <li>
+                    <a onClick={() => setStatusFilter("all")} className="dropdown-item">
+                      All
+                    </a>
+                  </li>
+                  <li>
+                    <a onClick={() => setStatusFilter("active")} className="dropdown-item">
+                      Active
+                    </a>
+                  </li>
+                  <li>
+                    <a onClick={() => setStatusFilter("inactive")} className="dropdown-item">
+                      Inactive
+                    </a>
+                  </li>
+                </ul>
+              </div>
+
+              {/* Sort Order Dropdown */}
+              <div className="dropdown me-2">
+                <a
+                  className="btn btn-white btn-md d-inline-flex align-items-center"
+                  data-bs-toggle="dropdown"
+                  aria-expanded="false"
+                >
+                  Sort By: {sortOrderLabels[sortOrder]} <GoChevronDown className="ms-1" />
+                </a>
+                <ul className="dropdown-menu dropdown-menu-end">
+                  <li>
+                    <a onClick={() => setSortOrder("Latest")} className="dropdown-item">
+                      Latest
+                    </a>
+                  </li>
+                  <li>
+                    <a onClick={() => setSortOrder("Oldest")} className="dropdown-item">
+                      Oldest
+                    </a>
+                  </li>
+                  <li>
+                    <a onClick={() => setSortOrder("Ascending")} className="dropdown-item">
+                      A-Z
+                    </a>
+                  </li>
+                  <li>
+                    <a onClick={() => setSortOrder("Descending")} className="dropdown-item">
+                      Z-A
+                    </a>
+                  </li>
+                </ul>
+              </div>
+
+              <div className="dropdown me-2">
+                <a
+                  className="btn btn-white btn-md d-inline-flex align-items-center"
+                  data-bs-toggle="dropdown"
+                  aria-expanded="false"
+                >
+                  Date : {
+                    {
+                      "all": "All Time",
+                      "last1day": "Last 1 Day",
+                      "last2days": "Last 2 Days",
+                      "last7days": "Last 7 Days"
+                    }[dateFilter]
+                  } <GoChevronDown className="ms-1" />
+                </a>
+                <ul className="dropdown-menu dropdown-menu-end">
+                  <li><a onClick={() => setDateFilter("all")} className="dropdown-item">All Time</a></li>
+                  <li><a onClick={() => setDateFilter("last1day")} className="dropdown-item">Last 1 Day</a></li>
+                  <li><a onClick={() => setDateFilter("last2days")} className="dropdown-item">Last 2 Days</a></li>
+                  <li><a onClick={() => setDateFilter("last7days")} className="dropdown-item">Last 7 Days</a></li>
+                </ul>
+              </div>
             </div>
           </div>
 
@@ -777,17 +873,11 @@ const GiftCard = ({ show, handleClose }) => {
                     <input
                       type="checkbox"
                       checked={
-                        filteredGiftCards
-                          .slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage)
-                          .length > 0 &&
-                        filteredGiftCards
-                          .slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage)
-                          .every((item) => selectedGiftCards.includes(item._id))
+                        paginatedGiftCards.length > 0 &&
+                        paginatedGiftCards.every((item) => selectedGiftCards.includes(item._id))
                       }
                       onChange={(e) => {
-                        const pageIds = filteredGiftCards
-                          .slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage)
-                          .map((item) => item._id);
+                        const pageIds = paginatedGiftCards.map((item) => item._id);
                         const allSelectedOnPage = pageIds.every((id) =>
                           selectedGiftCards.includes(id)
                         );
@@ -801,59 +891,61 @@ const GiftCard = ({ show, handleClose }) => {
                   <th scope="col">Expiry Date</th>
                   <th scope="col">Amount</th>
                   <th scope="col">Status</th>
-                  <th style={{textAlign:'center'}}>Action</th>
+                  <th style={{ textAlign: 'center' }}>Action</th>
                 </tr>
               </thead>
 
               <tbody>
-
-                {filteredGiftCards
-                  .slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage)
-                  .map((item, idx) => (
-                    <tr key={idx}>
-                      <td>
-                        <input
-                          type="checkbox"
-                          checked={selectedGiftCards.includes(item._id)}
-                          onChange={(e) => handleCheckboxChange(item._id, e.target.checked)}
-                        />
-                      </td>
-                      <td>{item.giftCard}</td>
-                      <td>{getCustomerName(item.customer)}</td>
-                      <td>{dayjs(item.issuedDate).format("YYYY-MM-DD")}</td>
-                      <td>{dayjs(item.expiryDate).format("YYYY-MM-DD")}</td>
-                      <td>{item.amount}</td>
-                      <td>
-                        <span
-                          className={`badge ${item.status ? "badge-success" : "badge-danger"
-                            }`}
-                        >
-                          {item.status ? "Active" : "Inactive"}
-                        </span>
-                      </td>
-
-                      <td>
-                        <div className="iconsms" style={{display:'flex', justifyContent:'center', gap:'10px'}}>
-                          {/* <button>
-                            <IoEyeOutline />
-                          </button> */}
-                          <button
+    {paginatedGiftCards.length > 0 ? (
+        paginatedGiftCards.map((item, idx) => (
+            <tr key={idx}>
+                <td>
+                    <input
+                        type="checkbox"
+                        checked={selectedGiftCards.includes(item._id)}
+                        onChange={() => handleCheckboxChange(item._id)}
+                    />
+                </td>
+                <td>{item.giftCard}</td>
+                <td>{getCustomerName(item.customer)}</td>
+                <td>{dayjs(item.issuedDate).format("YYYY-MM-DD")}</td>
+                <td>{dayjs(item.expiryDate).format("YYYY-MM-DD")}</td>
+                <td>{item.amount}</td>
+                <td>
+                    <span
+                    
+                        className={`badge table-badge fw-medium fs-10 ${item.status ? "badge-success" : "badge-danger"}`}
+                    >
+                        {item.status ? "Active" : "Inactive"}
+                    </span>
+                </td>
+                <td className="action-table-data">
+                    <div className="iconsms" style={{ display: 'flex', justifyContent: 'center', gap: '10px' }}>
+                        <button
                             variant="warning text-white"
                             onClick={() => handleEditOpen(toEditForm(item))}
                             title="Edit"
-                          >
+                        >
                             <FiEdit />
-                          </button>
-                          <button onClick={() => handleDelete(item._id)}
+                        </button>
+                        <button 
+                            onClick={() => handleDelete(item._id)}
                             title="Delete"
-                          >
+                        >
                             <RiDeleteBinLine />
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
-              </tbody>
+                        </button>
+                    </div>
+                </td>
+            </tr>
+        ))
+    ) : (
+        <tr>
+            <td colSpan="8" className="text-center text-muted">
+                No matching gift card found.
+            </td>
+        </tr>
+    )}
+</tbody>
             </table>
           </div>
 
@@ -921,34 +1013,34 @@ const GiftCard = ({ show, handleClose }) => {
 
 
         </div>
-        </div>
-      
-        {/* add models */}
-        <Modal show={showModal} onHide={handleCloses} centered>
-          <Modal.Header closeButton>
-            <Modal.Title>Add Gift Card</Modal.Title>
-          </Modal.Header>
-          <Modal.Body>
-            <Form>
-              <Form.Group controlId="giftCard">
-                <Form.Label>
-                  Gift Card <span className="text-danger">*</span>
-                </Form.Label>
-                <Form.Control
-                  type="text"
-                  placeholder="Enter gift card name"
-                  name="giftCard"
-                  value={formData.giftCard}
-                  onChange={handleChange}
-                />
-              </Form.Group>
+      </div>
 
-              <Form.Group controlId="customer" className="mt-3">
-                <div className="d-flex justify-content-between align-items-center">
-                  <Form.Label className="mb-0">
-                    Customer <span className="text-danger">*</span>
-                  </Form.Label>
-                  {/* <Button
+      {/* add models */}
+      <Modal show={showModal} onHide={handleCloses} centered>
+        <Modal.Header>
+          <Modal.Title>Add Gift Card</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          <Form>
+            <Form.Group controlId="giftCard">
+              <Form.Label>
+                Gift Card <span className="text-danger">*</span>
+              </Form.Label>
+              <Form.Control
+                type="text"
+                placeholder="Enter gift card name"
+                name="giftCard"
+                value={formData.giftCard}
+                onChange={handleChange}
+              />
+            </Form.Group>
+
+            <Form.Group controlId="customer" className="mt-3">
+              <div className="d-flex justify-content-between align-items-center">
+                <Form.Label className="mb-0">
+                  Customer <span className="text-danger">*</span>
+                </Form.Label>
+                {/* <Button
                     variant="link"
                     className="text-warning p-0 text-decoration-none d-flex align-items-center gap-1"
                     onClick={() => setShowCustomerModal(true)}
@@ -956,68 +1048,69 @@ const GiftCard = ({ show, handleClose }) => {
                     <FiPlusCircle style={{ fontSize: "1.1rem" }} />
                     Add New
                   </Button> */}
-                </div>
-                <Form.Select
-                  name="customer"
-                  value={formData.customer}
-                  onChange={handleChange}
-                  className="mt-1"
-                >
-                  <option value="">
-                    {Customers.length === 0 ? "Loading customers..." : "Select Customer"}
+              </div>
+              <Form.Select
+                name="customer"
+                value={formData.customer}
+                onChange={handleChange}
+                className="mt-1"
+              >
+                <option value="">
+                  {Customers.length === 0 ? "Loading customers..." : "Select Customer"}
+                </option>
+                {Customers.map((c) => (
+                  <option key={c._id} value={c._id}>
+                    {c.name}
                   </option>
-                  {Customers.map((c) => (
-                    <option key={c._id} value={c._id}>
-                      {c.name}
-                    </option>
-                  ))}
-                </Form.Select>
-              </Form.Group>
+                ))}
+              </Form.Select>
+            </Form.Group>
 
-              <Row className="mt-3">
-                <Col>
-                  <Form.Group controlId="issuedDate">
-                    <Form.Label>
-                      Issued Date <span className="text-danger">*</span>
-                    </Form.Label>
-                    <Form.Control
-                      type="date"
-                      name="issuedDate"
-                      value={dayjs(formData.issuedDate).format("YYYY-MM-DD")}
-                      onChange={handleChange}
-                    />
-                  </Form.Group>
-                </Col>
-                <Col>
-                  <Form.Group controlId="expiryDate">
-                    <Form.Label>
-                      Expiry Date <span className="text-danger">*</span>
-                    </Form.Label>
-                    <Form.Control
-                      type="date"
-                      name="expiryDate"
-                      value={formData.expiryDate}
-                      onChange={handleChange}
-                    />
-                  </Form.Group>
-                </Col>
-              </Row>
+            <Row className="mt-3">
+              <Col>
+                <Form.Group controlId="issuedDate">
+                  <Form.Label>
+                    Issued Date <span className="text-danger">*</span>
+                  </Form.Label>
+                  <Form.Control
+                    type="date"
+                    name="issuedDate"
+                    value={dayjs(formData.issuedDate).format("YYYY-MM-DD")}
+                    onChange={handleChange}
+                  />
+                </Form.Group>
+              </Col>
+              <Col>
+                <Form.Group controlId="expiryDate">
+                  <Form.Label>
+                    Expiry Date <span className="text-danger">*</span>
+                  </Form.Label>
+                  <Form.Control
+                    type="date"
+                    name="expiryDate"
+                    value={formData.expiryDate}
+                    onChange={handleChange}
+                  />
+                </Form.Group>
+              </Col>
+            </Row>
 
-              <Row className="mt-3">
-                <Col>
-                  <Form.Group controlId="amount">
-                    <Form.Label>
-                      Amount <span className="text-danger">*</span>
-                    </Form.Label>
-                    <Form.Control
-                      type="number"
-                      name="amount"
-                      value={formData.amount}
-                      onChange={handleChange}
-                    />
-                  </Form.Group>
-                </Col>
-                {/* <Col>
+            <Row className="mt-3">
+              <Col>
+                <Form.Group controlId="amount">
+                  <Form.Label>
+                    Amount <span className="text-danger">*</span>
+                  </Form.Label>
+                  <Form.Control
+                    type="number"
+                    name="amount"
+                    value={formData.amount}
+                    onChange={handleChange}
+                    min={1}
+                  />
+                </Form.Group>
+              </Col>
+              {/* <Col>
                   <Form.Group controlId="balance">
                     <Form.Label>
                       Balance <span className="text-danger">*</span>
@@ -1030,143 +1123,143 @@ const GiftCard = ({ show, handleClose }) => {
                     />
                   </Form.Group>
                 </Col> */}
-              </Row>
+            </Row>
 
-              <Form.Group
-                controlId="status"
-                className="mt-4 d-flex align-items-center justify-content-between"
-              >
-                <Form.Label className=" me-3 mb-0">Status</Form.Label>
-                <Form.Check
-                  type="switch"
-                  name="status"
-                  checked={formData.status}
-                  onChange={handleChange}
-                  className=""
-                />
-              </Form.Group>
-            </Form>
-          </Modal.Body>
-          <Modal.Footer style={{gap:'10px'}}>
-            <Button variant="dark" onClick={handleCloses}>
-              Cancel
-            </Button>
-            <Button variant="warning" onClick={handleSubmit}>
-              Add Gift Card
-            </Button>
-          </Modal.Footer>
-        </Modal>
+            <Form.Group
+              controlId="status"
+              className="mt-4 d-flex align-items-center justify-content-between"
+            >
+              <Form.Label className=" me-3 mb-0">Status</Form.Label>
+              <Form.Check
+                type="switch"
+                name="status"
+                checked={formData.status}
+                onChange={handleChange}
+                className=""
+              />
+            </Form.Group>
+          </Form>
+        </Modal.Body>
+        <Modal.Footer style={{ gap: '10px' }}>
+          <Button variant="dark" onClick={handleCloses}>
+            Cancel
+          </Button>
+          <Button variant="warning" onClick={handleSubmit}>
+            Add Gift Card
+          </Button>
+        </Modal.Footer>
+      </Modal>
 
-        {/* edit modal */}
-        <Modal show={showEditModal} onHide={handleEditClose} centered>
-          <Modal.Header closeButton>
-            <Modal.Title>Edit Gift Card</Modal.Title>
-          </Modal.Header>
-          <Modal.Body>
-            <Form>
-              <Form.Group controlId="editGiftCard">
-                <Form.Label>
-                  Gift Card <span className="text-danger">*</span>
+      {/* edit modal */}
+      <Modal show={showEditModal} onHide={handleEditClose} centered>
+        <Modal.Header>
+          <Modal.Title>Edit Gift Card</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          <Form>
+            <Form.Group controlId="editGiftCard">
+              <Form.Label>
+                Gift Card <span className="text-danger">*</span>
+              </Form.Label>
+              <Form.Control
+                type="text"
+                name="giftCard"
+                value={editFormData.giftCard}
+                onChange={(e) =>
+                  setEditFormData({ ...editFormData, giftCard: e.target.value })
+                }
+              />
+            </Form.Group>
+
+            <Form.Group controlId="editCustomer" className="mt-3">
+              <div className="d-flex justify-content-between align-items-center">
+                <Form.Label className="mb-0">
+                  Customer <span className="text-danger">*</span>
                 </Form.Label>
-                <Form.Control
-                  type="text"
-                  name="giftCard"
-                  value={editFormData.giftCard}
-                  onChange={(e) =>
-                    setEditFormData({ ...editFormData, giftCard: e.target.value })
-                  }
-                />
-              </Form.Group>
-
-              <Form.Group controlId="editCustomer" className="mt-3">
-                <div className="d-flex justify-content-between align-items-center">
-                  <Form.Label className="mb-0">
-                    Customer <span className="text-danger">*</span>
-                  </Form.Label>
-                  {/* <Button
+                {/* <Button
                     variant="link"
                     className="text-warning p-0 text-decoration-none d-flex align-items-center gap-1"
                   >
                     <FiPlusCircle style={{ fontSize: "1.1rem" }} />
                     Add New
                   </Button> */}
-                </div>
-                <Form.Select
-                  name="customer"
-                  value={editFormData.customer}
-                  onChange={(e) =>
-                    setEditFormData({ ...editFormData, customer: e.target.value })
-                  }
-                  className="mt-1"
-                >
-                  <option value="">Select</option>
-                  {Customers.map((c) => (
-                    <option key={c._id} value={c._id}>
-                      {c.name}
-                    </option>
-                  ))}
-                </Form.Select>
-              </Form.Group>
+              </div>
+              <Form.Select
+                name="customer"
+                value={editFormData.customer}
+                onChange={(e) =>
+                  setEditFormData({ ...editFormData, customer: e.target.value })
+                }
+                className="mt-1"
+              >
+                <option value="">Select</option>
+                {Customers.map((c) => (
+                  <option key={c._id} value={c._id}>
+                    {c.name}
+                  </option>
+                ))}
+              </Form.Select>
+            </Form.Group>
 
-              <Row className="mt-3">
-                <Col>
-                  <Form.Group controlId="editIssuedDate">
-                    <Form.Label>
-                      Issued Date <span className="text-danger">*</span>
-                    </Form.Label>
-                    <Form.Control
-                      type="date"
-                      name="issuedDate"
-                      value={editFormData.issuedDate}
-                      onChange={(e) =>
-                        setEditFormData({
-                          ...editFormData,
-                          issuedDate: e.target.value,
-                        })
-                      }
-                    />
-                  </Form.Group>
-                </Col>
-                <Col>
-                  <Form.Group controlId="editExpiryDate">
-                    <Form.Label>
-                      Expiry Date <span className="text-danger">*</span>
-                    </Form.Label>
-                    <Form.Control
-                      type="date"
-                      name="expiryDate"
-                      value={editFormData.expiryDate}
-                      onChange={(e) =>
-                        setEditFormData({
-                          ...editFormData,
-                          expiryDate: e.target.value,
-                        })
-                      }
-                    />
-                  </Form.Group>
-                </Col>
-              </Row>
+            <Row className="mt-3">
+              <Col>
+                <Form.Group controlId="editIssuedDate">
+                  <Form.Label>
+                    Issued Date <span className="text-danger">*</span>
+                  </Form.Label>
+                  <Form.Control
+                    type="date"
+                    name="issuedDate"
+                    value={editFormData.issuedDate}
+                    onChange={(e) =>
+                      setEditFormData({
+                        ...editFormData,
+                        issuedDate: e.target.value,
+                      })
+                    }
+                  />
+                </Form.Group>
+              </Col>
+              <Col>
+                <Form.Group controlId="editExpiryDate">
+                  <Form.Label>
+                    Expiry Date <span className="text-danger">*</span>
+                  </Form.Label>
+                  <Form.Control
+                    type="date"
+                    name="expiryDate"
+                    value={editFormData.expiryDate}
+                    onChange={(e) =>
+                      setEditFormData({
+                        ...editFormData,
+                        expiryDate: e.target.value,
+                      })
+                    }
+                  />
+                </Form.Group>
+              </Col>
+            </Row>
 
-              <Row className="mt-3">
-                <Col>
-                  <Form.Group controlId="editAmount">
-                    <Form.Label>
-                      Amount <span className="text-danger">*</span>
-                    </Form.Label>
-                    <Form.Control
-                      type="number"
-                      name="amount"
-                      value={editFormData.amount}
-                      onChange={(e) =>
-                        setEditFormData({
-                          ...editFormData,
-                          amount: e.target.value,
-                        })
-                      }
-                    />
-                  </Form.Group>
-                </Col>
-                {/* <Col>
+            <Row className="mt-3">
+              <Col>
+                <Form.Group controlId="editAmount">
+                  <Form.Label>
+                    Amount <span className="text-danger">*</span>
+                  </Form.Label>
+                  <Form.Control
+                    type="number"
+                    name="amount"
+                    value={editFormData.amount}
+                    onChange={(e) =>
+                      setEditFormData({
+                        ...editFormData,
+                        amount: e.target.value,
+                      })
+                    }
+                  />
+                </Form.Group>
+              </Col>
+              {/* <Col>
                   <Form.Group controlId="editBalance">
                     <Form.Label>
                       Balance <span className="text-danger">*</span>
@@ -1184,100 +1277,100 @@ const GiftCard = ({ show, handleClose }) => {
                     />
                   </Form.Group>
                 </Col> */}
-              </Row>
+            </Row>
 
-              <Form.Group
-                controlId="editStatus"
-                className="mt-4 d-flex align-items-center justify-content-between"
-              >
-                <Form.Label className="me-3 mb-0">Status</Form.Label>
-                <Form.Check
-                  type="switch"
-                  name="status"
-                  checked={editFormData.status}
-                  onChange={(e) =>
-                    setEditFormData({ ...editFormData, status: e.target.checked })
-                  }
-                />
-              </Form.Group>
-            </Form>
-          </Modal.Body>
-          <Modal.Footer style={{gap:'10px'}}>
-            <Button variant="dark" onClick={handleEditClose}>
-              Cancel
-            </Button>
-            <Button variant="warning" onClick={handleEditSubmit}>
-              Save Changes
-            </Button>
-          </Modal.Footer>
-        </Modal>
-
-        {/* ───────────────── Add‑Customer Modal ──────────────── */}
-        <Modal
-          show={showCustomerModal}
-          onHide={() => setShowCustomerModal(false)}
-          centered
-        >
-          <Modal.Header closeButton>
-            <Modal.Title>Add Customer</Modal.Title>
-          </Modal.Header>
-
-          <Modal.Body>
-            <Form
-              id="addCustomerForm"
-              onSubmit={async (e) => {
-                e.preventDefault();
-
-
-                const name = e.target.customerName.value.trim();
-                if (!name) return;
-
-                try {
-                  // 👉 hit your API (or whatever you use) to save
-                  const res = await fetch(`${BASE_URL}/api/customers/`, {
-                    method: "POST",
-                    headers: { 
-                      "Content-Type": "application/json",
-                      Authorization: `Bearer ${localStorage.getItem("token")}`
-                    },
-                    body: JSON.stringify({ 
-                      name: name,
-                      email: `${name.toLowerCase().replace(/\s+/g, '')}@example.com`,
-                      phone: "0000000000"
-                    }),
-                  });
-                  const saved = await res.json();
-
-                  // 👉 pop the new customer into the dropdown list
-                  setFormData((prev) => ({ ...prev, customer: saved._id }));
-                  // Update the customers list with the new customer
-                  setCustomers((prev) => [...prev, saved]);
-
-                  setShowCustomerModal(false);
-                } catch (err) {
-                  console.error(err);
-                  alert("Couldn’t add customer. Please try again.");
-                }
-              }}
+            <Form.Group
+              controlId="editStatus"
+              className="mt-4 d-flex align-items-center justify-content-between"
             >
-              <Form.Group controlId="customer">
-                <Form.Label>
-                  Customer <span className="text-danger">*</span>
-                </Form.Label>
-                <Form.Control name="customerName" placeholder="Enter customer name" />
-              </Form.Group>
-            </Form>
-          </Modal.Body>
+              <Form.Label className="me-3 mb-0">Status</Form.Label>
+              <Form.Check
+                type="switch"
+                name="status"
+                checked={editFormData.status}
+                onChange={(e) =>
+                  setEditFormData({ ...editFormData, status: e.target.checked })
+                }
+              />
+            </Form.Group>
+          </Form>
+        </Modal.Body>
+        <Modal.Footer style={{ gap: '10px' }}>
+          <Button variant="dark" onClick={handleEditClose}>
+            Cancel
+          </Button>
+          <Button variant="warning" onClick={handleEditSubmit}>
+            Save Changes
+          </Button>
+        </Modal.Footer>
+      </Modal>
 
-          <Modal.Footer>
-            <Button variant="dark" onClick={() => setShowCustomerModal(false)}>
-              Cancel
-            </Button>
-            <Button variant="warning" type="submit" form="addCustomerForm" >
-              Add Customer
-            </Button>
-          </Modal.Footer>
-        </Modal>
+      {/* ───────────────── Add‑Customer Modal ──────────────── */}
+      <Modal
+        show={showCustomerModal}
+        onHide={() => setShowCustomerModal(false)}
+        centered
+      >
+        <Modal.Header closeButton>
+          <Modal.Title>Add Customer</Modal.Title>
+        </Modal.Header>
+
+        <Modal.Body>
+          <Form
+            id="addCustomerForm"
+            onSubmit={async (e) => {
+              e.preventDefault();
+
+
+              const name = e.target.customerName.value.trim();
+              if (!name) return;
+
+              try {
+                // 👉 hit your API (or whatever you use) to save
+                const res = await fetch(`${BASE_URL}/api/customers/`, {
+                  method: "POST",
+                  headers: {
+                    "Content-Type": "application/json",
+                    Authorization: `Bearer ${localStorage.getItem("token")}`
+                  },
+                  body: JSON.stringify({
+                    name: name,
+                    email: `${name.toLowerCase().replace(/\s+/g, '')}@example.com`,
+                    phone: "0000000000"
+                  }),
+                });
+                const saved = await res.json();
+
+                // 👉 pop the new customer into the dropdown list
+                setFormData((prev) => ({ ...prev, customer: saved._id }));
+                // Update the customers list with the new customer
+                setCustomers((prev) => [...prev, saved]);
+
+                setShowCustomerModal(false);
+              } catch (err) {
+                console.error(err);
+                alert("Couldn’t add customer. Please try again.");
+              }
+            }}
+          >
+            <Form.Group controlId="customer">
+              <Form.Label>
+                Customer <span className="text-danger">*</span>
+              </Form.Label>
+              <Form.Control name="customerName" placeholder="Enter customer name" />
+            </Form.Group>
+          </Form>
+        </Modal.Body>
+
+        <Modal.Footer>
+          <Button variant="dark" onClick={() => setShowCustomerModal(false)}>
+            Cancel
+          </Button>
+          <Button variant="warning" type="submit" form="addCustomerForm" >
+            Add Customer
+          </Button>
+        </Modal.Footer>
+      </Modal>
 
     </div>
   );

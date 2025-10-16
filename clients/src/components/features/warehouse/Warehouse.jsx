@@ -194,7 +194,6 @@ function Warehouse() {
 
             <div style={{ marginTop: "2px" }}>
               <div className="row">
-                {console.log("wre", warehouses)}
                 {warehouses.map((item) => {
                   const filteredProducts = products.filter(
                     (p) => p.warehouseName === item.warehouseName

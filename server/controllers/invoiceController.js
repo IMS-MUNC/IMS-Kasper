@@ -141,7 +141,7 @@ exports.getAllInvoice = async (req, res) => {
 
         // Get all invoiceIds from Sales model
         const salesInvoiceIds = await Sales.find({ invoiceId: { $exists: true, $ne: null } }).distinct("invoiceId");
-        console.log("Invoice IDs from Sales model:", salesInvoiceIds);
+        // console.log("Invoice IDs from Sales model:", salesInvoiceIds);
 
         // Build query to only fetch invoices whose invoiceId exists in Sales
         let query = { invoiceId: { $in: salesInvoiceIds } };
@@ -195,7 +195,7 @@ exports.getAllInvoice = async (req, res) => {
                 .skip(skip)
                 .limit(limit);
         } catch (popErr) {
-            console.error('Invoice population error:', popErr);
+            // console.error('Invoice population error:', popErr);
             return res.status(500).json({ message: 'Invoice population error', error: popErr.message });
         }
 
@@ -273,7 +273,7 @@ exports.getAllInvoice = async (req, res) => {
 
         res.json({ invoices: merged, total, page, pages: Math.ceil(total / limit) });
     } catch (err) {
-        console.error('getAllInvoice error:', err);
+        // console.error('getAllInvoice error:', err);
         res.status(500).json({ message: err.message });
     }
 };
