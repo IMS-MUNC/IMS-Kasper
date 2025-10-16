@@ -77,6 +77,7 @@ import LanguageSwitcher from "../utils/LanguageSwitch/LanguageSwitcher.jsx";
 import DebitNote from "../components/features/creditDebit/debitNote/DebitNote.jsx";
 import CreditNote from "../components/features/creditDebit/creditNote/CreditNote.jsx";
 import Sales from "../components/features/sales/Sales.jsx";
+// import AddSalesCreate from "../components/features/sales/SalesCreate.jsx";
 import SalesDashboard from "../components/features/sales/SalesDashboard.jsx";
 import SaleReturn from "../components/features/sales/return/SaleReturn.jsx";
 import AllCustomer from "../components/features/customers/AllCustomers.jsx";
@@ -140,6 +141,7 @@ import OtpVerification from "../components/auth/TwoStepOtpVerification.jsx";
 import Quotation from "../components/features/quotation/Quotation.jsx";
 import NewPos from "../pages/pos/NewPos.jsx";
 import Trash from "../pages/Delete/Trash.jsx";
+import AddSalesModal from "../pages/Modal/SalesModal/AddSalesModal.jsx";
 // import {Pos} from "../pages/pos/Pos.jsx";
 
 
@@ -294,6 +296,8 @@ const AppRoutes = () => {
  <Route path="/sales-payment" element={<PaymentHistory />} />
  <Route path="/quotation-list" element={<Quotation />} />
  <Route path="/sales-dashboard" element={<SalesDashboard />} />
+
+ <Route path="/add-sales" element={<AddSalesModal />} />
 
 
  {/* stock */}

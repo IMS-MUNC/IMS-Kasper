@@ -887,24 +887,6 @@ React.useEffect(() => {
 
   
 
-  // Validation function
-  // const validateForm = () => {
-  //   const errors = {};
-  //   if (!selectedCustomer) errors.selectedCustomer = 'Customer is required.';
-  //   if (!saleDate) errors.saleDate = 'Sale date is required.';
-  //   if (!status) errors.status = 'Status is required.';
-  //   if (!selectedProducts || selectedProducts.length === 0) errors.selectedProducts = 'At least one product is required.';
-  //   selectedProducts.forEach((p, idx) => {
-  //     if (!p.productName) errors[`productName_${idx}`] = 'Product name required.';
-  //     if (!p.quantity || p.quantity <= 0) errors[`quantity_${idx}`] = 'Quantity must be greater than 0.';
-  //   });
-  //   if (paymentType === 'Partial') {
-  //     if (paidAmount < 0) errors.paidAmount = 'Paid amount cannot be negative.';
-  //     if (paidAmount > grandTotals) errors.paidAmount = 'Paid amount cannot exceed total.';
-  //     if (!dueDate) errors.dueDate = 'Due date required for partial payment.';
-  //   }
-  //   return errors;
-  // };
 
 const validateForm = () => {
   const errors = {};
@@ -961,7 +943,7 @@ const validateForm = () => {
   const statusOptions =
     paymentType === "Full"
       ? ["Paid", "Pending"]        // sirf Paid aur Pending
-      : ["Unpaid", "Partial", "Pending"]; // Full ke alawa (Partial case)
+      : ["Unpaid","Pending"]; // Full ke alawa (Partial case)
 
   return (
     <div className="modal fade" id="add-sales-new">
