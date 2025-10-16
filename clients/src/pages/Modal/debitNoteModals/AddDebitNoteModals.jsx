@@ -1,7 +1,3 @@
-
-
-
-
 // // AddDebitNoteModals.jsx
 // This file is used to create a debit note modal for returning products from a purchase.    
 import React, { useState, useEffect, useRef } from 'react'
@@ -203,9 +199,19 @@ const [orderTax, setOrderTax] = useState(0);
         }
     }, [purchaseData]);
 
+    const formatDateToISO = (dateStr) => {
+        if(!dateStr) return new Date().toISOString();
+        if(dateStr.includes('/')) {
+            const [day, month, year] = dateStr.split('/');
+            return `${year}-${month}-${day}`; //ISO format string
+        }
+        return dateStr;
+    }
+
     const handleSubmit = async (e) => {
         e.preventDefault();
         setLoading(true);
+        const token = localStorage.getItem("token")
         try {
             const productsPayload = formState.products.map(p => ({
                 productId: p._id || p.product?._id || p.productId,
@@ -226,8 +232,8 @@ const [orderTax, setOrderTax] = useState(0);
             const payload = {
                 debitNoteId: formState.debitNoteId,
                 referenceNumber: formState.referenceNumber,
-                debitNoteDate: formState.debitNoteDate || new Date().toISOString(),
-                dueDate: formState.dueDate,
+                debitNoteDate: formatDateToISO(formState.debitNoteDate) || new Date().toISOString(),
+                dueDate: formatDateToISO(formState.dueDate),
                 status: formState.status,
                 currency: formState.currency,
                 enableTax: formState.enableTax,
@@ -248,6 +254,8 @@ const [orderTax, setOrderTax] = useState(0);
                 purchase: formState.purchase?._id || formState.purchase || '',
                 reason: formState.reason,
             };
+            console.log("🟢 Payload before submit:", formState);
+
             // await axios.post(`${BASE_URL}/api/purchases/return`, payload);
             await axios.post(`${BASE_URL}/api/debit-notes/return`, payload, {
                 headers: {

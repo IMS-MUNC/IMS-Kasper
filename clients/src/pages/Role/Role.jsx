@@ -33,7 +33,7 @@ const Role = () => {
 
 
   const [errors, setErrors] = useState({});
-  const nameRegex = /^[A-Za-z]{2,}$/;
+  const nameRegex = /^[A-Za-z]+(?: [A-Za-z]+)*$/;;
 
   // const [statusFilter, setStatusFilter] = useState("Status");
   const [searchTerm, setSearchTerm] = useState("");
