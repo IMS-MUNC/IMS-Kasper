@@ -750,7 +750,8 @@ const AddPurchaseModal = ({ onSuccess }) => {
                                 discountAmount = (qty * price * discount) / 100;
                               } else {
                                 discountDisplay = "₹" + discount;
-                                discountAmount = discount;
+                                // discountAmount = discount;
+                                discountAmount = qty * discount; //i use this 15-10-25
                               }
                               const tax = product.tax || 0;
                               const subTotal = qty * price;
