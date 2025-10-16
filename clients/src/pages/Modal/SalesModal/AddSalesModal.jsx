@@ -1109,6 +1109,7 @@ const validateForm = () => {
                                   <p className="mb-0">{billingAddr?.address1}</p>
                                   <p className="mb-0">Phone : {customerObj?.phone}</p>
                                   <p className="mb-0">Email : {customerObj?.email}</p>
+                                  <p className="mb-0">GSTIN : {customerObj?.gstin}</p>
                                 </div>
                               </div>
                             </div>
@@ -1138,6 +1139,7 @@ const validateForm = () => {
                                   <p className="mb-0">{shippingAddr?.address1}</p>
                                   <p className="mb-0">Phone : {customerObj?.phone}</p>
                                   <p className="mb-0">Email : {customerObj?.email}</p>
+                                  <p className="mb-0">GSTIN : {customerObj?.gstin}</p>
                                 </div>
                               </div>
                             </div>

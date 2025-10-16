@@ -266,7 +266,7 @@ const isPathActive = (path) => {
           const res = await axios.get(`${BASE_URL}/api/companyprofile/get`)
           if (res.status === 200) {
             setCompanyImages(res.data.data)
-            console.log("res.data", res.data.data)
+            // console.log("res.data", res.data.data)
           }
         } catch (error) {
           toast.error("Unable to find company details", {
@@ -287,7 +287,7 @@ const isPathActive = (path) => {
 			
 
 			<div
-			className={`sidebar${mobileOpen ? ' slide-nav' : ''}${miniSidebar ? ' mini-sidebar' : ''}${hovered ? ' expand-menu' : ''} ${themeColor}`}
+				className={`sidebar${mobileOpen ? ' slide-nav' : ''}${miniSidebar ? ' mini-sidebar' : ''}${hovered ? ' expand-menu' : ''} ${themeColor}`}
 
 
 				id="sidebar"
@@ -299,12 +299,12 @@ const isPathActive = (path) => {
 					{/* <a href="/dashboard" className="logo logo-normal" style={{ padding: '0 10px', height: '40px', width: 'auto', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
 						 <img src={isDarkMode ? companyImages?.companyDarkLogo : companyImages?.companyLogo} className="compact-logo" alt="Logo" style={{height: "65px"}}/>
 					</a> */}
-					  <Link to="/home" className="logo logo-normal">
-						 <img src={isDarkMode ? companyImages?.companyDarkLogo : companyImages?.companyLogo}  alt="Logo" />
-							  </Link>
-				
+					<Link to="/home" className="logo logo-normal">
+						<img src={isDarkMode ? companyImages?.companyDarkLogo : companyImages?.companyLogo} alt="Logo" />
+					</Link>
+
 					<Link href="/dashboard" className="logo-small">
-						 <img src={companyImages?.companyIcon} class="compact-logo" alt="Compact Footer Logo" />
+						<img src={companyImages?.companyIcon} class="compact-logo" alt="Compact Footer Logo" />
 					</Link>
 					<a
 						id="toggle_btn"
@@ -444,121 +444,121 @@ const isPathActive = (path) => {
 
 
 				<div className="sidebar-inner slimscroll">
-  <div id="sidebar-menu" className="sidebar-menu">
-    <ul>
-      {menuData.map((section, idx) => (
-        <li key={idx} className="submenu-open">
-          {section.section && <h6 className="submenu-hdr">{section.section}</h6>}
-          <ul>
-            {section.items.map((item, iidx) => {
-              // If item has subItems, determine if any child is active
-              if (item.subItems) {
-                const anyChildActive = item.subItems.some((sub) => {
-                  if (sub.nested) {
-                    return sub.nested.some((n) => isPathActive(n.path));
-                  }
-                  return isPathActive(sub.path);
-                });
-   const isOpen = !!openMenus[item.key] || anyChildActive;
-                return (
-                  <li
-                    className={`submenu ${openMenus[item.key] ? "open" : ""}`}
-                    key={iidx}
-                  >
-                    <a
-                      href="#"
-                      className={`subdrop ${openMenus[item.key] ? "active" : ""} ${anyChildActive ? "active" : ""}`}
-                      onClick={(e) => {
-                        e.preventDefault();
-                        toggleMenu(item.key);
-                      }}
-                    >
-                      {item.icon}
-                      <span>{item.title}</span>
-					{isOpen ? (
-					  <AiOutlineRight
-  className={`menu-arrow ${isOpen ? "rotated" : ""}`}
-/>
+					<div id="sidebar-menu" className="sidebar-menu">
+						<ul>
+							{menuData.map((section, idx) => (
+								<li key={idx} className="submenu-open">
+									{section.section && <h6 className="submenu-hdr">{section.section}</h6>}
+									<ul>
+										{section.items.map((item, iidx) => {
+											// If item has subItems, determine if any child is active
+											if (item.subItems) {
+												const anyChildActive = item.subItems.some((sub) => {
+													if (sub.nested) {
+														return sub.nested.some((n) => isPathActive(n.path));
+													}
+													return isPathActive(sub.path);
+												});
+												const isOpen = !!openMenus[item.key] || anyChildActive;
+												return (
+													<li
+														className={`submenu ${openMenus[item.key] ? "open" : ""}`}
+														key={iidx}
+													>
+														<a
+															href="#"
+															className={`subdrop ${openMenus[item.key] ? "active" : ""} ${anyChildActive ? "active" : ""}`}
+															onClick={(e) => {
+																e.preventDefault();
+																toggleMenu(item.key);
+															}}
+														>
+															{item.icon}
+															<span>{item.title}</span>
+															{isOpen ? (
+																<AiOutlineRight
+																	className={`menu-arrow ${isOpen ? "rotated" : ""}`}
+																/>
 
-					) : (
-					  <AiOutlineUp className="menu-arrow" />
-					)}
-                    </a>
+															) : (
+																<AiOutlineUp className="menu-arrow" />
+															)}
+														</a>
 
-                    <ul
-                      style={{
-                        display: openMenus[item.key] || anyChildActive ? "block" : "none",
-                      }}
-                    >
-                      {item.subItems.map((sub, subIdx) =>
-                        sub.nested ? (
-                          <li
-                            key={subIdx}
-                            className={`submenu submenu-two ${openMenus[sub.nestedKey] ? "open" : ""}`}
-                          >
-                            <a
-                              href="#"
-                              onClick={(e) => {
-                                e.preventDefault();
-                                toggleMenu(sub.nestedKey);
-                              }}
-                              className={openMenus[sub.nestedKey] ? "active" : ""}
-                            >
-                              {sub.label}
-                              <span className={`menu-arrow inside-submenu ${openMenus[sub.nestedKey] ? "rotated" : ""}`}></span>
-                            </a>
+														<ul
+															style={{
+																display: openMenus[item.key] || anyChildActive ? "block" : "none",
+															}}
+														>
+															{item.subItems.map((sub, subIdx) =>
+																sub.nested ? (
+																	<li
+																		key={subIdx}
+																		className={`submenu submenu-two ${openMenus[sub.nestedKey] ? "open" : ""}`}
+																	>
+																		<a
+																			href="#"
+																			onClick={(e) => {
+																				e.preventDefault();
+																				toggleMenu(sub.nestedKey);
+																			}}
+																			className={openMenus[sub.nestedKey] ? "active" : ""}
+																		>
+																			{sub.label}
+																			<span className={`menu-arrow inside-submenu ${openMenus[sub.nestedKey] ? "rotated" : ""}`}></span>
+																		</a>
 
-                            <ul style={{ display: openMenus[sub.nestedKey] ? "block" : "none" }}>
-                              {sub.nested.map((n, nIdx) => (
-                                <li key={nIdx}>
-                                  <NavLink
-                                    to={n.path}
-                                    onClick={handleLinkClick}
-                                    className={({ isActive }) => (isActive ? "active" : "")}
-                                  >
-                                    {n.label}
-                                  </NavLink>
-                                </li>
-                              ))}
-                            </ul>
-                          </li>
-                        ) : (
-                          <li key={subIdx}>
-                            <NavLink
-                              to={sub.path}
-                              onClick={handleLinkClick}
-                              className={({ isActive }) => (isActive ? "active" : "")}
-                            >
-                              {sub.label}
-                            </NavLink>
-                          </li>
-                        )
-                      )}
-                    </ul>
-                  </li>
-                );
-              }
+																		<ul style={{ display: openMenus[sub.nestedKey] ? "block" : "none" }}>
+																			{sub.nested.map((n, nIdx) => (
+																				<li key={nIdx}>
+																					<NavLink
+																						to={n.path}
+																						onClick={handleLinkClick}
+																						className={({ isActive }) => (isActive ? "active" : "")}
+																					>
+																						{n.label}
+																					</NavLink>
+																				</li>
+																			))}
+																		</ul>
+																	</li>
+																) : (
+																	<li key={subIdx}>
+																		<NavLink
+																			to={sub.path}
+																			onClick={handleLinkClick}
+																			className={({ isActive }) => (isActive ? "active" : "")}
+																		>
+																			{sub.label}
+																		</NavLink>
+																	</li>
+																)
+															)}
+														</ul>
+													</li>
+												);
+											}
 
-              // Single-level item (no subItems)
-              return (
-                <li key={iidx}>
-                  <NavLink
-                    to={item.path}
-                    onClick={handleLinkClick}
-                    className={({ isActive }) => (isActive ? "active" : "")}
-                  >
-                    {item.icon}
-                    <span>{item.label}</span>
-                  </NavLink>
-                </li>
-              );
-            })}
-          </ul>
-        </li>
-      ))}
-    </ul>
-  </div>
-</div>
+											// Single-level item (no subItems)
+											return (
+												<li key={iidx}>
+													<NavLink
+														to={item.path}
+														onClick={handleLinkClick}
+														className={({ isActive }) => (isActive ? "active" : "")}
+													>
+														{item.icon}
+														<span>{item.label}</span>
+													</NavLink>
+												</li>
+											);
+										})}
+									</ul>
+								</li>
+							))}
+						</ul>
+					</div>
+				</div>
 
 			</div>
 		</>

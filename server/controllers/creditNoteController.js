@@ -317,7 +317,68 @@ exports.createCreditNote = async (req, res) => {
   }
 };
 
-// 🔹 GET all Credit Notes
+// // 🔹 GET all Credit Notes
+// exports.getAllCreditNotes = async (req, res) => {
+//   try {
+//     // Support isDeleted filter like purchaseController
+//     let filter = {};
+//     if (typeof req.query.isDeleted !== 'undefined') {
+//       filter.isDeleted = req.query.isDeleted === 'true';
+//     } else {
+//       filter.isDeleted = false; // Default: only show not deleted
+//     }
+
+//     // Pagination
+//     let page = parseInt(req.query.page) || 1;
+//     let limit = parseInt(req.query.limit) || 10;
+//     if (page < 1) page = 1;
+//     if (limit < 1) limit = 10;
+//     const skip = (page - 1) * limit;
+
+//     const [creditNotes, total] = await Promise.all([
+//       CreditNote.find(filter)
+//         .sort({ createdAt: -1 })
+//         .skip(skip)
+//         .limit(limit)
+//         .populate({
+//           path: "customer",
+//           select: "name email phone gstin billing  gstState",
+//         })
+//         .populate({
+//           path: "billFrom",
+//           select: "name email phone billing gstin",
+//         })
+//         .populate({
+//           path: "billTo",
+//           select: "name email phone billing gstin",
+//         })
+//         .populate({
+//           path: "sale",
+//           populate: {
+//             path: "customer",
+//             select: "name email phone gstin billing ",
+//           },
+//         })
+//         .populate({
+//           path: "products.productId",
+//           select: "productName hsnCode images",
+//         }),
+//       CreditNote.countDocuments(filter)
+//     ]);
+
+//     res.status(200).json({
+//       success: true,
+//       count: creditNotes.length,
+//       total,
+//       page,
+//       totalPages: Math.ceil(total / limit),
+//       data: creditNotes,
+//     });
+//   } catch (error) {
+//     console.error("Error fetching Credit Notes:", error);
+//     res.status(500).json({ success: false, error: error.message });
+//   }
+// };
 exports.getAllCreditNotes = async (req, res) => {
   try {
     // Support isDeleted filter like purchaseController
@@ -335,24 +396,29 @@ exports.getAllCreditNotes = async (req, res) => {
     if (limit < 1) limit = 10;
     const skip = (page - 1) * limit;
 
+    // Fetch credit notes with customer, billFrom, billTo, sale.customer, and products.productId populated
     const [creditNotes, total] = await Promise.all([
       CreditNote.find(filter)
         .sort({ createdAt: -1 })
         .skip(skip)
         .limit(limit)
         .populate({
+          path: "customer",
+          select: "name email phone gstin gstState",
+        })
+        .populate({
           path: "billFrom",
-          select: "name images email",
+          select: "name email phone billing gstin",
         })
         .populate({
           path: "billTo",
-          select: "name images email",
+          select: "name email phone billing gstin",
         })
         .populate({
           path: "sale",
           populate: {
             path: "customer",
-            select: "name images email",
+            select: "name email phone billing gstin",
           },
         })
         .populate({
@@ -361,6 +427,11 @@ exports.getAllCreditNotes = async (req, res) => {
         }),
       CreditNote.countDocuments(filter)
     ]);
+
+    // Debug: log the first populated customer object
+    // if (creditNotes.length > 0) {
+    //   console.log("Populated customer in credit note:", creditNotes[0].customer);
+    // }
 
     res.status(200).json({
       success: true,
@@ -375,7 +446,6 @@ exports.getAllCreditNotes = async (req, res) => {
     res.status(500).json({ success: false, error: error.message });
   }
 };
-
 
 // SOFT DELETE Credit Note
 exports.softDeleteCreditNote = async (req, res) => {
@@ -413,7 +483,7 @@ exports.hardDeleteCreditNote = async (req, res) => {
   }
 };
 
-
+// old main code 
 // exports.getAllCreditNotes = async (req, res) => {
 //   try {
 //     const creditNotes = await CreditNote.find()
