@@ -561,11 +561,11 @@ function AllCustomers({ onClose }) {
                         <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
                           
                           {customer.images && customer.images.length > 0 ? (
-                            <div className="" style={{ width: "30px", height: "30px", overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                            <img
+                            <div style={{width:'30px',height:'30px',objectFit: "cover"}}>
+                                    <img
                               src={customer.images && customer.images.length > 0 ? customer.images[0] : ""}
                               className="rounded"
-                              style={{ width: "30px", height: "30px", objectFit: "cover" }}
+                               style={{ width: "100%", height: "100%",  }}
                             // onError={(e) => { e.target.src = "https://via.placeholder.com/32"; }} // Fallback on error
                             />
                             </div>
@@ -580,7 +580,7 @@ function AllCustomers({ onClose }) {
                       {/* <td>{customer.address}</td> */}
                       <td>{customer.phone}</td>
                       <td>{customer.email}</td>
-                      <td>{formatAddress(customer.billing)}</td>
+                      <td>{(formatAddress(customer.billing)).length > 20 ? formatAddress(customer.billing).slice(0,20) + "..." : formatAddress(customer.billing)}</td>
                       {/* <td>{customer.orders}</td> */}
                       <td>{customerStats[customer._id]?.orderCount || 0} times</td>
 
@@ -793,19 +793,20 @@ function AllCustomers({ onClose }) {
                     height="32"
                   /> */}
                                   {selectedCustomer.images && selectedCustomer.images.length > 0 ? (
+                                    <div style={{width:'30px',height:'30px',objectFit: "cover"}}>
                                     <img
                                       src={selectedCustomer.images && selectedCustomer.images.length > 0 ? selectedCustomer.images[0] : ""}
                                       className="rounded"
-                                      width="32"
-                                      height="32"
+                              style={{ width: "100%", height: "100%",  }}
                                     // onError={(e) => { e.target.src = "https://via.placeholder.com/32"; }} // Fallback on error
                                     />
+                                    </div>
                                   ) : (
                                     <div className="avatar-placeholder rounded d-flex align-items-center justify-content-center" style={{ width: 32, height: 32, backgroundColor: '#6c757d', color: 'white', fontWeight: 'bold' }}>
                                       {selectedCustomer.name ? selectedCustomer.name.charAt(0).toUpperCase() : 'N/A'}
                                     </div>
                                   )}
-                                  {selectedCustomer.name}
+                                  {/* {selectedCustomer.name} */}
                                 </div>
                                 <span className="fw-semibold">{selectedCustomer.name}</span>
                               </div>

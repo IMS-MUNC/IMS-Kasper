@@ -237,6 +237,30 @@ exports.updateCustomer = async (req, res) => {
   }
 };
 
+// Upload customer image
+exports.uploadCustomerImage = async (req, res) => {
+  try {
+    const customerId = req.params.id;
+    if (!req.file) return res.status(400).json({ error: 'No image provided' });
+
+    // Upload to Cloudinary
+    const uploaded = await cloudinary.uploader.upload(req.file.path, { folder: "customer_images" });
+    const imageUrl = uploaded.secure_url;
+
+    // Find and update customer - replace images array with new image
+    const customer = await Customer.findById(customerId);
+    if (!customer) return res.status(404).json({ error: 'Customer not found' });
+
+    customer.images = [imageUrl];
+    await customer.save();
+
+    res.json({ message: 'Image uploaded successfully', imageUrl });
+  } catch (err) {
+    console.error("Upload Image Error:", err);
+    res.status(500).json({ error: err.message });
+  }
+};
+
 // Delete customer
 exports.deleteCustomer = async (req, res) => {
   try {

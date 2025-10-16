@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import axios from "axios";
 import BASE_URL from "../../config/config";
+import DOMPurify from "dompurify";
 import { toast } from "react-toastify";
 import { IoIosArrowForward } from "react-icons/io";
 import { TbCopy } from "react-icons/tb";
@@ -25,6 +26,13 @@ const EditCustomerModal = ({ customer, onClose, onSuccess }) => {
   const [selectedShippingState, setSelectedShippingState] = useState(null);
   const [selectedShippingCity, setSelectedShippingCity] = useState(null);
 
+  const [gstType, setGstType] = useState("");
+  const [gstStates, setGstStates] = useState([]);
+  const [selectedGstState, setSelectedGstState] = useState(null);
+  const [gstLoading, setGstLoading] = useState(false);
+  const [validationErrors, setValidationErrors] = useState({});
+  const [isGstinVerified, setIsGstinVerified] = useState(false);
+
   const [form, setForm] = useState({
     name: "",
     email: "",
@@ -32,6 +40,7 @@ const EditCustomerModal = ({ customer, onClose, onSuccess }) => {
     currency: "",
     website: "",
     notes: "",
+    gstin: "",
     billing: {
       name: "",
       address1: "",
@@ -73,6 +82,7 @@ const EditCustomerModal = ({ customer, onClose, onSuccess }) => {
       currency: customer.currency || "",
       website: customer.website || "",
       notes: customer.notes || "",
+      gstin: customer.gstin || "",
       billing: {
         name: customer.billing?.name || "",
         address1: customer.billing?.address1 || "",
@@ -102,6 +112,14 @@ const EditCustomerModal = ({ customer, onClose, onSuccess }) => {
       status: typeof customer.status === "boolean" ? customer.status : true,
     };
     setForm(prefilledForm);
+
+    setGstType(customer.gstType === "Registered" ? "register" : customer.gstType === "Unregister" ? "unregister" : "");
+    if (customer.gstState && customer.gstState !== "N/A") {
+      setSelectedGstState({ value: customer.gstState, label: customer.gstState });
+    } else {
+      setSelectedGstState({ value: "N/A", label: "N/A" });
+    }
+    setIsGstinVerified(!!customer.gstin);
 
     // Initialize image preview
     setImagePreviewUrl(customer.image || null);
@@ -155,6 +173,38 @@ const EditCustomerModal = ({ customer, onClose, onSuccess }) => {
     }
   }, [customer]);
 
+useEffect(() => {
+  if (gstType === "register") {
+    axios
+      .get(`${BASE_URL}/api/gst`)
+      .then((res) => {
+        // Log the response to debug the API data structure
+        console.log("GST States API Response:", res.data);
+        const stateOptions = res.data.map((s) => ({ value: s.gstinCode, label: s.gstinCode }));
+        setGstStates(stateOptions);
+        // Ensure prefilled gstState is selected if it exists
+        if (customer?.gstState && customer.gstState !== "N/A") {
+          const matchedState = stateOptions.find(
+            (option) => option.value === customer.gstState
+          );
+          if (matchedState) {
+            setSelectedGstState(matchedState);
+          } else {
+            console.warn("Prefilled GST state not found in options:", customer.gstState);
+          }
+        }
+      })
+      .catch((err) => {
+        console.error("Failed to fetch GST states:", err.response || err.message);
+        setGstStates([]);
+        toast.error("Failed to fetch GST states. Please try again.");
+      });
+  } else {
+    setGstStates([]);
+    setSelectedGstState({ value: "N/A", label: "N/A" });
+  }
+}, [gstType, customer]);
+
   // Clean up image preview URL to prevent memory leaks
   useEffect(() => {
     return () => {
@@ -201,14 +251,52 @@ const EditCustomerModal = ({ customer, onClose, onSuccess }) => {
     : [];
 
   // Sanitization function to prevent XSS
-  const sanitizeInput = (input) => {
-    if (typeof input !== "string") return input;
-    return input
-      // .replace(/&/g, "&amp;")
-      // .replace(/</g, "&lt;")
-      // .replace(/>/g, "&gt;")
-      // .replace(/"/g, "&quot;")
-      // .replace(/'/g, "&#x27;");
+  // const sanitizeInput = (input) => {
+  //   if (typeof input !== "string") return input;
+  //   // return input
+  //   let sanitized = DOMPurify.sanitize(input, {
+  //     ALLOWED_TAGS: [],
+  //     ALLOWED_ATTR: [],
+  //   });
+  //   if (isName) {
+  //     sanitized = sanitized.replace(/[^a-zA-Z0-9\s.,'-]/g, "");
+  //   }
+  //   return sanitized;
+  //     // .replace(/&/g, "&amp;")
+  //     // .replace(/</g, "&lt;")
+  //     // .replace(/>/g, "&gt;")
+  //     // .replace(/"/g, "&quot;")
+  //     // .replace(/'/g, "&#x27;");
+  // };
+  const sanitizeInput = (input, isName = false) => {
+  if (typeof input !== "string") return input;
+  let sanitized = DOMPurify.sanitize(input, {
+    ALLOWED_TAGS: [],
+    ALLOWED_ATTR: [],
+  });
+  if (isName) {
+    sanitized = sanitized.replace(/[^a-zA-Z0-9\s.,'-]/g, "");
+  }
+  return sanitized;
+};
+
+  // Validation patterns aligned with ProductForm
+  const validationPatterns = {
+    name: /^[a-zA-Z\s.,'-]{2,100}$/, // Aligned with productName
+    email: /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/,
+    phone: /^\+?[0-9\s()-]{7,15}$/,
+    website: /^(https?:\/\/)?[\w.-]+\.[a-zA-Z]{2,}(\/.*)?$/,
+    notes: /^[\w\s.,!?-]{0,500}$/,
+    gstin: /^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}Z[0-9A-Z]{1}$/, // Aligned with ProductForm's stricter GSTIN
+    address1: /^[a-zA-Z0-9\s.,'-]{1,100}$/,
+    address2: /^[a-zA-Z0-9\s.,'-]{0,100}$/,
+    postalCode: /^\d{6}$/,
+    pincode: /^\d{6}$/,
+    bankName: /^[a-zA-Z\s.,'-]{2,100}$/,
+    branch: /^[a-zA-Z0-9\s.,'-]{2,100}$/,
+    accountHolder: /^[a-zA-Z\s.,'-]{2,100}$/,
+    accountNumber: /^[0-9]{9,18}$/, // Aligned with stricter numeric account numbers
+    ifsc: /^[A-Z]{4}0[A-Z0-9]{6}$/, // Aligned with ProductForm
   };
 
   // Validation function with regex patterns
@@ -226,6 +314,7 @@ const EditCustomerModal = ({ customer, onClose, onSuccess }) => {
       accountNumber: /^[a-zA-Z0-9\s-]{8,20}$/,
       ifsc: /^[A-Z]{4}0[A-Z0-9]{6}$/,
       notes: /^[\w\s.,!?-]{0,500}$/,
+      gstin: /^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}Z[0-9A-Z]{1}$/,
       address1: /^[a-zA-Z0-9\s.,'-]{1,100}$/,
       address2: /^[a-zA-Z0-9\s.,'-]{0,100}$/,
     };
@@ -242,6 +331,7 @@ const EditCustomerModal = ({ customer, onClose, onSuccess }) => {
       [
         "website",
         "notes",
+        "gstin",
         "postalCode",
         "pincode",
         "bankName",
@@ -281,6 +371,8 @@ const EditCustomerModal = ({ customer, onClose, onSuccess }) => {
           return "Please enter a valid IFSC code (e.g., ABCD0123456).";
         case "notes":
           return "Notes can only contain letters, numbers, spaces, and common punctuation (max 500 characters).";
+        case "gstin": // Commented out
+          return "Please enter a valid GSTIN (15 characters, e.g., 22AAAAA0000A1Z5).";
         case "name":
           return "Please enter a valid name (2-100 characters, letters and common punctuation only).";
         case "address1":
@@ -295,17 +387,29 @@ const EditCustomerModal = ({ customer, onClose, onSuccess }) => {
   };
 
   // Input handlers with sanitization and validation
-  const handleInputChange = (e) => {
-    const { name, value } = e.target;
-    const sanitizedValue = sanitizeInput(value);
-    const error = validateField(name, sanitizedValue);
+  // const handleInputChange = (e) => {
+  //   const { name, value } = e.target;
+  //   const sanitizedValue = sanitizeInput(value);
+  //   const error = validateField(name, sanitizedValue);
 
-    setErrors((prev) => ({ ...prev, [name]: error }));
-    setForm((prev) => ({ ...prev, [name]: sanitizedValue }));
-    if (error) {
-      // toast.error(error);
-    }
-  };
+  //   setErrors((prev) => ({ ...prev, [name]: error }));
+  //   setForm((prev) => ({ ...prev, [name]: sanitizedValue }));
+  //   if (error) {
+  //     // toast.error(error);
+  //   }
+  // };
+  const handleInputChange = (e) => {
+  const { name, value } = e.target;
+  let sanitizedValue = sanitizeInput(value);
+
+  if (name === "gstin") {
+    sanitizedValue = sanitizedValue.toUpperCase().replace(/\s/g, "");
+  }
+
+  const error = validateField(name, sanitizedValue);
+  setErrors((prev) => ({ ...prev, [name]: error }));
+  setForm((prev) => ({ ...prev, [name]: sanitizedValue }));
+};
 
   const handleBillingChange = (e) => {
     const { name, value } = e.target;
@@ -485,6 +589,52 @@ const EditCustomerModal = ({ customer, onClose, onSuccess }) => {
     setForm((prev) => ({ ...prev, status: !prev.status }));
   };
 
+  const handleGstTypeChange = (e) => {
+    const value = e.target.value;
+    setGstType(value);
+    setForm((prev) => ({ ...prev, gstin: "" }));
+    setIsGstinVerified(false);
+    if (value === "unregister") {
+      setSelectedGstState({ value: "N/A", label: "N/A" });
+    } else {
+      setSelectedGstState(null);
+    }
+  };
+
+  const handleVerifyGstin = async () => {
+    if (!form.gstin || !selectedGstState) {
+      toast.error("Please enter GSTIN and select state");
+      return;
+    }
+    if (!validationPatterns.gstin.test(form.gstin)) {
+      setValidationErrors((prev) => ({ ...prev, gstin: "Invalid GSTIN format" }));
+      toast.error("Invalid GSTIN format");
+      return;
+    }
+    setGstLoading(true);
+    try {
+      const gstinPrefix = form.gstin.substring(0, 2);
+      if (gstinPrefix === selectedGstState.value) {
+        setValidationErrors((prev) => ({ ...prev, gstin: "" }));
+        setIsGstinVerified(true);
+        toast.success("GSTIN verified successfully");
+      } else {
+        setValidationErrors((prev) => ({
+          ...prev,
+          gstin: "GSTIN does not match the selected state",
+        }));
+        setIsGstinVerified(false);
+        toast.error("GSTIN verification failed");
+      }
+    } catch (err) {
+      setValidationErrors((prev) => ({ ...prev, gstin: "Verification failed" }));
+      setIsGstinVerified(false);
+      toast.error("Verification failed");
+    } finally {
+      setGstLoading(false);
+    }
+  };
+
   // File upload handler
   const handleUploadClick = (e) => {
     e.preventDefault();
@@ -495,7 +645,7 @@ const EditCustomerModal = ({ customer, onClose, onSuccess }) => {
     const file = e.target.files[0];
     if (file) {
       const validTypes = ["image/jpeg", "image/png"];
-      const maxSize = 5 * 1024 * 1024; // 5MB
+      const maxSize = 1 * 1024 * 1024; // 5MB
       if (!validTypes.includes(file.type)) {
         toast.error("Please upload a JPEG or PNG image.");
         setErrors((prev) => ({ ...prev, image: "Invalid image type" }));
@@ -522,6 +672,17 @@ const EditCustomerModal = ({ customer, onClose, onSuccess }) => {
     newErrors.currency = validateField("currency", form.currency);
     newErrors.website = validateField("website", form.website);
     newErrors.notes = validateField("notes", form.notes);
+    newErrors.gstType = gstType ? "" : "GST Type is required.";
+    if (gstType === "register") {
+      newErrors.gstState = selectedGstState ? "" : "GST State is required.";
+      newErrors.gstin = validateField("gstin", form.gstin);
+      if (newErrors.gstin === "" && !isGstinVerified) {
+        newErrors.gstin = "Please verify GSTIN.";
+      }
+    } else {
+      newErrors.gstState = "";
+      newErrors.gstin = "";
+    }
     newErrors["billing.name"] = validateField("name", form.billing.name);
     newErrors["billing.address1"] = validateField("address1", form.billing.address1);
     newErrors["billing.address2"] = validateField("address2", form.billing.address2);
@@ -569,6 +730,9 @@ const EditCustomerModal = ({ customer, onClose, onSuccess }) => {
         currency: form.currency,
         website: form.website,
         notes: form.notes,
+        gstType: gstType === "register" ? "Registered" : "Unregister", // Commented out
+        gstState: selectedGstState?.value || "N/A", // Commented out
+        gstin: form.gstin || "", // Commented out
         billing: {
           name: form.billing.name,
           address1: form.billing.address1,
@@ -626,6 +790,8 @@ const EditCustomerModal = ({ customer, onClose, onSuccess }) => {
       }
       setImagePreviewUrl(customer?.image || null);
       setErrors({});
+      setValidationErrors({}); // Commented out
+      setIsGstinVerified(!!form.gstin); // Commented out
       if (fileInputRef.current) fileInputRef.current.value = "";
       if (onSuccess) onSuccess();
       if (onClose) onClose();
@@ -866,6 +1032,71 @@ const EditCustomerModal = ({ customer, onClose, onSuccess }) => {
                         )}
                       </div>
                     </div>
+                    <div className="col-lg-4 col-md-6">
+                      <div className="mb-3">
+                        <label className="form-label">GST Type</label>
+                        <select
+                          className="form-select"
+                          value={gstType}
+                          onChange={handleGstTypeChange}
+                          required
+                        >
+                          <option value="">Select</option>
+                          <option value="register">Register</option>
+                          <option value="unregister">Unregister</option>
+                        </select>
+                        {errors.gstType && (
+                          <span className="text-danger fs-12">{errors.gstType}</span>
+                        )}
+                      </div>
+                    </div>
+                    {gstType === "register" && (
+                      <>
+                        <div className="col-lg-4 col-md-6">
+                          <div className="mb-3">
+                            <label className="form-label">State Code </label>
+                            <Select
+                              options={gstStates}
+                              value={selectedGstState}
+                              onChange={(option) => setSelectedGstState(option)}
+                              placeholder="Select State"
+                            />
+                            {errors.gstState && (
+                              <span className="text-danger fs-12">{errors.gstState}</span>
+                            )}
+                          </div>
+                        </div>
+                        <div className="col-lg-4 col-md-4">
+                          <div className="mb-3">
+                            <label className="form-label">GSTIN</label>
+                            <div className="d-flex gap-2">
+                              <input
+                                type="text"
+                                placeholder="Enter GSTIN"
+                                className="form-control"
+                                name="gstin"
+                                value={form.gstin}
+                                onChange={handleInputChange}
+                                style={{ pointerEvents: "auto" }}
+                              />
+                              <button
+                                type="button"
+                                className="btn btn-outline-primary"
+                                onClick={handleVerifyGstin}
+                                disabled={!form.gstin || gstLoading || !selectedGstState}
+                              >
+                                {gstLoading ? "Verifying..." : "Verify"}
+                              </button>
+                            </div>
+                            {(errors.gstin || validationErrors.gstin) && (
+                              <span className="text-danger fs-12">
+                                {errors.gstin || validationErrors.gstin}
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                      </>
+                    )}
                   </div>
                   <div className="border-top my-2">
                     <div className="row gx-5">
