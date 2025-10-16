@@ -25,8 +25,13 @@ import Graph from "../../Graph";
 import BASE_URL from "../../../pages/config/config";
 import PaymentStatusChart from "../graph/PaymentStatusChart";
 import SalesGraph from "../graph/SalesGraph";
+import { useNavigate } from "react-router-dom";
+import { GrTransaction } from "react-icons/gr";
 
 const AdminDashboard = () => {
+  //transaction
+  const navigate = useNavigate();
+const [activeTab, setActiveTab] = useState("sale");
     const [recentPurchases, setRecentPurchases] = useState([]);
   const [activeTransactionTab, setActiveTransactionTab] = useState("sales");
   // const [recentPurchases, setRecentPurchases] = useState([]);
@@ -814,7 +819,7 @@ setTotalSaleValue(totalValue);
           </div>
 
           {/* search bar */}
-          <div className="input-icon-start position-relative mb-3">
+          {/* <div className="input-icon-start position-relative mb-3">
             <span className="input-icon-addon fs-16 text-gray-9">
               <i className="ti ti-calendar" />
             </span>
@@ -823,7 +828,7 @@ setTotalSaleValue(totalValue);
               className="form-control date-range bookingrange"
               placeholder="Search Product"
             />
-          </div>
+          </div> */}
         </div>
 
         {/* alert notification section */}
@@ -1076,7 +1081,7 @@ setTotalSaleValue(totalValue);
                     Last Month
                   </p>
                   <a
-                    href="expense-list.html"
+                    href="/purchase-list"
                     className="text-decoration-underline fs-13 fw-medium"
                   >
                     View All
@@ -1107,7 +1112,7 @@ setTotalSaleValue(totalValue);
                     Last Month
                   </p>
                   <a
-                    href="sales-report.html"
+                    href="/manage-stocks"
                     className="text-decoration-underline fs-13 fw-medium"
                   >
                     View All
@@ -1998,16 +2003,35 @@ setTotalSaleValue(totalValue);
               <div className="card-header d-flex align-items-center justify-content-between flex-wrap gap-3">
                 <div className="d-inline-flex align-items-center">
                   <span className="title-icon bg-soft-orange fs-16 me-2">
-                    <i className="ti ti-flag" />
+                   <GrTransaction />
                   </span>
                   <h5 className="card-title mb-0">Recent Transactions</h5>
                 </div>
+                 
                 <a
-                  href="online-orders.html"
+                    onClick={() => {
+    if (activeTab === "sale") navigate("/online-orders");
+    else if (activeTab === "purchase") navigate("/purchase-list");
+    else if (activeTab === "invoices") navigate("/invoice");
+  }}
+                 
                   className="fs-13 fw-medium text-decoration-underline"
                 >
                   View All
-                </a>
+                </a> 
+                {/* <button
+  onClick={() => {
+    if (activeTab === "sale") navigate("/online-orders");
+    else if (activeTab === "purchase") navigate("/purchase-list");
+    else if (activeTab === "invoices") navigate("/invoice");
+  }}
+  className="fs-13 fw-medium text-decoration-underline btn p-0"
+>
+  View All
+</button> */}
+
+
+
               </div>
               {/* for right now it is comment */}
               {/* <div className="dropdown">
@@ -2025,18 +2049,27 @@ setTotalSaleValue(totalValue);
                 <ul className="nav nav-tabs nav-justified transaction-tab">
                   <li className="nav-item">
                     <a
-                      className="nav-link active"
-                      href="#sale"
-                      data-bs-toggle="tab"
+                      // className="nav-link active"
+                      // href="#sale"
+                      // data-bs-toggle="tab"
+                       
+                       className={`nav-link ${activeTab === "sale" ? "active" : ""}`}
+  href="#sale"
+  data-bs-toggle="tab"
+  onClick={() => setActiveTab("sale")}
                     >
                       Sale
                     </a>
                   </li>
                   <li className="nav-item">
                     <a
-                      className="nav-link"
-                      href="#purchase-transaction"
-                      data-bs-toggle="tab"
+                      // className="nav-link"
+                      // href="#purchase-transaction"
+                      // data-bs-toggle="tab"
+                       className={`nav-link ${activeTab === "purchase" ? "active" : ""}`}
+  href="#purchase-transaction"
+  data-bs-toggle="tab"
+  onClick={() => setActiveTab("purchase")}
                     >
                       Purchase
                     </a>
@@ -2044,9 +2077,13 @@ setTotalSaleValue(totalValue);
 
                   <li className="nav-item">
                     <a
-                      className="nav-link"
-                      href="#invoices"
-                      data-bs-toggle="tab"
+                      // className="nav-link"
+                      // href="#invoices"
+                      // data-bs-toggle="tab"
+                       className={`nav-link ${activeTab === "invoices" ? "active" : ""}`}
+  href="#invoices"
+  data-bs-toggle="tab"
+  onClick={() => setActiveTab("invoices")}
                     >
                       Invoices
                     </a>
