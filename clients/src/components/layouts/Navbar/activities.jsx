@@ -10,6 +10,7 @@ import './activities.css'; // Import your CSS file for styles
 import BASE_URL from "../../../pages/config/config";
 import axios from "axios";
 
+
 const Activities = ({ onUnreadCountChange }) => {
   const { t } = useTranslation();
   const [notifications, setNotifications] = useState([]);
@@ -252,11 +253,11 @@ const Activities = ({ onUnreadCountChange }) => {
   return (
     <div>
       <div className="" style={{ padding: '5px 12px', backgroundColor: '#FDFDFD', borderTopLeftRadius: '8px', borderTopRightRadius: '8px', borderBottom: '1px solid white', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-        <h5 className="notification-title" style={{ color: '#262626', marginTop: '8px' }}>Notification</h5>
+        <h5 className="notification-title" style={{ color: '#262626', marginTop: '8px' }}>{t("Notification")}</h5>
         <a href="#" className="clear-noti" style={{ color: '#1368EC', textDecoration: 'none' }} onClick={(e) => {
           e.preventDefault();
           markAllAsRead();
-        }}>Clear All</a>
+        }}>{t("Clear All")}</a>
       </div>
       <div className="" style={{ padding: '5px 10px', lineHeight: 'normal', height: 'auto', width: '350px', position: 'relative', overflowY: 'auto', maxHeight: '300px' }}>
         <ul className="notification-list">
@@ -272,7 +273,7 @@ const Activities = ({ onUnreadCountChange }) => {
             <li className="notification-message">
               <div className="media d-flex">
                 <div className="flex-grow-1">
-                  <p className="noti-details" style={{ marginTop: '10px', textAlign: 'center' }}> No Notifications yet !!</p>
+                  <p className="noti-details" style={{ marginTop: '10px', textAlign: 'center' }}>{t("No Notifications yet !!")}</p>
                 </div>
               </div>
             </li>
@@ -382,7 +383,7 @@ const Activities = ({ onUnreadCountChange }) => {
           e.preventDefault();
           markAllAsRead();
         }}>
-        <Link to="/ViewAllNotifications" className="" style={{ width: '100%', color: '#1368EC', backgroundColor: '#F9F9F9', textAlign: 'center', textDecoration: 'none' }} >View All</Link>
+        <Link to="/ViewAllNotifications" className="" style={{ width: '100%', color: '#1368EC', backgroundColor: '#F9F9F9', textAlign: 'center', textDecoration: 'none' }} >{t("View All")}</Link>
       </div>
     </div>
   )

@@ -27,8 +27,10 @@ import PaymentStatusChart from "../graph/PaymentStatusChart";
 import SalesGraph from "../graph/SalesGraph";
 import { useNavigate } from "react-router-dom";
 import { GrTransaction } from "react-icons/gr";
+import { useTranslation } from 'react-i18next';
 
 const AdminDashboard = () => {
+  const { t } = useTranslation();
   //transaction
   const navigate = useNavigate();
 const [activeTab, setActiveTab] = useState("sale");
@@ -799,7 +801,7 @@ setTotalSaleValue(totalValue);
           {/* welcome greetings */}
           <div className="mb-3">
             <h1 className="mb-1">
-              Welcome, {userObj?.firstName || "User"} {userObj?.lastName || ""}
+              {t("Welcome,")} {userObj?.firstName || "User"} {userObj?.lastName || ""}
             </h1>
             {/* <p className="fw-medium">You have <span className="text-primary fw-bold">200+</span> Orders, Today</p> */}
             {/* <div className="mt-3">
@@ -848,24 +850,24 @@ setTotalSaleValue(totalValue);
                 >
                   <span>
                     <i className="ti ti-info-circle fs-14 text-orange me-2" />
-                    Your Product{" "}
+                    {t("Your Product")}{" "}
                   </span>
                   <span className="text-orange fw-semibold">
-                    {prod.productName || prod.name || "-"} is running Low,{" "}
+                    {prod.productName || prod.name || "-"} {t("is running Low,")}{" "}
                   </span>
-                  already below {prod.availableQty} Pcs.,
+                  {t("already below")} {prod.availableQty} Pcs.,
                   <a
                     href=""
                     className="link-orange text-decoration-underline fw-semibold"
                     data-bs-toggle="modal"
                     data-bs-target="#add-stock"
                   >
-                    Add Stock
+                    {t("Add Stock")}
                   </a>
                 </span>
               ))
             ) : (
-              <span>No low stock products.</span>
+              <span>{t("No low stock products.")}</span>
             )}
           </div>
           <button
@@ -892,12 +894,12 @@ setTotalSaleValue(totalValue);
                                         <p className="text-white mb-1">Invoice Due</p>
                                         <div className="d-inline-flex align-items-center flex-wrap gap-2">
                                             <h4 className="text-white">₹ {totalInvoiceDue.toLocaleString()}</h4>
-                                            <span className="badge badge-soft-warning"><i className="ti ti-arrow-up me-1" />{invoiceDueGrowth}% vs Last Month</span>
+                                            <span className="badge badge-soft-warning"><i className="ti ti-arrow-up me-1" />{invoiceDueGrowth}% vs {t("Last Month")}</span>
                                         </div>
                                         <p className="text-white mb-0 fs-14">Total Due Invoices: {invoiceDueCount}</p>
                                     </div>
                                 </div>
-                                <button className="btn btn-light btn-sm" onClick={() => window.location.href = '/invoice'}>View All</button>
+                                <button className="btn btn-light btn-sm" onClick={() => window.location.href = '/invoice'}>{t("View All")}</button>
                             </div>
                         </div>
                     </div> */}
@@ -908,7 +910,7 @@ setTotalSaleValue(totalValue);
                   <TbFileText className="ti ti-file-text fs-24" />
                 </span>
                 <div className="ms-2">
-                  <p className="text-white mb-1">Total Sales</p>
+                  <p className="text-white mb-1">{t("Total Sales")}</p>
                   <div className="d-inline-flex align-items-center flex-wrap gap-2">
                     <h4 className="text-white">
                       ₹ {totalSaleValue.toLocaleString()}
@@ -927,7 +929,7 @@ setTotalSaleValue(totalValue);
                   <TbRepeat className="ti ti-repeat fs-24" />
                 </span>
                 <div className="ms-2">
-                  <p className="text-white mb-1">Total Sales Return</p>
+                  <p className="text-white mb-1">{t("Total Sales Return")}</p>
                   <div className="d-inline-flex align-items-center flex-wrap gap-2">
                     <h4 className="text-white">
                       ₹ {totalCreditNoteAmount.toLocaleString()}
@@ -946,7 +948,7 @@ setTotalSaleValue(totalValue);
                   <TbGift className="ti ti-gift fs-24" />
                 </span>
                 <div className="ms-2">
-                  <p className="text-white mb-1">Total Purchase</p>
+                  <p className="text-white mb-1">{t("Total Purchase")}</p>
                   <div className="d-inline-flex align-items-center flex-wrap gap-2">
                     <h4 className="text-white">
                       ₹ {totalPurchaseAmount.toLocaleString()}
@@ -965,7 +967,7 @@ setTotalSaleValue(totalValue);
                   <TbBrandPocket className="ti ti-brand-pocket fs-24" />
                 </span>
                 <div className="ms-2">
-                  <p className="text-white mb-1">Total Purchase Return</p>
+                  <p className="text-white mb-1">{t("Total Purchase Return")}</p>
                   <div className="d-inline-flex align-items-center flex-wrap gap-2">
                     <h4 className="text-white">
                       ₹ {totalDebitNoteAmount.toLocaleString()}
@@ -993,10 +995,10 @@ setTotalSaleValue(totalValue);
                         getProfit() >= 0 ? "text-success" : "text-danger"
                       }
                     >
-                      Profit: ₹{" "}
+                      {t("Profit")}: ₹{" "}
                       {getProfit() >= 0 ? getProfit().toLocaleString() : 0}
                       <br />
-                      Loss:{" "}
+                      {t("Loss")}:{" "}
                       <span className="text-danger">
                         ₹ {getLoss().toLocaleString()}
                       </span>
@@ -1015,14 +1017,14 @@ setTotalSaleValue(totalValue);
                     >
                       {getProfit() >= 0 ? "+" : ""}
                       {getProfit().toLocaleString()} (
-                      {getProfit() >= 0 ? "Profit" : "Loss"})
+                      {getProfit() >= 0 ? t("Profit") : t("Loss")})
                     </span>
                   </p>
                   <a
                     href="/online-orders"
                     className="text-decoration-underline fs-13 fw-medium"
                   >
-                    View All
+                   {t("View All")}
                   </a>
                 </div>
               </div>
@@ -1038,7 +1040,7 @@ setTotalSaleValue(totalValue);
                     <h4 className="mb-1">
                       ₹ {totalInvoiceDue.toLocaleString()}
                     </h4>
-                    <p>Invoice Due</p>
+                    <p>{t("Invoice Due")}</p>
                   </div>
                   <span className="revenue-icon bg-teal-transparent text-teal">
                     <TbChartPie className="ti ti-chart-pie fs-16" />
@@ -1047,13 +1049,13 @@ setTotalSaleValue(totalValue);
                 <div className="d-flex align-items-center justify-content-between">
                   <p className="mb-0">
                     <span className="fs-13 fw-bold text-success">+35%</span> vs
-                    Last Month
+                    {t("Last Month")}
                   </p>
                   <a
                     href="/invoice"
                     className="text-decoration-underline fs-13 fw-medium"
                   >
-                    View All
+                    {t("View All")}
                   </a>
                 </div>
               </div>
@@ -1069,7 +1071,7 @@ setTotalSaleValue(totalValue);
                     <h4 className="mb-1">
                       ₹ {totalExpensesAmount.toLocaleString()}
                     </h4>
-                    <p>Total Expenses ({totalExpensesCount})</p>
+                    <p>{t("Total Expenses")} ({totalExpensesCount})</p>
                   </div>
                   <span className="revenue-icon bg-orange-transparent text-orange">
                     <TbLifebuoy className="ti ti-lifebuoy fs-16" />
@@ -1078,13 +1080,13 @@ setTotalSaleValue(totalValue);
                 <div className="d-flex align-items-center justify-content-between">
                   <p className="mb-0">
                     <span className="fs-13 fw-bold text-success">+41%</span> vs
-                    Last Month
+                    {t("Last Month")}
                   </p>
                   <a
                     href="/purchase-list"
                     className="text-decoration-underline fs-13 fw-medium"
                   >
-                    View All
+                    {t("View All")}
                   </a>
                 </div>
               </div>
@@ -1100,7 +1102,7 @@ setTotalSaleValue(totalValue);
                     <h4 className="mb-1">
                       ₹ {totalStockValue.toLocaleString()}
                     </h4>
-                    <p>Total Stock Amount</p>
+                    <p>{t("Total Stock Amount")}</p>
                   </div>
                   <span className="revenue-icon bg-indigo-transparent text-indigo">
                     <TbHash className="ti ti-hash fs-16" />
@@ -1109,13 +1111,13 @@ setTotalSaleValue(totalValue);
                 <div className="d-flex align-items-center justify-content-between">
                   <p className="mb-0">
                     <span className="fs-13 fw-bold text-danger">-20%</span> vs
-                    Last Month
+                    {t("Last Month")}
                   </p>
                   <a
                     href="/manage-stocks"
                     className="text-decoration-underline fs-13 fw-medium"
                   >
-                    View All
+                    {t("View All")}
                   </a>
                 </div>
               </div>
@@ -1131,23 +1133,23 @@ setTotalSaleValue(totalValue);
             {/* Purchase aanalysis Graphs */}
             <div className="col-md-6">
               <div className="card mb-4">
-                <div className="card-header">Purchase Analytics</div>
+                <div className="card-header">{t("Purchase Analytics")}</div>
                 <div className="card-body">
                   <Graph
-                    title="Purchase Quantity & Price by Product"
+                    title={t("Purchase Quantity & Price by Product")}
                     labels={lowStockProducts.map(
                       (p) => p.name || p.productName || "-"
                     )}
                     datasets={[
                       {
-                        label: "Quantity",
+                        label: [t("Quantity")],
                         data: lowStockProducts.map(
                           (p) => p.availableQty || p.quantity || 0
                         ),
                         backgroundColor: "rgba(75,192,192,0.6)",
                       },
                       {
-                        label: "Price",
+                        label: [t("Price")],
                         data: lowStockProducts.map(
                           (p) => p.purchasePrice || p.price || 0
                         ),
@@ -1165,10 +1167,10 @@ setTotalSaleValue(totalValue);
             {/* Sales aanalysis Graphs */}
             <div className="col-md-6">
               <div className="card mb-4">
-                <div className="card-header">Sales Analytics</div>
+                <div className="card-header">{t("Sales Analytics")}</div>
                 <div className="card-body">
                   <Graph
-                    title="Sales Qty & Selling Price by Product"
+                    title={t("Sales Qty & Selling Price by Product")}
                     labels={recentSales.flatMap((sale) =>
                       sale.products
                         ? sale.products.map(
@@ -1178,7 +1180,7 @@ setTotalSaleValue(totalValue);
                     )}
                     datasets={[
                       {
-                        label: "Sold Qty",
+                        label: [t("Sold Qty")],
                         data: recentSales.flatMap((sale) =>
                           sale.products
                             ? sale.products.map(
@@ -1189,7 +1191,7 @@ setTotalSaleValue(totalValue);
                         backgroundColor: "rgba(153,102,255,0.6)",
                       },
                       {
-                        label: "Selling Price",
+                        label: [t("Selling Price")],
                         data: recentSales.flatMap((sale) =>
                           sale.products
                             ? sale.products.map((p) => p.sellingPrice || 0)
@@ -1257,7 +1259,7 @@ setTotalSaleValue(totalValue);
                   <span className="title-icon bg-soft-pink fs-16 me-2">
                     <TbBox className="ti ti-box" />
                   </span>
-                  <h5 className="card-title mb-0">Recent Sales</h5>
+                  <h5 className="card-title mb-0">{t("Recent Sales")}</h5>
                 </div>
                <div className="dropdown">
                   <button
@@ -1267,10 +1269,10 @@ setTotalSaleValue(totalValue);
                   >
                     <i className="ti ti-calendar me-1" />
                     {recentSalesFilter === "today"
-                      ? "Today"
-                      : recentSalesFilter === "weekly"
-                      ? "Weekly"
-                      : "Monthly"}
+                      ? [t("Today")]
+                      : recentSalesFilter === t("weekly")
+                      ? [t("Weekly")]
+                      : [t("Monthly")]}
                   </button>
                   <ul className="dropdown-menu p-3">
                     <li>
@@ -1278,7 +1280,7 @@ setTotalSaleValue(totalValue);
                         className="dropdown-item"
                         onClick={() => setRecentSalesFilter("today")}
                       >
-                        Today
+                       {t("Today")}
                       </button>
                     </li>
                     <li>
@@ -1286,7 +1288,7 @@ setTotalSaleValue(totalValue);
                         className="dropdown-item"
                         onClick={() => setRecentSalesFilter("weekly")}
                       >
-                        Weekly
+                       {t("Weekly")}
                       </button>
                     </li>
                     <li>
@@ -1294,7 +1296,7 @@ setTotalSaleValue(totalValue);
                         className="dropdown-item"
                         onClick={() => setRecentSalesFilter("monthly")}
                       >
-                        Monthly
+                        {t("Monthly")}
                       </button>
                     </li>
                   </ul>
@@ -1305,13 +1307,13 @@ setTotalSaleValue(totalValue);
                   <table className="table table-borderless custom-table">
                     <thead className="thead-light">
                       <tr>
-                        <th>Date</th>
-                        <th>Customer</th>
-                        <th>Product</th>
+                        <th>{t("Date")}</th>
+                        <th>{t("Customer")}</th>
+                        <th>{t("Product")}</th>
                         {/* <th>Image</th>  */}
-                        <th>Sale Qty</th>
-                        <th>Selling Price</th>
-                        <th>Total</th>
+                        <th>{t("Sale Qty")}</th>
+                        <th>{t("Selling Price")}</th>
+                        <th>{t("Total")}</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -1484,7 +1486,7 @@ setTotalSaleValue(totalValue);
                   <span className="title-icon bg-soft-info fs-16 me-2">
                     <TbInfoCircle className="ti ti-info-circle" />
                   </span>
-                  <h5 className="card-title mb-0">Overall Information</h5>
+                  <h5 className="card-title mb-0">{t("Overall Information")}</h5>
                 </div>
               </div>
               <div className="card-body">
@@ -1494,7 +1496,7 @@ setTotalSaleValue(totalValue);
                       <div className="mb-2 text-info fs-24">
                         <TbUserCheck className="ti ti-user-check" />
                       </div>
-                      <p className="mb-1">Suppliers</p>
+                      <p className="mb-1">{t("Suppliers")}</p>
                       <h5>{totalSupplier}</h5>
                     </div>
                   </div>
@@ -1503,7 +1505,7 @@ setTotalSaleValue(totalValue);
                       <div className="mb-2 text-orange fs-24">
                         <TbUsers className="ti ti-users" />
                       </div>
-                      <p className="mb-1">Customer</p>
+                      <p className="mb-1">{t("Customer")}</p>
                       <h5>{totalCustomer}</h5>
                     </div>
                   </div>
@@ -1512,7 +1514,7 @@ setTotalSaleValue(totalValue);
                       <div className="mb-2 text-teal fs-24">
                         <TbShoppingCart className="ti ti-shopping-cart" />
                       </div>
-                      <p className="mb-1">Orders</p>
+                      <p className="mb-1">{t("Orders")}</p>
                       <h5>487</h5>
                     </div>
                   </div>
@@ -1520,7 +1522,7 @@ setTotalSaleValue(totalValue);
               </div>
               <div className="card-footer pb-sm-0">
                 <div className="d-flex align-items-center justify-content-between flex-wrap gap-3">
-                  <h5>Customers Overview</h5>
+                  <h5>{t("Customers Overview")}</h5>
                   <div className="dropdown dropdown-wraper">
                     <a
                       href=""
@@ -1529,22 +1531,22 @@ setTotalSaleValue(totalValue);
                       aria-expanded="false"
                     >
                       <i className="ti ti-calendar me-1" />
-                      Today
+                      {t("Today")}
                     </a>
                     <ul className="dropdown-menu p-3">
                       <li>
                         <a href="" className="dropdown-item">
-                          Today
+                          {t("Today")}
                         </a>
                       </li>
                       <li>
                         <a href="" className="dropdown-item">
-                          Weekly
+                          {t("Weekly")}
                         </a>
                       </li>
                       <li>
                         <a href="" className="dropdown-item">
-                          Monthly
+                          {t("Monthly")}
                         </a>
                       </li>
                     </ul>
@@ -1559,7 +1561,7 @@ setTotalSaleValue(totalValue);
                       <div className="col-sm-6">
                         <div className="text-center border-end">
                           <h2 className="mb-1">5.5K</h2>
-                          <p className="text-orange mb-2">First Time</p>
+                          <p className="text-orange mb-2">{t("First Time")}</p>
                           <span className="badge badge-success badge-xs d-inline-flex align-items-center">
                             <i className="ti ti-arrow-up-left me-1" />
                             25%
@@ -1569,7 +1571,7 @@ setTotalSaleValue(totalValue);
                       <div className="col-sm-6">
                         <div className="text-center">
                           <h2 className="mb-1">3.5K</h2>
-                          <p className="text-teal mb-2">Return</p>
+                          <p className="text-teal mb-2">{t("Return")}</p>
                           <span className="badge badge-success badge-xs d-inline-flex align-items-center">
                             <i className="ti ti-arrow-up-left me-1" />
                             21%
@@ -1601,7 +1603,7 @@ setTotalSaleValue(totalValue);
                     <FcExpired className="ti ti-box" />
                   </span>
                   <h5 className="card-title mb-0">
-                    Upcomming Expired Products
+                    {t("Upcomming Expired Products")}
                   </h5>
                 </div>
                 <div className="dropdown">
@@ -1612,22 +1614,22 @@ setTotalSaleValue(totalValue);
                     aria-expanded="false"
                   >
                     <i className="ti ti-calendar me-1" />
-                    Weekly
+                    {t("Weekly")}
                   </a>
                   <ul className="dropdown-menu p-3">
                     <li>
                       <a href="" className="dropdown-item">
-                        Today
+                        {t("Today")}
                       </a>
                     </li>
                     <li>
                       <a href="" className="dropdown-item">
-                        Weekly
+                        {t("Weekly")}
                       </a>
                     </li>
                     <li>
                       <a href="" className="dropdown-item">
-                        Monthly
+                        {t("Monthly")}
                       </a>
                     </li>
                   </ul>
@@ -1644,24 +1646,24 @@ setTotalSaleValue(totalValue);
                             <span className="checkmarks" />
                           </label>
                         </th>
-                        <th>SKU</th>
-                        <th>Product</th>
-                        <th>Manufactured Date</th>
-                        <th>Expired Date</th>
-                        <th>Quantity</th>
-                        <th>Supplier</th>
-                        <th>Warehouse</th>
+                        <th>{t("SKU")}</th>
+                        <th>{t("Product")}</th>
+                        <th>{t("Manufactured Date")}</th>
+                        <th>{t("Expired Date")}</th>
+                        <th>{t("Quantity")}</th>
+                        <th>{t("Supplier")}</th>
+                        <th>{t("Warehouse")}</th>
                         <th className="no-sort" />
                       </tr>
                     </thead>
                     <tbody>
                       {expiredLoading ? (
                         <div className="text-muted">
-                          Loading expired products...
+                          {t("Loading expired products...")}
                         </div>
                       ) : expiredProducts.length === 0 ? (
                         <div className="text-muted">
-                          No expired products found.
+                          {t("No expired products found.")}
                         </div>
                       ) : (
                         expiredProducts.map((product) => (
@@ -1724,7 +1726,7 @@ setTotalSaleValue(totalValue);
                   <span className="title-icon bg-soft-pink fs-16 me-2">
                     <TbBox className="ti ti-box" />
                   </span>
-                  <h5 className="card-title mb-0">Top Selling Products</h5>
+                  <h5 className="card-title mb-0">{t("Top Selling Products")}</h5>
                 </div>
 
                 {/*  */}
@@ -1736,10 +1738,10 @@ setTotalSaleValue(totalValue);
                   >
                     <i className="ti ti-calendar me-1" />
                     {topSellingFilter === "today"
-                      ? "Today"
+                      ? [t("Today")]
                       : topSellingFilter === "weekly"
-                      ? "Weekly"
-                      : "Monthly"}
+                      ? [t("Weekly")]
+                      : [t("Monthly")]}
                   </button>
                   <ul className="dropdown-menu p-3">
                     <li>
@@ -1747,7 +1749,7 @@ setTotalSaleValue(totalValue);
                         className="dropdown-item"
                         onClick={() => setTopSellingFilter("today")}
                       >
-                        Today
+                        {t("Today")}
                       </button>
                     </li>
                     <li>
@@ -1755,7 +1757,7 @@ setTotalSaleValue(totalValue);
                         className="dropdown-item"
                         onClick={() => setTopSellingFilter("weekly")}
                       >
-                        Weekly
+                        {t("Weekly")}
                       </button>
                     </li>
                     <li>
@@ -1763,7 +1765,7 @@ setTotalSaleValue(totalValue);
                         className="dropdown-item"
                         onClick={() => setTopSellingFilter("monthly")}
                       >
-                        Monthly
+                        {t("Monthly")}
                       </button>
                     </li>
                   </ul>
@@ -1773,7 +1775,7 @@ setTotalSaleValue(totalValue);
               </div>
               <div className="card-body sell-product">
                 {topSellingProducts.length === 0 ? (
-                  <div className="text-muted">No sales data available.</div>
+                  <div className="text-muted">{t("No sales data available.")}</div>
                 ) : (
                   topSellingProducts.map((p, idx) => (
                     <div
@@ -1802,11 +1804,11 @@ setTotalSaleValue(totalValue);
                           </h6>
                           <div className="d-flex align-items-center item-list">
                             <p className="mb-0 me-3">₹{p.sellingPrice}</p>
-                            <p className="mb-0">{p.sellQuantity} Sold</p>
+                            <p className="mb-0">{p.sellQuantity} {t("Sold")}</p>
                           </div>
                           <div className="d-flex align-items-center item-list">
                             <span className="me-3">SKU: {p.sku}</span>
-                            <span>Available: {p.availableQuantity}</span>
+                            <span>{t("Available")}: {p.availableQuantity}</span>
                           </div>
                         </div>
                       </div>
@@ -1852,13 +1854,13 @@ setTotalSaleValue(totalValue);
                   <span className="title-icon bg-soft-danger fs-16 me-2">
                     <TbAlertTriangle className="ti ti-alert-triangle" />
                   </span>
-                  <h5 className="card-title mb-0">Low Stock Products</h5>
+                  <h5 className="card-title mb-0">{t("Low Stock Products")}</h5>
                 </div>
                 <a
                   href="/low-stocks"
                   className="fs-13 fw-medium text-decoration-underline"
                 >
-                  View All
+                  {t("View All")}
                 </a>
               </div>
               <div className="card-body">
@@ -1884,12 +1886,12 @@ setTotalSaleValue(totalValue);
                             </a>
                           </h6>
                           <p className="fs-13">
-                            ID : {product.sku || product._id}
+                            {t("ID")} : {product.sku || product._id}
                           </p>
                         </div>
                       </div>
                       <div className="text-end">
-                        <p className="fs-13 mb-1">Instock</p>
+                        <p className="fs-13 mb-1">{t("Instock")}</p>
                         <h6 className="text-orange fw-medium">
                           {product.availableQty}
                         </h6>
@@ -1898,7 +1900,7 @@ setTotalSaleValue(totalValue);
                   ))
                 ) : (
                   <div className="text-center text-muted">
-                    No low stock products.
+                    {t("No low stock products.")}
                   </div>
                 )}
               </div>
@@ -2005,7 +2007,7 @@ setTotalSaleValue(totalValue);
                   <span className="title-icon bg-soft-orange fs-16 me-2">
                    <GrTransaction />
                   </span>
-                  <h5 className="card-title mb-0">Recent Transactions</h5>
+                  <h5 className="card-title mb-0">{t("Recent Transactions")}</h5>
                 </div>
                  
                 <a
@@ -2017,7 +2019,7 @@ setTotalSaleValue(totalValue);
                  
                   className="fs-13 fw-medium text-decoration-underline"
                 >
-                  View All
+                  {t("View All")}
                 </a> 
                 {/* <button
   onClick={() => {
@@ -2027,7 +2029,7 @@ setTotalSaleValue(totalValue);
   }}
   className="fs-13 fw-medium text-decoration-underline btn p-0"
 >
-  View All
+  {t("View All")}
 </button> */}
 
 
@@ -2058,7 +2060,7 @@ setTotalSaleValue(totalValue);
   data-bs-toggle="tab"
   onClick={() => setActiveTab("sale")}
                     >
-                      Sale
+                     {t("Sale")}
                     </a>
                   </li>
                   <li className="nav-item">
@@ -2071,7 +2073,7 @@ setTotalSaleValue(totalValue);
   data-bs-toggle="tab"
   onClick={() => setActiveTab("purchase")}
                     >
-                      Purchase
+                      {t("Purchase")}
                     </a>
                   </li>
 
@@ -2085,7 +2087,7 @@ setTotalSaleValue(totalValue);
   data-bs-toggle="tab"
   onClick={() => setActiveTab("invoices")}
                     >
-                      Invoices
+                      {t("Invoices")}
                     </a>
                   </li>
                 </ul>
@@ -2095,11 +2097,11 @@ setTotalSaleValue(totalValue);
                       <table className="table table-borderless custom-table">
                         <thead className="thead-light">
                           <tr>
-                            <th>Date</th>
-                            <th>Customer</th>
-                            <th>Status</th>
-                            <th>Total</th>
-                            <th>Reference</th>
+                            <th>{t("Date")}</th>
+                            <th>{t("Customer")}</th>
+                            <th>{t("Status")}</th>
+                            <th>{t("Total")}</th>
+                            <th>{t("Reference")}</th>
                           </tr>
                         </thead>
                         <tbody>
@@ -2214,7 +2216,7 @@ setTotalSaleValue(totalValue);
                                 colSpan="5"
                                 className="text-center text-muted"
                               >
-                                No sales found.
+                               {t("No sales found.")}
                               </td>
                             </tr>
                           )}
@@ -2227,15 +2229,15 @@ setTotalSaleValue(totalValue);
                       <table className="table table-borderless custom-table">
                         <thead className="thead-light">
                           <tr>
-                            <th>Date</th>
-                            <th>Supplier</th>
-                            <th>Status</th>
-                            <th>Total</th>
+                            <th>{t("Date")}</th>
+                            <th>{t("Supplier")}</th>
+                            <th>{t("Status")}</th>
+                            <th>{t("Total")}</th>
                           </tr>
                         </thead>
                         <tbody>
                           {filteredPurchases.length === 0 ? (
-                            <li>No recent purchases found.</li>
+                            <li>{t("No recent purchases found.")}</li>
                           ) : (
                             filteredPurchases
                             .map((purchase) => (
@@ -2316,16 +2318,16 @@ setTotalSaleValue(totalValue);
                       <table className="table table-borderless custom-table">
                         <thead className="thead-light">
                           <tr>
-                            <th>Customer</th>
-                            <th>Due Amount</th>
-                            <th>Paid Amount</th>
-                            <th>Status</th>
-                            <th>Amount</th>
+                            <th>{t("Customer")}</th>
+                            <th>{t("Due Amount")}</th>
+                            <th>{t("Paid Amount")}</th>
+                            <th>{t("Status")}</th>
+                            <th>{t("Amount")}</th>
                           </tr>
                         </thead>
                         <tbody>
                           {filteredSales.length === 0 ? (
-                            <li>No recent sales found.</li>
+                            <li>{t("No recent sales found.")}</li>
                           ) : (
                             filteredSales.map((sale) => (
                               <tr key={sale._id}>
