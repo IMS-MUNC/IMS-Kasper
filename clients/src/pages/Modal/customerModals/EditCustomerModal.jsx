@@ -921,7 +921,7 @@ useEffect(() => {
                         {errors.image && (
                           <span className="text-danger fs-12">{errors.image}</span>
                         )}
-                        <span className="text-gray-9">JPG or PNG format, not exceeding 5MB.</span>
+                        <span className="text-gray-9">JPG or PNG format, not exceeding 1MB.</span>
                       </div>
                     </div>
                   </div>

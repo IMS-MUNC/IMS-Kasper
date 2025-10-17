@@ -70,6 +70,19 @@ const AddCustomerModal = ({ onClose, onSuccess }) => {
     status: true,
   });
 
+  // HELPER FUNCTION - Add after all useState declarations
+  const getFieldLabel = (name) => {
+    const labels = {
+      name: "Name",
+      email: "Email",
+      phone: "Phone Number",
+      currency: "Currency",
+      gstType: "GST Type",
+      address1: "Address Line 1"
+    };
+    return labels[name] || name;
+  };
+
   // Clean up image preview URL to prevent memory leaks
   useEffect(() => {
     return () => {
@@ -133,12 +146,12 @@ const AddCustomerModal = ({ onClose, onSuccess }) => {
 
   // Validation patterns aligned with ProductForm
   const validationPatterns = {
-    name: /^[a-zA-Z\s.,'-]{2,100}$/, // Aligned with productName
+    name: /^[a-zA-Z\s.,'-]{2,100}$/,
     email: /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/,
     phone: /^\+?[0-9\s()-]{7,15}$/,
     website: /^(https?:\/\/)?[\w.-]+\.[a-zA-Z]{2,}(\/.*)?$/,
     notes: /^[\w\s.,!?-]{0,500}$/,
-    gstin: /^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}Z[0-9A-Z]{1}$/, // Aligned with ProductForm's stricter GSTIN
+    gstin: /^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}Z[0-9A-Z]{1}$/,
     address1: /^[a-zA-Z0-9\s.,'-]{1,100}$/,
     address2: /^[a-zA-Z0-9\s.,'-]{0,100}$/,
     postalCode: /^\d{6}$/,
@@ -146,8 +159,8 @@ const AddCustomerModal = ({ onClose, onSuccess }) => {
     bankName: /^[a-zA-Z\s.,'-]{2,100}$/,
     branch: /^[a-zA-Z0-9\s.,'-]{2,100}$/,
     accountHolder: /^[a-zA-Z\s.,'-]{2,100}$/,
-    accountNumber: /^[0-9]{9,18}$/, // Aligned with stricter numeric account numbers
-    ifsc: /^[A-Z]{4}0[A-Z0-9]{6}$/, // Aligned with ProductForm
+    accountNumber: /^[0-9]{9,18}$/,
+    ifsc: /^[A-Z]{4}0[A-Z0-9]{6}$/,
   };
 
   const validateField = (name, value) => {
@@ -169,35 +182,11 @@ const AddCustomerModal = ({ onClose, onSuccess }) => {
       ifsc: "IFSC Code",
     };
 
-    // Required fields
-    const requiredFields = ["name", "email", "phone", "currency"];
-    if (requiredFields.includes(name) && !value) {
-      return `${fieldLabels[name]} is required.`;
-    }
-
-    // Optional fields
-    if (
-      !value &&
-      [
-        "website",
-        "notes",
-        "gstin",
-        "address1",
-        "address2",
-        "postalCode",
-        "pincode",
-        "bankName",
-        "branch",
-        "accountHolder",
-        "accountNumber",
-        "ifsc",
-      ].includes(name)
-    ) {
-      return "";
-    }
+    // Skip required validation here - handled separately
+    if (!value) return "";
 
     // Regex validation
-    if (name in validationPatterns && value && !validationPatterns[name].test(value)) {
+    if (name in validationPatterns && !validationPatterns[name].test(value)) {
       switch (name) {
         case "name":
           return `${fieldLabels[name]} must be 2-100 characters, using letters, spaces, and common punctuation.`;
@@ -234,25 +223,34 @@ const AddCustomerModal = ({ onClose, onSuccess }) => {
     return "";
   };
 
-  // Input handlers
+  // FIXED: Input handlers with REAL-TIME REQUIRED VALIDATION
   const handleInputChange = (e) => {
     const { name, value } = e.target;
-    const sanitizedValue = sanitizeInput(value, name === "name" || name === "billing.name" || name === "shipping.name");
-    const error = validateField(name, sanitizedValue);
+    const sanitizedValue = sanitizeInput(value, name === "name");
+    let error = validateField(name, sanitizedValue);
+
+    // REAL-TIME REQUIRED VALIDATION
+    const requiredFields = ["name", "email", "phone", "currency"];
+    if (requiredFields.includes(name) && !sanitizedValue.trim()) {
+      error = `${getFieldLabel(name)} is required.`;
+    }
 
     setErrors((prev) => ({ ...prev, [name]: error }));
     setForm((prev) => ({ ...prev, [name]: sanitizedValue }));
   };
 
+  // FIXED: Address handlers with REAL-TIME REQUIRED VALIDATION
   const handleBillingChange = (e) => {
     const { name, value } = e.target;
     const sanitizedValue = sanitizeInput(value, name === "name");
-    const error = validateField(name, sanitizedValue);
+    let error = validateField(name, sanitizedValue);
+    
+    // REAL-TIME REQUIRED for name & address1
+    if ((name === "name" || name === "address1") && !sanitizedValue.trim()) {
+      error = `${getFieldLabel(name)} is required.`;
+    }
 
-    setErrors((prev) => ({
-      ...prev,
-      [`billing.${name}`]: error,
-    }));
+    setErrors((prev) => ({ ...prev, [`billing.${name}`]: error }));
     setForm((prev) => ({
       ...prev,
       billing: { ...prev.billing, [name]: sanitizedValue },
@@ -262,12 +260,14 @@ const AddCustomerModal = ({ onClose, onSuccess }) => {
   const handleShippingChange = (e) => {
     const { name, value } = e.target;
     const sanitizedValue = sanitizeInput(value, name === "name");
-    const error = validateField(name, sanitizedValue);
+    let error = validateField(name, sanitizedValue);
+    
+    // REAL-TIME REQUIRED for name & address1
+    if ((name === "name" || name === "address1") && !sanitizedValue.trim()) {
+      error = `${getFieldLabel(name)} is required.`;
+    }
 
-    setErrors((prev) => ({
-      ...prev,
-      [`shipping.${name}`]: error,
-    }));
+    setErrors((prev) => ({ ...prev, [`shipping.${name}`]: error }));
     setForm((prev) => ({
       ...prev,
       shipping: { ...prev.shipping, [name]: sanitizedValue },
@@ -289,6 +289,7 @@ const AddCustomerModal = ({ onClose, onSuccess }) => {
     }));
   };
 
+  // Dropdown handlers
   const handleCountryChange = (option) => {
     setSelectedCountry(option);
     setSelectedState(null);
@@ -403,6 +404,7 @@ const AddCustomerModal = ({ onClose, onSuccess }) => {
     setForm((prev) => ({ ...prev, status: !prev.status }));
   };
 
+  // File upload handlers
   const handleUploadClick = (e) => {
     e.preventDefault();
     if (fileInputRef.current) fileInputRef.current.click();
@@ -412,7 +414,7 @@ const AddCustomerModal = ({ onClose, onSuccess }) => {
     const file = e.target.files[0];
     if (file) {
       const validTypes = ["image/jpeg", "image/png"];
-      const maxSize = 1 * 1024 * 1024; // 1MB, aligned with ProductForm
+      const maxSize = 1 * 1024 * 1024;
       if (!validTypes.includes(file.type)) {
         toast.error("Please upload a JPEG or PNG image.");
         setErrors((prev) => ({ ...prev, image: "Invalid image type" }));
@@ -430,47 +432,77 @@ const AddCustomerModal = ({ onClose, onSuccess }) => {
     }
   };
 
+  // FIXED: Complete validateForm with PROPER REQUIRED LOGIC
   const validateForm = () => {
     const newErrors = {};
-    newErrors.name = validateField("name", form.name);
-    newErrors.email = validateField("email", form.email);
-    newErrors.phone = validateField("phone", form.phone);
-    newErrors.currency = validateField("currency", form.currency);
-    newErrors.website = validateField("website", form.website);
-    newErrors.notes = validateField("notes", form.notes);
-    newErrors.gstType = gstType ? "" : "GST Type is required.";
+    
+    // Basic required fields - IMMEDIATE VALIDATION
+    const requiredBasic = [
+      { key: "name", label: "Name", value: form.name },
+      { key: "email", label: "Email", value: form.email },
+      { key: "phone", label: "Phone Number", value: form.phone },
+      { key: "currency", label: "Currency", value: form.currency },
+      { key: "gstType", label: "GST Type", value: gstType }
+    ];
+
+    requiredBasic.forEach(({ key, label, value }) => {
+      newErrors[key] = !value.trim() ? `${label} is required.` : validateField(key, value);
+    });
+
+    // GST fields
     if (gstType === "register") {
-      newErrors.gstState = selectedGstState ? "" : "GST State is required.";
-      newErrors.gstin = validateField("gstin", form.gstin);
-      if (newErrors.gstin === "" && !isGstinVerified) {
-        newErrors.gstin = "Please verify GSTIN.";
-      }
-    } else {
-      newErrors.gstState = "";
-      newErrors.gstin = "";
+      newErrors.gstState = !selectedGstState ? "GST State is required." : "";
+      newErrors.gstin = !form.gstin ? "GSTIN is required." : 
+                       validateField("gstin", form.gstin) || 
+                       (!isGstinVerified ? "Please verify GSTIN." : "");
     }
-    newErrors["billing.name"] = validateField("name", form.billing.name);
-    newErrors["billing.address1"] = validateField("address1", form.billing.address1);
-    newErrors["billing.address2"] = validateField("address2", form.billing.address2);
-    newErrors["billing.postalCode"] = validateField("postalCode", form.billing.postalCode);
-    newErrors["billing.country"] = selectedCountry ? "" : "Billing Country is required.";
-    newErrors["billing.state"] = selectedState ? "" : "Billing State is required.";
-    newErrors["billing.city"] = selectedCity ? "" : "Billing City is required.";
-    newErrors["shipping.name"] = validateField("name", form.shipping.name);
-    newErrors["shipping.address1"] = validateField("address1", form.shipping.address1);
-    newErrors["shipping.address2"] = validateField("address2", form.shipping.address2);
-    newErrors["shipping.pincode"] = validateField("pincode", form.shipping.pincode);
-    newErrors["shipping.country"] = selectedShippingCountry ? "" : "Shipping Country is required.";
-    newErrors["shipping.state"] = selectedShippingState ? "" : "Shipping State is required.";
-    newErrors["shipping.city"] = selectedShippingCity ? "" : "Shipping City is required.";
-    newErrors["bank.bankName"] = validateField("bankName", form.bank.bankName);
-    newErrors["bank.branch"] = validateField("branch", form.bank.branch);
-    newErrors["bank.accountHolder"] = validateField("accountHolder", form.bank.accountHolder);
-    newErrors["bank.accountNumber"] = validateField("accountNumber", form.bank.accountNumber);
-    newErrors["bank.ifsc"] = validateField("ifsc", form.bank.ifsc);
+
+    // Billing required fields
+    newErrors["billing.name"] = !form.billing.name.trim() ? "Name is required." : validateField("name", form.billing.name);
+    newErrors["billing.address1"] = !form.billing.address1.trim() ? "Address Line 1 is required." : validateField("address1", form.billing.address1);
+    newErrors["billing.country"] = !selectedCountry ? "Billing Country is required." : "";
+    newErrors["billing.state"] = !selectedState ? "Billing State is required." : "";
+    newErrors["billing.city"] = !selectedCity ? "Billing City is required." : "";
+
+    // Shipping required fields  
+    newErrors["shipping.name"] = !form.shipping.name.trim() ? "Name is required." : validateField("name", form.shipping.name);
+    newErrors["shipping.address1"] = !form.shipping.address1.trim() ? "Address Line 1 is required." : validateField("address1", form.shipping.address1);
+    newErrors["shipping.country"] = !selectedShippingCountry ? "Shipping Country is required." : "";
+    newErrors["shipping.state"] = !selectedShippingState ? "Shipping State is required." : "";
+    newErrors["shipping.city"] = !selectedShippingCity ? "Shipping City is required." : "";
+
+    // Optional fields (only regex validation)
+    const optionalFields = ["website", "notes", "billing.address2", "billing.postalCode", "shipping.address2", "shipping.pincode"];
+    optionalFields.forEach(field => {
+      const [section, subfield] = field.split(".");
+      const value = section === "billing" || section === "shipping" ? form[section][subfield] : form[field];
+      newErrors[field] = value ? validateField(subfield || field, value) : "";
+    });
+
+    // Bank fields (all optional)
+    Object.keys(form.bank).forEach(key => {
+      newErrors[`bank.${key}`] = form.bank[key] ? validateField(key, form.bank[key]) : "";
+    });
 
     setErrors(newErrors);
     return Object.values(newErrors).every((error) => !error);
+  };
+
+  // FIXED: GST Type handler
+  const handleGstTypeChange = (e) => {
+    const value = e.target.value;
+    setGstType(value);
+    setForm((prev) => ({ ...prev, gstin: "" }));
+    setIsGstinVerified(false);
+    setSelectedGstState(value === "unregister" ? { value: "N/A", label: "N/A" } : null);
+    
+    // CLEAR GST ERRORS IMMEDIATELY
+    setErrors(prev => ({
+      ...prev,
+      gstType: "",
+      gstState: "",
+      gstin: ""
+    }));
   };
 
   const handleSubmit = async (e) => {
@@ -589,6 +621,7 @@ const AddCustomerModal = ({ onClose, onSuccess }) => {
     }
   };
 
+  // GST States fetch
   useEffect(() => {
     if (gstType === "register") {
       axios
@@ -607,18 +640,6 @@ const AddCustomerModal = ({ onClose, onSuccess }) => {
       setSelectedGstState(null);
     }
   }, [gstType]);
-
-  const handleGstTypeChange = (e) => {
-    const value = e.target.value;
-    setGstType(value);
-    setForm((prev) => ({ ...prev, gstin: "" }));
-    setIsGstinVerified(false);
-    if (value === "unregister") {
-      setSelectedGstState({ value: "N/A", label: "N/A" });
-    } else {
-      setSelectedGstState(null);
-    }
-  };
 
   const handleVerifyGstin = async () => {
     if (!form.gstin || !selectedGstState) {
@@ -748,7 +769,7 @@ const AddCustomerModal = ({ onClose, onSuccess }) => {
                           name="name"
                           value={form.name}
                           onChange={handleInputChange}
-                          required
+                          // required
                         />
                         {errors.name && (
                           <span className="text-danger fs-12">{errors.name}</span>
@@ -766,7 +787,7 @@ const AddCustomerModal = ({ onClose, onSuccess }) => {
                           name="email"
                           value={form.email}
                           onChange={handleInputChange}
-                          required
+                          // required
                         />
                         {errors.email && (
                           <span className="text-danger fs-12">{errors.email}</span>
@@ -784,7 +805,7 @@ const AddCustomerModal = ({ onClose, onSuccess }) => {
                           name="phone"
                           value={form.phone}
                           onChange={handleInputChange}
-                          required
+                          // required
                         />
                         {errors.phone && (
                           <span className="text-danger fs-12">{errors.phone}</span>
@@ -793,13 +814,13 @@ const AddCustomerModal = ({ onClose, onSuccess }) => {
                     </div>
                     <div className="col-lg-4 col-md-6">
                       <div className="mb-3">
-                        <label className="form-label">Currency</label>
+                        <label className="form-label">Currency <span className="text-danger ms-1">*</span></label>
                         <select
                           className="form-select"
                           name="currency"
                           value={form.currency}
                           onChange={handleInputChange}
-                          required
+                          // required
                         >
                           <option value="">Select</option>
                           <option value="Dollar">Dollar</option>
@@ -845,12 +866,12 @@ const AddCustomerModal = ({ onClose, onSuccess }) => {
                     </div>
                     <div className="col-lg-4 col-md-6">
                       <div className="mb-3">
-                        <label className="form-label">GST Type</label>
+                        <label className="form-label">GST Type <span className="text-danger ms-1">*</span></label>
                         <select
                           className="form-select"
                           value={gstType}
                           onChange={handleGstTypeChange}
-                          required
+                          // required
                         >
                           <option value="">Select</option>
                           <option value="register">Register</option>
@@ -865,7 +886,7 @@ const AddCustomerModal = ({ onClose, onSuccess }) => {
                       <>
                         <div className="col-lg-4 col-md-6">
                           <div className="mb-3">
-                            <label className="form-label">State</label>
+                            <label className="form-label">State <span className="text-danger ms-1">*</span></label>
                             <Select
                               options={gstStates}
                               value={selectedGstState}
@@ -879,7 +900,7 @@ const AddCustomerModal = ({ onClose, onSuccess }) => {
                         </div>
                         <div className="col-lg-4 col-md-4">
                           <div className="mb-3">
-                            <label className="form-label">GSTIN</label>
+                            <label className="form-label">GSTIN <span className="text-danger ms-1">*</span></label>
                             <div className="d-flex gap-2">
                               <input
                                 type="text"
@@ -916,7 +937,7 @@ const AddCustomerModal = ({ onClose, onSuccess }) => {
                         <div className="row">
                           <div className="col-12">
                             <div className="mb-3">
-                              <label className="form-label">Name</label>
+                              <label className="form-label">Name <span className="text-danger ms-1">*</span></label>
                               <input
                                 type="text"
                                 className="form-control"
@@ -931,7 +952,7 @@ const AddCustomerModal = ({ onClose, onSuccess }) => {
                           </div>
                           <div className="col-12">
                             <div className="mb-3">
-                              <label className="form-label">Address Line 1</label>
+                              <label className="form-label">Address Line 1 <span className="text-danger ms-1">*</span></label>
                               <input
                                 type="text"
                                 className="form-control"
@@ -962,7 +983,7 @@ const AddCustomerModal = ({ onClose, onSuccess }) => {
                           <div className="mb-3">
                             <div className="row">
                               <div className="col-md-6 mb-3">
-                                <label className="form-label">Country</label>
+                                <label className="form-label">Country <span className="text-danger ms-1">*</span></label>
                                 <Select
                                   options={countryOptions}
                                   value={selectedCountry}
@@ -974,7 +995,7 @@ const AddCustomerModal = ({ onClose, onSuccess }) => {
                                 )}
                               </div>
                               <div className="col-md-6 mb-3">
-                                <label className="form-label">State</label>
+                                <label className="form-label">State <span className="text-danger ms-1">*</span></label>
                                 <Select
                                   options={stateOptions}
                                   value={selectedState}
@@ -987,7 +1008,7 @@ const AddCustomerModal = ({ onClose, onSuccess }) => {
                                 )}
                               </div>
                               <div className="col-md-6 mb-3">
-                                <label className="form-label">City</label>
+                                <label className="form-label">City <span className="text-danger ms-1">*</span></label>
                                 <Select
                                   options={cityOptions}
                                   value={selectedCity}
@@ -1032,7 +1053,7 @@ const AddCustomerModal = ({ onClose, onSuccess }) => {
                         <div className="row">
                           <div className="col-12">
                             <div className="mb-3">
-                              <label className="form-label">Name</label>
+                              <label className="form-label">Name <span className="text-danger ms-1">*</span></label>
                               <input
                                 type="text"
                                 className="form-control"
@@ -1047,7 +1068,7 @@ const AddCustomerModal = ({ onClose, onSuccess }) => {
                           </div>
                           <div className="col-12">
                             <div className="mb-3">
-                              <label className="form-label">Address Line 1</label>
+                              <label className="form-label">Address Line 1 <span className="text-danger ms-1">*</span></label>
                               <input
                                 type="text"
                                 className="form-control"
@@ -1076,7 +1097,7 @@ const AddCustomerModal = ({ onClose, onSuccess }) => {
                             </div>
                           </div>
                           <div className="col-md-6 mb-3">
-                            <label className="form-label">Country</label>
+                            <label className="form-label">Country <span className="text-danger ms-1">*</span></label>
                             <Select
                               options={countryOptions}
                               value={selectedShippingCountry}
@@ -1088,7 +1109,7 @@ const AddCustomerModal = ({ onClose, onSuccess }) => {
                             )}
                           </div>
                           <div className="col-md-6 mb-3">
-                            <label className="form-label">State</label>
+                            <label className="form-label">State <span className="text-danger ms-1">*</span></label>
                             <Select
                               options={shippingStateOptions}
                               value={selectedShippingState}
@@ -1101,7 +1122,7 @@ const AddCustomerModal = ({ onClose, onSuccess }) => {
                             )}
                           </div>
                           <div className="col-md-6 mb-3">
-                            <label className="form-label">City</label>
+                            <label className="form-label">City <span className="text-danger ms-1">*</span></label>
                             <Select
                               options={shippingCityOptions}
                               value={selectedShippingCity}
