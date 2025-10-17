@@ -253,7 +253,7 @@ const canAccess = (module, action = "read") => {
       key: "sales",
       items: [
         canAccess("Sales", "read") && {
-          label: t("Sales"),
+          label: t("sales"),
           path: "/online-orders",
           icon: <TbShoppingBag className="icons" />,
         },
