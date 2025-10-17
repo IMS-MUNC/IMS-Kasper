@@ -30,6 +30,7 @@
     "country-state-city": "^3.2.1",
     "date-fns": "^4.1.0",
     "emoji-picker-react": "^4.12.3",
+    "exceljs": "^4.4.0",
     "file-saver": "^2.0.5",
     "html2canvas": "^1.4.1",
     "i18next": "^25.3.0",

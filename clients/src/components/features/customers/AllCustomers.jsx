@@ -266,6 +266,7 @@ function AllCustomers({ onClose }) {
     });
   };
 
+
   // Handle select all for current page
   const handleSelectAll = () => {
     const currentPageCustomers = getCurrentPageCustomers();
@@ -295,44 +296,62 @@ function AllCustomers({ onClose }) {
   };
 
   const handleDownloadPDF = () => {
-    try {
-      const doc = new jsPDF();
+  // Filter customers based on selectedCustomers (_id)
+  const dataToExport = selectedCustomers.length > 0
+    ? customers.filter(customer => selectedCustomers.includes(customer._id))
+    : customers; // Export all customers if none are selected
 
-      doc.setFontSize(18);
-      doc.text("Customer List with Order Statistics", 14, 20);
+  if (dataToExport.length === 0) {
+    toast.warn("No customers available to export.");
+    return;
+  }
 
-      const tableColumn = ["S.No", "Name", "Phone", "Email", "Address", "Total Orders", "Total Spent", "Status"];
-      const tableRows = customers.map((c, i) => [
-        i + 1,
-        c.name || "N/A",
-        c.phone || "N/A",
-        // c.billing?.country?.name || "N/A",
-        // c.billing?.state?.stateName || "N/A",
-        c.email || "N/A",
-        formatAddress(c.billing) || "N/A",
-        `${customerStats[c._id]?.orderCount || 0} times`,
-        `Rs. ${(customerStats[c._id]?.totalAmount || 0).toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
-        c.status == true ? 'Active' : 'Inactive',
-      ]);
+  try {
+    const doc = new jsPDF();
+    doc.setFontSize(18);
+    doc.text("Customer List with Order Statistics", 14, 20);
 
-      autoTable(doc, {
-        startY: 30,
-        head: [tableColumn],
-        body: tableRows,
-        styles: { fontSize: 6 },
-      });
+    const tableColumn = ["S.No", "Name", "Phone", "Email", "Address", "Total Orders", "Total Spent", "Status"];
+    const tableRows = dataToExport.map((c, i) => [
+      i + 1,
+      c.name || "N/A",
+      c.phone || "N/A",
+      c.email || "N/A",
+      formatAddress(c.billing) || "N/A",
+      `${customerStats[c._id]?.orderCount || 0} times`,
+      `Rs. ${(customerStats[c._id]?.totalAmount || 0).toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
+      c.status == true ? 'Active' : 'Inactive',
+    ]);
 
-      doc.save("customers-with-order-stats.pdf");
-    } catch (error) {
-      console.error("Error generating PDF:", error);
-      toast.error("Failed to generate PDF.");
-    }
-  };
+    autoTable(doc, {
+      startY: 30,
+      head: [tableColumn],
+      body: tableRows,
+      styles: { fontSize: 6 },
+    });
+
+    doc.save("customers-with-order-stats.pdf");
+  } catch (error) {
+    console.error("Error generating PDF:", error);
+    toast.error("Failed to generate PDF.");
+  }
+};
+
   const handleExcel = () => {
+
+    const dataToExport = selectedCustomers.length > 0
+    ? customers.filter(customer => selectedCustomers.includes(customer._id))
+    : customers; // Export all customers if none are selected
+
+  if (dataToExport.length === 0) {
+    toast.warn("No customers available to export.");
+    return;
+  }
+
     try {
       const tableColumn = ["S.No", "Name", "Phone", "Email", "Address", "Total Orders", "Total Spent", "Status"];
 
-      const tableRows = customers.map((c, i) => [
+      const tableRows = dataToExport.map((c, i) => [
         i + 1,
         c.name || "N/A",
         c.phone || "N/A",
@@ -343,7 +362,7 @@ function AllCustomers({ onClose }) {
         c.status == true ? 'Active' : 'Inactive',
       ]);
 
-      const data = [tableColumn, ...tableRows];
+      const data = [tableColumn, ...tableRows];   
 
       const worksheet = XLSX.utils.aoa_to_sheet(data);
 
@@ -397,6 +416,11 @@ function AllCustomers({ onClose }) {
 
     return { lastPurchaseDate, recentOrderItems };
   }, [selectedCustomer, sales]);
+
+
+  useEffect(() => {
+setCurrentPage(1);
+}, [selectedStatus]);
 
   return (
     <div className="page-wrapper">

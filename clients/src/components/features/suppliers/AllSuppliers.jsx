@@ -22,6 +22,8 @@ import * as XLSX from "xlsx";
 import DeleteAlert from "../../../utils/sweetAlert/DeleteAlert";
 import { toast } from "react-toastify";
 import Swal from "sweetalert2";
+import ExcelJS from 'exceljs';
+import { saveAs } from 'file-saver';
 
 function formatAddress(billing) {
   if (!billing) return "";
@@ -116,7 +118,11 @@ function AllSuppliers() {
   const filteredSuppliers = suppliers.filter((s) => {
     const matchesSearch =
       s.firstName?.toLowerCase().includes(searchTerm.toLowerCase().trim()) +
-      s.lastName?.toLowerCase().includes(searchTerm.toLowerCase().trim());
+      s.lastName?.toLowerCase().includes(searchTerm.toLowerCase().trim()) || s.supplierCode
+        ?.toLowerCase()
+        .includes(searchTerm.toLowerCase().trim()) ||
+      s.email?.toLowerCase().includes(searchTerm.toLowerCase().trim()) ||
+      s.phone?.toLowerCase().includes(searchTerm.toLowerCase().trim());
     const matchesStatus = selectedStatus
       ? (s.status ? "Active" : "Inactive") === selectedStatus
       : true;
@@ -202,35 +208,48 @@ function AllSuppliers() {
     doc.save("Suppliers.pdf");
   };
 
-  const handleExcel = () => {
-    const tableColumns = [
-      "Code",
-      "Supplier",
-      "Email",
-      "Phone",
-      "Country",
-      "Status",
-    ];
 
-    const tableRows = paginatedData.map((e) => [
-      e.supplierCode,
-      e.firstName + " " + e.lastName,
-      e.email,
-      e.phone,
-      e.billing?.country?.name || e.shipping?.country?.name || "-",
-      // e.billing?.country?.name ||e?.shipping?.country?.name || '-',
-      e.status == true ? "Active" : "Inactive",
-    ]);
+ const handleExcel = async () => {
+  const workbook = new ExcelJS.Workbook();
+  const worksheet = workbook.addWorksheet("Suppliers");
 
-    const data = [tableColumns, ...tableRows];
+  // Define columns
+  worksheet.columns = [
+    { header: "Code", key: "code", width: 15 },
+    { header: "Supplier", key: "supplier", width: 25 },
+    { header: "Email", key: "email", width: 25 },
+    { header: "Phone", key: "phone", width: 15 },
+    { header: "Country", key: "country", width: 20 },
+    { header: "Status", key: "status", width: 10 },
+  ];
 
-    const worksheet = XLSX.utils.aoa_to_sheet(data);
+  // Add rows
+  paginatedData.forEach((e) => {
+    worksheet.addRow({
+      code: e.supplierCode,
+      supplier: `${e.firstName} ${e.lastName}`,
+      email: e.email,
+      phone: e.phone,
+      country: e.billing?.country?.name || e.shipping?.country?.name || "-",
+      status: e.status === true ? "Active" : "Inactive",
+    });
+  });
 
-    const workbook = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(workbook, worksheet, "Products");
-
-    XLSX.writeFile(workbook, "Suppliers.xlsx");
+  // Style header row: bold and font size
+  worksheet.getRow(1).font = {
+    bold: true,
+    size: 13,
   };
+
+  // Optional: Center align headers
+  worksheet.getRow(1).alignment = { horizontal: "center" };
+
+  // Generate Excel file and trigger download
+  const buffer = await workbook.xlsx.writeBuffer();
+  const blob = new Blob([buffer], { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" });
+  saveAs(blob, "Suppliers.xlsx");
+};
+
 
   return (
     <div className="page-wrapper">
