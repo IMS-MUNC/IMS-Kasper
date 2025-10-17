@@ -41,7 +41,7 @@ export const InboxProvider = ({ children }) => {
         setInboxCount(res.data.count);
       }
     } catch (error) {
-      console.log("Error fetching inbox count:", error);
+      // console.log("Error fetching inbox count:", error);
     }
   };
 
