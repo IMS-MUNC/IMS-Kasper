@@ -38,6 +38,15 @@ const usersSchema = new mongoose.Schema(
     twoFactorEnabled: { type: Boolean, default: true },
     otp: { type: String },
     otpExpires: { type: Date },
+
+    // sessions or refresh tokens - for multi device logout
+  refreshTokens: [
+    {
+    token:{type:String},
+    deviceInfo:{type:String},
+    createdAt: {type:Date, default:Date.now},
+    },
+  ],
   },
   {
     timestamps: true,
@@ -52,5 +61,21 @@ usersSchema.set("toJSON", {
     return ret;
   },
 });
+
+// Helper method: check if password changed after JWT issued
+usersSchema.methods.changedPasswordAfter = function(JWTTimestamp) {
+  if(this.passwordChangedAt) {
+    const changedTimestamp = parseInt(this.passwordChangedAt.getTime() / 1000, 10);
+    return JWTTimestamp < changedTimestamp
+  }
+  //false means not changed
+  return false;
+}
+
+usersSchema.methods.removeToken = async function (token) {
+  this.refreshTokens = this.refreshTokens.filter(t => t.token !== token);
+  await this.save();
+};
+
 
 module.exports = mongoose.model("Users", usersSchema);

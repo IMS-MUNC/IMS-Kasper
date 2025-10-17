@@ -35,7 +35,7 @@ const Role = () => {
   const [errors, setErrors] = useState({});
   const nameRegex = /^[A-Za-z]+(?: [A-Za-z]+)*$/;;
 
-  // const [statusFilter, setStatusFilter] = useState("Status");
+  // const [statusFilter, setStatusFilter] = useState("Latest");
   const [searchTerm, setSearchTerm] = useState("");
   const [sortOrder, setSortOrder] = useState("Latest");
 
@@ -199,7 +199,7 @@ const Role = () => {
 
   // Filtered, searched, sorted roles
   const filteredRoles = roles
-    // .filter((role) => statusFilter === "Status" || role.status === statusFilter)
+    // .filter((role) => sortOrder === "Latest" || role.status === sortOrder)
     .filter((role) =>
       role.roleName.toLowerCase().includes(searchTerm.toLowerCase())
     )
@@ -422,7 +422,7 @@ const Role = () => {
                     padding: "10px",
                   }}
                 >
-                  Latest{" "}
+                  {sortOrder}{" "}
                   <img src={IConnie} alt="" style={{ marginLeft: "10px", fontSize: "20px" }} />
                 </button>
                 <ul className="dropdown-menu  dropdown-menu-end p-1" aria-labelledby="statusDropdown">

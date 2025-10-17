@@ -182,6 +182,7 @@ exports.verifyOtpAndReset = async (req, res) => {
     if (!user) return res.status(404).json({ message: "User not found" });
 
     user.password = await bcrypt.hash(newPassword, 10);
+    user.passwordChangedAt = new Date(); // i added this 17-10-25
     await user.save();
 
     await Otp.deleteMany({ email });

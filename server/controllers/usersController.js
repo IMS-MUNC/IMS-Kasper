@@ -156,6 +156,8 @@ exports.updateUser = async (req, res) => {
       }
       user.password = await bcrypt.hash(newpassword, 10);
       user.passwordChangedAt = new Date();
+      // Invalidate all tokens after password change
+      user.refreshTokens = [];
     }
 
     if (req.file) {

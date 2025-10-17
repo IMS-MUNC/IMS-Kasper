@@ -164,12 +164,15 @@ import axios from 'axios';
 import { toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import BASE_URL from '../../../../pages/config/config';
+import { useNavigate } from 'react-router-dom';
+
 
 const PphnneChangePassword = ({ isOpen, onClose }) => {
   const [showCurrent, setShowCurrent] = useState(false);
   const [showNew, setShowNew] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
   const [errors, setErrors] = useState({});
+  const navigate = useNavigate();
  
   const toggleCurrent = () => setShowCurrent(!showCurrent);
   const toggleNew = () => setShowNew(!showNew);
@@ -230,9 +233,14 @@ const token = localStorage.getItem("token");
         },
       });
 
-      toast.success('Password updated successfully', {
+      toast.success('Password updated successfully. Please login again', {
         position: 'top-center',
       });
+      localStorage.removeItem('token');
+      localStorage.removeItem('user');
+      localStorage.removeItem('twoFAToken');
+      localStorage.removeItem('userId');
+      navigate("/login")
 
       setFormData({ currentpassword: '', newpassword: '', confirmpassword: '' });
       onClose();
@@ -260,6 +268,7 @@ const token = localStorage.getItem("token");
                 value={formData.currentpassword}
                 onChange={handleInputChange}
                 required
+                placeholder='Enter your current password'
               />
               {errors.currentpassword && (
                   <p style={{ color: "red", fontSize: "12px" }}>
@@ -283,6 +292,7 @@ const token = localStorage.getItem("token");
                 value={formData.newpassword}
                 onChange={handleInputChange}
                 required
+                placeholder='Enter new password'
               />
               {errors.newpassword && (
                   <p style={{ color: "red", fontSize: "12px" }}>
@@ -305,6 +315,7 @@ const token = localStorage.getItem("token");
                 value={formData.confirmpassword}
                 onChange={handleInputChange}
                 required
+                placeholder='Re-Enter new password'
               />
               {errors.confirmpassword && (
                   <p style={{ color: "red", fontSize: "12px" }}>

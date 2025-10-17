@@ -454,11 +454,26 @@ const Users = () => {
   }
 
   // handle single checkbox toggle
-  const handleCheckboxChange = (id) => {
-    setSelectedUsers((prevUsers) =>
-      prevUsers.includes(id) ? prevUsers.filter((userId) => userId !== id) : [...prevUsers, id]
+ const handleCheckboxChange = (id) => {
+  setSelectedUsers((prevSelected) => {
+    let updatedSelected;
+
+    if (prevSelected.includes(id)) {
+      updatedSelected = prevSelected.filter((userId) => userId !== id);
+    } else {
+      updatedSelected = [...prevSelected, id];
+    }
+
+    // ✅ Keep selectAll in sync dynamically
+    const allSelected = paginatedUsers.every((user) =>
+      updatedSelected.includes(user._id)
     );
-  }
+    setSelectAll(allSelected);
+
+    return updatedSelected;
+  });
+};
+
 
   const handleSelectAll = () => {
     if (selectAll) {
