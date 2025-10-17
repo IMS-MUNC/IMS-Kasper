@@ -579,7 +579,16 @@ const ExpenseReport = ({ item }) => {
               fontSize: "16px",
             }}
           >
-            {currentExpenses.map((item, index) => (
+            {currentExpenses.length === 0 ? (
+              <>
+              <tr>
+                <td colSpan="10" style={{ textAlign: "center", padding: "20px" }}>
+                  No expenses found.
+                </td>
+              </tr>
+              </>
+            ) : (
+              currentExpenses.map((item, index) => (
               <tr key={index} style={{ borderBottom: "1px solid #E6E6E6" }}>
                 <td style={{ padding: "10px" }}>
                   <input type="checkbox" />
@@ -690,7 +699,7 @@ const ExpenseReport = ({ item }) => {
                   </td>
                 </OverlayTrigger>
               </tr>
-            ))}
+            )))}
           </tbody>
         </table>
       </div>

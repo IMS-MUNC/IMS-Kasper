@@ -17,6 +17,7 @@ import {
   TbUserCheck,
   TbUsers,
 } from "react-icons/tb";
+import { RiArrowDownSLine } from "react-icons/ri";
 import { FaLayerGroup } from "react-icons/fa";
 import { FcExpired } from "react-icons/fc";
 import { getTotalStockValue } from "../../../utils/getTotalStockValue";
@@ -33,8 +34,8 @@ const AdminDashboard = () => {
   const { t } = useTranslation();
   //transaction
   const navigate = useNavigate();
-const [activeTab, setActiveTab] = useState("sale");
-    const [recentPurchases, setRecentPurchases] = useState([]);
+  const [activeTab, setActiveTab] = useState("sale");
+  const [recentPurchases, setRecentPurchases] = useState([]);
   const [activeTransactionTab, setActiveTransactionTab] = useState("sales");
   // const [recentPurchases, setRecentPurchases] = useState([]);
   const [user, setUser] = useState(null);
@@ -74,9 +75,9 @@ const [activeTab, setActiveTab] = useState("sale");
   const [recentSalesFilter, setRecentSalesFilter] = useState("weekly");
   const [topSellingFilter, setTopSellingFilter] = useState("weekly");
   const [recentTransactionsFilter, setRecentTransactionsFilter] = useState("weekly");
-  
 
-   const filteredSales = recentSales.filter((sale) => {
+
+  const filteredSales = recentSales.filter((sale) => {
     if (!sale.createdAt) return false;
     const saleDate = new Date(sale.createdAt);
     const now = new Date();
@@ -136,7 +137,7 @@ const [activeTab, setActiveTab] = useState("sale");
   }, []);
   // Profit/Loss calculation based on price and quantity
   const filteredPurchases = recentPurchases.filter((purchase) => {
-    if(!purchase.createdAt) return false;
+    if (!purchase.createdAt) return false;
     const purchaseDate = new Date(purchase.createdAt);
     const now = new Date();
     if (recentTransactionsFilter === "today") {
@@ -146,7 +147,7 @@ const [activeTab, setActiveTab] = useState("sale");
       const oneWeekAgo = new Date();
       oneWeekAgo.setDate(now.getDate() - 7);
       return purchaseDate >= oneWeekAgo && purchaseDate <= now;
-    }if (recentTransactionsFilter === "monthly") {
+    } if (recentTransactionsFilter === "monthly") {
       const oneMonthAgo = new Date();
       oneMonthAgo.setMonth(now.getMonth() - 1);
       return purchaseDate >= oneMonthAgo && purchaseDate <= now;
@@ -181,7 +182,7 @@ const [activeTab, setActiveTab] = useState("sale");
     // Profit = Total Sales - Total Purchase
     return totalSales - totalPurchase;
   };
-  
+
   // console.log("Total Stock Value:", totalStockValue);
   // console.log("Total Purchase Amount:", totalPurchaseAmount);
   // console.log("Total Return Amount:", totalReturnAmount);
@@ -207,22 +208,22 @@ const [activeTab, setActiveTab] = useState("sale");
   const topSellingProducts = (() => {
     const productSales = {};
     const filteredTopSales = allSales.filter((sale) => {
-        if(!sale.createdAt) return false;
-        const saleDate = new Date(sale.createdAt);
-        const now = new Date();
-        if(topSellingFilter === "today") {
-            return saleDate.toDateString() === now.toDateString();
-        }
-         if(topSellingFilter === "weekly") {
-            const oneWeekAgo = new Date();
-            oneWeekAgo.setDate(now.getDate() - 7);
-            return saleDate >= oneWeekAgo && saleDate <= now;
-        }if(topSellingFilter === "monthly") {
-         const oneMonthAgo = new Date();
-            oneMonthAgo.setMonth(now.getMonth() - 1);
-            return saleDate >= oneMonthAgo && saleDate <= now;
-        }
-        return true;   
+      if (!sale.createdAt) return false;
+      const saleDate = new Date(sale.createdAt);
+      const now = new Date();
+      if (topSellingFilter === "today") {
+        return saleDate.toDateString() === now.toDateString();
+      }
+      if (topSellingFilter === "weekly") {
+        const oneWeekAgo = new Date();
+        oneWeekAgo.setDate(now.getDate() - 7);
+        return saleDate >= oneWeekAgo && saleDate <= now;
+      } if (topSellingFilter === "monthly") {
+        const oneMonthAgo = new Date();
+        oneMonthAgo.setMonth(now.getMonth() - 1);
+        return saleDate >= oneMonthAgo && saleDate <= now;
+      }
+      return true;
     });
 
     filteredTopSales.forEach((sale) => {
@@ -246,9 +247,9 @@ const [activeTab, setActiveTab] = useState("sale");
         );
         const availableQuantity = Number(
           prod.availableQuantity ??
-            prod.availableQty ??
-            prod.productId?.availableQty ??
-            0
+          prod.availableQty ??
+          prod.productId?.availableQty ??
+          0
         );
 
         if (!productSales[id]) {
@@ -271,7 +272,7 @@ const [activeTab, setActiveTab] = useState("sale");
       .sort((a, b) => b.sellQuantity - a.sellQuantity)
       .slice(0, 5);
   })();
-//   console.log("fdfdfrecentsales", recentSales[0]?.products[0]);
+  //   console.log("fdfdfrecentsales", recentSales[0]?.products[0]);
 
   useEffect(() => {
     const fetchProducts = async () => {
@@ -335,17 +336,17 @@ const [activeTab, setActiveTab] = useState("sale");
         tenDaysLater.setDate(today.getDate() + 10);
         const soonToExpire = Array.isArray(data)
           ? data.filter((product) => {
-              const expiryArr =
-                product.variants?.get?.("Expiry") ||
-                product.variants?.["Expiry"];
-              if (!expiryArr || expiryArr.length === 0) return false;
-              return expiryArr.some((dateStr) => {
-                const [day, month, year] = dateStr.split("-").map(Number);
-                if (!day || !month || !year) return false;
-                const expDate = new Date(year, month - 1, day);
-                return expDate >= today && expDate <= tenDaysLater;
-              });
-            })
+            const expiryArr =
+              product.variants?.get?.("Expiry") ||
+              product.variants?.["Expiry"];
+            if (!expiryArr || expiryArr.length === 0) return false;
+            return expiryArr.some((dateStr) => {
+              const [day, month, year] = dateStr.split("-").map(Number);
+              if (!day || !month || !year) return false;
+              const expDate = new Date(year, month - 1, day);
+              return expDate >= today && expDate <= tenDaysLater;
+            });
+          })
           : [];
         setExpiredProducts(soonToExpire);
         setExpiredLoading(false);
@@ -704,14 +705,14 @@ const [activeTab, setActiveTab] = useState("sale");
     setAllSales(sales);
     setRecentSales(sales.slice(0, 5));
     const totalValue = sales.reduce((acc, sale) => acc + (sale.grandTotal || 0), 0);
-setTotalSaleValue(totalValue);
+    setTotalSaleValue(totalValue);
 
   };
   useEffect(() => {
-  setTotalSaleValue(
-    filteredSales.reduce((acc, sale) => acc + (sale.grandTotal || 0), 0)
-  );
-}, [filteredSales]);
+    setTotalSaleValue(
+      filteredSales.reduce((acc, sale) => acc + (sale.grandTotal || 0), 0)
+    );
+  }, [filteredSales]);
 
 
   // 🔹 fetch all purchases
@@ -990,19 +991,13 @@ setTotalSaleValue(totalValue);
                 <div className="d-flex align-items-center justify-content-between mb-3 pb-3 border-bottom">
                   <div>
                     <h4 className="mb-1">₹ {getProfit().toLocaleString()}</h4>
-                    <p
-                      className={
-                        getProfit() >= 0 ? "text-success" : "text-danger"
-                      }
-                    >
-                      {t("Profit")}: ₹{" "}
-                      {getProfit() >= 0 ? getProfit().toLocaleString() : 0}
-                      <br />
-                      {t("Loss")}:{" "}
+                    {t("Profit")}:
+                    <span className={getProfit() >= 0 ? "text-success" : "text-danger"}> ₹{" "}
+                      {getProfit() >= 0 ? getProfit().toLocaleString() : 0}</span>  | {t("Loss")}:{" "}<span className={getProfit() >= 0 ? "text-success" : "text-danger"}>
                       <span className="text-danger">
                         ₹ {getLoss().toLocaleString()}
                       </span>
-                    </p>
+                    </span>
                   </div>
                   <span className="revenue-icon bg-cyan-transparent text-cyan">
                     <FaLayerGroup className="fa-solid fa-layer-group fs-16" />
@@ -1011,9 +1006,8 @@ setTotalSaleValue(totalValue);
                 <div className="d-flex align-items-center justify-content-between">
                   <p className="mb-0">
                     <span
-                      className={`fs-13 fw-bold ${
-                        getProfit() >= 0 ? "text-success" : "text-danger"
-                      }`}
+                      className={`fs-13 fw-bold ${getProfit() >= 0 ? "text-success" : "text-danger"
+                        }`}
                     >
                       {getProfit() >= 0 ? "+" : ""}
                       {getProfit().toLocaleString()} (
@@ -1022,9 +1016,10 @@ setTotalSaleValue(totalValue);
                   </p>
                   <a
                     href="/online-orders"
-                    className="text-decoration-underline fs-13 fw-medium"
+                    // className="text-decoration-underline fs-13 fw-medium"
+                    className="fs-13 fw-medium"
                   >
-                   {t("View All")}
+                    {t("View All")}
                   </a>
                 </div>
               </div>
@@ -1048,12 +1043,12 @@ setTotalSaleValue(totalValue);
                 </div>
                 <div className="d-flex align-items-center justify-content-between">
                   <p className="mb-0">
-                    <span className="fs-13 fw-bold text-success">+35%</span> vs
-                    {t("Last Month")}
+                    <span className="fs-13 fw-bold text-success">+0%</span> vs {t("Last Month")}
                   </p>
                   <a
                     href="/invoice"
-                    className="text-decoration-underline fs-13 fw-medium"
+                    // className="text-decoration-underline fs-13 fw-medium"
+                    className="fs-13 fw-medium"
                   >
                     {t("View All")}
                   </a>
@@ -1079,12 +1074,12 @@ setTotalSaleValue(totalValue);
                 </div>
                 <div className="d-flex align-items-center justify-content-between">
                   <p className="mb-0">
-                    <span className="fs-13 fw-bold text-success">+41%</span> vs
-                    {t("Last Month")}
+                    <span className="fs-13 fw-bold text-success">+0%</span> vs {t("Last Month")}
                   </p>
                   <a
                     href="/purchase-list"
-                    className="text-decoration-underline fs-13 fw-medium"
+                    // className="text-decoration-underline fs-13 fw-medium"
+                    className="fs-13 fw-medium"
                   >
                     {t("View All")}
                   </a>
@@ -1110,12 +1105,12 @@ setTotalSaleValue(totalValue);
                 </div>
                 <div className="d-flex align-items-center justify-content-between">
                   <p className="mb-0">
-                    <span className="fs-13 fw-bold text-danger">-20%</span> vs
-                    {t("Last Month")}
+                    <span className="fs-13 fw-bold text-danger">-0%</span> vs {t("Last Month")}
                   </p>
                   <a
                     href="/manage-stocks"
-                    className="text-decoration-underline fs-13 fw-medium"
+                    // className="text-decoration-underline fs-13 fw-medium"
+                    className="fs-13 fw-medium"
                   >
                     {t("View All")}
                   </a>
@@ -1174,8 +1169,8 @@ setTotalSaleValue(totalValue);
                     labels={recentSales.flatMap((sale) =>
                       sale.products
                         ? sale.products.map(
-                            (p) => p.productName || p.name || "-"
-                          )
+                          (p) => p.productName || p.name || "-"
+                        )
                         : []
                     )}
                     datasets={[
@@ -1184,8 +1179,8 @@ setTotalSaleValue(totalValue);
                         data: recentSales.flatMap((sale) =>
                           sale.products
                             ? sale.products.map(
-                                (p) => p.saleQty || p.quantity || 0
-                              )
+                              (p) => p.saleQty || p.quantity || 0
+                            )
                             : []
                         ),
                         backgroundColor: "rgba(153,102,255,0.6)",
@@ -1203,8 +1198,8 @@ setTotalSaleValue(totalValue);
                     dates={recentSales.flatMap((sale) =>
                       sale.products
                         ? sale.products.map(
-                            (p) => sale.saleDate || sale.date || ""
-                          )
+                          (p) => sale.saleDate || sale.date || ""
+                        )
                         : []
                     )}
                   />
@@ -1261,7 +1256,7 @@ setTotalSaleValue(totalValue);
                   </span>
                   <h5 className="card-title mb-0">{t("Recent Sales")}</h5>
                 </div>
-               <div className="dropdown">
+                <div className="">
                   <button
                     className="dropdown-toggle btn btn-sm btn-white"
                     data-bs-toggle="dropdown"
@@ -1271,8 +1266,8 @@ setTotalSaleValue(totalValue);
                     {recentSalesFilter === "today"
                       ? [t("Today")]
                       : recentSalesFilter === t("weekly")
-                      ? [t("Weekly")]
-                      : [t("Monthly")]}
+                        ? [t("Weekly")]
+                        : [t("Monthly")]}
                   </button>
                   <ul className="dropdown-menu p-3">
                     <li>
@@ -1280,7 +1275,7 @@ setTotalSaleValue(totalValue);
                         className="dropdown-item"
                         onClick={() => setRecentSalesFilter("today")}
                       >
-                       {t("Today")}
+                        {t("Today")}
                       </button>
                     </li>
                     <li>
@@ -1288,7 +1283,7 @@ setTotalSaleValue(totalValue);
                         className="dropdown-item"
                         onClick={() => setRecentSalesFilter("weekly")}
                       >
-                       {t("Weekly")}
+                        {t("Weekly")}
                       </button>
                     </li>
                     <li>
@@ -1325,8 +1320,8 @@ setTotalSaleValue(totalValue);
                                 <td>
                                   {sale.saleDate
                                     ? new Date(
-                                        sale.saleDate
-                                      ).toLocaleDateString()
+                                      sale.saleDate
+                                    ).toLocaleDateString()
                                     : "-"}
                                 </td>
                                 {/* <td>
@@ -1436,7 +1431,7 @@ setTotalSaleValue(totalValue);
                               </td>
                               <td>
                                 <div className="d-flex align-items-center file-name-icon">
-                                  <a href="" className="avatar avatar-md">
+                                  <div className="avatar avatar-md">
                                     <img
                                       src={
                                         sale.customer?.image ||
@@ -1445,12 +1440,12 @@ setTotalSaleValue(totalValue);
                                       className="img-fluid"
                                       alt="img"
                                     />
-                                  </a>
+                                  </div>
                                   <div className="ms-2">
                                     <h6>
-                                      <a href="" className="fw-bold">
+                                      <div className="fw-bold">
                                         {sale.customer?.name || "-"}
-                                      </a>
+                                      </div>
                                     </h6>
                                   </div>
                                 </div>
@@ -1515,7 +1510,7 @@ setTotalSaleValue(totalValue);
                         <TbShoppingCart className="ti ti-shopping-cart" />
                       </div>
                       <p className="mb-1">{t("Orders")}</p>
-                      <h5>487</h5>
+                      <h5>0</h5>
                     </div>
                   </div>
                 </div>
@@ -1523,31 +1518,30 @@ setTotalSaleValue(totalValue);
               <div className="card-footer pb-sm-0">
                 <div className="d-flex align-items-center justify-content-between flex-wrap gap-3">
                   <h5>{t("Customers Overview")}</h5>
-                  <div className="dropdown dropdown-wraper">
-                    <a
-                      href=""
+                  <div className="">
+                    <div
                       className="dropdown-toggle btn btn-sm btn-white"
                       data-bs-toggle="dropdown"
                       aria-expanded="false"
                     >
                       <i className="ti ti-calendar me-1" />
                       {t("Today")}
-                    </a>
+                    </div>
                     <ul className="dropdown-menu p-3">
                       <li>
-                        <a href="" className="dropdown-item">
+                        <div className="dropdown-item">
                           {t("Today")}
-                        </a>
+                        </div>
                       </li>
                       <li>
-                        <a href="" className="dropdown-item">
+                        <div className="dropdown-item">
                           {t("Weekly")}
-                        </a>
+                        </div>
                       </li>
                       <li>
-                        <a href="" className="dropdown-item">
+                        <div className="dropdown-item">
                           {t("Monthly")}
-                        </a>
+                        </div>
                       </li>
                     </ul>
                   </div>
@@ -1560,21 +1554,21 @@ setTotalSaleValue(totalValue);
                     <div className="row gx-0">
                       <div className="col-sm-6">
                         <div className="text-center border-end">
-                          <h2 className="mb-1">5.5K</h2>
+                          <h2 className="mb-1">0 K</h2>
                           <p className="text-orange mb-2">{t("First Time")}</p>
                           <span className="badge badge-success badge-xs d-inline-flex align-items-center">
                             <i className="ti ti-arrow-up-left me-1" />
-                            25%
+                            0%
                           </span>
                         </div>
                       </div>
                       <div className="col-sm-6">
                         <div className="text-center">
-                          <h2 className="mb-1">3.5K</h2>
+                          <h2 className="mb-1">0 K</h2>
                           <p className="text-teal mb-2">{t("Return")}</p>
                           <span className="badge badge-success badge-xs d-inline-flex align-items-center">
                             <i className="ti ti-arrow-up-left me-1" />
-                            21%
+                            0%
                           </span>
                         </div>
                       </div>
@@ -1600,37 +1594,36 @@ setTotalSaleValue(totalValue);
               <div className="card-header d-flex justify-content-between align-items-center flex-wrap gap-3">
                 <div className="d-inline-flex align-items-center">
                   <span className="title-icon bg-soft-pink fs-16 me-2">
-                    <FcExpired className="ti ti-box" />
+                    <RiArrowDownSLine />
                   </span>
                   <h5 className="card-title mb-0">
                     {t("Upcomming Expired Products")}
                   </h5>
                 </div>
-                <div className="dropdown">
-                  <a
-                    href=""
+                <div className="">
+                  <div
                     className="dropdown-toggle btn btn-sm btn-white"
                     data-bs-toggle="dropdown"
                     aria-expanded="false"
                   >
                     <i className="ti ti-calendar me-1" />
                     {t("Weekly")}
-                  </a>
+                  </div>
                   <ul className="dropdown-menu p-3">
                     <li>
-                      <a href="" className="dropdown-item">
+                      <div className="dropdown-item">
                         {t("Today")}
-                      </a>
+                      </div>
                     </li>
                     <li>
-                      <a href="" className="dropdown-item">
+                      <div className="dropdown-item">
                         {t("Weekly")}
-                      </a>
+                      </div>
                     </li>
                     <li>
-                      <a href="" className="dropdown-item">
+                      <div className="dropdown-item">
                         {t("Monthly")}
-                      </a>
+                      </div>
                     </li>
                   </ul>
                 </div>
@@ -1730,7 +1723,7 @@ setTotalSaleValue(totalValue);
                 </div>
 
                 {/*  */}
-                <div className="dropdown">
+                <div className="">
                   <button
                     className="dropdown-toggle btn btn-sm btn-white"
                     data-bs-toggle="dropdown"
@@ -1740,8 +1733,8 @@ setTotalSaleValue(totalValue);
                     {topSellingFilter === "today"
                       ? [t("Today")]
                       : topSellingFilter === "weekly"
-                      ? [t("Weekly")]
-                      : [t("Monthly")]}
+                        ? [t("Weekly")]
+                        : [t("Monthly")]}
                   </button>
                   <ul className="dropdown-menu p-3">
                     <li>
@@ -1783,7 +1776,7 @@ setTotalSaleValue(totalValue);
                       className="d-flex align-items-center justify-content-between border-bottom py-2"
                     >
                       <div className="d-flex align-items-center">
-                        <a href="" className="avatar avatar-lg">
+                        <div className="avatar avatar-lg">
                           <img
                             src={
                               p.image || "assets/img/products/product-01.jpg"
@@ -1797,10 +1790,10 @@ setTotalSaleValue(totalValue);
                               borderRadius: "6px",
                             }}
                           />
-                        </a>
+                        </div>
                         <div className="ms-2">
                           <h6 className="fw-bold mb-1">
-                            <a href="">{p.name}</a>
+                            <div>{p.name}</div>
                           </h6>
                           <div className="d-flex align-items-center item-list">
                             <p className="mb-0 me-3">₹{p.sellingPrice}</p>
@@ -1858,7 +1851,8 @@ setTotalSaleValue(totalValue);
                 </div>
                 <a
                   href="/low-stocks"
-                  className="fs-13 fw-medium text-decoration-underline"
+                  // className="fs-13 fw-medium text-decoration-underline"
+                    className="fs-13 fw-medium"
                 >
                   {t("View All")}
                 </a>
@@ -1871,19 +1865,19 @@ setTotalSaleValue(totalValue);
                       key={product._id}
                     >
                       <div className="d-flex align-items-center">
-                        <a href="" className="avatar avatar-lg">
+                        <div className="avatar avatar-lg">
                           {product.images?.[0] && (
                             <img
                               src={product.images[0].url}
                               alt={product.productName}
                             />
                           )}
-                        </a>
+                        </div>
                         <div className="ms-2">
                           <h6 className="fw-bold mb-1">
-                            <a href="">
+                            <div>
                               {product.productName || product.name || "N/A"}
-                            </a>
+                            </div>
                           </h6>
                           <p className="fs-13">
                             {t("ID")} : {product.sku || product._id}
@@ -2005,22 +1999,23 @@ setTotalSaleValue(totalValue);
               <div className="card-header d-flex align-items-center justify-content-between flex-wrap gap-3">
                 <div className="d-inline-flex align-items-center">
                   <span className="title-icon bg-soft-orange fs-16 me-2">
-                   <GrTransaction />
+                    <GrTransaction />
                   </span>
                   <h5 className="card-title mb-0">{t("Recent Transactions")}</h5>
                 </div>
-                 
+
                 <a
-                    onClick={() => {
-    if (activeTab === "sale") navigate("/online-orders");
-    else if (activeTab === "purchase") navigate("/purchase-list");
-    else if (activeTab === "invoices") navigate("/invoice");
-  }}
-                 
-                  className="fs-13 fw-medium text-decoration-underline"
+                  onClick={() => {
+                    if (activeTab === "sale") navigate("/online-orders");
+                    else if (activeTab === "purchase") navigate("/purchase-list");
+                    else if (activeTab === "invoices") navigate("/invoice");
+                  }}
+
+                  // className="fs-13 fw-medium text-decoration-underline"
+                    className="fs-13 fw-medium"
                 >
                   {t("View All")}
-                </a> 
+                </a>
                 {/* <button
   onClick={() => {
     if (activeTab === "sale") navigate("/online-orders");
@@ -2054,13 +2049,13 @@ setTotalSaleValue(totalValue);
                       // className="nav-link active"
                       // href="#sale"
                       // data-bs-toggle="tab"
-                       
-                       className={`nav-link ${activeTab === "sale" ? "active" : ""}`}
-  href="#sale"
-  data-bs-toggle="tab"
-  onClick={() => setActiveTab("sale")}
+
+                      className={`nav-link ${activeTab === "sale" ? "active" : ""}`}
+                      href="#sale"
+                      data-bs-toggle="tab"
+                      onClick={() => setActiveTab("sale")}
                     >
-                     {t("Sale")}
+                      {t("Sale")}
                     </a>
                   </li>
                   <li className="nav-item">
@@ -2068,10 +2063,10 @@ setTotalSaleValue(totalValue);
                       // className="nav-link"
                       // href="#purchase-transaction"
                       // data-bs-toggle="tab"
-                       className={`nav-link ${activeTab === "purchase" ? "active" : ""}`}
-  href="#purchase-transaction"
-  data-bs-toggle="tab"
-  onClick={() => setActiveTab("purchase")}
+                      className={`nav-link ${activeTab === "purchase" ? "active" : ""}`}
+                      href="#purchase-transaction"
+                      data-bs-toggle="tab"
+                      onClick={() => setActiveTab("purchase")}
                     >
                       {t("Purchase")}
                     </a>
@@ -2082,10 +2077,10 @@ setTotalSaleValue(totalValue);
                       // className="nav-link"
                       // href="#invoices"
                       // data-bs-toggle="tab"
-                       className={`nav-link ${activeTab === "invoices" ? "active" : ""}`}
-  href="#invoices"
-  data-bs-toggle="tab"
-  onClick={() => setActiveTab("invoices")}
+                      className={`nav-link ${activeTab === "invoices" ? "active" : ""}`}
+                      href="#invoices"
+                      data-bs-toggle="tab"
+                      onClick={() => setActiveTab("invoices")}
                     >
                       {t("Invoices")}
                     </a>
@@ -2111,8 +2106,8 @@ setTotalSaleValue(totalValue);
                                 <td>
                                   {sale.saleDate
                                     ? new Date(
-                                        sale.saleDate
-                                      ).toLocaleDateString()
+                                      sale.saleDate
+                                    ).toLocaleDateString()
                                     : "-"}
                                 </td>
                                 <td>
@@ -2153,9 +2148,9 @@ setTotalSaleValue(totalValue);
                                     {/* <h6 className='text-capitalize'>{sale.customer?.name || "-"}</h6> */}
                                     <div className="ms-2">
                                       <h6>
-                                        <a href="" className="fw-bold">
+                                        <div className="fw-bold">
                                           {sale.customer?.name || "-"}
-                                        </a>
+                                        </div>
                                       </h6>
                                       <span className="fs-13 text-orange">
                                         {sale.referenceNumber || "-"}
@@ -2192,13 +2187,12 @@ setTotalSaleValue(totalValue);
                                                             </td> */}
                                 <td>
                                   <span
-                                    className={`badge badge-xs d-inline-flex align-items-center ${
-                                      sale.status === "Completed"
+                                    className={`badge badge-xs d-inline-flex align-items-center ${sale.status === "Completed"
                                         ? "badge-success"
                                         : sale.status === "Draft"
-                                        ? "badge-pink"
-                                        : "badge-success"
-                                    }`}
+                                          ? "badge-pink"
+                                          : "badge-success"
+                                      }`}
                                   >
                                     <i className="ti ti-circle-filled fs-5 me-1" />
                                     {sale.status}
@@ -2216,7 +2210,7 @@ setTotalSaleValue(totalValue);
                                 colSpan="5"
                                 className="text-center text-muted"
                               >
-                               {t("No sales found.")}
+                                {t("No sales found.")}
                               </td>
                             </tr>
                           )}
@@ -2240,41 +2234,41 @@ setTotalSaleValue(totalValue);
                             <li>{t("No recent purchases found.")}</li>
                           ) : (
                             filteredPurchases
-                            .map((purchase) => (
-                              <tr>
-                                <td>
-                                  {new Date(
-                                    purchase.purchaseDate
-                                  ).toLocaleDateString()}
-                                </td>
+                              .map((purchase) => (
+                                <tr>
+                                  <td>
+                                    {new Date(
+                                      purchase.purchaseDate
+                                    ).toLocaleDateString()}
+                                  </td>
 
-                                <td>
-                                  <div className="d-flex align-items-center file-name-icon">
-                                    <a href="" className="avatar avatar-md">
-                                      <img
-                                        src={
-                                          sale.customer?.image ||
-                                          "assets/img/customer/customer16.jpg"
-                                        }
-                                        className="img-fluid"
-                                        alt="img"
-                                      />
-                                    </a>
-                                    <div className="ms-2">
-                                      <h6>
-                                        <a href="" className="fw-bold">
-                                          {purchase.supplier
-                                            ? `${purchase.supplier.firstName} ${purchase.supplier.lastName}`
-                                            : "N/A"}
-                                        </a>
-                                      </h6>
-                                      <span className="fs-13 text-orange">
-                                        {purchase.referenceNumber || "-"}
-                                      </span>
+                                  <td>
+                                    <div className="d-flex align-items-center file-name-icon">
+                                      <div className="avatar avatar-md">
+                                        <img
+                                          src={
+                                            sale.customer?.image ||
+                                            "assets/img/customer/customer16.jpg"
+                                          }
+                                          className="img-fluid"
+                                          alt="img"
+                                        />
+                                      </div>
+                                      <div className="ms-2">
+                                        <h6>
+                                          <div className="fw-bold">
+                                            {purchase.supplier
+                                              ? `${purchase.supplier.firstName} ${purchase.supplier.lastName}`
+                                              : "N/A"}
+                                          </div>
+                                        </h6>
+                                        <span className="fs-13 text-orange">
+                                          {purchase.referenceNumber || "-"}
+                                        </span>
+                                      </div>
                                     </div>
-                                  </div>
-                                </td>
-                                {/* <td>
+                                  </td>
+                                  {/* <td>
                                                                     <div className="d-flex align-items-center">
 
                                                                         <a href="#" className="avatar avatar-md">
@@ -2296,17 +2290,17 @@ setTotalSaleValue(totalValue);
                                      
                                                                     </div>
                                                                 </td> */}
-                                <td>
-                                  <span className="badge badge-success badge-xs d-inline-flex align-items-center">
-                                    <i className="ti ti-circle-filled fs-5 me-1" />
-                                    {purchase.status}
-                                  </span>
-                                </td>
-                                <td className="text-gray-9">
-                                  ₹{purchase.grandTotal}
-                                </td>
-                              </tr>
-                            ))
+                                  <td>
+                                    <span className="badge badge-success badge-xs d-inline-flex align-items-center">
+                                      <i className="ti ti-circle-filled fs-5 me-1" />
+                                      {purchase.status}
+                                    </span>
+                                  </td>
+                                  <td className="text-gray-9">
+                                    ₹{purchase.grandTotal}
+                                  </td>
+                                </tr>
+                              ))
                           )}
                         </tbody>
                       </table>
@@ -2333,7 +2327,7 @@ setTotalSaleValue(totalValue);
                               <tr key={sale._id}>
                                 <td>
                                   <div className="d-flex align-items-center file-name-icon">
-                                    <a href="" className="avatar avatar-md">
+                                    <div className="avatar avatar-md">
                                       <img
                                         src={
                                           sale.customer?.image ||
@@ -2342,12 +2336,12 @@ setTotalSaleValue(totalValue);
                                         className="img-fluid"
                                         alt="img"
                                       />
-                                    </a>
+                                    </div>
                                     <div className="ms-2">
                                       <h6>
-                                        <a href="" className="fw-bold">
+                                        <div className="fw-bold">
                                           {sale.customer?.name || "-"}
-                                        </a>
+                                        </div>
                                       </h6>
                                       <span className="fs-13 text-orange">
                                         {sale.invoiceId || sale.referenceNumber}{" "}

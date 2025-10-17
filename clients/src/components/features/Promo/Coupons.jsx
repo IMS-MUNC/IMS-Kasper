@@ -71,23 +71,28 @@ const Coupons = () => {
   };
 
   // Function to check and update expired coupons
-  const checkAndUpdateExpiredCoupons = async () => {
-    const currentDate = new Date();
+    const checkAndUpdateExpiredCoupons = async () => {
+    // Get the current date and set the time to the beginning of the day (00:00:00)
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
 
-    // Find expired coupons that are still active
+    // Find coupons where the validity date is strictly before today's date.
+    // This means a coupon expiring 'today' will not be included.
     const expiredCoupons = coupons.filter((coupon) => {
       const validDate = new Date(coupon.valid);
-      return coupon.validStatus === "Active" && validDate < currentDate;
+      return coupon.validStatus === "Active" && validDate < today;
     });
 
     if (expiredCoupons.length > 0) {
       try {
         const token = localStorage.getItem("token");
 
-        // Update each expired coupon
+        // Update each expired coupon in the database
         for (const coupon of expiredCoupons) {
+          // The check `validDate < today` is implicitly true because of the filter above,
+          // but we can keep it for clarity.
           const validDate = new Date(coupon.valid);
-          if (coupon.validStatus === "Active" && validDate < currentDate) {
+          if (coupon.validStatus === "Active" && validDate < today) {
             const response = await fetch(`${BASE_URL}/api/coupons/${coupon._id}`, {
               method: "PUT",
               headers: {
@@ -106,11 +111,12 @@ const Coupons = () => {
           }
         }
 
-        // Update local state
+        // Update local state to reflect the changes
         setCoupons((prevCoupons) =>
           prevCoupons.map((coupon) => {
             const validDate = new Date(coupon.valid);
-            if (coupon.validStatus === "Active" && validDate < currentDate) {
+            // If the coupon is active and its valid date is before today, make it inactive
+            if (coupon.validStatus === "Active" && validDate < today) {
               return { ...coupon, validStatus: "Inactive" };
             }
             return coupon;
@@ -118,7 +124,7 @@ const Coupons = () => {
         );
 
         if (expiredCoupons.length > 0) {
-          toast.info(`${expiredCoupons.length} expired coupon(s) have been automatically set to inactive.`);
+          toast.info(`${expiredCoupons.length} coupon(s) have been automatically set to inactive.`);
         }
       } catch (error) {
         console.error("Error updating expired coupons:", error);
@@ -413,20 +419,21 @@ const Coupons = () => {
       );
     })
     .sort((a, b) => {
-      // Sorting Logic
-      if (sortOrder === "Latest") {
-        const dateA = new Date(a.valid);
-        const dateB = new Date(b.valid);
-        return dateB - dateA; // Newest first
-      }
-      if (sortOrder === "Ascending") {
-        return a.name.localeCompare(b.name); // A-Z
-      }
-      if (sortOrder === "Descending") {
-        return b.name.localeCompare(a.name); // Z-A
-      }
-      return 0; // Default: no sorting
-    });
+  // Sorting Logic
+  if (sortOrder === "Latest") {
+    // Sort by creation time (LIFO), assuming a 'createdAt' field exists
+    const dateA = new Date(a.createdAt);
+    const dateB = new Date(b.createdAt);
+    return dateB - dateA; // Newest created item first
+  }
+  if (sortOrder === "Ascending") {
+    return a.name.localeCompare(b.name); // A-Z
+  }
+  if (sortOrder === "Descending") {
+    return b.name.localeCompare(a.name); // Z-A
+  }
+  return 0; // Default: no sorting
+});
 
   const totalPages = Math.ceil(filteredCoupons.length / itemsPerPage);
   const paginatedCoupons = filteredCoupons.slice(
