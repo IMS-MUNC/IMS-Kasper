@@ -43,6 +43,8 @@ const Chat = () => {
   const [message, setMessage] = useState('');
   const [readStatus, setReadStatus] = useState({});
   const [unreadCounts, setUnreadCounts] = useState({}); // Track unread counts per user
+  const [newMessagesStartIndex, setNewMessagesStartIndex] = useState(null); // Index of first unread incoming message
+  const [showNewMessagesDivider, setShowNewMessagesDivider] = useState(false); // Show "New messages" divider
 
   // Debug unreadCounts changes
   useEffect(() => {
@@ -432,6 +434,36 @@ const Chat = () => {
     return `${formattedHours}:${formattedMinutes} ${ampm}`;
   };
 
+  // Date helpers for day grouping and label rendering
+  const isSameDay = (a, b) => {
+    if (!a || !b) return false;
+    const da = new Date(a);
+    const db = new Date(b);
+    return da.getFullYear() === db.getFullYear() &&
+           da.getMonth() === db.getMonth() &&
+           da.getDate() === db.getDate();
+  };
+
+  const formatDateLabel = (timestamp) => {
+    if (!timestamp) return '';
+    const d = new Date(timestamp);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const yesterday = new Date(today);
+    yesterday.setDate(today.getDate() - 1);
+
+    const labelDate = new Date(d.getFullYear(), d.getMonth(), d.getDate());
+    if (labelDate.getTime() === today.getTime()) return 'Today';
+    if (labelDate.getTime() === yesterday.getTime()) return 'Yesterday';
+
+    return d.toLocaleDateString(undefined, {
+      weekday: 'short',
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric'
+    });
+  };
+
   const calculateUnreadCount = (userId) => {
     const userMessages = messages[userId] || [];
     const unreadMessages = userMessages.filter(msg => msg.from === userId && !msg.read);
@@ -450,20 +482,24 @@ const Chat = () => {
     if (!messageContainerRef.current || !selectedUser) return;
 
     const userMessages = messages[selectedUser._id] || [];
-    const firstUnreadIndex = userMessages.findIndex(msg => msg.from === selectedUser._id && !msg.read);
+    const normalizedSelectedUserId = normalizeUserId(selectedUser._id);
+    // Prefer stored boundary index to avoid race with read flag updates
+    const targetIndex = (newMessagesStartIndex !== null && newMessagesStartIndex !== -1)
+      ? newMessagesStartIndex
+      : userMessages.findIndex(msg => normalizeUserId(msg.from) === normalizedSelectedUserId && !msg.read);
 
-    if (firstUnreadIndex !== -1) {
+    if (targetIndex !== -1 && targetIndex !== null) {
       const messageElements = messageContainerRef.current.children;
-      if (messageElements[firstUnreadIndex]) {
-        messageElements[firstUnreadIndex].scrollIntoView({
+      if (messageElements[targetIndex]) {
+        messageElements[targetIndex].scrollIntoView({
           behavior: 'smooth',
           block: 'center'
         });
+        return;
       }
-    } else {
-      // If no unread messages, scroll to bottom
-      messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
     }
+    // Fallback: If no unread or element not found, scroll to bottom
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
 
 
@@ -810,6 +846,9 @@ const Chat = () => {
   useEffect(() => {
     const fetchMessages = async () => {
       if (!selectedUser) return;
+      // Reset divider state for fresh computation on new selection
+      setNewMessagesStartIndex(null);
+      setShowNewMessagesDivider(false);
       try {
         const token = localStorage.getItem('token');
         const res = await fetch(
@@ -870,8 +909,13 @@ const Chat = () => {
           };
         });
 
-        // Check if there are any unread messages from the selected user
-        const unreadMessages = data.filter(msg => msg.from === selectedUser._id && !msg.read);
+        // Compute boundary and check unread messages from selected user
+        const normalizedSelectedUserId = normalizeUserId(selectedUser._id);
+        const firstUnreadIndex = data.findIndex(msg => normalizeUserId(msg.from) === normalizedSelectedUserId && !msg.read);
+        setNewMessagesStartIndex(firstUnreadIndex !== -1 ? firstUnreadIndex : null);
+        setShowNewMessagesDivider(firstUnreadIndex !== -1);
+
+        const unreadMessages = data.filter(msg => normalizeUserId(msg.from) === normalizedSelectedUserId && !msg.read);
 
         // Only mark messages as read if there are actually unread messages
         if (unreadMessages.length > 0) {
@@ -886,12 +930,13 @@ const Chat = () => {
           socket.current.emit('message-read', { from: currentUserId, to: selectedUser._id });
           setReadStatus((prev) => ({ ...prev, [selectedUser._id]: true }));
 
-          // Update messages to mark them as read
+          // Update messages to mark them as read for incoming messages
+          const normalizedSelectedUserIdForMarking = normalizeUserId(selectedUser._id);
           setMessages((prev) => ({
             ...prev,
             [selectedUser._id]: (prev[selectedUser._id] || []).map(msg => ({
               ...msg,
-              read: msg.from === selectedUser._id ? true : msg.read
+              read: normalizeUserId(msg.from) === normalizedSelectedUserIdForMarking ? true : msg.read
             }))
           }));
         }
@@ -925,7 +970,7 @@ const Chat = () => {
         scrollToFirstUnreadMessage();
       }, 100); // Small delay to ensure DOM is updated
     }
-  }, [messages, selectedUser]);
+  }, [messages, selectedUser, newMessagesStartIndex]);
 
   const handleMessageSelection = (messageIndex) => {
     if (!isSelectionMode) return;
@@ -1989,6 +2034,36 @@ const Chat = () => {
                                 </span>
                                 <br />
                                 <span style={{ color: '#333' }}>{msg.replyTo.message}</span>
+                              </div>
+                            )}
+                            {/* Date divider */}
+                            {msg.timestamp && (idx === 0 || !isSameDay(msg.timestamp, (messages[selectedUser._id] || [])[idx - 1]?.timestamp)) && (
+                              <div style={{ width: '100%', textAlign: 'center', margin: '8px 0' }}>
+                                <span style={{
+                                  backgroundColor: '#E3F3FF',
+                                  color: 'black',
+                                  padding: '4px 10px',
+                                  borderRadius: '999px',
+                                  border: '1px solid #007AFF',
+                                  fontSize: '12px'
+                                }}>
+                                  {formatDateLabel(msg.timestamp)}
+                                </span>
+                              </div>
+                            )}
+                            {/* NEW: Inline "New messages" divider within the message node */}
+                            {showNewMessagesDivider && newMessagesStartIndex === idx && (
+                              <div style={{ width: '100%', textAlign: 'center', margin: '8px 0' }}>
+                                <span style={{
+                                  backgroundColor: '#fff3cd',
+                                  color: '#856404',
+                                  padding: '4px 10px',
+                                  borderRadius: '999px',
+                                  border: '1px solid #ffeeba',
+                                  fontSize: '12px'
+                                }}>
+                                  New messages
+                                </span>
                               </div>
                             )}
                             {/* Message row: avatar + message bubble + menu */}
