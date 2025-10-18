@@ -49,10 +49,12 @@ const GiftCard = ({ show, handleClose }) => {
 
   // Function to check and update expired gift cards
   const checkAndUpdateExpiredGiftCards = async (giftCards) => {
-    const currentDate = new Date();
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
     const expiredCards = giftCards.filter(card => {
       const expiryDate = new Date(card.expiryDate);
-      return card.status === true && expiryDate < currentDate;
+      return card.status === true && expiryDate < today;
     });
 
     if (expiredCards.length > 0) {
@@ -77,7 +79,7 @@ const GiftCard = ({ show, handleClose }) => {
         // Update local state to reflect changes
         const updatedCards = giftCards.map(card => {
           const expiryDate = new Date(card.expiryDate);
-          if (card.status === true && expiryDate < currentDate) {
+          if (card.status === true && expiryDate < today) {
             return { ...card, status: false };
           }
           return card;
@@ -650,20 +652,20 @@ const GiftCard = ({ show, handleClose }) => {
       );
     })
     .sort((a, b) => {
-      // Sorting Logic
-      switch (sortOrder) {
-        case "Latest":
-          return new Date(b.issuedDate) - new Date(a.issuedDate);
-        case "Oldest":
-          return new Date(a.issuedDate) - new Date(b.issuedDate);
-        case "Ascending":
-          return a.giftCard.localeCompare(b.giftCard);
-        case "Descending":
-          return b.giftCard.localeCompare(a.giftCard);
-        default:
-          return 0;
-      }
-    });
+  // Sorting Logic
+  switch (sortOrder) {
+    case "Latest": // LIFO - Last-In, First-Out
+      return new Date(b.createdAt) - new Date(a.createdAt);
+    case "Oldest": // FIFO - First-In, First-Out
+      return new Date(a.createdAt) - new Date(b.createdAt);
+    case "Ascending":
+      return a.giftCard.localeCompare(b.giftCard);
+    case "Descending":
+      return b.giftCard.localeCompare(a.giftCard);
+    default:
+      return 0;
+  }
+});
 
   const totalPages = Math.ceil(filteredGiftCards.length / itemsPerPage);
   const paginatedGiftCards = filteredGiftCards.slice(

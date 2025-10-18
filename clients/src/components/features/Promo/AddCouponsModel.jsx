@@ -63,20 +63,29 @@ const AddCouponModal = ({ show, handleClose, onSave, editCoupon = null, mode }) 
     }));
   };
 
-  const handleSave = async () => {
+    const handleSave = async () => {
     const plainDescription = description.replace(/<[^>]*>?/gm, '');
     const finalData = {
       ...formData,
       description: plainDescription
     };
    
+    // 1. First, check if all required fields have a value
     const requiredFields = ['name', 'code', 'type', 'discount', 'limit', 'valid', 'validStatus'];
-    const isValid = requiredFields.every(field => finalData[field] && finalData[field].toString().trim() !== '');
-    if (!isValid) {
+    const allFieldsFilled = requiredFields.every(field => finalData[field] && finalData[field].toString().trim() !== '');
+    
+    if (!allFieldsFilled) {
       toast.error("Please fill all the required fields marked with * before submitting.");
       return;
     }
 
+    // 2. NEW: After confirming fields are filled, check the code's length
+    if (finalData.code.trim().length !== 6) {
+      toast.error("Coupon code must be 6 characters long.");
+      return; // Stop the function if the code length is not 6
+    }
+
+    // If all checks pass, proceed with the API call
     try {
       const token = localStorage.getItem("token");
       
@@ -154,9 +163,10 @@ const AddCouponModal = ({ show, handleClose, onSave, editCoupon = null, mode }) 
               <Form.Control
                 name="code"
                 type="text"
-                placeholder="Enter coupon code"
+                placeholder="Enter 6 digit coupon code"
                 value={formData.code}
                 onChange={handleChange}
+                maxLength={6}
               />
             </div>
             <div className="col-md-6">
