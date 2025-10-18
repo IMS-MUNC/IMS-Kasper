@@ -19,15 +19,15 @@ exports.createSupplier = async (req, res) => {
     }
 
     // Auto-generate supplierCode
-    const lastSupplier = await Supplier.findOne(
+    const maxSupplier = await Supplier.findOne(
       { supplierCode: { $ne: null } },
-      {},
-      { sort: { createdAt: -1 } }
-    ); 
+      { supplierCode: 1 },
+      { sort: { supplierCode: -1 } }
+    );
     let supplierCode = 'SUP001';
-    if (lastSupplier && lastSupplier.supplierCode) {
-      const lastNum = parseInt(lastSupplier.supplierCode.replace('SUP', '')) || 0;
-      supplierCode = 'SUP' + String(lastNum + 1).padStart(3, '0');
+    if (maxSupplier && maxSupplier.supplierCode) {
+      const maxNum = parseInt(maxSupplier.supplierCode.replace('SUP', '')) || 0;
+      supplierCode = 'SUP' + String(maxNum + 1).padStart(3, '0');
     }
     supplierData.supplierCode = supplierCode;
 

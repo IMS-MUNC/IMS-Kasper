@@ -48,6 +48,14 @@ const AddSupplierModals = ({ onClose, onSuccess, editSupplier }) => {
 
   useEffect(() => {
     if (editSupplier) {
+      const billingCountry = editSupplier.billing?.country ? { value: editSupplier.billing.country._id, label: editSupplier.billing.country.name } : null;
+      const billingState = editSupplier.billing?.state ? { value: editSupplier.billing.state._id, label: editSupplier.billing.state.stateName } : null;
+      const billingCity = editSupplier.billing?.city ? { value: editSupplier.billing.city._id, label: editSupplier.billing.city.cityName } : null;
+
+      const shippingCountry = editSupplier.shipping?.country ? { value: editSupplier.shipping.country._id, label: editSupplier.shipping.country.name } : null;
+      const shippingState = editSupplier.shipping?.state ? { value: editSupplier.shipping.state._id, label: editSupplier.shipping.state.stateName } : null;
+      const shippingCity = editSupplier.shipping?.city ? { value: editSupplier.shipping.city._id, label: editSupplier.shipping.city.cityName } : null;
+
       setForm({
         firstName: editSupplier.firstName || '',
         lastName: editSupplier.lastName || '',
@@ -57,24 +65,24 @@ const AddSupplierModals = ({ onClose, onSuccess, editSupplier }) => {
         gstin: editSupplier.gstin || '',
         email: editSupplier.email || '',
         phone: editSupplier.phone || '',
-        billing: editSupplier.billing || {
-          name: '',
-          address1: '',
-          address2: '',
-          country: null,
-          state: null,
-          city: null,
-          postalCode: '',
-          pincode: '',
+        billing: {
+          name: editSupplier.billing?.name || '',
+          address1: editSupplier.billing?.address1 || '',
+          address2: editSupplier.billing?.address2 || '',
+          country: billingCountry,
+          state: billingState,
+          city: billingCity,
+          postalCode: editSupplier.billing?.postalCode || '',
+          pincode: editSupplier.billing?.pincode || '',
         },
-        shipping: editSupplier.shipping || {
-          name: '',
-          address1: '',
-          address2: '',
-          country: null,
-          state: null,
-          city: null,
-          pincode: '',
+        shipping: {
+          name: editSupplier.shipping?.name || '',
+          address1: editSupplier.shipping?.address1 || '',
+          address2: editSupplier.shipping?.address2 || '',
+          country: shippingCountry,
+          state: shippingState,
+          city: shippingCity,
+          pincode: editSupplier.shipping?.pincode || '',
         },
         bank: editSupplier.bank || {
           bankName: '',
@@ -85,6 +93,27 @@ const AddSupplierModals = ({ onClose, onSuccess, editSupplier }) => {
         },
         status: typeof editSupplier.status === 'boolean' ? editSupplier.status : true,
       });
+
+      // Set filtered states and cities for billing
+      if (billingCountry && states.length > 0) {
+        const filtered = states.filter((s) => s.country._id === billingCountry.value).map((s) => ({ value: s._id, label: s.stateName }));
+        setFilteredStates(filtered);
+      }
+      if (billingState && cities.length > 0) {
+        const filtered = cities.filter((c) => c.state._id === billingState.value).map((c) => ({ value: c._id, label: c.cityName }));
+        setFilteredCities(filtered);
+      }
+
+      // Set filtered states and cities for shipping
+      if (shippingCountry && states.length > 0) {
+        const filtered = states.filter((s) => s.country._id === shippingCountry.value).map((s) => ({ value: s._id, label: s.stateName }));
+        setFilteredShippingStates(filtered);
+      }
+      if (shippingState && cities.length > 0) {
+        const filtered = cities.filter((c) => c.state._id === shippingState.value).map((c) => ({ value: c._id, label: c.cityName }));
+        setFilteredShippingCities(filtered);
+      }
+
       if (editSupplier.images) {
         setSelectedImages(editSupplier.images.map(img => ({
           file: null,
@@ -318,19 +347,18 @@ const AddSupplierModals = ({ onClose, onSuccess, editSupplier }) => {
 
   const handleFileChange = (event) => {
     const files = Array.from(event.target.files);
-     const oversizedFile = files.find((file) => file.size > 1 * 1024 * 1024);
+    const oversizedFile = files.find((file) => file.size > 1 * 1024 * 1024);
     const imagePreviews = files.map(file => ({
       file,
       preview: URL.createObjectURL(file)
     }));
-  
-     if (oversizedFile) {
-        toast.error(`File ${oversizedFile.name} exceeds 1MB size limit.`);
-        e.target.value = null; // reset input
-        return;
-      }
-      setSelectedImages(files);
-      setSelectedImages(imagePreviews);
+
+    if (oversizedFile) {
+      toast.error(`File ${oversizedFile.name} exceeds 1MB size limit.`);
+      event.target.value = null; // reset input
+      return;
+    }
+    setSelectedImages(imagePreviews);
   };
 
   const removeImage = (indexToRemove) => {
@@ -838,407 +866,3 @@ const AddSupplierModals = ({ onClose, onSuccess, editSupplier }) => {
 };
 
 export default AddSupplierModals;
-
-
-// import React, { useEffect, useRef, useState } from 'react';
-// import axios from 'axios';
-// import Select from "react-select";
-// import { toast } from 'react-toastify';
-// import BASE_URL from '../../config/config';
-
-// const AddSupplierModals = ({ onClose, onSuccess }) => {
-//   const fileInputRef = useRef(null);
-//   const [selectedImage, setSelectedImage] = useState(null);
-//   const [form, setForm] = useState({
-//     firstName: '',
-//     lastName: '',
-//     businessType: '',
-//     gstin: '',
-//     email: '',
-//     phone: '',
-//     address: '',
-//     city: null,
-//     state: null,
-//     country: null,
-//     postalCode: '',
-//     status: true,
-//     bank: {
-//       bankName: '',
-//       branch: '',
-//       accountHolder: '',
-//       accountNumber: '',
-//       ifsc: '',
-//     },
-//   });
-//   const [countries, setCountries] = useState([]);
-//   const [states, setStates] = useState([]);
-//   const [cities, setCities] = useState([]);
-//   const [filteredStates, setFilteredStates] = useState([]);
-//   const [filteredCities, setFilteredCities] = useState([]);
-//   const [loading, setLoading] = useState(false);
-//   const [gstDetails, setGstDetails] = useState(null);
-//   const [gstLoading, setGstLoading] = useState(false);
-//   const [gstError, setGstError] = useState('');
-
-//   // Fetch countries, states, cities on mount
-  
-//   useEffect(() => {
-//     fetchCountries();
-//     fetchStates();
-//     fetchCities();
-//   }, []);
-
-
-  
-//   const fetchCountries = async () => {
-//     try {
-//       const res = await axios.get(`${BASE_URL}/api/countries`);
-//       const formatted = res.data.map((c) => ({ value: c._id, label: c.name }));
-//       setCountries(formatted);
-//     } catch {
-//       toast.error("Failed to fetch countries");
-//     }
-//   };
-//   const fetchStates = async () => {
-//     try {
-//       const res = await axios.get(`${BASE_URL}/api/states`);
-//       setStates(res.data);
-//     } catch {
-//       toast.error("Failed to fetch states");
-//     }
-//   };
-//   const fetchCities = async () => {
-//     try {
-//       const res = await axios.get(`${BASE_URL}/api/city/cities`);
-//       setCities(res.data);
-//     } catch {
-//       toast.error("Failed to fetch cities");
-//     }
-//   };
-  
-
-//   // Input handlers
-//   const handleInputChange = (e) => {
-//     const { name, value } = e.target;
-//     setForm((prev) => ({ ...prev, [name]: value }));
-//   };
-
-//   const handleVerifyGSTIN = async () => {
-//     setGstLoading(true);
-//     setGstError('');
-//     try {
-//       const res = await axios.post(`${BASE_URL}/api/suppliers/verify-gstin`, { gstin: form.gstin });
-//       setGstDetails(res.data);
-//       // Optionally autofill fields
-//       if (res.data.valid) {
-//         setForm(prev => ({
-//           ...prev,
-//           businessType: res.data.businessType || prev.businessType,
-//           address: res.data.address || prev.address,
-//           state: res.data.state ? { value: '', label: res.data.state } : prev.state,
-//           // Add more autofill as needed
-//         }));
-//       }
-//     } catch (err) {
-//       setGstError('GSTIN verification failed');
-//       setGstDetails(null);
-//     } finally {
-//       setGstLoading(false);
-//     }
-//   };
-//   const handleSelectChange = (name, option) => {
-//     setForm((prev) => ({ ...prev, [name]: option }));
-//     if (name === 'country') {
-//       const filtered = states.filter((s) => s.country._id === option.value).map((s) => ({ value: s._id, label: s.stateName }));
-//       setFilteredStates(filtered);
-//       setFilteredCities([]);
-//       setForm((prev) => ({ ...prev, state: null, city: null }));
-//     }
-//     if (name === 'state') {
-//       const filtered = cities.filter((c) => c.state._id === option.value).map((c) => ({ value: c._id, label: c.cityName }));
-//       setFilteredCities(filtered);
-//       setForm((prev) => ({ ...prev, city: null }));
-//     }
-//   };
- 
-
-
-//   const handleBankChange = (e) => {
-//     const { name, value } = e.target;
-//     setForm((prev) => ({ ...prev, bank: { ...prev.bank, [name]: value } }));
-//   };
-
-
-
-
-
-
-
-//   const handleSubmit = async (e) => {
-//     e.preventDefault();
-//     setLoading(true);
-//     try {
-//       const payload = {
-//         firstName: form.firstName,
-//         lastName: form.lastName,
-//         businessType: form.businessType,
-//         gstin: form.gstin,
-//         email: form.email,
-//         phone: form.phone,
-//         address: form.address,
-//         city: form.city?.value || '',
-//         state: form.state?.value || '',
-//         country: form.country?.value || '',
-//         postalCode: form.postalCode,
-//         status: form.status,
-//         bank: form.bank,
-//       };
-//       // If image is selected, use FormData
-//       if (selectedImage) {
-//         const formData = new FormData();
-//         Object.entries(payload).forEach(([key, value]) => {
-//           if (typeof value === 'object' && value !== null) {
-//             formData.append(key, JSON.stringify(value));
-//           } else {
-//             formData.append(key, value);
-//           }
-//         });
-//         formData.append('image', selectedImage);
-//         await axios.post(`${BASE_URL}/api/suppliers`, formData, {
-//           headers: { 'Content-Type': 'multipart/form-data' },
-//         });
-//       } else {
-//         await axios.post(`${BASE_URL}/api/suppliers`, payload);
-//       }
-//       toast.success('Supplier created successfully!');
-//       if (onSuccess) onSuccess();
-//       if (onClose) onClose();
-//     } catch (err) {
-//       toast.error('Failed to create supplier');
-//     } finally {
-//       setLoading(false);
-//     }
-//   };
-//   const handleFileChange = (e) => {
-//     const file = e.target.files[0];
-//     setSelectedImage(file);
-//   };
-//   const handleUploadClick = (e) => {
-//     e.preventDefault();
-//     if (fileInputRef.current) fileInputRef.current.click();
-//   };
-
-
-//   const businessTypeOptions = [
-//   { value: 'Manufacturer', label: 'Manufacturer' },
-//   { value: 'Wholesaler', label: 'Wholesaler' },
-//   { value: 'Distributor', label: 'Distributor' }
-// ];
-//   return (
-//     <div className="modal fade show" id="add-supplier"
-//       tabIndex="-1"
-//       style={{ display: "block", backgroundColor: "rgba(0, 0, 0, 0.5)" }}
-//       aria-modal="true"
-//       role="dialog">
-//       <div className="modal-dialog modal-dialog-centere modal-lg">
-//         <div className="modal-content">
-//           <div className="modal-header">
-//             <div className="page-title">
-//               <h4>Add Supplier</h4>
-//             </div>
-//             <button type="button" className="close" aria-label="Close" onClick={onClose}>
-//               <span aria-hidden="true">×</span>
-//             </button>
-//           </div>
-//       <form onSubmit={handleSubmit}>
-//         <div className="modal-body">
-//           <div className="row">
-//             <div className="col-lg-12">
-//               <div className="new-employee-field">
-//                 <div className="profile-pic-upload mb-2">
-//                   <div className="profile-pic">
-//                     <span><i data-feather="plus-circle" className="plus-down-add" />Add Image</span>
-//                   </div>
-//                   <div className="mb-0">
-//                     <div className="image-upload mb-2">
-//                       <input type="file" ref={fileInputRef} style={{ display: 'none' }} onChange={handleFileChange} />
-//                       <div className="image-uploads" onClick={handleUploadClick} style={{ cursor: 'pointer' }}>
-//                         <h4>Upload Image</h4>
-//                       </div>
-//                     </div>
-//                     <p>JPEG, PNG up to 2 MB</p>
-//                   </div>
-//                 </div>
-//               </div>
-//             </div>
-//             <div className="col-lg-6">
-//               <div className="mb-3">
-//                 <label className="form-label">First Name <span className="text-danger">*</span></label>
-//                 <input type="text" className="form-control" name="firstName" value={form.firstName} onChange={handleInputChange} />
-//               </div>
-//             </div>
-//             <div className="col-lg-6">
-//               <div className="mb-3">
-//                 <label className="form-label">Last Name <span className="text-danger">*</span></label>
-//                 <input type="text" className="form-control" name="lastName" value={form.lastName} onChange={handleInputChange} />
-//               </div>
-//             </div>	
-//             {/* <div className="col-lg-6">
-//               <div className="mb-3">
-//                 <label className="form-label">Business Types <span className="text-danger">*</span></label>
-//                 <input type="text" className="form-control" name="businessType" value={form.businessType} onChange={handleInputChange} />
-//               </div>
-              
-//             </div>	 */}
-//             <div className="col-lg-6">
-//   <div className="mb-3">
-//     <label className="form-label">
-//       Business Types <span className="text-danger">*</span>
-//     </label>
-//     <Select
-//       name="businessType"
-//       options={businessTypeOptions}
-//       value={businessTypeOptions.find(option => option.value === form.businessType)}
-//       onChange={selectedOption =>
-//         handleInputChange({
-//           target: { name: 'businessType', value: selectedOption.value }
-//         })
-//       }
-//       isSearchable
-//       placeholder="Select Business Type"
-//     />
-//   </div>
-// </div>
-
-
-
-//             <div className="col-lg-6">
-//               <div className="mb-3">
-//                 <label className="form-label">GSTIN <span className="text-danger">*</span></label>
-//                 <div className="d-flex align-items-center gap-2">
-//                   <input type="text" className="form-control" name="gstin" value={form.gstin} onChange={handleInputChange} />
-//                   <button type="button" className="btn btn-outline-primary" style={{whiteSpace:'nowrap'}} onClick={handleVerifyGSTIN} disabled={gstLoading || !form.gstin}>
-//                     {gstLoading ? 'Verifying...' : 'Verify GST' }
-//                   </button>
-//                 </div>
-//                 {gstError && <div className="text-danger mt-1">{gstError}</div>}
-//                 {gstDetails && gstDetails.valid && (
-//                   <div className="alert alert-success mt-2 p-2">
-//                     <div><strong>Name:</strong> {gstDetails.name}</div>
-//                     <div><strong>Address:</strong> {gstDetails.address}</div>
-//                     <div><strong>State:</strong> {gstDetails.state}</div>
-//                     <div><strong>Business Type:</strong> {gstDetails.businessType}</div>
-//                   </div>
-//                 )}
-//               </div>
-//             </div>
-//             <div className="col-lg-6">
-//               <div className="mb-3">
-//                 <label className="form-label">Email <span className="text-danger">*</span></label>
-//                 <input type="email" className="form-control" name="email" value={form.email} onChange={handleInputChange} />
-//               </div>
-//             </div>								
-//             <div className="col-lg-6">
-//               <div className="mb-3">
-//                 <label className="form-label">Phone <span className="text-danger">*</span></label>
-//                 <input type="text" className="form-control" name="phone" value={form.phone} onChange={handleInputChange} />
-//               </div>
-//             </div>									
-//             <div className="col-lg-12">
-//               <div className="mb-3">
-//                 <label className="form-label">Address <span className="text-danger">*</span></label>
-//                 <input type="text" className="form-control" name="address" value={form.address} onChange={handleInputChange} />
-//               </div>
-//             </div>
-           
-//             <div className="col-lg-6 col-sm-10 col-10">
-//               <div className="mb-3">
-//                 <label className="form-label">Country <span className="text-danger">*</span></label>
-//                 <Select options={countries} value={form.country} onChange={option => handleSelectChange('country', option)} placeholder="Select Country" />
-//                         </div>
-//             </div>
-//             <div className="col-lg-6 col-sm-10 col-10">
-//               <div className="mb-3">
-//                 <label className="form-label">State <span className="text-danger">*</span></label>
-//                 <Select options={filteredStates} value={form.state} onChange={option => handleSelectChange('state', option)} isDisabled={!form.country} placeholder="Select State" />
-//               </div>
-//             </div>
-            
-//              <div className="col-lg-6 col-sm-10 col-10">
-//               <div className="mb-3">
-//                 <label className="form-label">City <span className="text-danger">*</span></label>
-//                 <Select options={filteredCities} value={form.city} onChange={option => handleSelectChange('city', option)} isDisabled={!form.state} placeholder="Select City" />
-//               </div>
-//             </div>
-//               <div className="col-lg-6">
-//               <div className="mb-3">
-//                 <label className="form-label">Postal Code <span className="text-danger">*</span></label>
-//                 <input type="text" className="form-control" name="postalCode" value={form.postalCode} onChange={handleInputChange} />
-//               </div>
-//             </div>
-
-
-//              <div className="border-top my-2">
-//         <h6 className="mb-3 pt-4">Banking Details</h6>
-//         <div className="row gx-3">
-//           <div className="col-lg-4 col-md-6">
-//             <div className="mb-3">
-//               <label className="form-label">Bank Name</label>
-//               <input type="text" className="form-control" name="bankName" value={form.bank.bankName} onChange={handleBankChange} />
-//             </div>
-//           </div>
-//           <div className="col-lg-4 col-md-6">
-//             <div className="mb-3">
-//               <label className="form-label">Branch</label>
-//               <input type="text" className="form-control" name="branch" value={form.bank.branch} onChange={handleBankChange} />
-//             </div>
-//           </div>
-//           <div className="col-lg-4 col-md-6">
-//             <div className="mb-3">
-//               <label className="form-label">Account Holder</label>
-//               <input type="text" className="form-control" name="accountHolder" value={form.bank.accountHolder} onChange={handleBankChange} />
-//             </div>
-//           </div>
-//           <div className="col-lg-4 col-md-6">
-//             <div className="mb-3">
-//               <label className="form-label">Account Number</label>
-//               <input type="text" className="form-control" name="accountNumber" value={form.bank.accountNumber} onChange={handleBankChange} />
-//             </div>
-//           </div>
-//           <div className="col-lg-4 col-md-6">
-//             <div className="mb-3">
-//               <label className="form-label">IFSC</label>
-//               <input type="text" className="form-control" name="ifsc" value={form.bank.ifsc} onChange={handleBankChange} />
-//             </div>
-//           </div>
-//         </div>
-//       </div>
-          
-//             <div className="col-md-12">
-//               <div className="mb-0">
-//                 <div className="status-toggle modal-status d-flex justify-content-between align-items-center">
-//                   <span className="status-label">Status</span>
-//                   {/* <input type="checkbox" id="users5" className="check" checked={form.status} onChange={() => setForm(prev => ({ ...prev, status: !prev.status }))} /> */}
-//                   {/* <label htmlFor="users5" className="checktoggle mb-0" /> */}
-//                    <div className="form-check form-switch">
-//   <input className="form-check-input" type="checkbox" role="switch" id="flexSwitchCheckChecked" defaultChecked checked={form.status} onChange={() => setForm(prev => ({ ...prev, status: !prev.status }))}/>
-// </div>
-//                 </div>
-
-//               </div>	
-//             </div>
-//           </div>
-//         </div>
-//         <div className="modal-footer">
-//           <button type="button" className="btn me-2 btn-secondary" data-bs-dismiss="modal">Cancel</button>
-//           <button type="submit" className="btn btn-primary" disabled={loading}>{loading ? 'Saving...' : 'Add Supplier'}</button>
-//         </div>
-//       </form>
-//     </div>
-//   </div>
-// </div>
-
-//   )
-// }
-
-// export default AddSupplierModals
