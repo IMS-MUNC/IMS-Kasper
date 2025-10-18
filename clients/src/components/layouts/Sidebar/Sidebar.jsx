@@ -295,15 +295,15 @@ const isPathActive = (path) => {
 				data-color={themeColor}
 			>
 				{/* Logo and Profile */}
-				<div className="sidebar-logo active">
+				<div className="sidebar-logo active" >
 					{/* <a href="/dashboard" className="logo logo-normal" style={{ padding: '0 10px', height: '40px', width: 'auto', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
 						 <img src={isDarkMode ? companyImages?.companyDarkLogo : companyImages?.companyLogo} className="compact-logo" alt="Logo" style={{height: "65px"}}/>
 					</a> */}
-					<Link to="/home" className="logo logo-normal">
+					<Link to="/home" className="logo logo-normal" style={{width:'65px', height:'65px', objectFit:'cover'}}>
 						<img src={isDarkMode ? companyImages?.companyDarkLogo : companyImages?.companyLogo} alt="Logo" />
 					</Link>
 
-					<Link href="/dashboard" className="logo-small">
+					<Link href="/dashboard" className="logo-small" style={{width:'40px', height:'40px', objectFit:'cover'}}>
 						<img src={companyImages?.companyIcon} class="compact-logo" alt="Compact Footer Logo" />
 					</Link>
 					<a
