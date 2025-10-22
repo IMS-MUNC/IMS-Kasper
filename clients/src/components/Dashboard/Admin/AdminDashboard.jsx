@@ -26,7 +26,7 @@ import Graph from "../../Graph";
 import BASE_URL from "../../../pages/config/config";
 import PaymentStatusChart from "../graph/PaymentStatusChart";
 import SalesGraph from "../graph/SalesGraph";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { GrTransaction } from "react-icons/gr";
 import { useTranslation } from 'react-i18next';
 
@@ -857,14 +857,14 @@ const AdminDashboard = () => {
                     {prod.productName || prod.name || "-"} {t("is running Low,")}{" "}
                   </span>
                   {t("already below")} {prod.availableQty} Pcs.,
-                  <a
-                    href=""
+                  <Link
+                    to="/purchase-list"
                     className="link-orange text-decoration-underline fw-semibold"
-                    data-bs-toggle="modal"
-                    data-bs-target="#add-stock"
+                    // data-bs-toggle="modal"
+                    // data-bs-target="#add-stock"
                   >
                     {t("Add Stock")}
-                  </a>
+                  </Link>
                 </span>
               ))
             ) : (
@@ -2194,12 +2194,12 @@ const AdminDashboard = () => {
                                           : "badge-success"
                                       }`}
                                   >
-                                    <i className="ti ti-circle-filled fs-5 me-1" />
+                                    <i className="ti ti-circle-filled fs-5" />
                                     {sale.status}
                                   </span>
                                 </td>
                                 <td className="fs-16 fw-bold text-gray-9">
-                                  ₹{sale.grandTotal || "-"}
+                                  ₹{(sale.grandTotal).toFixed(2) || "-"}
                                 </td>
                                 {/* <td>{sale.referenceNumber || '-'}</td> */}
                               </tr>
@@ -2297,7 +2297,7 @@ const AdminDashboard = () => {
                                     </span>
                                   </td>
                                   <td className="text-gray-9">
-                                    ₹{purchase.grandTotal}
+                                    ₹{(purchase.grandTotal).toFixed(2)}
                                   </td>
                                 </tr>
                               ))
@@ -2349,8 +2349,8 @@ const AdminDashboard = () => {
                                     </div>
                                   </div>
                                 </td>
-                                <td>{sale.dueAmount}.</td>
-                                <td>{sale.paidAmount}.</td>
+                                <td>{(sale.dueAmount).toFixed(2)}</td>
+                                <td>{(sale.paidAmount).toFixed(2)}</td>
                                 <td>
                                   <span className="badge badge-success badge-xs d-inline-flex align-items-center">
                                     <i className="ti ti-circle-filled fs-5 me-1" />
@@ -2358,7 +2358,7 @@ const AdminDashboard = () => {
                                   </span>
                                 </td>
                                 <td className="text-gray-9">
-                                  ₹{sale.grandTotal}
+                                  ₹{(sale.grandTotal).toFixed(2)}
                                 </td>
                               </tr>
                             ))
