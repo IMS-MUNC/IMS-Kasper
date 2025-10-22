@@ -11,8 +11,10 @@ import { MdNavigateNext } from "react-icons/md";
 import jsPDF from 'jspdf';
 import { autoTable } from 'jspdf-autotable';
 import * as XLSX from 'xlsx';
+import { useTranslation } from 'react-i18next';
 
 const ExpriedProduct = () => {
+  const { t } = useTranslation();
   // Columns for export
   const exportColumns = ['sku', 'productName', 'manufactured', 'expiry', 'quantity', 'supplierName', 'warehouseName'];
 
@@ -467,8 +469,8 @@ const ExpriedProduct = () => {
         <div className="page-header">
           <div className="add-item d-flex">
             <div className="page-title">
-              <h4 className="fw-bold">Expired Products</h4>
-              <h6>Manage your expired products</h6>
+              <h4 className="fw-bold">{t("Expired Products")}</h4>
+              <h6>{t("Manage your expired products")}</h6>
             </div>
           </div>
           <ul className="table-top-head">
@@ -486,14 +488,14 @@ const ExpriedProduct = () => {
               </li>
             )}
             <li style={{ display: "flex", alignItems: "center", gap: '5px' }} className="icon-btn">
-              <label className="" title="">Export : </label>
-              <button onClick={handlePdf} title="Download PDF" style={{
+              <label className="" title="">{t("Export : ")}</label>
+              <button onClick={handlePdf} title={t("Download PDF")} style={{
                 backgroundColor: "white",
                 display: "flex",
                 alignItems: "center",
                 border: "none",
               }}><FaFilePdf className="fs-20" style={{ color: "red" }} /></button>
-              <button onClick={handleExcel} title="Download Excel" style={{
+              <button onClick={handleExcel} title={t("Download Excel")} style={{
                 backgroundColor: "white",
                 display: "flex",
                 alignItems: "center",
@@ -507,7 +509,7 @@ const ExpriedProduct = () => {
               <button
                 data-bs-toggle="tooltip"
                 data-bs-placement="top"
-                title="Refresh"
+                title={t("Refresh")}
                 onClick={() => {
                   window.location.reload();
                 }}
@@ -552,26 +554,26 @@ const ExpriedProduct = () => {
           </div> */}
               <div className="dropdown">
                 <a className="btn btn-white btn-md d-inline-flex align-items-center" data-bs-toggle="dropdown">
-                  Sort By : {sortBy}
+                  {t("Sort By")} : {sortBy}
                 </a>
                 <ul className="dropdown-menu dropdown-menu-end p-3">
                   <li>
-                    <a className="dropdown-item rounded-1" onClick={() => handleSortChange('Recently Added')} style={{ cursor: 'pointer' }}>Recently Added</a>
+                    <a className="dropdown-item rounded-1" onClick={() => handleSortChange(t('Recently Added'))} style={{ cursor: 'pointer' }}>{t("Recently Added")}</a>
                   </li>
                   <li>
-                    <a className="dropdown-item rounded-1" onClick={() => handleSortChange('Expiry Date')} style={{ cursor: 'pointer' }}>Expiry Date</a>
+                    <a className="dropdown-item rounded-1" onClick={() => handleSortChange(t('Expiry Date'))} style={{ cursor: 'pointer' }}>{t("Expiry Date")}</a>
                   </li>
                   <li>
-                    <a className="dropdown-item rounded-1" onClick={() => handleSortChange('Ascending')} style={{ cursor: 'pointer' }}>Ascending</a>
+                    <a className="dropdown-item rounded-1" onClick={() => handleSortChange(t('Ascending'))} style={{ cursor: 'pointer' }}>{t("Ascending")}</a>
                   </li>
                   <li>
-                    <a className="dropdown-item rounded-1" onClick={() => handleSortChange('Descending')} style={{ cursor: 'pointer' }}>Descending</a>
+                    <a className="dropdown-item rounded-1" onClick={() => handleSortChange(t('Descending'))} style={{ cursor: 'pointer' }}>{t("Descending")}</a>
                   </li>
                   <li>
-                    <a className="dropdown-item rounded-1" onClick={() => handleSortChange('Last Month')} style={{ cursor: 'pointer' }}>Last Month</a>
+                    <a className="dropdown-item rounded-1" onClick={() => handleSortChange(t('Last Month'))} style={{ cursor: 'pointer' }}>{t("Last Month")}</a>
                   </li>
                   <li>
-                    <a className="dropdown-item rounded-1" onClick={() => handleSortChange('Last 7 Days')} style={{ cursor: 'pointer' }}>Last 7 Days</a>
+                    <a className="dropdown-item rounded-1" onClick={() => handleSortChange(t('Last 7 Days'))} style={{ cursor: 'pointer' }}>{t("Last 7 Days")}</a>
                   </li>
                 </ul>
               </div>
@@ -593,14 +595,14 @@ const ExpriedProduct = () => {
                         <span className="checkmarks" />
                       </label>
                     </th>
-                    <th>SKU</th>
-                    <th>Product</th>
-                    <th>Manufactured Date</th>
-                    <th>Expired Date</th>
-                    <th>Quantity</th>
+                    <th>{t("SKU")}</th>
+                    <th>{t("Product")}</th>
+                    <th>{t("Manufactured Date")}</th>
+                    <th>{t("Expired Date")}</th>
+                    <th>{t("Quantity")}</th>
                     {/* <th>Supplier</th> */}
-                    <th>Warehouse</th>
-                    <th style={{textAlign: 'center'}}>Action</th>
+                    <th>{t("Warehouse")}</th>
+                    <th style={{textAlign: 'center'}}>{t("Action")}</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -647,7 +649,7 @@ const ExpriedProduct = () => {
                     ))
                   ) : (
                     <tr>
-                      <td colSpan="9" className="text-center">No Expired Products</td>
+                      <td colSpan="9" className="text-center">{t("No Expired Products")}</td>
                     </tr>
                   )}
                 </tbody>
@@ -668,10 +670,10 @@ const ExpriedProduct = () => {
               }}
               className="form-select w-auto"
             >
-              <option value={10}>10 Per Page</option>
-              <option value={25}>25 Per Page</option>
-              <option value={50}>50 Per Page</option>
-              <option value={100}>100 Per Page</option>
+              <option value={10}>10 {t("Per Page")}</option>
+              <option value={25}>25 {t("Per Page")}</option>
+              <option value={50}>50 {t("Per Page")}</option>
+              <option value={100}>100 {t("Per Page")}</option>
             </select>
             <span
               style={{

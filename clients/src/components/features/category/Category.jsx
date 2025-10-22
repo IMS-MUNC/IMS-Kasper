@@ -14,8 +14,10 @@ import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import Papa from "papaparse";
 import * as XLSX from "xlsx";
+import { useTranslation } from 'react-i18next';
 
 const Category = () => {
+  const { t } = useTranslation();
   const [categories, setCategories] = useState([]);
   const [categoryName, setCategoryName] = useState("");
   const [categorySlug, setCategorySlug] = useState("");
@@ -355,8 +357,8 @@ const Category = () => {
         <div className="page-header">
           <div className="add-item d-flex">
             <div className="page-title">
-              <h4 className="fw-bold">Category</h4>
-              <h6>Manage your categories</h6>
+              <h4 className="fw-bold">{t("Category")}</h4>
+              <h6>{t("Manage your categories")}</h6>
             </div>
           </div>
           <div
@@ -374,10 +376,10 @@ const Category = () => {
               style={{ display: "flex", alignItems: "center", gap: "5px" }}
               className="icon-btn"
             >
-              <label title="">Export : </label>
+              <label title="">{t("Export :")} </label>
               <button
                 onClick={handlePdf}
-                title="Download PDF"
+                title={t("Download PDF")}
                 style={{
                   backgroundColor: "white",
                   display: "flex",
@@ -389,7 +391,7 @@ const Category = () => {
               </button>
               <button
                 onClick={handleExcel}
-                title="Download Excel"
+                title={t("Download Excel")}
                 style={{
                   backgroundColor: "white",
                   display: "flex",
@@ -404,8 +406,8 @@ const Category = () => {
               style={{ display: "flex", alignItems: "center", gap: "5px" }}
               className="icon-btn"
             >
-              <label title="">Import : </label>
-              <label title="Import Excel">
+              <label title="">{t("Import :")}</label>
+              <label title={t("Import Excel")}>
                 <button
                   type="button"
                   onClick={handleImportClick}
@@ -442,7 +444,7 @@ const Category = () => {
               }}
             >
               <i className="ti ti-circle-plus me-1" />
-              Add Category
+              {t("Add Category")}
             </a>
           </div>
         </div>
@@ -453,7 +455,7 @@ const Category = () => {
               <div className="search-input">
                 <input
                   type="text"
-                  placeholder="Search category..."
+                  placeholder={t("Search category...")}
                   className="form-control"
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
@@ -497,11 +499,11 @@ const Category = () => {
                         <span className="checkmarks" />
                       </label>
                     </th>
-                    <th>Category Code</th>
-                    <th>Category</th>
-                    <th>Category slug</th>
-                    <th>Created On</th>
-                    <th>Action</th>
+                    <th>{t("Category Code")}</th>
+                    <th>{t("Category")}</th>
+                    <th>{t("Category slug")}</th>
+                    <th>{t("Created On")}</th>
+                    <th>{t("Action")}</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -584,7 +586,7 @@ const Category = () => {
                   ) : (
                     <tr>
                       <td colSpan="5" className="text-center text-muted">
-                        No categories found.
+                        {t("No categories found.")}
                       </td>
                     </tr>
                   )}
@@ -603,10 +605,10 @@ const Category = () => {
                 }}
                 className="form-select w-auto"
               >
-                <option value={10}>10 Per Page</option>
-                <option value={25}>25 Per Page</option>
-                <option value={50}>50 Per Page</option>
-                <option value={100}>100 Per Page</option>
+                <option value={10}>10 {t("Per Page")}</option>
+                <option value={25}>25 {t("Per Page")}</option>
+                <option value={50}>50 {t("Per Page")}</option>
+                <option value={100}>100 {t("Per Page")}</option>
               </select>
               <span
                 style={{
@@ -652,14 +654,14 @@ const Category = () => {
 
       <CategoryModal
         modalId="categoryModal"
-        title={isEditMode ? "Edit Category" : "Add Category"}
+        title={isEditMode ? [t("Edit Category")] : [t("Add Category")]}
         isEditMode={isEditMode}
         categoryName={isEditMode ? editCategoryName : categoryName}
         categorySlug={isEditMode ? editCategorySlug : categorySlug}
         onCategoryChange={handleCategoryNameChange}
         onSlugChange={handleSlugChange}
         onSubmit={isEditMode ? handleUpdate : handleSubmit}
-        submitLabel={isEditMode ? "Update" : "Submit"}
+        submitLabel={isEditMode ? [t("Update")] : [t("Submit")]}
         errors={errors}
       />
     </div>
