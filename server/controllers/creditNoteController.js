@@ -286,7 +286,7 @@ exports.createCreditNote = async (req, res) => {
 
         // 🔹 Add returned qty back to stock
         await Product.findByIdAndUpdate(productId, {
-          $inc: { availableQty: Math.abs(quantity) },
+          $inc: { quantity: Math.abs(quantity) },
         });
 
         // 🔹 Update sale product qty
@@ -303,7 +303,7 @@ exports.createCreditNote = async (req, res) => {
           soldQuantity: Math.abs(quantity), // ✅ consistent with schema
           priceChanged: sellingPrice || 0,
           type: "RETURN",
-          notes: `Credit Note for ref: ${reference}`,
+          note: `Credit Note for ref: ${reference}`,
         });
       }
 

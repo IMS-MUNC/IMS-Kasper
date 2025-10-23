@@ -82,7 +82,11 @@ console.log("edit",editData)
                 enableAddCharges: editData.enableAddCharges || false,
                 currency: editData.currency || ""
             });
-            setSelectedProducts(editData.products || []);
+            // Preserve per-line discount type by adding a local flag for calculations
+            setSelectedProducts((editData.products || []).map(p => ({
+                ...p,
+                isDiscountPercent: p.discountType === 'Percentage'
+            })));
             setSelectedImages(editData.images || []);
         }
     }, [editData]);
@@ -104,6 +108,7 @@ console.log("edit",editData)
                     quantity: p.quantity,
                     sellingPrice: p.sellingPrice,
                     discount: p.discount,
+                    discountType: p.discountType,
                     tax: p.tax,
                 })),
                 saleDate,
@@ -143,16 +148,16 @@ console.log("edit",editData)
     const calculateLineTotal = (product) => {
         const price = product.sellingPrice || 0;
         const qty = product.quantity || 1;
-        let discount = 0;
-        if (product.isDiscountPercent) {
-            discount = ((price * qty) * (product.discount || 0)) / 100;
-        } else {
-            discount = product.discount || 0;
-        }
-        const afterDiscount = (price * qty) - discount;
+        const percent = product.discountType === 'Percentage' || product.isDiscountPercent;
+        const discountValue = Number(product.discount) || 0;
+        const subTotal = price * qty;
+        const discountAmount = percent
+          ? (subTotal * discountValue) / 100
+          : qty * discountValue; // per-unit fixed/rupees discount
+        const afterDiscount = subTotal - discountAmount;
         const taxAmount = (afterDiscount * (product.tax || 0)) / 100;
         return {
-            subTotal: price * qty,
+            subTotal,
             afterDiscount,
             taxAmount,
             lineTotal: afterDiscount + taxAmount,
@@ -202,13 +207,18 @@ console.log("edit",editData)
         }
     }, [paymentType, paidAmount, grandTotal]);
 
-
-
-
-
-
-
-
+    // Infer order-level discount type from saved totals when editing
+    useEffect(() => {
+        if (editData && typeof editData.orderDiscount === 'number' && editData.grandTotal) {
+            const base = totalProductAmount + (formState.enableTax ? (cgstValue + sgstValue) : 0) + (formState.enableAddCharges ? (labourCost + shippingCost) : 0);
+            if (base > 0) {
+                const inferredPercent = ((base - editData.grandTotal) / base) * 100;
+                if (Math.abs(inferredPercent - editData.orderDiscount) < 0.01) {
+                    setIsDiscountPercent(true);
+                }
+            }
+        }
+    }, [editData, totalProductAmount, cgstValue, sgstValue, labourCost, shippingCost, formState.enableTax, formState.enableAddCharges]);
 
     console.log("search:", options);
     console.log("customer:", selectedCustomer);
@@ -767,7 +777,10 @@ console.log("edit",editData)
                                                         const discount = product.discount || 0;
                                                         const tax = product.tax || 0;
                                                         const subTotal = qty * price;
-                                                        const afterDiscount = subTotal - discount;
+                                                        const discountAmount = (product.discountType === 'Percentage' || product.isDiscountPercent)
+                                                          ? (subTotal * discount) / 100
+                                                          : qty * discount; // per-unit fixed/rupees discount
+                                                        const afterDiscount = subTotal - discountAmount;
                                                         const taxAmount = (afterDiscount * tax) / 100;
                                                         const lineTotal = afterDiscount + taxAmount;
                                                         const unitCost = qty > 0 ? lineTotal / qty : 0;
