@@ -14,10 +14,12 @@ import { sanitizeInput } from "../../../utils/sanitize.js";
 import { GrFormPrevious } from "react-icons/gr";
 import { MdNavigateNext } from "react-icons/md";
 import "../../features/units/Units.css"
+import { useTranslation } from 'react-i18next';
 
 
 
 const Units = () => {
+   const { t } = useTranslation();
   const [unitData, setUnitData] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedStatus, setSelectedStatus] = useState(""); //for active , inactive
@@ -298,8 +300,8 @@ const Units = () => {
         <div className="page-header">
           <div className="add-item d-flex">
             <div className="page-title">
-              <h4 className="fw-bold">Units</h4>
-              <h6>Manage your units</h6>
+              <h4 className="fw-bold">{t("Units")}</h4>
+              <h6>{t("Manage your units")}</h6>
             </div>
           </div>
           {/* <ul className="table-top-head">
@@ -338,19 +340,19 @@ const Units = () => {
             <li>
               {selectedUnits.length > 0 && (
                 <button className="btn btn-danger ms-2" onClick={handleBulkDelete}>
-                  Delete ({selectedUnits.length}) Selected
+                  {t("Delete")} ({selectedUnits.length}) {t("Selected")}
                 </button>
               )}
             </li>
             <li style={{ display: "flex", alignItems: "center", gap: '5px' }} className="icon-btn">
-              <label className="" title="">Export : </label>
-              <button onClick={exportToPDF} title="Download PDF" style={{
+              <label className="" title="">{t("Export :")} </label>
+              <button onClick={exportToPDF} title={t("Download PDF")} style={{
                 backgroundColor: "white",
                 display: "flex",
                 alignItems: "center",
                 border: "none",
               }}><FaFilePdf className="fs-20" style={{ color: "red" }} /></button>
-              <button onClick={exportToExcel} title="Download Excel" style={{
+              <button onClick={exportToExcel} title={t("Download Excel")} style={{
                 backgroundColor: "white",
                 display: "flex",
                 alignItems: "center",
@@ -358,8 +360,8 @@ const Units = () => {
               }}><FaFileExcel className="fs-20" style={{ color: "orange" }} /></button>
             </li>
             <li style={{ display: "flex", alignItems: "center", gap: '5px' }} className="icon-btn">
-              <label className="" title="">Import : </label>
-              <label className="" title="Import Excel">
+              <label className="" title="">{t("Import :")} </label>
+              <label className="" title={t("Import Excel")}>
                 <input type="file" accept=".xlsx, .xls" hidden />
                 <FaFileExcel style={{ color: "green" }} />
               </label>
@@ -383,7 +385,7 @@ const Units = () => {
               data-bs-target="#add-units"
             >
               <i className="ti ti-circle-plus me-1" />
-              Add Unit
+              {t("Add Unit")}
             </a>
           </div>
         </div>
@@ -393,7 +395,7 @@ const Units = () => {
               <div className="search-input">
                 <input
                   type="text"
-                  placeholder="Search Units..."
+                  placeholder={t("Search Units...")}
                   className="form-control"
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
@@ -410,7 +412,7 @@ const Units = () => {
                   className="btn btn-white btn-md d-inline-flex align-items-center"
                   data-bs-toggle="dropdown"
                 >
-                  Sort by : {selectedStatus || "All Status"}
+                  {t("Sort By")} : {t(selectedStatus) || [t("All Status")]}
                 </a>
                 <ul className="dropdown-menu  dropdown-menu-end p-3">
                   <li>
@@ -419,7 +421,7 @@ const Units = () => {
                       className="dropdown-item rounded-1"
                       onClick={() => setSelectedStatus("")}
                     >
-                      All Status
+                      {t("All Status")}
                     </button>
                   </li>
                   <li>
@@ -428,7 +430,7 @@ const Units = () => {
                       className="dropdown-item rounded-1"
                       onClick={() => setSelectedStatus("Active")}
                     >
-                      Active
+                      {t("Active")}
                     </button>
                   </li>
                   <li>
@@ -437,7 +439,7 @@ const Units = () => {
                       className="dropdown-item rounded-1"
                       onClick={() => setSelectedStatus("Inactive")}
                     >
-                      Inactive
+                      {t("Inactive")}
                     </button>
                   </li>
                 </ul>
@@ -460,11 +462,11 @@ const Units = () => {
                         <span className="checkmarks" />
                       </label>
                     </th>
-                    <th>Unit</th>
-                    <th>Short name</th>
-                    <th>Created Date</th>
-                    <th>Status</th>
-                    <th style={{ textAlign: "center", width: "120px" }}>Action</th>
+                    <th>{t("Unit")}</th>
+                    <th>{t("Short name")}</th>
+                    <th>{t("Created Date")}</th>
+                    <th>{t("Status")}</th>
+                    <th style={{ textAlign: "center", width: "120px" }}>{t("Action")}</th>
                     {/* <th className="no-sort" /> */}
                   </tr>
                 </thead>
@@ -499,7 +501,7 @@ const Units = () => {
                               : "bg-danger"
                               }`}
                           >
-                            {unit.status}
+                            {t(unit.status)}
                           </span>
                         </td>
                         <td className="action-table-data">
@@ -545,10 +547,10 @@ const Units = () => {
                 }}
                 className="form-select w-auto"
               >
-                <option value={10}>10 Per Page</option>
-                <option value={25}>25 Per Page</option>
-                <option value={50}>50 Per Page</option>
-                <option value={100}>100 Per Page</option>
+                <option value={10}>10 {t("Per Page")}</option>
+                <option value={25}>25 {t("Per Page")}</option>
+                <option value={50}>50 {t("Per Page")}</option>
+                <option value={100}>100 {t("Per Page")}</option>
               </select>
               <span
                 style={{
@@ -601,7 +603,7 @@ const Units = () => {
           <div className="modal-content">
             <form onSubmit={handleSubmit}>
               <div className="modal-header">
-                <h4>Add Unit</h4>
+                <h4>{t("Add Unit")}</h4>
                 {/* <button
                   type="button"
                   className="close bg-danger text-white fs-16"
@@ -614,7 +616,7 @@ const Units = () => {
               <div className="modal-body">
                 <div className="mb-3">
                   <label className="form-label">
-                    Unit<span className="text-danger ms-1">*</span>
+                    {t("Unit")}<span className="text-danger ms-1">*</span>
                   </label>
                   <input
                     type="text"
@@ -627,7 +629,7 @@ const Units = () => {
                 </div>
                 <div className="mb-3">
                   <label className="form-label">
-                    Short Name<span className="text-danger ms-1">*</span>
+                    {t("Short Name")}<span className="text-danger ms-1">*</span>
                   </label>
                   <input
                     type="text"
@@ -640,7 +642,7 @@ const Units = () => {
                 </div>
                 <div className="mb-0">
                   <div className="status-toggle modal-status d-flex justify-content-between align-items-center">
-                    <span className="status-label">Status</span>
+                    <span className="status-label">{t("Status")}</span>
                     <input
                       type="checkbox"
                       id="unitStatus"
@@ -663,7 +665,7 @@ const Units = () => {
                     cleanUpModal();
                   }}
                 >
-                  Cancel
+                  {t("Cancel")}
                 </button>
                 <button
   type="submit"
@@ -677,10 +679,10 @@ const Units = () => {
         role="status"
         aria-hidden="true"
       ></span>
-      Adding Unit...
+      {t("Adding Unit...")}
     </>
   ) : (
-    "Add Unit"
+    [t("Add Unit")]
   )}
 </button>
 

@@ -16,8 +16,9 @@ import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import html2canvas from "html2canvas";
 import * as XLSX from "xlsx";
-
+import { useTranslation } from 'react-i18next';
 const Brand = () => {
+  const { t } = useTranslation();
   const [brandName, setBrandName] = useState("");
   const [status, setStatus] = useState(true); // true = Active
   const [selectedImages, setSelectedImages] = useState([]);
@@ -426,8 +427,8 @@ const Brand = () => {
         <div className="page-header">
           <div className="add-item d-flex">
             <div className="page-title">
-              <h4 className="fw-bold">Brand</h4>
-              <h6>Manage your brands</h6>
+              <h4 className="fw-bold">{t("Brand")}</h4>
+              <h6>{t("Manage your brands")}</h6>
             </div>
           </div>
           <div className="table-top-head me-2">
@@ -437,19 +438,19 @@ const Brand = () => {
                   className="btn btn-danger ms-2"
                   onClick={handleBulkDelete}
                 >
-                  Delete ({selectedBrands.length}) Selected
+                  {t("Delete")} ({selectedBrands.length}) {t("Selected")}
                 </button>
               )}
             </li>
             <li style={{ display: "flex", alignItems: "center", gap: '5px' }} className="icon-btn">
-              <label className="" title="">Export : </label>
-              <button onClick={exportToPDF} title="Download PDF" style={{
+              <label className="" title="">{t("Export :")} </label>
+              <button onClick={exportToPDF} title={t("Download PDF")} style={{
                 backgroundColor: "white",
                 display: "flex",
                 alignItems: "center",
                 border: "none",
               }}><FaFilePdf className="fs-20" style={{ color: "red" }} /></button>
-              <button onClick={exportToExcel} title="Download Excel" style={{
+              <button onClick={exportToExcel} title={t("Download Excel")} style={{
                 backgroundColor: "white",
                 display: "flex",
                 alignItems: "center",
@@ -457,8 +458,8 @@ const Brand = () => {
               }}><FaFileExcel className="fs-20" style={{ color: "orange" }} /></button>
             </li>
             <li style={{ display: "flex", alignItems: "center", gap: '5px' }} className="icon-btn">
-              <label className="" title="">Import : </label>
-              <label className="" title="Import Excel">
+              <label className="" title="">{t("Import :")} </label>
+              <label className="" title={t("Import Excel")}>
                 <input type="file" accept=".xlsx, .xls" hidden />
                 <FaFileExcel style={{ color: "green" }} />
               </label>
@@ -482,7 +483,7 @@ const Brand = () => {
               data-bs-target="#add-brand"
             >
               <CiCirclePlus className=" me-1" />
-              Add Brand
+              {t("Add Brand")}
             </a>
           </div>
         </div>
@@ -493,7 +494,7 @@ const Brand = () => {
               <div className="search-input">
                 <input
                   type="text"
-                  placeholder="Search brands..."
+                  placeholder={t("Search brands...")}
                   className="form-control"
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
@@ -506,7 +507,7 @@ const Brand = () => {
                   className="btn btn-white btn-md d-inline-flex align-items-center"
                   data-bs-toggle="dropdown"
                 >
-                  Status : {statusFilter || "All"}
+                  {t("Status")} : {t(statusFilter) || "All"}
                 </a>
                 <ul className="dropdown-menu  dropdown-menu-end p-3">
                   <li>
@@ -514,7 +515,7 @@ const Brand = () => {
                       onClick={() => setStatusFilter("All")}
                       className="dropdown-item rounded-1"
                     >
-                      All
+                      {t("All")}
                     </a>
                   </li>
                   <li>
@@ -522,7 +523,7 @@ const Brand = () => {
                       onClick={() => setStatusFilter("Active")}
                       className="dropdown-item rounded-1"
                     >
-                      Active
+                      {t("Active")}
                     </a>
                   </li>
                   <li>
@@ -530,7 +531,7 @@ const Brand = () => {
                       onClick={() => setStatusFilter("Inactive")}
                       className="dropdown-item rounded-1"
                     >
-                      Inactive
+                      {t("Inactive")}
                     </a>
                   </li>
                 </ul>
@@ -541,7 +542,7 @@ const Brand = () => {
                   className="btn btn-white btn-md d-inline-flex align-items-center"
                   data-bs-toggle="dropdown"
                 >
-                  Sort By : {sortOrder || "Latest"}
+                  {t("Sort By")} : {t(sortOrder) || "Latest"}
                 </a>
                 <ul className="dropdown-menu  dropdown-menu-end p-3">
                   <li>
@@ -549,7 +550,7 @@ const Brand = () => {
                       onClick={() => setSortOrder("Latest")}
                       className="dropdown-item rounded-1"
                     >
-                      Latest
+                     {t("Latest")}
                     </a>
                   </li>
                   <li>
@@ -557,7 +558,7 @@ const Brand = () => {
                       onClick={() => setSortOrder("Ascending")}
                       className="dropdown-item rounded-1"
                     >
-                      Ascending
+                      {t("Ascending")}
                     </a>
                   </li>
                   <li>
@@ -565,7 +566,7 @@ const Brand = () => {
                       onClick={() => setSortOrder("Descending")}
                       className="dropdown-item rounded-1"
                     >
-                      Descending
+                      {t("Descending")}
                     </a>
                   </li>
                 </ul>
@@ -590,10 +591,10 @@ const Brand = () => {
                         <span className="checkmarks" />
                       </label>
                     </th>
-                    <th>Brand</th>
-                    <th>Created Date</th>
-                    <th>Status</th>
-                    <th style={{ textAlign: 'center', width: '120px' }}>Action</th>
+                    <th>{t("Brand")}</th>
+                    <th>{t("Created Date")}</th>
+                    <th>{t("Status")}</th>
+                    <th style={{ textAlign: 'center', width: '120px' }}>{t("Action")}</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -640,7 +641,7 @@ const Brand = () => {
                             : "bg-danger"
                             }`}
                         >
-                          {brand.status}
+                          {t(brand.status)}
                         </span>
                       </td>
                       <td className="action-table-data">
@@ -682,10 +683,10 @@ const Brand = () => {
                 }}
                 className="form-select w-auto"
               >
-                <option value={10}>10 Per Page</option>
-                <option value={25}>25 Per Page</option>
-                <option value={50}>50 Per Page</option>
-                <option value={100}>100 Per Page</option>
+                <option value={10}>10 {t("Per Page")}</option>
+                <option value={25}>25 {t("Per Page")}</option>
+                <option value={50}>50 {t("Per Page")}</option>
+                <option value={100}>100 {t("Per Page")}</option>
               </select>
               <span
                 style={{
@@ -744,7 +745,7 @@ const Brand = () => {
                   }}
                 >
                   <div className="page-title">
-                    <h4>Add Brand</h4>
+                    <h4>{t("Add Brand")}</h4>
                   </div>
                   {/* <button
                     type="button"
@@ -773,8 +774,7 @@ const Brand = () => {
                             />
                           ) : (
                             <>
-                              <CiCirclePlus className="plus-down-add" /> Add
-                              Image
+                              <CiCirclePlus className="plus-down-add" /> {t("Add Image")}
                             </>
                           )}{" "}
                         </span>
@@ -795,14 +795,14 @@ const Brand = () => {
                           }
                           className="btn btn-outline-primary"
                         >
-                          Upload Image
+                          {t("Upload Image")}
                         </button>
                         <p className="mt-2">JPEG, PNG up to 2 MB</p>
                       </div>
                     </div>
                     <div className="mb-3">
                       <label className="form-label">
-                        Brand<span className="text-danger ms-1">*</span>
+                        {t("Brand")}<span className="text-danger ms-1">*</span>
                       </label>
                       <input
                         type="text"
@@ -816,7 +816,7 @@ const Brand = () => {
                     </div>
                     <div className="mb-0">
                       <div className="status-toggle modal-status d-flex justify-content-between align-items-center">
-                        <span className="status-label">Status</span>
+                        <span className="status-label">{t("Status")}</span>
                         <input
                           type="checkbox"
                           id="user2"
@@ -843,7 +843,7 @@ const Brand = () => {
                         cleanUpModal();
                       }}
                     >
-                      Cancel
+                      {t("Cancel")}
                     </button>
                     <button type="submit" className="btn btn-primary" disabled={isAdding}>
                       {isAdding ? (
@@ -853,9 +853,9 @@ const Brand = () => {
         role="status"
         aria-hidden="true"
       ></span>
-      Adding Brand...
+      {t("Adding Brand...")}
                     </>
-                      ):("Add Brand")}
+                      ):[t("Add Brand")]}
                       
                     </button>
                   </div>
@@ -871,7 +871,7 @@ const Brand = () => {
             <div className="modal-content">
               <div className="modal-header">
                 <div className="page-title">
-                  <h4>Edit Brand</h4>
+                  <h4>{t("Edit Brand")}</h4>
                 </div>
                 {/* <button
                   type="button"
@@ -927,7 +927,7 @@ const Brand = () => {
                           }
                           className="btn btn-outline-primary"
                         >
-                          Change Image
+                          {t("Change Image")}
                         </button>
                         <p className="mt-2">JPEG, PNG up to 2 MB</p>
                       </div>
@@ -935,7 +935,7 @@ const Brand = () => {
                   </div>
                   <div className="mb-3">
                     <label className="form-label">
-                      Brand<span className="text-danger ms-1">*</span>
+                      {t("Brand")}<span className="text-danger ms-1">*</span>
                     </label>
                     <input
                       type="text"
@@ -949,7 +949,7 @@ const Brand = () => {
                   </div>
                   <div className="mb-0">
                     <div className="status-toggle modal-status d-flex justify-content-between align-items-center">
-                      <span className="status-label">Status</span>
+                      <span className="status-label">{t("Status")}</span>
                       <input
                         type="checkbox"
                         id="user4"
@@ -973,10 +973,10 @@ const Brand = () => {
                       cleanUpModal();
                     }}
                   >
-                    Cancel
+                    {t("Cancel")}
                   </button>
                   <button type="submit" className="btn btn-primary">
-                    Save Changes
+                    {t("Save Changes")}
                   </button>
                 </div>
               </form>
