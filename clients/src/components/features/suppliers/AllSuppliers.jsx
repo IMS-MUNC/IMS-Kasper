@@ -91,10 +91,10 @@ function AllSuppliers() {
     }
   };
 
-  const handleDeleteSupplier = async (id,firstName) => {
+  const handleDeleteSupplier = async (id, firstName) => {
     const confirmed = await DeleteAlert({});
     if (!confirmed) return;
-   
+
     try {
       const token = localStorage.getItem("token");
 
@@ -104,13 +104,13 @@ function AllSuppliers() {
           Authorization: `Bearer ${token}`,
         },
       });
-       toast.success("Supplier deleted successfully");
+      toast.success("Supplier deleted successfully");
       fetchSuppliers();
-     Swal.fire("Deleted!", `Supplier "${firstName}" has been deleted.`, "success");
+      Swal.fire("Deleted!", `Supplier "${firstName}" has been deleted.`, "success");
     } catch (err) {
       // handle error
-       console.error("Delete error:", err);
-            toast.error("Failed to delete Supplier");
+      console.error("Delete error:", err);
+      toast.error("Failed to delete Supplier");
     }
   };
 
@@ -142,7 +142,7 @@ function AllSuppliers() {
   const [viewSupplierId, setViewSupplierId] = useState(null);
 
   const handleBulkDelete = async () => {
-     const confirmed = await DeleteAlert({});
+    const confirmed = await DeleteAlert({});
     if (!confirmed) return;
     if (selectedIds.length === 0) {
       alert("Please select at least one supplier.");
@@ -182,7 +182,13 @@ function AllSuppliers() {
       "Status",
     ];
 
-    const tableRows = paginatedData.map((e) => [
+    const dataToExport =
+      selectedIds.length > 0
+        ? suppliers.filter((s) => selectedIds.includes(s._id))
+        : paginatedData;
+
+
+    const tableRows = dataToExport.map((e) => [
       e.supplierCode,
       e.firstName + " " + e.lastName,
       e.email,
@@ -205,50 +211,56 @@ function AllSuppliers() {
       theme: "striped",
     });
 
-    doc.save("Suppliers.pdf");
+    doc.save(selectedIds.length > 0 ? "Selected_Suppliers.pdf" : "Suppliers.pdf");
   };
 
 
- const handleExcel = async () => {
-  const workbook = new ExcelJS.Workbook();
-  const worksheet = workbook.addWorksheet("Suppliers");
+  const handleExcel = async () => {
+    const workbook = new ExcelJS.Workbook();
+    const worksheet = workbook.addWorksheet("Suppliers");
 
-  // Define columns
-  worksheet.columns = [
-    { header: "Code", key: "code", width: 15 },
-    { header: "Supplier", key: "supplier", width: 25 },
-    { header: "Email", key: "email", width: 25 },
-    { header: "Phone", key: "phone", width: 15 },
-    { header: "Country", key: "country", width: 20 },
-    { header: "Status", key: "status", width: 10 },
-  ];
+    // Define columns
+    worksheet.columns = [
+      { header: "Code", key: "code", width: 15 },
+      { header: "Supplier", key: "supplier", width: 25 },
+      { header: "Email", key: "email", width: 25 },
+      { header: "Phone", key: "phone", width: 15 },
+      { header: "Country", key: "country", width: 20 },
+      { header: "Status", key: "status", width: 10 },
+    ];
 
-  // Add rows
-  paginatedData.forEach((e) => {
-    worksheet.addRow({
-      code: e.supplierCode,
-      supplier: `${e.firstName} ${e.lastName}`,
-      email: e.email,
-      phone: e.phone,
-      country: e.billing?.country?.name || e.shipping?.country?.name || "-",
-      status: e.status === true ? "Active" : "Inactive",
+    const dataToExport =
+    selectedIds.length > 0
+      ? suppliers.filter((s) => selectedIds.includes(s._id))
+      : paginatedData; 
+
+
+    // Add rows
+    dataToExport.forEach((e) => {
+      worksheet.addRow({
+        code: e.supplierCode,
+        supplier: `${e.firstName} ${e.lastName}`,
+        email: e.email,
+        phone: e.phone,
+        country: e.billing?.country?.name || e.shipping?.country?.name || "-",
+        status: e.status === true ? "Active" : "Inactive",
+      });
     });
-  });
 
-  // Style header row: bold and font size
-  worksheet.getRow(1).font = {
-    bold: true,
-    size: 13,
+    // Style header row: bold and font size
+    worksheet.getRow(1).font = {
+      bold: true,
+      size: 13,
+    };
+
+    // Optional: Center align headers
+    worksheet.getRow(1).alignment = { horizontal: "center" };
+
+    // Generate Excel file and trigger download
+    const buffer = await workbook.xlsx.writeBuffer();
+    const blob = new Blob([buffer], { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" });
+    saveAs(blob,  selectedIds.length > 0 ? "Selected_Suppliers.xlsx" : "Suppliers.xlsx");
   };
-
-  // Optional: Center align headers
-  worksheet.getRow(1).alignment = { horizontal: "center" };
-
-  // Generate Excel file and trigger download
-  const buffer = await workbook.xlsx.writeBuffer();
-  const blob = new Blob([buffer], { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" });
-  saveAs(blob, "Suppliers.xlsx");
-};
 
 
   return (
@@ -285,56 +297,56 @@ function AllSuppliers() {
               )}
             </li>
             <li className="me-2">
-              
-                <button
+
+              <button
                 data-bs-toggle="tooltip" data-bs-placement="top" title="Pdf"
-                  type="button"
-                  
-                  
-                    className="fs-20"
-                   style={{ backgroundColor: 'white', color: '', padding: '6px 6px', display: 'flex', alignItems: 'center', border: '1px solid #e8eaebff', cursor: 'pointer', borderRadius: '4px' }}
-                  onClick={handlePdf}
-                >
-                  <FaFilePdf style={{ color: "red" }} />
-                </button>
-              </li>
-           
-            <li className="me-2">   
-                <button
+                type="button"
+
+
+                className="fs-20"
+                style={{ backgroundColor: 'white', color: '', padding: '6px 6px', display: 'flex', alignItems: 'center', border: '1px solid #e8eaebff', cursor: 'pointer', borderRadius: '4px' }}
+                onClick={handlePdf}
+              >
+                <FaFilePdf style={{ color: "red" }} />
+              </button>
+            </li>
+
+            <li className="me-2">
+              <button
                 data-bs-toggle="tooltip" data-bs-placement="top"
-                  type="button"
-                  title="Export Excel"
-                  className="fs-20"
-                    style={{ backgroundColor: 'white', color: '', padding: '6px 6px', display: 'flex', alignItems: 'center', border: '1px solid #e8eaebff', cursor: 'pointer', borderRadius: '4px' }}
-                  onClick={handleExcel}
-                >
-                  <FaFileExcel style={{ color: "green" }} />
-                </button>
+                type="button"
+                title="Export Excel"
+                className="fs-20"
+                style={{ backgroundColor: 'white', color: '', padding: '6px 6px', display: 'flex', alignItems: 'center', border: '1px solid #e8eaebff', cursor: 'pointer', borderRadius: '4px' }}
+                onClick={handleExcel}
+              >
+                <FaFileExcel style={{ color: "green" }} />
+              </button>
             </li>
             <li className="me-2">
               {/* <li> */}
-                <button
-                  data-bs-toggle="tooltip"
-                  data-bs-placement="top"
-                  title="Refresh"
-                  onClick={() => location.reload()}
-                  className="fs-20"
-                  // style={{
-                  //   backgroundColor: "white",
-                  //   color: "",
-                  //   padding: "5px 5px",
-                  //   display: "flex",
-                  //   alignItems: "center",
-                  //   border: "1px solid #e8eaebff",
-                  //   cursor: "pointer",
-                  //   borderRadius: "4px",
-                  // }}
-                   style={{ backgroundColor: 'white', color: '', padding: '6px 6px', display: 'flex', alignItems: 'center', border: '1px solid #e8eaebff', cursor: 'pointer', borderRadius: '4px' }}
+              <button
+                data-bs-toggle="tooltip"
+                data-bs-placement="top"
+                title="Refresh"
+                onClick={() => location.reload()}
+                className="fs-20"
+                // style={{
+                //   backgroundColor: "white",
+                //   color: "",
+                //   padding: "5px 5px",
+                //   display: "flex",
+                //   alignItems: "center",
+                //   border: "1px solid #e8eaebff",
+                //   cursor: "pointer",
+                //   borderRadius: "4px",
+                // }}
+                style={{ backgroundColor: 'white', color: '', padding: '6px 6px', display: 'flex', alignItems: 'center', border: '1px solid #e8eaebff', cursor: 'pointer', borderRadius: '4px' }}
 
-                >
-                  <TbRefresh className="ti ti-refresh" />
-                </button>
-              </li>
+              >
+                <TbRefresh className="ti ti-refresh" />
+              </button>
+            </li>
             {/* </li> */}
             {/* <li className="me-2">
               <a data-bs-toggle="tooltip" data-bs-placement="top" title="Collapse" id="collapse-header"><i className="ti ti-chevron-up" /></a>
@@ -466,22 +478,22 @@ function AllSuppliers() {
                       <td>{supplier.supplierCode}</td>
                       <td>
                         <div className="d-flex align-items-center">
-                         
+
                           <a href="#" className="">
-                           
+
                             {supplier.images && supplier.images.length > 0 ? (
-                            <div className="avatar-placeholder rounded" style={{ width: "30px", height: "30px", overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                            <img
-                              src={supplier.images && supplier.images.length > 0 ? supplier.images[0].url : ""}
-                              
-                              style={{ width: "30px", height: "30px", objectFit: "cover", borderRadius: '' }}
-                            />
-                            </div>
-                          ) : (
-                            <div className="avatar-placeholder rounded d-flex align-items-center justify-content-center" style={{ width: "30px", height: "30px", backgroundColor: '#6c757d', color: 'white', fontWeight: 'bold' }}>
-                              {supplier.firstName?.charAt(0).toUpperCase() || "N/A"}
-                            </div>
-                          )}
+                              <div className="avatar-placeholder rounded" style={{ width: "30px", height: "30px", overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                <img
+                                  src={supplier.images && supplier.images.length > 0 ? supplier.images[0].url : ""}
+
+                                  style={{ width: "30px", height: "30px", objectFit: "cover", borderRadius: '' }}
+                                />
+                              </div>
+                            ) : (
+                              <div className="avatar-placeholder rounded d-flex align-items-center justify-content-center" style={{ width: "30px", height: "30px", backgroundColor: '#6c757d', color: 'white', fontWeight: 'bold' }}>
+                                {supplier.firstName?.charAt(0).toUpperCase() || "N/A"}
+                              </div>
+                            )}
                           </a>
                           <div className="ms-2">
                             <p className="text-gray-9 mb-0">
@@ -504,9 +516,8 @@ function AllSuppliers() {
 
                       <td>
                         <span
-                          className={`badge ${
-                            supplier.status ? "badge-success" : "badge-danger"
-                          } d-inline-flex align-items-center badge-xs`}
+                          className={`badge ${supplier.status ? "badge-success" : "badge-danger"
+                            } d-inline-flex align-items-center badge-xs`}
                         >
                           <i className="ti ti-point-filled me-1" />
                           {supplier.status ? "Active" : "Inactive"}
@@ -584,9 +595,9 @@ function AllSuppliers() {
                 {filteredSuppliers.length === 0
                   ? "0 of 0"
                   : `${(currentPage - 1) * itemsPerPage + 1}-${Math.min(
-                      currentPage * itemsPerPage,
-                      filteredSuppliers.length
-                    )} of ${filteredSuppliers.length}`}
+                    currentPage * itemsPerPage,
+                    filteredSuppliers.length
+                  )} of ${filteredSuppliers.length}`}
                 <button
                   style={{
                     border: "none",
