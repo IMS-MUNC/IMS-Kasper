@@ -13,9 +13,10 @@ import EXCEL from '../../../../assets/img/icons/excel.svg'
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import * as XLSX from 'xlsx';
+import { useTranslation } from 'react-i18next';
 
 const LowStock = () => {
-  
+  const { t } = useTranslation();
   // Check authentication status
   const user = JSON.parse(localStorage.getItem("user"));
   
@@ -523,8 +524,8 @@ const LowStock = () => {
       <div className="content">
         <div className="page-header">
           <div className="page-title me-auto">
-            <h4 className="fw-bold">Low Stocks</h4>
-            <h6>Manage your low stocks</h6>
+            <h4 className="fw-bold">{t("Low Stocks")}</h4>
+            <h6>{t("Manage your low stocks")}</h6>
           </div>
           <ul className="table-top-head low-stock-top-head">
             {selectedProducts.length > 0 && (
@@ -552,14 +553,14 @@ const LowStock = () => {
               </li>
             )}
             <li style={{ display: "flex", alignItems: "center", gap: '5px' }} className="icon-btn">
-              <label className="" title="">Export : </label>
-              <button onClick={handlePdf} title="Download PDF" style={{
+              <label className="" title="">{t("Export : ")}</label>
+              <button onClick={handlePdf} title={t("Download PDF")} style={{
                 backgroundColor: "white",
                 display: "flex",
                 alignItems: "center",
                 border: "none",
               }}><FaFilePdf className="fs-20" style={{ color: "red" }} /></button>
-              <button onClick={handleExcel} title="Download Excel" style={{
+              <button onClick={handleExcel} title={t("Download Excel")} style={{
                 backgroundColor: "white",
                 display: "flex",
                 alignItems: "center",
@@ -570,7 +571,7 @@ const LowStock = () => {
               <a data-bs-toggle="tooltip" data-bs-placement="top" title="Excel" onClick={handleExcel}><img src={EXCEL} alt="excel" /></a>
             </li> */}
             <li>
-              <button data-bs-toggle="tooltip" data-bs-placement="top" title="Refresh" onClick={() => window.location.reload()} className="fs-20" style={{ backgroundColor: 'white', color: '', padding: '5px 5px', display: 'flex', alignItems: 'center', border: '1px solid #e8eaebff', cursor: 'pointer', borderRadius: '4px' }}><TbRefresh className="ti ti-refresh" /></button>
+              <button data-bs-toggle="tooltip" data-bs-placement="top" title={t("Refresh")} onClick={() => window.location.reload()} className="fs-20" style={{ backgroundColor: 'white', color: '', padding: '5px 5px', display: 'flex', alignItems: 'center', border: '1px solid #e8eaebff', cursor: 'pointer', borderRadius: '4px' }}><TbRefresh className="ti ti-refresh" /></button>
             </li>
             {/* <li>
           <a data-bs-toggle="tooltip" data-bs-placement="top" title="Collapse" id="collapse-header"><i className="ti ti-chevron-up" /></a>
@@ -584,7 +585,7 @@ const LowStock = () => {
           <div className="d-flex flex-wrap justify-content-between align-items-center mb-3">
             <ul className="nav nav-pills low-stock-tab d-flex me-2 mb-0" id="pills-tab" role="tablist">
               <li className="nav-item" role="presentation">
-                <button className={`nav-link${activeTab === 'low' ? ' active' : ''}`} id="pills-home-tab" data-bs-toggle="pill" data-bs-target="#pills-home" type="button" role="tab" aria-controls="pills-home" aria-selected={activeTab === 'low'} onClick={() => setActiveTab('low')}>Low Stocks</button>
+                <button className={`nav-link${activeTab === 'low' ? ' active' : ''}`} id="pills-home-tab" data-bs-toggle="pill" data-bs-target="#pills-home" type="button" role="tab" aria-controls="pills-home" aria-selected={activeTab === 'low'} onClick={() => setActiveTab('low')}>{t("Low Stocks")}</button>
               </li>
               <li className="nav-item" role="presentation">
                 <button className={`nav-link${activeTab === 'out' ? ' active' : ''}`} id="pills-profile-tab" data-bs-toggle="pill" data-bs-target="#pills-profile" type="button" role="tab" aria-controls="pills-profile" aria-selected={activeTab === 'out'} onClick={() => {
@@ -604,7 +605,7 @@ const LowStock = () => {
                     });
                     newOutStockProducts.forEach(product => shownToastsRef.current.add('out_' + product._id));
                   }
-                }}>Out of Stocks</button>
+                }}>{t("Out of Stocks")}</button>
               </li>
             </ul>
             <div className="notify d-flex bg-white p-1 px-2 border rounded">
@@ -617,7 +618,7 @@ const LowStock = () => {
                   onChange={(e) => setNotificationsEnabled(e.target.checked)}
                 />
                 <label htmlFor="user2" className="checktoggle me-2">checkbox</label>
-                Notify
+                {t("Notify")}
               </div>
             </div>
           </div>
@@ -635,11 +636,11 @@ const LowStock = () => {
                   <div className="d-flex table-dropdown my-xl-auto right-content align-items-center flex-wrap row-gap-3">
                     <div className="dropdown me-2">
                       <a className="btn btn-white btn-md d-inline-flex align-items-center" data-bs-toggle="dropdown">
-                        Sort by : {selectedWarehouse || 'All Warehouse'}
+                        {t("Sort By")} : {selectedWarehouse || [t('All Warehouses')]}
                       </a>
                       <ul className="dropdown-menu dropdown-menu-end p-3" style={{ maxHeight: '200px', overflowY: 'auto' }}>
                         <li>
-                          <a className="dropdown-item rounded-1" onClick={() => setSelectedWarehouse('')}>All Warehouses</a>
+                          <a className="dropdown-item rounded-1" onClick={() => setSelectedWarehouse('')}>{t("All Warehouses")}</a>
                         </li>
                         {Array.isArray(warehouses) && warehouses.map(warehouse => (
                           <li key={warehouse._id}>
@@ -652,11 +653,11 @@ const LowStock = () => {
                     </div>
                     <div className="dropdown me-2">
                       <a className="btn btn-white btn-md d-inline-flex align-items-center" data-bs-toggle="dropdown">
-                        Sort by : {selectedCategory || 'All Category'}
+                        {t("Sort By")} : {selectedCategory || [t('All Categories')]}
                       </a>
                       <ul className="dropdown-menu dropdown-menu-end p-3" style={{ maxHeight: '200px', overflowY: 'auto' }}>
                         <li>
-                          <a className="dropdown-item rounded-1" onClick={() => setSelectedCategory('')}>All Categories</a>
+                          <a className="dropdown-item rounded-1" onClick={() => setSelectedCategory('')}>{t("All Categories")}</a>
                         </li>
                         {Array.isArray(categories) && categories.map(category => (
                           <li key={category._id}>
@@ -686,14 +687,14 @@ const LowStock = () => {
                               <span className="checkmarks" />
                             </label>
                           </th>
-                          <th>Warehouse</th>
+                          <th>{t("Warehouse")}</th>
                           {/* <th>Supplier</th> */}
-                          <th>Product Name</th>
-                          <th>Category</th>
-                          <th>SKU</th>
-                          <th>Qty</th>
-                          <th>Qty Alert</th>
-                          <th style={{textAlign: 'center'}}>Actions</th>
+                          <th>{t("Product Name")}</th>
+                          <th>{t("Category")}</th>
+                          <th>{t("SKU")}</th>
+                          <th>{t("Qty")}</th>
+                          <th>{t("Qty Alert")}</th>
+                          <th style={{textAlign: 'center'}}>{t("Action")}</th>
                         </tr>
                       </thead>
                       <tbody>
@@ -742,7 +743,7 @@ const LowStock = () => {
                           ))
                         ) : (
                           <tr>
-                            <td colSpan="9" className="text-center text-muted">No low stock products.</td>
+                            <td colSpan="9" className="text-center text-muted">{t("No low stock products.")}</td>
                           </tr>
                         )}
 
@@ -762,10 +763,10 @@ const LowStock = () => {
                       }}
                       className="form-select w-auto"
                     >
-                      <option value={10}>10 Per Page</option>
-                      <option value={25}>25 Per Page</option>
-                      <option value={50}>50 Per Page</option>
-                      <option value={100}>100 Per Page</option>
+                      <option value={25}>25 {t("Per Page")}</option>
+                      <option value={50}>50 {t("Per Page")}</option>
+                      <option value={100}>100 {t("Per Page")}</option>
+                      <option value={10}>10 {t("Per Page")}</option>
                     </select>
                     <span
                       style={{
@@ -825,7 +826,7 @@ const LowStock = () => {
                   <div className="d-flex table-dropdown my-xl-auto right-content align-items-center flex-wrap row-gap-3">
                     <div className="dropdown me-2">
                       <a className="btn btn-white btn-md d-inline-flex align-items-center" data-bs-toggle="dropdown">
-                        Sort by : {selectedWarehouse || 'All Warehouse'}
+                        {t("Sort By")} : {selectedWarehouse || [t('All Warehouses')]}
                       </a>
                       <ul className="dropdown-menu dropdown-menu-end p-3" style={{ maxHeight: '200px', overflowY: 'auto' }}>
                         {warehouses.map(warehouse => (
@@ -839,7 +840,7 @@ const LowStock = () => {
                     </div>
                     <div className="dropdown me-2">
                       <a className="btn btn-white btn-md d-inline-flex align-items-center" data-bs-toggle="dropdown">
-                        Sort by : {selectedCategory || 'All Category'}
+                        {t("Sort By")} : {selectedCategory || [t('All Category')]}
                       </a>
                       <ul className="dropdown-menu dropdown-menu-end p-3" style={{ maxHeight: '200px', overflowY: 'auto' }}>
                         {categories.map(category => (
@@ -870,14 +871,14 @@ const LowStock = () => {
                               <span className="checkmarks" />
                             </label>
                           </th>
-                          <th>Warehouse</th>
-                          <th>Supplier</th>
-                          <th>Product Name</th>
-                          <th>Category</th>
-                          <th>SKU</th>
-                          <th>Qty</th>
-                          <th>Qty Alert</th>
-                          <th style={{textAlign: 'center'}}>Actions</th>
+                          <th>{t("Warehouse")}</th>
+                          <th>{t("Supplier")}</th>
+                          <th>{t("Product Name")}</th>
+                          <th>{t("Category")}</th>
+                          <th>{t("SKU")}</th>
+                          <th>{t("Qty")}</th>
+                          <th>{t("Qty Alert")}</th>
+                          <th style={{textAlign: 'center'}}>{t("Actions")}</th>
                         </tr>
                       </thead>
                       <tbody>
@@ -925,7 +926,7 @@ const LowStock = () => {
                           ))
                         ) : (
                           <tr>
-                            <td colSpan="9" className="text-center text-muted">No low stock products.</td>
+                            <td colSpan="9" className="text-center text-muted">{t("No low stock products.")}</td>
                           </tr>
                         )}
 
@@ -945,10 +946,10 @@ const LowStock = () => {
                       }}
                       className="form-select w-auto"
                     >
-                      <option value={10}>10 Per Page</option>
-                      <option value={25}>25 Per Page</option>
-                      <option value={50}>50 Per Page</option>
-                      <option value={100}>100 Per Page</option>
+                      <option value={10}>10 {t("Per Page")}</option>
+                      <option value={25}>25 {t("Per Page")}</option>
+                      <option value={50}>50 {t("Per Page")}</option>
+                      <option value={100}>100 {t("Per Page")}</option>
                     </select>
                     <span
                       style={{

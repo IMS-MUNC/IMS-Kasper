@@ -17,6 +17,7 @@ import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import Papa from "papaparse";
 import * as XLSX from "xlsx";
+import { t } from "i18next";
 
 const SubCategory = () => {
   const [categories, setCategories] = useState([]);
@@ -585,8 +586,8 @@ const SubCategory = () => {
         <div className="page-header">
           <div className="add-item d-flex">
             <div className="page-title">
-              <h4 className="fw-bold">Sub Category</h4>
-              <h6>Manage your sub categories</h6>
+              <h4 className="fw-bold">{t("Sub Category")}</h4>
+              <h6>{t("Manage your sub categories")}</h6>
             </div>
           </div>
           <div className="table-top-head me-2">
@@ -598,7 +599,7 @@ const SubCategory = () => {
                   onClick={handleBulkDelete}
                   disabled={selectedSubCategories.length === 0}
                 >
-                  Delete ({selectedSubCategories.length}) Selected
+                  {t("Delete")} ({selectedSubCategories.length}) {t("Selected")}
                 </button>
               )}
             </li>
@@ -607,11 +608,11 @@ const SubCategory = () => {
               className="icon-btn"
             >
               <label className="" title="">
-                Export :{" "}
+                {t("Export :")}{" "}
               </label>
               <button
                 onClick={handlePdf}
-                title="Download PDF"
+                title={t("Download PDF")}
                 style={{
                   backgroundColor: "white",
                   display: "flex",
@@ -623,7 +624,7 @@ const SubCategory = () => {
               </button>
               <button
                 onClick={handleExcel}
-                title="Download Excel"
+                title={t("Download Excel")}
                 style={{
                   backgroundColor: "white",
                   display: "flex",
@@ -639,9 +640,9 @@ const SubCategory = () => {
               className="icon-btn"
             >
               <label className="" title="">
-                Import :{" "}
+                {t("Import :")}{" "}
               </label>
-              <label className="" title="Import Excel">
+              <label className="" title={t("Import Excel")}>
                 <input type="file" accept=".xlsx, .xls" hidden />
                 <FaFileExcel style={{ color: "green" }} />
               </label>
@@ -660,7 +661,7 @@ const SubCategory = () => {
               data-bs-target="#add-category"
             >
               <i className="ti ti-circle-plus me-1" />
-              Add Sub Category
+              {t("Add Sub Category")}
             </a>
           </div>
         </div>
@@ -671,7 +672,7 @@ const SubCategory = () => {
               <div className="search-input">
                 <input
                   type="text"
-                  placeholder="Search subcategory..."
+                  placeholder={t("Search subcategory...")}
                   className="form-control"
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
@@ -699,11 +700,11 @@ const SubCategory = () => {
                         <span className="checkmarks" />
                       </label>
                     </th>
-                    <th style={{textAlign:'left'}}>Category Code</th>
-                    <th style={{textAlign:'left'}}>Category</th>
-                    <th style={{textAlign:'left'}}>Sub Category</th>
-                    <th style={{textAlign:'left'}}>Description</th>
-                    <th>Action</th>
+                    <th style={{textAlign:'left'}}>{t("Category Code")}</th>
+                    <th style={{textAlign:'left'}}>{t("Category")}</th>
+                    <th style={{textAlign:'left'}}>{t("Sub Category")}</th>
+                    <th style={{textAlign:'left'}}>{t("Description")}</th>
+                    <th>{t("Action")}</th>
                     {/* <th className="no-sort" /> */}
                   </tr>
                 </thead>
@@ -857,10 +858,10 @@ const SubCategory = () => {
                 }}
                 className="form-select w-auto"
               >
-                <option value={10}>10 Per Page</option>
-                <option value={25}>25 Per Page</option>
-                <option value={50}>50 Per Page</option>
-                <option value={100}>100 Per Page</option>
+                <option value={10}>10 {t("Per Page")}</option>
+                <option value={25}>25 {t("Per Page")}</option>
+                <option value={50}>50 {t("Per Page")}</option>
+                <option value={100}>100 {t("Per Page")}</option>
               </select>
               <span
                 style={{
@@ -911,7 +912,7 @@ const SubCategory = () => {
             <div className="modal-content">
               <div className="modal-header">
                 <div className="page-title">
-                  <h4>Add Sub Category</h4>
+                  <h4>{t("Add Sub Category")}</h4>
                 </div>
                 {/* <button
                   type="button"
@@ -941,7 +942,7 @@ const SubCategory = () => {
                           />
                         ) : (
                           <>
-                            <CiCirclePlus className="plus-down-add" /> Add Image
+                            <CiCirclePlus className="plus-down-add" /> {t("Add Image")}
                           </>
                         )}
                       </span>
@@ -968,14 +969,14 @@ const SubCategory = () => {
                         }
                         className="btn btn-outline-primary"
                       >
-                        Upload Image
+                        {t("Upload Image")}
                       </button>
                       <p className="mt-2">JPEG, PNG up to 2 MB</p>
                     </div>
                   </div>
                   <div className="mb-3">
                     <label className="form-label">
-                      Category<span className="text-danger ms-1">*</span>
+                      {t("Category")}<span className="text-danger ms-1">*</span>
                     </label>
 
                     <Select
@@ -984,12 +985,12 @@ const SubCategory = () => {
                       value={selectedCategory}
                       onChange={handleCategoryChange}
                       isSearchable
-                      placeholder="Search or select category..."
+                      placeholder={t("Search or select category...")}
                     />
                   </div>
                   <div className="mb-3">
                     <label className="form-label">
-                      Sub Category Name
+                      {t("Sub Category Name")}
                       <span className="text-danger ms-1">*</span>
                     </label>
                     <input
@@ -1004,7 +1005,7 @@ const SubCategory = () => {
                   </div>
                   <div className="mb-3">
                     <label className="form-label">
-                      Description<span className="text-danger ms-1">*</span>
+                      {t("Description")}<span className="text-danger ms-1">*</span>
                     </label>
                     <textarea
                       className="form-control"
@@ -1014,7 +1015,7 @@ const SubCategory = () => {
                   </div>
                   <div className="mb-0">
                     <div className="status-toggle modal-status d-flex justify-content-between align-items-center">
-                      <span className="status-label">Status</span>
+                      <span className="status-label">{t("Status")}</span>
                       <input
                         type="checkbox"
                         id="user2"
@@ -1033,7 +1034,7 @@ const SubCategory = () => {
                     className="btn me-2 btn-secondary"
                     onClick={handleCancelAdd}
                   >
-                    Cancel
+                    {t("Cancel")}
                   </button>
                   <button type="submit" className="btn btn-primary" disabled={isAdding}>
                     {
@@ -1044,9 +1045,9 @@ const SubCategory = () => {
                             role="status"
                             aria-hidden="true"
                           ></span>
-                          Adding Sub Category...
+                          {t("Adding Sub Category...")}
                         </>
-                      ) : ("Add Sub Category")
+                      ) : t("Add Sub Category")
                     }
                   </button>
                 </div>
@@ -1061,7 +1062,7 @@ const SubCategory = () => {
             <div className="modal-content">
               <div className="modal-header">
                 <div className="page-title">
-                  <h4>Edit Sub Category</h4>
+                  <h4>{t("Edit Sub Category")}</h4>
                 </div>
                 {/* <button
                   type="button"
@@ -1100,7 +1101,7 @@ const SubCategory = () => {
                                 }}
                               />
                             ) : (
-                              <span>No image</span>
+                              <span>{t("No image")}</span>
                             )}
                             {(images.length > 0 ||
                               editingSubCategory?.images?.length > 0) && (
@@ -1141,7 +1142,7 @@ const SubCategory = () => {
                               }
                               className="btn btn-outline-primary"
                             >
-                              Change Image
+                              {t("Change Image")}
                             </button>
                             <p className="mt-2">JPEG, PNG up to 2 MB</p>
                           </div>
@@ -1151,14 +1152,14 @@ const SubCategory = () => {
                   </div>
                   <div className="mb-3">
                     <label className="form-label">
-                      Category<span className="text-danger ms-1">*</span>
+                      {t("Category")}<span className="text-danger ms-1">*</span>
                     </label>
 
                     <Select
                       id="category"
                       options={categories}
                       isSearchable
-                      placeholder="Search or select category..."
+                      placeholder={t("Search or select category...")}
                       value={editSelectedCategory}
                       onChange={(selectedOption) =>
                         setEditSelectedCategory(selectedOption)
@@ -1167,7 +1168,7 @@ const SubCategory = () => {
                   </div>
                   <div className="mb-3">
                     <label className="form-label">
-                      Sub Category<span className="text-danger ms-1">*</span>
+                      {t("Sub Category")}<span className="text-danger ms-1">*</span>
                     </label>
                     <input
                       type="text"
@@ -1181,7 +1182,7 @@ const SubCategory = () => {
                   </div>
                   <div className="mb-3">
                     <label className="form-label">
-                      Category Code<span className="text-danger ms-1">*</span>
+                      {t("Category Code")}<span className="text-danger ms-1">*</span>
                     </label>
                     <input
                       type="text"
@@ -1192,7 +1193,7 @@ const SubCategory = () => {
                   </div>
                   <div className="mb-3">
                     <label className="form-label">
-                      Description<span className="text-danger ms-1">*</span>
+                      {t("Description")}<span className="text-danger ms-1">*</span>
                     </label>
                     <textarea
                       className="form-control"
@@ -1202,7 +1203,7 @@ const SubCategory = () => {
                   </div>
                   <div className="mb-0">
                     <div className="status-toggle modal-status d-flex justify-content-between align-items-center">
-                      <span className="status-label">Status</span>
+                      <span className="status-label">{t("Status")}</span>
                       <input
                         type="checkbox"
                         id="user3"
@@ -1220,14 +1221,14 @@ const SubCategory = () => {
                     className="btn me-2 btn-secondary"
                     onClick={handleCancelEdit}
                   >
-                    Cancel
+                    {t("Cancel")}
                   </button>
                   <button
                     type="submit"
                     className="btn btn-primary"
                     disabled={isUpdating}
                   >
-                    {isUpdating ? "Updating..." : "Save Changes"}
+                    {isUpdating ? [t("Updating...")] : [t("Save Changes")]}
                   </button>
                 </div>
               </form>
