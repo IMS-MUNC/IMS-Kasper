@@ -8,8 +8,9 @@ import "jspdf-autotable";
 import * as XLSX from "xlsx";
 import { saveAs } from "file-saver";
 import autoTable from "jspdf-autotable";
+import RingLoader from "../../../../utils/Loader/Loader";
 
-const Stock = () => {
+const Stock = (logoSrc) => {
   const [stockData, setStockData] = useState([]);
   const [totals, setTotals] = useState({});
   const [loading, setLoading] = useState(true);
@@ -170,24 +171,14 @@ const Stock = () => {
                   accept=".xlsx, .xls"
                   // ref={fileInputRef}
                   style={{ display: "none" }}
-                  // onChange={handleFileChange}
                 />
               </label>
             </div>
-            {/* <li>
-                        <button
-                          type="button"
-                          className="icon-btn"
-                          title="Export Excel"
-                          onClick={handleExcel}
-                        >
-                          <FaFileExcel />
-                        </button>
-                      </li> */}
+        
           </div>
         </div>
         {/* Totals Card */}
-        <div className="row mb-3">
+        {/* <div className="row mb-3">
           <div className="col-md-3">
             <div className="card text-center">
               <div className="card-body">
@@ -275,11 +266,14 @@ const Stock = () => {
               </div>
             </div>
           </div>
-        </div>
+        </div> */}
         <div className="card">
           <div className="card-body p-0">
             {loading ? (
-              <div className="text-center p-4">Loading...</div>
+              // <div className="text-center p-4">Loading...</div>
+      
+       <RingLoader progress={100} />
+    
             ) : error ? (
               <div className="text-danger p-4">{error}</div>
             ) : (
