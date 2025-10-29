@@ -17,7 +17,7 @@ const createPosSale = async (req, res) => {
     console.log('Items array length:', req.body.items ? req.body.items.length : 'No items');
     console.log('Customer ID:', req.body.customerId);
     console.log('Payment method:', req.body.paymentMethod);
-    
+
     const {
       customerId,
       items,
@@ -33,7 +33,7 @@ const createPosSale = async (req, res) => {
 
     // Validate required fields
     if (!customerId || !items || items.length === 0 || !paymentMethod) {
-      return res.status(400).json({ 
+      return res.status(400).json({
         message: 'Missing required fields',
         details: {
           customerId: !customerId ? 'Customer ID is required' : 'OK',
@@ -74,8 +74,8 @@ const createPosSale = async (req, res) => {
 
       // Check if enough stock is available
       if (product.quantity < item.quantity) {
-        return res.status(400).json({ 
-          message: `Insufficient stock for ${product.productName}. Available: ${product.quantity}` 
+        return res.status(400).json({
+          message: `Insufficient stock for ${product.productName}. Available: ${product.quantity}`
         });
       }
 
@@ -181,7 +181,7 @@ const createPosSale = async (req, res) => {
     for (const field of requiredFields) {
       if (!saleData[field]) {
         console.error(`Missing required field: ${field}`);
-        return res.status(400).json({ 
+        return res.status(400).json({
           message: `Missing required field: ${field}`,
           details: `Field ${field} is required but not provided`
         });
@@ -195,7 +195,7 @@ const createPosSale = async (req, res) => {
       const count = await PosSale.countDocuments();
       const invoiceNumber = `INV${Date.now()}${count + 1}`;
       console.log('Generated invoice number in controller:', invoiceNumber);
-      
+
       // Add invoice number to sale data
       saleData.invoiceNumber = invoiceNumber;
     } catch (error) {
@@ -217,7 +217,7 @@ const createPosSale = async (req, res) => {
       });
     } catch (modelError) {
       console.error('Error creating PosSale model:', modelError);
-      return res.status(500).json({ 
+      return res.status(500).json({
         message: 'Error creating sale model',
         error: modelError.message,
         details: 'Failed to create PosSale document instance'
@@ -227,7 +227,7 @@ const createPosSale = async (req, res) => {
     // Check database connection
     if (mongoose.connection.readyState !== 1) {
       console.error('Database not connected. Ready state:', mongoose.connection.readyState);
-      return res.status(500).json({ 
+      return res.status(500).json({
         message: 'Database connection error',
         details: 'Database is not ready'
       });
@@ -240,23 +240,23 @@ const createPosSale = async (req, res) => {
       console.log('Database ready state:', mongoose.connection.readyState);
       console.log('Document isNew before save:', posSale.isNew);
       console.log('Document _id before save:', posSale._id);
-      
+
       // Check if the document is valid before saving
       const validationError = posSale.validateSync();
       if (validationError) {
         console.error('Validation error before save:', validationError);
         console.error('Validation error details:', validationError.errors);
-        return res.status(400).json({ 
+        return res.status(400).json({
           message: 'Validation error',
           error: validationError.message,
           details: validationError.errors
         });
       }
-      
+
       console.log('Document validation passed, proceeding with save...');
       const savedSale = await posSale.save();
       console.log('Sale saved successfully with ID:', savedSale._id);
-      
+
       res.status(201).json({
         success: true,
         message: 'Sale recorded successfully',
@@ -271,7 +271,7 @@ const createPosSale = async (req, res) => {
         errors: saveError.errors,
         stack: saveError.stack
       });
-      
+
       // If save fails, try to restore product quantities
       try {
         for (const item of items) {
@@ -282,8 +282,8 @@ const createPosSale = async (req, res) => {
       } catch (restoreError) {
         console.error('Error restoring product quantities:', restoreError);
       }
-      
-      return res.status(500).json({ 
+
+      return res.status(500).json({
         message: 'Error saving sale record',
         error: saveError.message,
         details: saveError.errors || saveError.message
@@ -334,7 +334,7 @@ const getPosSales = async (req, res) => {
     if (req.query.search && req.query.search.trim()) {
       const searchTerm = req.query.search.trim();
       const searchRegex = new RegExp(searchTerm, 'i');
-      
+
       filter.$or = [
         { invoiceNumber: searchRegex },
         { 'customer.name': searchRegex },
@@ -408,7 +408,7 @@ const getSalesSummary = async (req, res) => {
 
     const totalSales = todaySales.length;
     const totalRevenue = todaySales.reduce((sum, sale) => sum + sale.totals.totalAmount, 0);
-    const totalItems = todaySales.reduce((sum, sale) => 
+    const totalItems = todaySales.reduce((sum, sale) =>
       sum + sale.items.reduce((itemSum, item) => itemSum + item.quantity, 0), 0
     );
 

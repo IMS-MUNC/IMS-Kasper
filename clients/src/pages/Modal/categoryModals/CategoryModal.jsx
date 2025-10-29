@@ -1,6 +1,8 @@
 import React from "react";
+import { useTranslation } from 'react-i18next';
 
 const CategoryModal = ({
+  
   modalId,
   title,
   // isEditMode,
@@ -12,6 +14,7 @@ const CategoryModal = ({
   submitLabel = "Submit",
   errors = {}
 }) => {
+  const { t } = useTranslation();
   return (
     <div className="modal" id={modalId} tabIndex="-1" aria-hidden="true">
       <div className="modal-dialog modal-dialog-centered">
@@ -31,7 +34,7 @@ const CategoryModal = ({
             <div className="modal-body">
               <div className="mb-3">
                 <label className="form-label">
-                  Category Name <span className="text-danger">*</span>
+                  {t("Category Name")} <span className="text-danger">*</span>
                 </label>
                 <input
                   type="text"
@@ -39,7 +42,7 @@ const CategoryModal = ({
                   value={categoryName}
                   onChange={onCategoryChange}
                   required
-                  placeholder="Category Name (only letters allowed)"
+                  placeholder={t("Category Name (only letters allowed)")}
                 />
                 {errors.categoryName && (
                   <p className="text-danger">{errors.categoryName}</p>
@@ -48,7 +51,7 @@ const CategoryModal = ({
 
               <div className="mb-3">
                 <label className="form-label">
-                  Category Slug
+                  {t("Category Slug")}
                 </label>
                 <input
                   type="text"
@@ -59,7 +62,7 @@ const CategoryModal = ({
                     const stringOnly = value.replace(/[^a-zA-Z\s-]/g, "");
                     onSlugChange({ target: { value: stringOnly } })
                   }}
-                  placeholder="Optional slug (only letters allowed)"
+                  placeholder={t("Optional slug (only letters allowed)")}
                 />
               </div>
             </div>
@@ -70,7 +73,7 @@ const CategoryModal = ({
                 className="btn btn-secondary"
                 data-bs-dismiss="modal"
               >
-                Cancel
+                {t("Cancel")}
               </button>
               <button type="submit" className="btn btn-primary" data-bs-dismiss="modal">
                 {submitLabel}

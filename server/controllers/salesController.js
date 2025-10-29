@@ -351,15 +351,15 @@ exports.createSale = async (req, res) => {
         return res.status(404).json({ message: "Product not found" });
       }
 
-      if (product.availableQty < item.saleQty) {
+      if (product.quantity < item.saleQty) {
         return res.status(400).json({
-          message: `Not enough stock for ${product.name}. Available: ${product.availableQty}, Requested: ${item.saleQty}`,
+          message: `Not enough stock for ${product.name}. Available: ${product.quantity}, Requested: ${item.saleQty}`,
         });
       }
 
       // 🔹 Subtract saleQty from stock and push soldPrice/soldQuantity
       await Product.findByIdAndUpdate(item.productId, {
-        $inc: { availableQty: -item.saleQty },
+        $inc: { quantity: -item.saleQty },
         $push: {
           soldPrice: item.sellingPrice,
           soldQuantity: item.saleQty,
@@ -381,7 +381,7 @@ exports.createSale = async (req, res) => {
         referenceNumber: referenceNumber,
         sellingPrice: item.sellingPrice,
         date: saleDate,
-        notes: `Sale created for ${item.saleQty} qty`,
+        note: `Sale created for ${item.saleQty} qty`,
       });
     }
 
@@ -1014,7 +1014,7 @@ exports.saleReturn = async (req, res) => {
     for (const item of products) {
       const product = await Product.findById(item.productId);
       if (!product) continue;
-      product.availableQty += item.returnQty;
+      product.quantity += item.returnQty;
       await product.save();
       // Log stock history
       await StockHistory.create({
@@ -1024,7 +1024,7 @@ exports.saleReturn = async (req, res) => {
         referenceNumber: sale.referenceNumber,
         sellingPrice: item.sellingPrice,
         date: returnDate || new Date(),
-        notes: `Sale return for ${item.returnQty} qty`,
+        note: `Sale return for ${item.returnQty} qty`,
       });
     }
     // Optionally log return in sale document

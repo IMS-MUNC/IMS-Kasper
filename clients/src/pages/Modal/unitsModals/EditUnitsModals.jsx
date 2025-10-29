@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
 import BASE_URL from "../../config/config";
+import { useTranslation } from 'react-i18next';
 
 const EditUnitModal = ({ selectedUnit, onUnitUpdated }) => {
+  const { t } = useTranslation();
   const [unitsName, setUnitsName] = useState("");
   const [shortName, setShortName] = useState("");
   const [status, setStatus] = useState(true);
@@ -84,7 +86,7 @@ const EditUnitModal = ({ selectedUnit, onUnitUpdated }) => {
         <div className="modal-content">
           <div className="modal-header">
             <div className="page-title">
-              <h4>Edit Unit</h4>
+              <h4>{t("Edit Unit")}</h4>
             </div>
             {/* <button
               type="button"
@@ -99,7 +101,7 @@ const EditUnitModal = ({ selectedUnit, onUnitUpdated }) => {
             <div className="modal-body">
               <div className="mb-3">
                 <label className="form-label">
-                  Unit<span className="text-danger ms-1">*</span>
+                  {t("Unit")}<span className="text-danger ms-1">*</span>
                 </label>
                 <input
                   type="text"
@@ -111,7 +113,7 @@ const EditUnitModal = ({ selectedUnit, onUnitUpdated }) => {
               </div>
               <div className="mb-3">
                 <label className="form-label">
-                  Short Name<span className="text-danger ms-1">*</span>
+                  {t("Short Name")}<span className="text-danger ms-1">*</span>
                 </label>
                 <input
                   type="text"
@@ -123,7 +125,7 @@ const EditUnitModal = ({ selectedUnit, onUnitUpdated }) => {
               </div>
               <div className="mb-0">
                 <div className="status-toggle modal-status d-flex justify-content-between align-items-center">
-                  <span className="status-label">Status</span>
+                  <span className="status-label">{t("Status")}</span>
                   <input
                     type="checkbox"
                     id="user3"
@@ -147,10 +149,10 @@ const EditUnitModal = ({ selectedUnit, onUnitUpdated }) => {
                   cleanUpModal();
                 }}
               >
-                Cancel
+                {t("Cancel")}
               </button>
               <button type="submit" className="btn btn-primary" disabled={isUpdating}>
-                {isUpdating ? 'Updating...' : 'Save Changes'}
+                {isUpdating ? [t('Updating...')] : [t('Save Changes')]}
               </button>
             </div>
           </form>
