@@ -38,6 +38,10 @@ import { io } from "socket.io-client";
 import { useAuth } from "../../auth/AuthContext";
 import { useInbox } from "../../../components/features/Mail/SideBar/InboxContext";
 import { getMenuData } from "../Sidebar/MenuData.jsx";
+import CategoryModal from "../../../pages/Modal/categoryModals/CategoryModal.jsx";
+import { Modal } from "bootstrap";
+
+
 
 function Navbar() {
   const { inboxCount, fetchInboxCount } = useInbox();
@@ -60,6 +64,9 @@ function Navbar() {
   const userId = userObj?.id || userObj?._id; // Handle both id and _id
   const token = localStorage.getItem("token");
   const { connectSocket, getSocket } = useSocket();
+
+
+
 
   // console.log("User ID:", userId);
   // console.log("Token:", token);
@@ -520,15 +527,13 @@ function Navbar() {
                   <div className="row g-2">
                     <div className="col-md-2">
                       <Link to="/category-list" className="link-item">
-                        <span className="link-icon no-hover">
-                          <TbListDetails className="ti ti-brand-codepen" />
-                        </span>
-                        <p>{t("category")}</p>
+                        <span className=" no-hover"> <TbListDetails className="ti ti-brand-codepen" /> </span>
+                        <span>{t("category")}</span>
                       </Link>
                     </div>
                     <div className="col-md-2">
                       <Link to="/add-product" className="link-item">
-                        <span className="link-icon" style={{}}>
+                        <span className="" style={{}}>
                           <GoPackage className="ti ti-square-plus" />
                         </span>
                         <p>{t("product")}</p>
@@ -591,9 +596,8 @@ function Navbar() {
                     ([code, { name, flag }]) => (
                       <button
                         key={code}
-                        className={`dropdown-item d-flex align-items-center ${
-                          currentLang === code ? "active" : ""
-                        }`}
+                        className={`dropdown-item d-flex align-items-center ${currentLang === code ? "active" : ""
+                          }`}
                         onClick={() => handleChangeLanguage(code)}
                       >
                         <img
