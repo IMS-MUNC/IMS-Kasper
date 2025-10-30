@@ -1491,10 +1491,15 @@ const handleSubmit = async (e) => {
   // 👇 new state for See More
   const [showAllCategories, setShowAllCategories] = useState(false);
 
-  // By default first 5 categories
-  const visibleCategories = showAllCategories 
-    ? categories 
-    : categories.slice(0, 5);
+  // // By default first 5 categories
+  // const visibleCategories = showAllCategories 
+  //   ? categories 
+  //   : categories.slice(0, 5);
+
+  const visibleCategories = Array.isArray(categories)
+  ? (showAllCategories ? categories : categories.slice(0, 5))
+  : [];
+
   return ( //page code starts from here-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 <div className="pos-five " style={{overflowY:"hidden"}}>
