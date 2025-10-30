@@ -40,6 +40,77 @@ import { GrPowerReset } from "react-icons/gr";
 import { FaExchangeAlt } from "react-icons/fa";
 import {  FaChevronDown, FaChevronUp } from "react-icons/fa";
 const Pos=() => {
+
+  const [isPressed, setIsPressed] = useState(false);
+  const [pressedButtonId, setPressedButtonId] = useState(null);
+
+  const baseStyle = {
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'center',
+    cursor: 'pointer',
+    gap: '0px',
+    backgroundColor: '#BCBCBC',
+    borderRadius: '8px',
+    padding: '20px 25px',
+    border: '1px solid #E6E6E6',
+    color: 'white',
+    userSelect: 'none', // Prevents text selection on click-and-drag
+    transition: 'transform 0.1s ease, filter 0.1s ease', // Smooth transition for the effect
+  };
+
+  const pressedStyle = {
+    transform: 'scale(0.97)',    // Shrinks the button slightly
+    filter: 'brightness(0.9)', // Dims the button a little
+  };
+
+  const [isPressed2, setIsPressed2] = useState(false);
+  const [pressedButtonId2, setPressedButtonId2] = useState(null);
+
+  const baseStyle2 = {
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'center',
+    cursor: 'pointer',
+    gap: '0px',
+    backgroundColor: '#BCBCBC',
+    borderRadius: '8px',
+    padding: '20px 25px',
+    border: '1px solid #E6E6E6',
+    color: 'white',
+    userSelect: 'none', // Prevents text selection on click-and-drag
+    transition: 'transform 0.1s ease, filter 0.1s ease', // Smooth transition for the effect
+  };
+
+  const pressedStyle2 = {
+    transform: 'scale(0.97)',    // Shrinks the button slightly
+    filter: 'brightness(0.9)', // Dims the button a little
+  };
+
+  
+  const [isPressed3, setIsPressed3] = useState(false);
+  const [pressedButtonId3, setPressedButtonId3] = useState(null);
+
+  const baseStyle3 = {
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'center',
+    cursor: 'pointer',
+    gap: '0px',
+    backgroundColor: '#BCBCBC',
+    borderRadius: '8px',
+    padding: '20px 25px',
+    border: '1px solid #E6E6E6',
+    color: 'white',
+    userSelect: 'none', // Prevents text selection on click-and-drag
+    transition: 'transform 0.1s ease, filter 0.1s ease', // Smooth transition for the effect
+  };
+
+  const pressedStyle3 = {
+    transform: 'scale(0.97)',    // Shrinks the button slightly
+    filter: 'brightness(0.9)', // Dims the button a little
+  };
+
   const userObj = JSON.parse(localStorage.getItem("user"));
     const userId = userObj?.id || userObj?._id; // Handle both id and _id
     const token = localStorage.getItem("token");
@@ -2075,7 +2146,7 @@ const handleSubmit = async (e) => {
                   >
                     <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:'8px'}}>
                       
-                    <div style={{display:'flex',justifyContent:'center',backgroundColor:'white',width:'50px',height:'50px',alignItems:'center',borderRadius:'8px',overflow:'hidden',cursor:'pointer'}} >
+                    <div style={{display:'flex',justifyContent:'center',backgroundColor:'white',width:'50px',height:'50px',alignItems:'center',borderRadius:'8px',overflow:'hidden',}} >
                     {item.isBag ? (
                       // Show bag icons for bag items
                       <div style={{
@@ -2172,7 +2243,7 @@ const handleSubmit = async (e) => {
                       </button>
                     </div>
                     
-                    <div style={{display:'flex',justifyContent:'space-between',alignItems:'center'}} onClick={() => handleProductDiscountClick(item)}>
+                    <div style={{display:'flex',justifyContent:'space-between',alignItems:'center'}}>
                       <div style={{display:'flex',alignItems:'center',gap:'8px'}}>
                         <span style={{fontWeight:'600',color:'#666'}}>
                           Quantity: {item.quantity}
@@ -2855,18 +2926,10 @@ const handleSubmit = async (e) => {
 
             <div style={{display:'flex',justifyContent:'space-around',alignItems:'center',marginTop:'20px',gap:'10px',marginBottom:'30px'}}>
               <div 
-                style={{
-                  display:'flex',
-                  flexDirection:'column',
-                  alignItems:'center',
-                  cursor:'pointer',
-                  gap:'0px',
-                  backgroundColor:'#BCBCBC',
-                  borderRadius: '8px',
-                  padding: '20px 25px',
-                  border: '1px solid #E6E6E6',
-                  color: bagCharge == 10 ? '#1368EC' : 'white',
-                }}
+                style={isPressed ? { ...baseStyle, ...pressedStyle } : baseStyle}
+                 onMouseDown={() => setIsPressed(true)}
+      onMouseUp={() => setIsPressed(false)}
+      onMouseLeave={() => setIsPressed(false)}
                 onClick={() => handleBagSelection(10, '10Kg Bag')}
               >
               <SlHandbag style={{fontSize:'30px',marginTop:'20px'}} /> 
@@ -2875,18 +2938,10 @@ const handleSubmit = async (e) => {
             </div>
 
             <div 
-                style={{
-                  display:'flex',
-                  flexDirection:'column',
-                  alignItems:'center',
-                  cursor:'pointer',
-                  gap:'0px',
-                  backgroundColor: '#BCBCBC',
-                  borderRadius: '8px',
-                  padding: '20px 25px',
-                  border: '1px solid #E6E6E6',
-                  color: bagCharge == 20 ? '#1368EC' : 'white',
-                }}
+                style={isPressed2 ? { ...baseStyle2, ...pressedStyle2 } : baseStyle2}
+                 onMouseDown={() => setIsPressed2(true)}
+      onMouseUp={() => setIsPressed2(false)}
+      onMouseLeave={() => setIsPressed2(false)}
                 onClick={() => handleBagSelection(20, '15Kg Bag')}
               >
               <PiShoppingBagThin style={{fontSize:'50px',marginTop:'10px'}} /> 
@@ -2895,18 +2950,10 @@ const handleSubmit = async (e) => {
             </div>
 
             <div 
-                style={{
-                  display:'flex',
-                  flexDirection:'column',
-                  alignItems:'center',
-                  cursor:'pointer',
-                  gap:'0px',
-                  backgroundColor: '#BCBCBC',
-                  borderRadius: '8px',
-                  padding: '20px 25px',
-                  border: '1px solid #E6E6E6',
-                  color: bagCharge == 30 ? '#1368EC' : 'white',
-                }}
+                style={isPressed3 ? { ...baseStyle3, ...pressedStyle3 } : baseStyle3}
+                 onMouseDown={() => setIsPressed3(true)}
+      onMouseUp={() => setIsPressed3(false)}
+      onMouseLeave={() => setIsPressed3(false)}
                 onClick={() => handleBagSelection(30, '20Kg Bag')}
               >
               <PiBagThin style={{fontSize:'50px',marginTop:'10px'}} /> 
