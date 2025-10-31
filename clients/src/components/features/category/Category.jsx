@@ -123,7 +123,10 @@ const Category = () => {
     e.preventDefault();
     let newErrors = {};
     newErrors.categoryName = validateCategoryName(categoryName);
-    if (categorySlug && !slugRegex.test(categorySlug)) {
+    // Require slug and validate format
+    if (!categorySlug) {
+      newErrors.categorySlug = "Category Slug is required";
+    } else if (!slugRegex.test(categorySlug)) {
       newErrors.categorySlug =
         "Enter a valid slug (lowercase letters, numbers, hyphens, min 2 chars)";
     }
@@ -135,10 +138,7 @@ const Category = () => {
       const cleanName = sanitizeInput(categoryName);
       const cleanSlug = sanitizeInput(categorySlug);
 
-      const payload = { categoryName: cleanName };
-      if (cleanSlug && cleanSlug.trim() !== "") {
-        payload.categorySlug = cleanSlug;
-      }
+      const payload = { categoryName: cleanName, categorySlug: cleanSlug };
 
       await axios.post(`${BASE_URL}/api/category/categories`, payload, {
         headers: { Authorization: `Bearer ${token}` },
@@ -160,7 +160,10 @@ const Category = () => {
     e.preventDefault();
     let newErrors = {};
     newErrors.categoryName = validateCategoryName(editCategoryName);
-    if (!slugRegex.test(editCategorySlug)) {
+    // Require slug for edit and validate format
+    if (!editCategorySlug) {
+      newErrors.categorySlug = "Category Slug is required";
+    } else if (!slugRegex.test(editCategorySlug)) {
       newErrors.categorySlug =
         "Enter a valid slug (lowercase letters, numbers, hyphens, min 2 chars)";
     }

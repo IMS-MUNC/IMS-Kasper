@@ -36,6 +36,10 @@ import { io } from "socket.io-client";
 import { useAuth } from "../../auth/AuthContext";
 import { useInbox } from "../../../components/features/Mail/SideBar/InboxContext";
 import { getMenuData } from "../Sidebar/MenuData.jsx";
+import CategoryModal from "../../../pages/Modal/categoryModals/CategoryModal.jsx";
+import { Modal } from "bootstrap";
+
+
 
 function Navbar() {
   const { inboxCount, fetchInboxCount } = useInbox();
@@ -58,6 +62,9 @@ function Navbar() {
   const userId = userObj?.id || userObj?._id; // Handle both id and _id
   const token = localStorage.getItem("token");
   const { connectSocket, getSocket } = useSocket();
+
+
+
 
   // console.log("User ID:", userId);
   // console.log("Token:", token);
@@ -588,9 +595,8 @@ function Navbar() {
                     ([code, { name, flag }]) => (
                       <button
                         key={code}
-                        className={`dropdown-item d-flex align-items-center ${
-                          currentLang === code ? "active" : ""
-                        }`}
+                        className={`dropdown-item d-flex align-items-center ${currentLang === code ? "active" : ""
+                          }`}
                         onClick={() => handleChangeLanguage(code)}
                       >
                         <img

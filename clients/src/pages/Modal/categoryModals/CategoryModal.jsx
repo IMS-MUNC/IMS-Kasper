@@ -41,7 +41,6 @@ const CategoryModal = ({
                   className="form-control"
                   value={categoryName}
                   onChange={onCategoryChange}
-                  required
                   placeholder={t("Category Name (only letters allowed)")}
                 />
                 {errors.categoryName && (
@@ -51,7 +50,7 @@ const CategoryModal = ({
 
               <div className="mb-3">
                 <label className="form-label">
-                  {t("Category Slug")}
+                  {t("Category Slug")} <span className="text-danger">*</span>
                 </label>
                 <input
                   type="text"
@@ -59,11 +58,14 @@ const CategoryModal = ({
                   value={categorySlug}
                   onChange={(e) => {
                     const value = e.target.value;
-                    const stringOnly = value.replace(/[^a-zA-Z\s-]/g, "");
-                    onSlugChange({ target: { value: stringOnly } })
+                    const cleaned = value.toLowerCase().replace(/[^a-z0-9-]/g, "");
+                    onSlugChange({ target: { value: cleaned } })
                   }}
-                  placeholder={t("Optional slug (only letters allowed)")}
+                  placeholder={t("Slug (lowercase letters, numbers, hyphens)")}
                 />
+                {errors.categorySlug && (
+                  <p className="text-danger">{errors.categorySlug}</p>
+                )}
               </div>
             </div>
 
@@ -75,7 +77,7 @@ const CategoryModal = ({
               >
                 {t("Cancel")}
               </button>
-              <button type="submit" className="btn btn-primary" data-bs-dismiss="modal">
+              <button type="submit" className="btn btn-primary">
                 {submitLabel}
               </button>
             </div>

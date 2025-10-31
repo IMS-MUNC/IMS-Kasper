@@ -416,7 +416,7 @@ const Inbox = () => {
         // update local state
         setEmails((prevEmails) => prevEmails.map((email) => email._id === emailId ? {...email, isRead:true, status:{...email.status, dotColor:'transparent'}} : email));
 
-        fetchInboxCount();
+        // fetchInboxCount();
         // update local state
         updateEmailList((prevEmails) =>
           prevEmails.map((email) =>
@@ -425,6 +425,8 @@ const Inbox = () => {
               : email
           )
         );
+
+        await fetchInboxCount();  //single call, awaited for sync
         // console.log("📄 Updated local email list");
 
         setInboxCount((prev) => Math.max(prev - 1, 0));
