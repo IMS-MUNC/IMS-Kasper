@@ -39,6 +39,7 @@ import { FaHandPaper } from "react-icons/fa";
 import { GrPowerReset } from "react-icons/gr";
 import { FaExchangeAlt } from "react-icons/fa";
 import {  FaChevronDown, FaChevronUp } from "react-icons/fa";
+import barcodeDetector from '../../utils/barcodeDetector';
 const Pos=() => {
 
   const [isPressed, setIsPressed] = useState(false);
@@ -620,6 +621,289 @@ const [selectedPaymentMethod, setSelectedPaymentMethod] = useState(null);
 // Search functionality
  
   const [productSearchQuery, setProductSearchQuery] = useState('')
+
+  const [barcodeInput, setBarcodeInput] = useState('');
+  const barcodeInputRef = React.useRef(null);
+
+  // Highlight scanned product in product list briefly
+  const [highlightedProductId, setHighlightedProductId] = useState(null);
+  const highlightTimerRef = useRef(null);
+
+  // Global keyboard scanner buffer (for hardware scanners that act like keyboards)
+  const scannerBufferRef = React.useRef([]); // array of {char, time}
+  const scannerClearTimerRef = React.useRef(null);
+
+  useEffect(() => {
+    const onKeyDown = (e) => {
+      try {
+        const key = e.key;
+        const now = Date.now();
+
+        // Only consider printable single-character keys and Enter
+        if (key === 'Enter') {
+          const buf = scannerBufferRef.current;
+          if (buf.length >= 2) {
+            const duration = buf[buf.length - 1].time - buf[0].time;
+            // Heuristic: treat as scanner if many chars typed quickly (fast duration)
+            if (duration <= 1000) {
+              const code = buf.map(x => x.char).join('');
+              // Clear buffer before processing
+              scannerBufferRef.current = [];
+              if (barcodeInputRef.current) barcodeInputRef.current.focus();
+              setBarcodeInput(code);
+              lookupBarcodeAndAdd(code);
+              e.preventDefault();
+              return;
+            }
+          }
+          // Not a fast buffered input — clear buffer and let Enter behave normally
+          scannerBufferRef.current = [];
+          return;
+        }
+
+        if (key && key.length === 1) {
+          // push char into buffer
+          scannerBufferRef.current.push({ char: key, time: now });
+
+          // reset clear timer
+          if (scannerClearTimerRef.current) clearTimeout(scannerClearTimerRef.current);
+          scannerClearTimerRef.current = setTimeout(() => {
+            scannerBufferRef.current = [];
+          }, 1200);
+        }
+      } catch (err) {
+        console.error('scanner onKeyDown error', err);
+      }
+    };
+
+    window.addEventListener('keydown', onKeyDown, true);
+    return () => {
+      window.removeEventListener('keydown', onKeyDown, true);
+      if (scannerClearTimerRef.current) clearTimeout(scannerClearTimerRef.current);
+    };
+  }, []);
+
+  // Camera barcode scanner state
+  const videoRef = React.useRef(null);
+  const fileInputRef = React.useRef(null);
+  const [scanning, setScanning] = useState(false);
+  const scanStreamRef = React.useRef(null);
+  const detectorRef = React.useRef(null);
+
+  const lookupBarcodeAndAdd = async (code, opts = { showToast: true }) => {
+    if (!code) return;
+    try {
+      const token = localStorage.getItem('token');
+      const res = await axios.get(`${BASE_URL}/api/products/barcode/${encodeURIComponent(code)}`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      if (res && res.data) {
+        const prod = res.data;
+        const frontendProduct = {
+          _id: prod._id,
+          productName: prod.productName,
+          sellingPrice: Number(prod.sellingPrice) || 0,
+          discountValue: Number(prod.discountValue) || 0,
+          tax: Number(prod.tax) || 0,
+          images: prod.images || [],
+          quantity: Number(prod.availableQty || prod.quantity) || 0,
+          unit: prod.unit || 'pcs'
+        };
+        handleProductClick(frontendProduct);
+        // show brief success with name and price (optional)
+        try {
+          if (opts && opts.showToast !== false) {
+            const priceDisplay = prod.sellingPrice != null ? `₹${Number(prod.sellingPrice).toFixed(2)}` : '';
+            // toast.success(`${prod.productName}${priceDisplay ? ' — ' + priceDisplay : ''}`);
+          }
+        } catch (e) { /* ignore */ }
+        // highlight the product in the product grid and scroll to it
+        try {
+          setHighlightedProductId(prod._id);
+          if (highlightTimerRef.current) clearTimeout(highlightTimerRef.current);
+          highlightTimerRef.current = setTimeout(() => setHighlightedProductId(null), 2500);
+          const el = document.getElementById(`product-card-${prod._id}`);
+          if (el && typeof el.scrollIntoView === 'function') el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        } catch (e) { /* ignore */ }
+
+        // clear barcode input and keep focus so next scan/input is ready
+        setBarcodeInput('');
+        barcodeInputRef.current?.focus();
+        return true;
+      }
+    } catch (err) {
+      console.error('Barcode lookup failed', err);
+      toast.error('Product not found for scanned barcode');
+      // keep input focused for retry
+      barcodeInputRef.current?.focus();
+    }
+  };
+
+  // Listen for global barcode found events (e.g., from the lookup modal) and add silently
+  useEffect(() => {
+    const handler = async (e) => {
+      try {
+        const prod = e.detail;
+        const code = prod?.itemBarcode || prod?.barcode || prod?.productBarcode || null;
+        if (code) {
+          // call lookupBarcodeAndAdd but suppress the toast because the lookup modal already showed it
+          await lookupBarcodeAndAdd(code, { showToast: false });
+        }
+      } catch (err) {
+        // ignore
+      }
+    };
+    window.addEventListener('barcode:found', handler);
+    return () => window.removeEventListener('barcode:found', handler);
+  }, []);
+
+  // Fallback: decode barcode from an image file (mobile photo capture)
+  const handleFileInput = async (e) => {
+    try {
+      const file = e?.target?.files?.[0];
+      if (!file) return;
+      const objectUrl = URL.createObjectURL(file);
+      const img = document.createElement('img');
+      img.src = objectUrl;
+      await img.decode();
+
+      // Use shared detector utility (tries native BarcodeDetector then ZXing fallback).
+      const code = await barcodeDetector.detectFromImageElement(img);
+      if (code) {
+        const ok = await lookupBarcodeAndAdd(code);
+        if (ok) {
+          // give haptic feedback on supported devices
+          if (typeof navigator !== 'undefined' && navigator.vibrate) navigator.vibrate(100);
+          // close camera overlay if open
+          try { stopScanner(); } catch (e) { /* ignore */ }
+        }
+      } else {
+        toast.error('No barcode found in the selected image');
+      }
+
+      URL.revokeObjectURL(objectUrl);
+      e.target.value = '';
+    } catch (err) {
+      console.error('handleFileInput error', err);
+      toast.error('Error processing image');
+      if (e && e.target) e.target.value = '';
+    }
+  };
+
+  const startScanner = async () => {
+    try {
+      if (!('mediaDevices' in navigator) || !navigator.mediaDevices.getUserMedia) {
+        // Some mobile browsers (especially older iOS Safari) don't expose getUserMedia.
+        // Offer the photo-capture fallback instead of failing.
+        toast.info('Camera not available — please capture or select a photo to scan');
+        fileInputRef.current?.click();
+        return;
+      }
+      setScanning(true);
+      const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
+      scanStreamRef.current = stream;
+      if (videoRef.current) {
+        videoRef.current.srcObject = stream;
+        await videoRef.current.play();
+      }
+
+      // Start unified video detector (native BarcodeDetector or ZXing fallback) from utility
+      try {
+        detectorRef.current = barcodeDetector.startVideoDetector(
+          videoRef.current,
+          async (code) => {
+            try {
+              const ok = await lookupBarcodeAndAdd(code);
+              // give haptic feedback on supported devices
+              if (ok && typeof navigator !== 'undefined' && navigator.vibrate) navigator.vibrate(100);
+            } catch (err) {
+              console.error('Error handling detected code', err);
+            } finally {
+              // stop scanner and close camera overlay after handling
+              stopScanner();
+            }
+          },
+          { formats: ['ean_13', 'ean_8', 'code_128', 'code_39', 'upc_a', 'upc_e', 'qr_code'], intervalMs: 300 }
+        );
+      } catch (err) {
+        console.warn('video detector failed', err);
+        toast.error('Barcode scanning is not supported in this browser.');
+        stopScanner();
+        return;
+      }
+    } catch (err) {
+      console.error('startScanner error', err);
+      // If camera access fails (permissions / unsupported), fall back to image picker on mobile
+      console.warn('getUserMedia failed, falling back to image picker', err);
+      toast.info('Unable to access camera — please capture or select a photo to scan');
+      setScanning(false);
+      // open file picker to allow user to capture a photo
+      setTimeout(() => fileInputRef.current?.click(), 200);
+    }
+  };
+
+  const stopScanner = () => {
+    try {
+      setScanning(false);
+      if (scanStreamRef.current) {
+        scanStreamRef.current.getTracks().forEach(t => t.stop());
+        scanStreamRef.current = null;
+      }
+      if (videoRef.current) {
+        videoRef.current.pause();
+        videoRef.current.srcObject = null;
+      }
+      // Stop any running detector (supports both utility stop() and legacy zxingReader)
+      if (detectorRef.current) {
+        try {
+          if (typeof detectorRef.current.stop === 'function') {
+            detectorRef.current.stop();
+          } else if (detectorRef.current.zxingReader && typeof detectorRef.current.zxingReader.reset === 'function') {
+            detectorRef.current.zxingReader.reset();
+          }
+        } catch (e) {
+          console.warn('Error stopping detector', e);
+        }
+      }
+      detectorRef.current = null;
+    } catch (err) {
+      console.error('stopScanner error', err);
+    }
+  };
+
+  const handleBarcodeSubmit = async (e) => {
+    if (e && e.preventDefault) e.preventDefault();
+    const code = (barcodeInput || '').trim();
+    if (!code) return;
+    try {
+      const token = localStorage.getItem('token');
+      const res = await axios.get(`${BASE_URL}/api/products/barcode/${encodeURIComponent(code)}`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      if (res && res.data) {
+        const prod = res.data;
+        // Map server product to frontend product shape expected by handleProductClick
+        const frontendProduct = {
+          _id: prod._id,
+          productName: prod.productName,
+          sellingPrice: Number(prod.sellingPrice) || 0,
+          discountValue: Number(prod.discountValue) || 0,
+          tax: Number(prod.tax) || 0,
+          images: prod.images || [],
+          quantity: Number(prod.availableQty || prod.quantity) || 0,
+          unit: prod.unit || 'pcs'
+        };
+        handleProductClick(frontendProduct);
+        setBarcodeInput('');
+        // keep focus on barcode input for next scan
+        barcodeInputRef.current?.focus();
+      }
+    } catch (err) {
+      console.error('Barcode lookup failed', err);
+      setBarcodeInput('');
+      barcodeInputRef.current?.focus();
+    }
+  };
 
   const [transactionSearchQuery, setTransactionSearchQuery] = useState('');
   
@@ -1562,15 +1846,14 @@ const handleSubmit = async (e) => {
   // 👇 new state for See More
   const [showAllCategories, setShowAllCategories] = useState(false);
 
-  // // By default first 5 categories
-  // const visibleCategories = showAllCategories 
-  //   ? categories 
-  //   : categories.slice(0, 5);
+  // By default first 5 categories
+  const visibleCategories = showAllCategories 
+    ? categories 
+    : categories.slice(0, 5);
 
-  const visibleCategories = Array.isArray(categories)
-  ? (showAllCategories ? categories : categories.slice(0, 5))
-  : [];
-
+    //  const visibleCategories = Array.isArray(categories)
+    // ? (showAllCategories ? categories : categories.slice(0, 5))
+    // : [];
   return ( //page code starts from here-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 <div className="pos-five " style={{overflowY:"hidden"}}>
@@ -1700,6 +1983,39 @@ const handleSubmit = async (e) => {
                     <input type="text" className="form-control" placeholder="Search Product"  value={productSearchQuery}
             onChange={(e) => handleProductSearch(e.target.value)}/>
                   </div>
+                  <div style={{marginLeft:10}}>
+                    <form onSubmit={handleBarcodeSubmit}>
+                      <input
+                        ref={barcodeInputRef}
+                        type="text"
+                        className="form-control"
+                        placeholder="Scan barcode or type and press Enter"
+                        value={barcodeInput}
+                        onChange={(e) => setBarcodeInput(e.target.value)}
+                        onKeyDown={(e) => { if (e.key === 'Enter') handleBarcodeSubmit(e); }}
+                        style={{width:260}}
+                      />
+                    </form>
+                  </div>
+                  <div style={{marginLeft:8, display:'flex', alignItems:'center'}}>
+                    <button
+                      type="button"
+                      className="btn btn-outline-secondary"
+                      onClick={() => { setScanning(true); startScanner(); }}
+                      title="Open camera scanner"
+                    >
+                      <LuScanLine /> Scan
+                    </button>
+                    {/* Hidden file input fallback for mobile devices (capture option opens camera on supported mobiles) */}
+                    <input
+                      type="file"
+                      accept="image/*"
+                      capture="environment"
+                      ref={fileInputRef}
+                      onChange={handleFileInput}
+                      style={{ display: 'none' }}
+                    />
+                  </div>
                   {/* <a href="#" className="btn btn-sm btn-dark mb-2 me-2"><i className="ti ti-tag me-1" />View All Brands</a>
                   <a href="#" className="btn btn-sm btn-primary mb-2"><i className="ti ti-star me-1" />Featured</a> */}
                 </div>
@@ -1707,11 +2023,20 @@ const handleSubmit = async (e) => {
               <div className="pos-products">
                 <div className="tabs_container">
                   <div className="tab_content active" data-tab="all">
+                        {/* Camera scanner modal */}
+                        {scanning && (
+                          <div style={{position:'fixed',inset:0,backgroundColor:'rgba(0,0,0,0.7)',zIndex:9999,display:'flex',alignItems:'center',justifyContent:'center'}}>
+                            <div style={{width:'90%',maxWidth:720,background:'#000',borderRadius:8,overflow:'hidden',position:'relative'}}>
+                              <video ref={videoRef} style={{width:'100%',height:420,objectFit:'cover'}} playsInline muted />
+                              <button onClick={stopScanner} style={{position:'absolute',top:8,right:8,zIndex:10000}} className="btn btn-danger">Close</button>
+                            </div>
+                          </div>
+                        )}
                     <div className="row g-3">
                         {products.length === 0 ? (
                 <span>No Product Available</span>
               ) : (
-              products.map((product) => {
+        products.map((product) => {
                 // Check if this product is in cart and get its quantity
                 const cartItem = selectedItems.find(item => item._id === product._id);
                 const cartQuantity = cartItem ? cartItem.quantity : 0;
@@ -1786,8 +2111,10 @@ const handleSubmit = async (e) => {
                   //     </div>
                   <div
                     key={product._id}
+                    id={`product-card-${product._id}`}
                     className="col-sm-6 col-md-6 col-lg-6 col-xl-4 col-xxl-3"
                     onClick={() => product.quantity > 0 && handleProductClick(product)}
+                    style={highlightedProductId === product._id ? { boxShadow: '0 0 0 3px rgba(16,185,129,0.25)', transform: 'scale(1.02)', transition: 'transform 0.12s' } : {}}
                   >
                     <div className="product-info card mb-0" style={{ height: "220px" }}>
                       {/* ✅ Card ki total height fix (optional) */}
