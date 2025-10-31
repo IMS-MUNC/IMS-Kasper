@@ -77,10 +77,20 @@ app.use(express.json());
 //   credentials: true,
 // };
 const corsOptions = {
-  origin: ["http://localhost:3001", "http://localhost:3000"],
+  origin: [
+    "http://localhost:3000",   // for CRA
+    "http://localhost:3001",   // for Vite local dev
+    "http://192.168.1.26:3000", // local network IPs
+    "http://192.168.1.37:3001"
+  ],
   methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "HEAD"],
   credentials: true,
 };
+// const corsOptions = {
+//   origin: ["http://192.168.1.34:3001", "http://localhost:3000"],
+//   methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "HEAD"],
+//   credentials: true,
+// };
 
 
 app.use(express.urlencoded({ extended: true }));
@@ -244,4 +254,7 @@ io.on("connection", (socket) => {
 
 // Start server with Socket.IO
 const PORT = process.env.PORT || 5000;
-server.listen(PORT, () => console.log(`🚀 Server running with Socket.IO on port ${PORT}`));
+server.listen(PORT, "0.0.0.0", () =>
+  console.log(`🚀 Server running with Socket.IO on port ${PORT}`)
+  // console.log(`🚀 Server running on http://192.168.1.34:${PORT}`)
+);

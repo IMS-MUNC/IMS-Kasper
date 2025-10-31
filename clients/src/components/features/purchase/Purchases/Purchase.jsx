@@ -28,7 +28,6 @@ const Purchase = () => {
   const [viewPurchaseId, setViewPurchaseId] = useState(null);
 
     const [selectedReturnData, setSelectedReturnData] = useState(null);
-    const [openReturnModal, setOpenReturnModal] = useState(false);
 
 // Export all table data to Excel
   // const handleExportExcel = () => {
@@ -416,25 +415,12 @@ const handleExportPDF = async () => {
   };
 
   
-    // const handleConvertToReturn = (purchase) => {
-    //   setSelectedReturnData(purchase);
-    //   const returnModal = new window.bootstrap.Modal(document.getElementById("add-return-debit-note"));
-    //   returnModal.show();
-    // };
-
     const handleConvertToReturn = (purchase) => {
-  setSelectedReturnData(purchase);
-  setOpenReturnModal(true); // trigger modal opening
-};
+      setSelectedReturnData(purchase);
+      const returnModal = new window.bootstrap.Modal(document.getElementById("add-return-debit-note"));
+      returnModal.show();
+    };
 
-// useEffect will open modal once state is updated
-useEffect(() => {
-  if (openReturnModal && selectedReturnData) {
-    const returnModal = new window.bootstrap.Modal(document.getElementById("add-return-debit-note"));
-    returnModal.show();
-    setOpenReturnModal(false); // reset trigger
-  }
-}, [openReturnModal, selectedReturnData]);
    
 
     

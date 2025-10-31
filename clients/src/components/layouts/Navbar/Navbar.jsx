@@ -9,7 +9,6 @@ import {
   TbDotsVertical,
   TbFileText,
   TbLanguage,
-  TbListDetails,
   TbLogout,
   TbMail,
   TbMaximize,
@@ -17,7 +16,6 @@ import {
   TbSettings,
   TbUserCircle,
 } from "react-icons/tb";
-import { GoPackage } from "react-icons/go";
 import UsFlag from "../../../assets/img/flags/us-flag.svg";
 import English from "../../../assets/img/flags/english.svg";
 import Arabic from "../../../assets/img/flags/arabic.svg";
@@ -520,16 +518,16 @@ function Navbar() {
                   <div className="row g-2">
                     <div className="col-md-2">
                       <Link to="/category-list" className="link-item">
-                        <span className="link-icon no-hover">
-                          <TbListDetails className="ti ti-brand-codepen" />
+                        <span className="link-icon">
+                          <i className="ti ti-brand-codepen" />
                         </span>
                         <p>{t("category")}</p>
                       </Link>
                     </div>
                     <div className="col-md-2">
                       <Link to="/add-product" className="link-item">
-                        <span className="link-icon" style={{}}>
-                          <GoPackage className="ti ti-square-plus" />
+                        <span className="link-icon">
+                          <i className="ti ti-square-plus" />
                         </span>
                         <p>{t("product")}</p>
                       </Link>
@@ -575,7 +573,6 @@ function Navbar() {
                 <a
                   className="nav-link dropdown-toggle"
                   data-bs-toggle="dropdown"
-                  title="Language"
                 >
                   <img
                     src={langObj.flag}
@@ -632,7 +629,6 @@ function Navbar() {
                   id="btnFullscreen"
                   style={{ cursor: "pointer" }}
                   onClick={handleFullscreen}
-                  title="Fullscreen"
                 >
                   <TbMaximize />
                 </a>
@@ -640,7 +636,7 @@ function Navbar() {
 
               {/* Email */}
               <li className="nav-item nav-item-box">
-                <Link to="/mail/inbox" className="position-relative" title="Email Inbox">
+                <Link to="/mail/inbox" className="position-relative">
                   <TbMail />
                   {inboxCount > 0 && (
                     <span className="badge rounded-pill">{inboxCount}</span>
@@ -654,7 +650,6 @@ function Navbar() {
                   className="dropdown-toggle nav-link"
                   data-bs-toggle="dropdown"
                   onClick={(e) => e.preventDefault()}
-                  title="Notifications"
                 >
                   <TbBell style={{ position: "absolute", left: "7px" }} />
                   {notificationCount > 0 && (
@@ -690,7 +685,7 @@ function Navbar() {
               </li>
               {/* Settings */}
               <li className="nav-item nav-item-box">
-                <Link to={`profile/${id}`} title="Settings">
+                <Link to={`profile/${id}`}>
                   <TbSettings className="ti" />
                 </Link>
               </li>

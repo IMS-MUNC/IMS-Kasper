@@ -1477,3 +1477,213 @@ function Barcode() {
 }
 
 export default Barcode;
+
+
+
+
+
+
+
+  const generateBarcode = () => {
+    if (!selectedProduct) {
+      toast.error('Please select a product first');
+      return;
+    }
+
+    // Helper function to safely get expiry date
+    const getExpiryDate = (selectedProduct) => {
+      return selectedProduct.variants && selectedProduct.variants.Expire && selectedProduct.variants.Expire[0]
+        ? selectedProduct.variants.Expire[0]
+        : 'N/A';
+    };
+
+    const barcodeNaming = (product, selectedProduct) => {
+      if (product.showProductName && product.showQuantity && product.showSku && product.showPrice && product.showExpiryDate) {
+        var name = selectedProduct.productName;
+        var sku = selectedProduct.sku;
+        var price = selectedProduct.sellingPrice;
+        var quantity = selectedProduct.quantity;
+        var expiry = getExpiryDate(selectedProduct);
+        return `Name:${name},SKU:${sku},Price:${price},QTY:${quantity},Exp:${expiry}`;
+      } else if (product.showProductName && product.showQuantity && product.showSku && product.showPrice) {
+        var name = selectedProduct.productName;
+        var sku = selectedProduct.sku;
+        var price = selectedProduct.sellingPrice;
+        var quantity = selectedProduct.quantity;
+        return `Name:${name},SKU:${sku},Price:${price},QTY:${quantity}`;
+      } else if (product.showProductName && product.showQuantity && product.showSku && product.showExpiryDate) {
+        var name = selectedProduct.productName;
+        var sku = selectedProduct.sku;
+        var quantity = selectedProduct.quantity;
+        var expiry = getExpiryDate(selectedProduct);
+        return `Name:${name},SKU${sku},QTY:${quantity},Exp:${expiry}`;
+      } else if (product.showProductName && product.showQuantity && product.showPrice && product.showExpiryDate) {
+        var name = selectedProduct.productName;
+        var price = selectedProduct.sellingPrice;
+        var quantity = selectedProduct.quantity;
+        var expiry = getExpiryDate(selectedProduct);
+        return `Name:${name},Price:${price},QTY:${quantity},Exp:${expiry}`;
+      } else if (product.showProductName && product.showSku && product.showPrice && product.showExpiryDate) {
+        var name = selectedProduct.productName;
+        var sku = selectedProduct.sku;
+        var price = selectedProduct.sellingPrice;
+        var expiry = getExpiryDate(selectedProduct);
+        return `Name:${name},SKU:${sku},Price:${price},Exp:${expiry}`;
+      } else if (product.showProductName && product.showSku && product.showPrice) {
+        var name = selectedProduct.productName;
+        var sku = selectedProduct.sku;
+        var price = selectedProduct.sellingPrice;
+        return `Name:${name},SKU:${sku},Price:${price}`;
+      } else if (product.showProductName && product.showSku && product.showExpiryDate) {
+        var name = selectedProduct.productName;
+        var sku = selectedProduct.sku;
+        var expiry = getExpiryDate(selectedProduct);
+        return `Name:${name},SKU:${sku},Exp:${expiry}`;
+      } else if (product.showProductName && product.showQuantity && product.showPrice) {
+        var name = selectedProduct.productName;
+        var price = selectedProduct.sellingPrice;
+        var quantity = selectedProduct.quantity;
+        return `Name:${name},Price:${price},QTY:${quantity}`;
+      } else if (product.showProductName && product.showQuantity && product.showExpiryDate) {
+        var name = selectedProduct.productName;
+        var quantity = selectedProduct.quantity;
+        var expiry = getExpiryDate(selectedProduct);
+        return `Name:${name},QTY:${quantity},Exp:${expiry}`;
+      } else if (product.showProductName && product.showSku) {
+        var name = selectedProduct.productName;
+        var sku = selectedProduct.sku;
+        return `Name:${name},SKU:${sku}`;
+      } else if (product.showProductName && product.showPrice) {
+        var name = selectedProduct.productName;
+        var price = selectedProduct.sellingPrice;
+        return `Name:${name},Price:${price}`;
+      } else if (product.showProductName && product.showExpiryDate) {
+        var name = selectedProduct.productName;
+        var expiry = getExpiryDate(selectedProduct);
+        return `Name:${name},Exp:${expiry}`;
+      } else if (product.showProductName && product.showQuantity) {
+        var name = selectedProduct.productName;
+        var quantity = selectedProduct.quantity;
+        return `Name:${name},QTY:${quantity}`;
+      } else if (product.showSku && product.showPrice && product.showExpiryDate) {
+        var sku = selectedProduct.sku;
+        var price = selectedProduct.sellingPrice;
+        var expiry = getExpiryDate(selectedProduct);
+        return `SKU:${sku},Price:${price},Exp:${expiry}`;
+      } else if (product.showSku && product.showPrice) {
+        var sku = selectedProduct.sku;
+        var price = selectedProduct.sellingPrice;
+        return `SKU:${sku},Price:${price}`;
+      } else if (product.showSku && product.showExpiryDate) {
+        var sku = selectedProduct.sku;
+        var expiry = getExpiryDate(selectedProduct);
+        return `SKU:${sku},Exp:${expiry}`;
+      } else if (product.showSku && product.showQuantity) {
+        var sku = selectedProduct.sku;
+        var quantity = selectedProduct.quantity;
+        return `SKU:${sku},QTY:${quantity}`;
+      } else if (product.showPrice && product.showExpiryDate) {
+        var price = selectedProduct.sellingPrice;
+        var expiry = getExpiryDate(selectedProduct);
+        return `Price:${price},Exp:${expiry}`;
+      } else if (product.showPrice && product.showQuantity) {
+        var price = selectedProduct.sellingPrice;
+        var quantity = selectedProduct.quantity;
+        return `Price:${price},QTY:${quantity}`;
+      } else if (product.showExpiryDate && product.showQuantity) {
+        var expiry = getExpiryDate(selectedProduct);
+        var quantity = selectedProduct.quantity;
+        return `Exp:${expiry},QTY:${quantity}`;
+      } else if (product.showProductName) {
+        return "Name:" + selectedProduct.productName;
+      } else if (product.showSku) {
+        return "SKU:" + selectedProduct.sku;
+      } else if (product.showPrice) {
+        return "Price:" + selectedProduct.sellingPrice;
+      } else if (product.showExpiryDate) {
+        return "Exp:" + getExpiryDate(selectedProduct);
+      } else if (product.showQuantity) {
+        return "QTY:" + selectedProduct.quantity;
+      } else {
+        return "Name:" + selectedProduct.productName || "SKU:" + selectedProduct.sku || "Price:" + selectedProduct.sellingPrice || "Exp:" + getExpiryDate(selectedProduct) || "QTY:" + selectedProduct.quantity || '';
+      }
+    }
+
+    // Call backend to generate barcode(s) so server-side values are used
+    const barcodeCount = parseInt(numberOfBarcodes, 10) || 1;
+    const token = localStorage.getItem('token');
+    setLoading(true);
+    (async () => {
+      try {
+        const requests = [];
+        for (let i = 0; i < barcodeCount; i++) {
+          // Attach productId only for the first call so product.itemBarcode is set once
+          const body = i === 0 ? { productId: selectedProduct._id } : {};
+          requests.push(
+            axios.post(`${BASE_URL}/api/products/generate-barcode`, body, {
+              headers: { Authorization: `Bearer ${token}` },
+            })
+          );
+        }
+
+        const responses = await Promise.all(requests);
+        const uniqueBarcodes = responses.map((r) => (r && r.data && r.data.barcode) || '');
+
+        // If any response returned an updated product, pick it (usually the first)
+        const updatedProduct = responses.find((r) => r && r.data && r.data.product && r.data.product._id);
+        if (updatedProduct && updatedProduct.data.product) {
+          const prod = updatedProduct.data.product;
+          setSelectedProduct(prod);
+          setProduct((prev) => ({
+            ...prev,
+            productName: prod.productName || prev.productName,
+            sku: prod.sku || prev.sku,
+            price: prod.sellingPrice || prev.price,
+            quantity: prod.quantity || prev.quantity,
+            barcode: prod.itemBarcode || uniqueBarcodes[0] || prev.barcode,
+            barcodeImg: prod.itemBarcode || uniqueBarcodes[0] || prev.barcodeImg,
+            uniqueBarcodes,
+          }));
+        } else {
+          setProduct((prev) => ({
+            ...prev,
+            barcode: uniqueBarcodes[0] || prev.barcode,
+            barcodeImg: uniqueBarcodes[0] || prev.barcode,
+            uniqueBarcodes,
+          }));
+        }
+
+        // Render barcode svgs
+        setTimeout(() => {
+          for (let i = 0; i < barcodeCount; i++) {
+            const barcodeId = `barcode-svg-${i}`;
+            const barcodeElement = document.getElementById(barcodeId);
+            if (barcodeElement) {
+              const codeValue = uniqueBarcodes[i] || uniqueBarcodes[0] || '';
+              // Choose format: use EAN13/UPC when purely numeric and length 12-13, otherwise CODE128
+              let format = 'CODE128';
+              if (/^\d{12,13}$/.test(codeValue)) {
+                // prefer EAN13 for 12/13-digit numeric codes (many scanners support EAN/UPC family)
+                format = 'EAN13';
+              }
+              JsBarcode(barcodeElement, codeValue, {
+                format,
+                lineColor: '#000',
+                width: 2, // wider bars to improve camera decoding
+                height: 100, // taller bars
+                margin: 10,
+                displayValue: true,
+                fontSize: 16,
+                textMargin: 6,
+              });
+            }
+          }
+        }, 100);
+      } catch (err) {
+        console.error('generateBarcode API error', err);
+        toast.error('Failed to generate barcode from server');
+      } finally {
+        setLoading(false);
+      }
+    })();
+  };

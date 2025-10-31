@@ -21,7 +21,7 @@ const productSchema = new mongoose.Schema(
 
 
     // supplier: { type: mongoose.Schema.Types.ObjectId, ref: "Supplier" },
-    // itemBarcode: { type: String },
+    itemBarcode: { type: String, index: true },
     store: { type: String },
     warehouse: {
       type: mongoose.Schema.Types.ObjectId, ref: "Warehouse", required: false,
