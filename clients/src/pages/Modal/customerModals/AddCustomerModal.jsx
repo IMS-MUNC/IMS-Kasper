@@ -627,7 +627,7 @@ const AddCustomerModal = ({ onClose, onSuccess }) => {
       axios
         .get(`${BASE_URL}/api/gst`)
         .then((res) => {
-          const stateOptions = res.data.map((s) => ({ value: s.gstinCode, label: s.gstinCode }));
+          const stateOptions = res.data.map((s) => ({ value: s.gstinCode, label: `${s.gstinCode} - ${s.name}` }));
           setGstStates(stateOptions);
         })
         .catch((err) => {
@@ -924,6 +924,14 @@ const AddCustomerModal = ({ onClose, onSuccess }) => {
                                 {errors.gstin || validationErrors.gstin}
                               </span>
                             )}
+                            {isGstinVerified && (
+                              <div className="alert alert-success mt-2">
+                                <div><strong>Name:</strong> </div>
+                                <div><strong>Address:</strong> </div>
+                                <div><strong>State:</strong> </div>
+                                <div><strong>Business Type:</strong> </div>
+                              </div>
+                              )}
                           </div>
                         </div>
                       </>
