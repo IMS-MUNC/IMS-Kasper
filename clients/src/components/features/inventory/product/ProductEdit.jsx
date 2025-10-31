@@ -778,15 +778,15 @@ const validateStep = () => {
   }
 
   if (step === 3) {
-    if (
-      !formData.variants ||
-      Object.keys(formData.variants).length === 0 ||
-      !Object.values(formData.variants).every(
-        (vals) => Array.isArray(vals) && vals.length > 0
-      )
-    ) {
-      newErrors.variants = "At least one variant with a valid value is required";
-    }
+    // if (
+    //   !formData.variants ||
+    //   Object.keys(formData.variants).length === 0 ||
+    //   !Object.values(formData.variants).every(
+    //     (vals) => Array.isArray(vals) && vals.length > 0
+    //   )
+    // ) {
+    //   newErrors.variants = "At least one variant with a valid value is required";
+    // }
   }
 
   // NEW: Update errors state with validation results
