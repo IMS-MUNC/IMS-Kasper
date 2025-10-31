@@ -14,7 +14,7 @@ const {
 const emailrouter = express.Router();
 const upload = require("../config/upload.js");
 const { verifyToken } = require("../middleware/Authentication/verifyToken.js");
-const  {authMiddleware}=require("../middleware/auth.js")
+const { authMiddleware } = require("../middleware/auth.js")
 
 emailrouter.post(
     "/send",

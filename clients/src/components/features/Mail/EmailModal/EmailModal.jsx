@@ -587,7 +587,7 @@ const EmailModal = ({
                 className="mailmdlbutton"
                 mailmdlbutton
                 onClick={handleAttachmentClick}
-                title="Upload files, folder or pdf"
+                title="Upload files, folders,Excel file or pdf"
               >
                 <RiAttachment2 />
               </button>
@@ -621,6 +621,7 @@ const EmailModal = ({
                 multiple
                 style={{ display: "none" }}
                 ref={fileInputRef}
+                  accept=".pdf,.doc,.docx,.xls,.xlsx,.txt"
                 onChange={handleFileChange}
               />
 
