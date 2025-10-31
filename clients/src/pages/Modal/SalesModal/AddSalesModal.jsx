@@ -1227,7 +1227,7 @@ const validateForm = () => {
                                       style={{ width: "70px", textAlign: "center" }} min="1" max={d.availableQty || 9999}
                                       value={d.qty} onChange={(e) => {
                                         let val = parseInt(e.target.value, 10);
-                                        if (isNaN(val)) val = 1;
+                                        // if (isNaN(val)) val = 1;
                                         if (val < 1) val = 1; if (val > (d.availableQty || 9999)) val = d.availableQty || 9999;
                                         setSelectedProducts((prev) =>
                                           prev.map((item, i) =>

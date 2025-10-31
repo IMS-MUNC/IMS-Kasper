@@ -6,17 +6,17 @@ const Customer = require('../models/customerModel');
 // Create new POS sale
 const createPosSale = async (req, res) => {
   try {
-    console.log('=== POS SALE REQUEST START ===');
-    console.log('Received POS sale request:', req.body);
-    console.log('Request headers:', req.headers);
-    console.log('User from middleware:', req.user);
-    console.log('Request method:', req.method);
-    console.log('Request URL:', req.url);
-    console.log('Request body type:', typeof req.body);
-    console.log('Request body keys:', Object.keys(req.body));
-    console.log('Items array length:', req.body.items ? req.body.items.length : 'No items');
-    console.log('Customer ID:', req.body.customerId);
-    console.log('Payment method:', req.body.paymentMethod);
+    // console.log('=== POS SALE REQUEST START ===');
+    // console.log('Received POS sale request:', req.body);
+    // console.log('Request headers:', req.headers);
+    // console.log('User from middleware:', req.user);
+    // console.log('Request method:', req.method);
+    // console.log('Request URL:', req.url);
+    // console.log('Request body type:', typeof req.body);
+    // console.log('Request body keys:', Object.keys(req.body));
+    // console.log('Items array length:', req.body.items ? req.body.items.length : 'No items');
+    // console.log('Customer ID:', req.body.customerId);
+    // console.log('Payment method:', req.body.paymentMethod);
 
     const {
       customerId,
@@ -291,12 +291,12 @@ const createPosSale = async (req, res) => {
     }
 
   } catch (error) {
-    console.error('=== POS SALE REQUEST ERROR ===');
-    console.error('Error creating POS sale:', error);
-    console.error('Error stack:', error.stack);
-    console.error('Error name:', error.name);
-    console.error('Error message:', error.message);
-    console.error('=== END ERROR LOG ===');
+    // console.error('=== POS SALE REQUEST ERROR ===');
+    // console.error('Error creating POS sale:', error);
+    // console.error('Error stack:', error.stack);
+    // console.error('Error name:', error.name);
+    // console.error('Error message:', error.message);
+    // console.error('=== END ERROR LOG ===');
     res.status(500).json({ message: 'Internal server error', error: error.message });
   }
 };
