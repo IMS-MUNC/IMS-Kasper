@@ -1,4 +1,5 @@
 import React from "react";
+import { createPortal } from "react-dom";
 import { useTranslation } from 'react-i18next';
 
 const CategoryModal = ({
@@ -15,7 +16,7 @@ const CategoryModal = ({
   errors = {}
 }) => {
   const { t } = useTranslation();
-  return (
+  const modalContent = (
     <div className="modal" id={modalId} tabIndex="-1" aria-hidden="true">
       <div className="modal-dialog modal-dialog-centered">
         <div className="modal-content">
@@ -86,6 +87,7 @@ const CategoryModal = ({
       </div>
     </div>
   );
+  return createPortal(modalContent, document.body);
 };
 
 export default CategoryModal;

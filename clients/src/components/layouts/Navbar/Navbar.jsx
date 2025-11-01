@@ -15,7 +15,9 @@ import {
   TbSearch,
   TbSettings,
   TbUserCircle,
+  TbListDetails,
 } from "react-icons/tb";
+import { GoPackage } from "react-icons/go";
 import UsFlag from "../../../assets/img/flags/us-flag.svg";
 import English from "../../../assets/img/flags/english.svg";
 import Arabic from "../../../assets/img/flags/arabic.svg";
@@ -38,6 +40,7 @@ import { useInbox } from "../../../components/features/Mail/SideBar/InboxContext
 import { getMenuData } from "../Sidebar/MenuData.jsx";
 import CategoryModal from "../../../pages/Modal/categoryModals/CategoryModal.jsx";
 import { Modal } from "bootstrap";
+import { sanitizeInput } from "../../../utils/sanitize";
 
 
 
@@ -66,6 +69,83 @@ function Navbar() {
 
 
 
+  // Category modal local state (for quick add from navbar)
+  const [navCategoryName, setNavCategoryName] = useState("");
+  const [navCategorySlug, setNavCategorySlug] = useState("");
+  const [navCatErrors, setNavCatErrors] = useState({});
+  const nameRegex = /^[A-Za-z]{2,}$/;
+  const slugRegex = /^[a-z0-9-]{2,}$/;
+
+  const validateCategoryName = (value) => {
+    if (!value) return "Category name is required";
+    if (!nameRegex.test(value)) return "Category name must contain only letters (min 2 characters)";
+    return "";
+  };
+
+  const handleNavCategoryNameChange = (e) => {
+    const value = e.target.value;
+    setNavCategoryName(value);
+    setNavCatErrors((prev) => ({ ...prev, categoryName: validateCategoryName(value) }));
+  };
+
+  const handleNavSlugChange = (e) => {
+    const value = e.target.value;
+    setNavCategorySlug(value);
+    setNavCatErrors((prev) => ({
+      ...prev,
+      categorySlug: !value
+        ? "Category Slug is required"
+        : !slugRegex.test(value)
+        ? "Enter a valid slug (lowercase letters, numbers, hyphens, min 2 chars)"
+        : "",
+    }));
+  };
+
+  const openNavbarCategoryModal = () => {
+    setNavCategoryName("");
+    setNavCategorySlug("");
+    setNavCatErrors({});
+    const el = document.getElementById("navbarCategoryModal");
+    if (el) {
+      const modal = new Modal(el);
+      modal.show();
+    }
+  };
+
+  const submitNavbarCategory = async (e) => {
+    e.preventDefault();
+    const errs = {};
+    errs.categoryName = validateCategoryName(navCategoryName);
+    if (!navCategorySlug) {
+      errs.categorySlug = "Category Slug is required";
+    } else if (!slugRegex.test(navCategorySlug)) {
+      errs.categorySlug = "Enter a valid slug (lowercase letters, numbers, hyphens, min 2 chars)";
+    }
+    setNavCatErrors(errs);
+    if (Object.values(errs).some(Boolean)) return;
+
+    try {
+      const cleanName = sanitizeInput(navCategoryName);
+      const cleanSlug = sanitizeInput(navCategorySlug);
+      await axios.post(`${BASE_URL}/api/category/categories`, {
+        categoryName: cleanName,
+        categorySlug: cleanSlug,
+      }, { headers: { Authorization: `Bearer ${token}` } });
+
+      toast.success("Category created successfully!");
+      setNavCategoryName("");
+      setNavCategorySlug("");
+      setNavCatErrors({});
+      const el = document.getElementById("navbarCategoryModal");
+      if (el) {
+        const modal = Modal.getInstance(el) || new Modal(el);
+        modal.hide();
+      }
+    } catch (err) {
+      console.error("Error creating category from navbar:", err);
+      toast.error(err.response?.data?.message || "Error creating category");
+    }
+  };
   // console.log("User ID:", userId);
   // console.log("Token:", token);
   // console.log("User Object:", userObj);
@@ -524,17 +604,21 @@ function Navbar() {
                 <div className="dropdown-menu dropdown-xl dropdown-menu-center">
                   <div className="row g-2">
                     <div className="col-md-2">
-                      <Link to="/category-list" className="link-item">
-                        <span className="link-icon">
-                          <i className="ti ti-brand-codepen" />
+                      <div
+                        className="link-item"
+                        onClick={openNavbarCategoryModal}
+                        style={{ cursor: "pointer" }}
+                      >
+                        <span className="link-icon" style={{backgroundColor:'#f0f0f0',}}>
+                          <TbListDetails className="ti ti-brand-codepen" />
                         </span>
                         <p>{t("category")}</p>
-                      </Link>
+                      </div>
                     </div>
                     <div className="col-md-2">
                       <Link to="/add-product" className="link-item">
-                        <span className="link-icon">
-                          <i className="ti ti-square-plus" />
+                        <span className="link-icon" style={{backgroundColor:'#f0f0f0',}}>
+                          <GoPackage className="ti ti-square-plus" />
                         </span>
                         <p>{t("product")}</p>
                       </Link>
@@ -887,6 +971,18 @@ function Navbar() {
             </Link>
           </div>
         </div>
+      {/* Navbar Add Category Modal */}
+      <CategoryModal
+        modalId="navbarCategoryModal"
+        title={t("Add Category")}
+        categoryName={navCategoryName}
+        categorySlug={navCategorySlug}
+        onCategoryChange={handleNavCategoryNameChange}
+        onSlugChange={handleNavSlugChange}
+        onSubmit={submitNavbarCategory}
+        submitLabel={t("Add Category")}
+        errors={navCatErrors}
+      />
       </div>
     </div>
   );
