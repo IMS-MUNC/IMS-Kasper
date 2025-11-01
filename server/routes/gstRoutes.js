@@ -5,7 +5,8 @@ const {
     getAllGst,
     updateGst,
     deleteGst,
-    bulkImportGst
+    bulkImportGst,
+    verifyGstin,
 } = require("../controllers/gstController.js");
 const { authMiddleware } = require("../middleware/auth.js");
 
@@ -23,5 +24,8 @@ router.delete("/:id", authMiddleware, deleteGst);
 
 // POST - Bulk Import GST
 router.post("/import", authMiddleware, bulkImportGst);
+
+// GET - Verify GSTIN via external API (server-side to avoid CORS)
+router.get("/verify", authMiddleware, verifyGstin);
 
 module.exports = router;

@@ -1,4 +1,5 @@
 const Gst = require("../models/gstModels");
+const axios = require("axios");
 
 //  Create/Add GST
 exports.addGst = async (req, res) => {
@@ -92,5 +93,65 @@ exports.deleteGst = async (req, res) => {
     res.status(200).json({ message: "GST deleted successfully" });
   } catch (err) {
     res.status(500).json({ message: "Server error", error: err.message });
+  }
+};
+
+// Verify GSTIN via Masters India API
+// GET /api/gst/verify?gstin=12GSPTN0792G1Z2
+exports.verifyGstin = async (req, res) => {
+  try {
+    let { gstin } = req.query;
+    if (!gstin) {
+      return res.status(400).json({ error: true, message: "gstin is required" });
+    }
+    // Sanitize GSTIN: trim and uppercase as per common formats
+    gstin = String(gstin).trim().toUpperCase();
+
+    const MI_AUTH = process.env.MI_AUTH;
+    const MI_CLIENT_ID = process.env.MI_CLIENT_ID;
+    if (!MI_AUTH || !MI_CLIENT_ID) {
+      return res.status(500).json({ error: true, message: "Masters India API not configured" });
+    }
+
+    // Ensure we don't double-prefix "Bearer " if the env already contains it
+    const authHeaderValue = MI_AUTH.startsWith("Bearer ") ? MI_AUTH : `Bearer ${MI_AUTH}`;
+
+    const miRes = await axios.get("https://commonapi.mastersindia.co/commonapis/searchgstin", {
+      params: { gstin },
+      headers: {
+        "Content-Type": "application/json",
+        Accept: "application/json",
+        Authorization: authHeaderValue,
+        client_id: MI_CLIENT_ID,
+      },
+    });
+
+    const payload = miRes.data;
+    if (payload && payload.error === false && payload.data) {
+      const info = JSON.parse(payload.data);
+      return res.json({
+        error: false,
+        data: {
+          gstin: info.gstin,
+          name: info.lgnm,
+          status: info.sts,
+          type: info.dty,
+          registrationDate: info.rgdt,
+          stateJurisdiction: info.stj,
+          centerJurisdiction: info.ctj,
+        },
+      });
+    }
+    return res.status(400).json({ error: true, message: payload?.message || "Verification failed" });
+  } catch (err) {
+    // Surface upstream error details to help diagnose (e.g., 401 due to invalid token)
+    const status = err.response?.status || 500;
+    const upstream = err.response?.data;
+    console.error("GST verify error:", status, upstream || err.message);
+    return res.status(status).json({
+      error: true,
+      message: upstream?.message || err.message || "Verification failed",
+      details: upstream || undefined,
+    });
   }
 };
