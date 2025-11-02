@@ -28,6 +28,7 @@ const EmailMessages = ({
   onDraftClick,
   isDeletedPage,
   starredEmails,
+  handleEmailClick
 
 
 }) => {

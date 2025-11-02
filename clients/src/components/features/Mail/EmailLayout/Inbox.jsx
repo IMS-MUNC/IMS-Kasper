@@ -400,8 +400,20 @@ const Inbox = () => {
   const markAsRead = async (emailId) => {
     try {
       const token = localStorage.getItem("token");
+      const userEmail = JSON.parse(localStorage.getItem("user"))?.email?.toLowerCase();  // Get userEmail locally if needed for logs
       console.log("🔹 readInboxEmails called for emailId:", emailId, "by user:", userEmail);
       console.log("Token present:", !!token);
+
+       // 1. Optimistic UI update (local only, for instant feel)
+    setEmails((prevEmails) =>
+      prevEmails.map((email) =>
+        email._id === emailId
+          ? { ...email, isRead: true, status: { ...email.status, dotColor: "transparent" } }
+          : email
+      )
+    );
+    setInboxCount((prev) => Math.max(prev - 1, 0));  // Optimistic count decrement
+
 
       const res = await axios.put(
         `${BASE_URL}/api/email/mail/read/${emailId}`,
@@ -414,7 +426,7 @@ const Inbox = () => {
       if (res.data.success) {
         console.log("Backend confirmed email marked as read");
         // update local state
-        setEmails((prevEmails) => prevEmails.map((email) => email._id === emailId ? {...email, isRead:true, status:{...email.status, dotColor:'transparent'}} : email));
+        // setEmails((prevEmails) => prevEmails.map((email) => email._id === emailId ? {...email, isRead:true, status:{...email.status, dotColor:'transparent'}} : email));
 
         // fetchInboxCount();
         // update local state
@@ -425,20 +437,32 @@ const Inbox = () => {
               : email
           )
         );
+      }
+      else {
+      throw new Error(res.data.message || "Failed to mark as read");
+    }
 
         await fetchInboxCount();  //single call, awaited for sync
         // console.log("📄 Updated local email list");
 
-        setInboxCount((prev) => Math.max(prev - 1, 0));
-         setTimeout(fetchInboxCount, 500);
+        // setInboxCount((prev) => Math.max(prev - 1, 0));
+        // setTimeout(fetchInboxCount, 500);
 
         // 3️⃣ Optional: fetch fresh count from backend to be sure
         // fetchInboxCount();
-      }
     } catch (error) {
       console.error("Failed to mark email as read", error);
+      setEmails((prevEmails) =>
+      prevEmails.map((email) =>
+        email._id === emailId
+          ? { ...email, isRead: false, status: { ...email.status, dotColor: "red" } }  // Assuming red for unread
+          : email
+      )
+    );
+    setInboxCount((prev) => Math.max(prev + 1, 0));  // Revert count
     }
   };
+
 
   return (
     <EmailMessages

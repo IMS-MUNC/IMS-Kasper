@@ -153,14 +153,14 @@ const AddSupplierModals = ({ onClose, onSuccess, editSupplier }) => {
     email: /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
     phone: /^[6-9]\d{9}$/,
     postalCode: /^\d{6}$/,
-    
+
     pincode: /^\d{6}$/,
     bankName: /^[a-zA-Z0-9\s&.-]{1,100}$/,
     branch: /^[a-zA-Z0-9\s&.-]{1,100}$/,
     accountHolder: /^[a-zA-Z\s]{1,100}$/,
     accountNumber: /^\d{9,18}$/,
     ifsc: /^[A-Z]{4}0[A-Z0-9]{6}$/,
-     name: /^[a-zA-Z\s'-]{1,50}$/, // For billing.name, shipping.name
+    name: /^[a-zA-Z\s'-]{1,50}$/, // For billing.name, shipping.name
     address1: /^[a-zA-Z0-9\s,.#-]{1,100}$/,
   };
 
@@ -186,10 +186,10 @@ const AddSupplierModals = ({ onClose, onSuccess, editSupplier }) => {
   const fetchCountries = async () => {
     try {
       const token = localStorage.getItem("token");
-      const res = await axios.get(`${BASE_URL}/api/countries`,{
+      const res = await axios.get(`${BASE_URL}/api/countries`, {
         headers: {
-        Authorization: `Bearer ${token}`,
-      },
+          Authorization: `Bearer ${token}`,
+        },
       });
       const formatted = res.data.map((c) => ({ value: c._id, label: c.name }));
       setCountries(formatted);
@@ -201,10 +201,10 @@ const AddSupplierModals = ({ onClose, onSuccess, editSupplier }) => {
   const fetchStates = async () => {
     try {
       const token = localStorage.getItem("token");
-      const res = await axios.get(`${BASE_URL}/api/states`,{
+      const res = await axios.get(`${BASE_URL}/api/states`, {
         headers: {
-        Authorization: `Bearer ${token}`,
-      },
+          Authorization: `Bearer ${token}`,
+        },
       });
       setStates(res.data);
     } catch {
@@ -215,10 +215,10 @@ const AddSupplierModals = ({ onClose, onSuccess, editSupplier }) => {
   const fetchCities = async () => {
     try {
       const token = localStorage.getItem("token");
-      const res = await axios.get(`${BASE_URL}/api/city/cities`,{
+      const res = await axios.get(`${BASE_URL}/api/city/cities`, {
         headers: {
-        Authorization: `Bearer ${token}`,
-      },
+          Authorization: `Bearer ${token}`,
+        },
       });
       setCities(res.data);
     } catch {
@@ -289,17 +289,17 @@ const AddSupplierModals = ({ onClose, onSuccess, editSupplier }) => {
 
   // GSTIN verification
   const handleVerifyGSTIN = async () => {
+    const token = localStorage.getItem("token")
     setGstLoading(true);
     setGstError('');
     try {
       const res = await axios.post(`${BASE_URL}/api/suppliers/verify-gstin`, {
-
         gstin: form.gstin,
       },
         {
-        headers: {
-        Authorization: `Bearer ${token}`,
-      },
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
         });
       const data = res.data;
       if (data.valid) {
@@ -333,17 +333,17 @@ const AddSupplierModals = ({ onClose, onSuccess, editSupplier }) => {
     fileInputRef.current.click();
   };
 
-    // const handleFileChange = (e) => {
-    //   const files = Array.from(e.target.files);
-    //   // check if any file exceeds 1MB
-    //   const oversizedFile = files.find((file) => file.size > 1 * 1024 * 1024);
-    //   if (oversizedFile) {
-    //     toast.error(`File ${oversizedFile.name} exceeds 1MB size limit.`);
-    //     e.target.value = null; // reset input
-    //     return;
-    //   }
-    //   setSelectedImages(files);
-    // }
+  // const handleFileChange = (e) => {
+  //   const files = Array.from(e.target.files);
+  //   // check if any file exceeds 1MB
+  //   const oversizedFile = files.find((file) => file.size > 1 * 1024 * 1024);
+  //   if (oversizedFile) {
+  //     toast.error(`File ${oversizedFile.name} exceeds 1MB size limit.`);
+  //     e.target.value = null; // reset input
+  //     return;
+  //   }
+  //   setSelectedImages(files);
+  // }
 
   const handleFileChange = (event) => {
     const files = Array.from(event.target.files);
@@ -459,31 +459,33 @@ const AddSupplierModals = ({ onClose, onSuccess, editSupplier }) => {
         });
         if (editSupplier && editSupplier._id) {
           await axios.put(`${BASE_URL}/api/suppliers/${editSupplier._id}`, formData, {
-            headers: { 'Content-Type': 'multipart/form-data' ,
-                      Authorization: `Bearer ${token}`,
+            headers: {
+              'Content-Type': 'multipart/form-data',
+              Authorization: `Bearer ${token}`,
 
             },
           });
         } else {
           await axios.post(`${BASE_URL}/api/suppliers`, formData, {
-            headers: { 'Content-Type': 'multipart/form-data',
-                      Authorization: `Bearer ${token}`,
+            headers: {
+              'Content-Type': 'multipart/form-data',
+              Authorization: `Bearer ${token}`,
 
-             },
+            },
           });
         }
       } else {
         if (editSupplier && editSupplier._id) {
-          await axios.put(`${BASE_URL}/api/suppliers/${editSupplier._id}`, payload,{
+          await axios.put(`${BASE_URL}/api/suppliers/${editSupplier._id}`, payload, {
             headers: {
-            Authorization: `Bearer ${token}`,
-          },
+              Authorization: `Bearer ${token}`,
+            },
           });
         } else {
-          await axios.post(`${BASE_URL}/api/suppliers`, payload,{
+          await axios.post(`${BASE_URL}/api/suppliers`, payload, {
             headers: {
-            Authorization: `Bearer ${token}`,
-          },
+              Authorization: `Bearer ${token}`,
+            },
           });
         }
       }
@@ -499,21 +501,21 @@ const AddSupplierModals = ({ onClose, onSuccess, editSupplier }) => {
 
   return (
     <div className="modal fade show" id="add-supplier" tabIndex="-1"
-   style={{ display: "block", backgroundColor: "rgba(0, 0, 0, 0.5)" }} aria-modal="true" role="dialog">
-   <div className="modal-dialog modal-dialog-centered modal-lg">
-     <div className="modal-content">
-       <div className="modal-header">
-         <h4>{editSupplier ? 'Edit Supplier' : 'Add Supplier'}</h4>
-         <button type="button" className="close" aria-label="Close" onClick={onClose}>
-           <span aria-hidden="true">×</span>
-         </button>
-       </div>
+      style={{ display: "block", backgroundColor: "rgba(0, 0, 0, 0.5)" }} aria-modal="true" role="dialog">
+      <div className="modal-dialog modal-dialog-centered modal-lg">
+        <div className="modal-content">
+          <div className="modal-header">
+            <h4>{editSupplier ? 'Edit Supplier' : 'Add Supplier'}</h4>
+            <button type="button" className="close" aria-label="Close" onClick={onClose}>
+              <span aria-hidden="true">×</span>
+            </button>
+          </div>
 
-       {/* Main Form */}
-       <form onSubmit={handleSubmit}>
-         <div className="modal-body">
-           {/* Image Upload */}
-           {/* <div className="mb-3">
+          {/* Main Form */}
+          <form onSubmit={handleSubmit}>
+            <div className="modal-body">
+              {/* Image Upload */}
+              {/* <div className="mb-3">
              <label className="form-label">Profile Images</label>
              <input type="file" ref={fileInputRef} multiple style={{ display: 'none' }} onChange={handleFileChange}
                accept="image/*" />
@@ -550,318 +552,337 @@ const AddSupplierModals = ({ onClose, onSuccess, editSupplier }) => {
              </div>
            </div> */}
 
-           <div className="col-lg-12">
-             <div className="new-employee-field">
-               <div className="profile-pic-upload mb-2">
-                 <div className="profile-pic">
-                   {selectedImages.map((img, index) => (
-                   <div key={index} className="position-relative">
-                     <img src={img.preview} alt="Preview" style={{
-                width: '100px',
-                height: '100px',
-                // objectFit: 'cover',
-                borderRadius: '8px'
-              }} />
-                     {img.file && (
-                     <button type="button" onClick={()=> removeImage(index)}
-                       style={{
-                  position: 'absolute',
-                  top: '-8px',
-                  right: '-8px',
-                  background: 'red',
-                  color: 'white',
-                  border: 'none',
-                  borderRadius: '50%',
-                  width: '20px',
-                  height: '20px',
-                  fontSize: '12px',
-                  cursor: 'pointer'
-                }}
-                       >
-                       &times;
-                     </button>
-                     )}
-                   </div>
-                   ))}
+              <div className="col-lg-12">
+                <div className="new-employee-field">
+                  <div className="profile-pic-upload mb-2">
+                    <div className="profile-pic">
+                      {selectedImages.map((img, index) => (
+                        <div key={index} className="position-relative">
+                          <img src={img.preview} alt="Preview" style={{
+                            width: '100px',
+                            height: '100px',
+                            // objectFit: 'cover',
+                            borderRadius: '8px'
+                          }} />
+                          {img.file && (
+                            <button type="button" onClick={() => removeImage(index)}
+                              style={{
+                                position: 'absolute',
+                                top: '-8px',
+                                right: '-8px',
+                                background: 'red',
+                                color: 'white',
+                                border: 'none',
+                                borderRadius: '50%',
+                                width: '20px',
+                                height: '20px',
+                                fontSize: '12px',
+                                cursor: 'pointer'
+                              }}
+                            >
+                              &times;
+                            </button>
+                          )}
+                        </div>
+                      ))}
 
-                   {/* Show "Add Image" only when no image is uploaded */}
-                   {selectedImages.length === 0 && (
-                   <span>
-                     <TbCirclePlus className="plus-down-add" /> Add Image
-                   </span>
-                   )}
-                 </div>
+                      {/* Show "Add Image" only when no image is uploaded */}
+                      {selectedImages.length === 0 && (
+                        <span>
+                          <TbCirclePlus className="plus-down-add" /> Add Image
+                        </span>
+                      )}
+                    </div>
 
-                 <div className="mb-0">
-                   <div className="image-upload mb-2" style={{backgroundColor:"#007aff"}}>
-                     <input type="file" ref={fileInputRef} style={{ display: 'none' }} accept="image/*" onChange={handleFileChange} />
-                     <div className="image-uploads" onClick={handleUploadClick} style={{ cursor: 'pointer' }}>
-                       <h4>Upload Image</h4>
-                     </div>
-                   </div>
-                   <p>JPEG, PNG up to 1 MB</p>
-                 </div>
-               </div>
-             </div>
-           </div>
+                    <div className="mb-0">
+                      <div className="image-upload mb-2" style={{ backgroundColor: "#007aff" }}>
+                        <input type="file" ref={fileInputRef} style={{ display: 'none' }} accept="image/*" onChange={handleFileChange} />
+                        <div className="image-uploads" onClick={handleUploadClick} style={{ cursor: 'pointer' }}>
+                          <h4>Upload Image</h4>
+                        </div>
+                      </div>
+                      <p>JPEG, PNG up to 1 MB</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
 
-           <div className="row">
-             <div className="col-md-6 mb-3">
-               <label>First Name</label><span className="text-danger ms-1">*</span>
-               <input type="text" name="firstName" className={`form-control ${validationErrors.firstName ? 'is-invalid' : ''}`} value={form.firstName}
-                 onChange={handleInputChange} />
-               {validationErrors.firstName && <div className="invalid-feedback">{validationErrors.firstName}</div>}
-             </div>
-             <div className="col-md-6 mb-3">
-               <label>Last Name</label> <span className="text-danger ms-1">*</span>
-               <input type="text" name="lastName" className={`form-control ${validationErrors.lastName ? 'is-invalid' : ''}`} value={form.lastName}
-                 onChange={handleInputChange} />
-               {validationErrors.lastName && <div className="invalid-feedback">{validationErrors.lastName}</div>}
-             </div>
-             <div className="col-md-6 mb-3">
-               <label>Company Name</label>  <span className="text-danger ms-1">*</span>
-               <input type="text" name="companyName" className={`form-control ${validationErrors.companyName ? 'is-invalid' : ''}`} value={form.companyName}
-                 onChange={handleInputChange} />
-               {validationErrors.companyName && <div className="invalid-feedback">{validationErrors.companyName}</div>}
-             </div>
-             <div className="col-md-6 mb-3">
-               <label>Company Website</label>  <span className="text-danger ms-1">*</span>
-               <input type="text" name="companyWebsite" className={`form-control ${validationErrors.companyWebsite ? 'is-invalid' : ''}`} value={form.companyWebsite}
-                 onChange={handleInputChange} />
-               {validationErrors.companyWebsite && <div className="invalid-feedback">{validationErrors.companyWebsite}</div>}
-             </div>
+              <div className="row">
+                <div className="col-md-6 mb-3">
+                  <label>First Name</label><span className="text-danger ms-1">*</span>
+                  <input type="text" name="firstName" className={`form-control ${validationErrors.firstName ? 'is-invalid' : ''}`} value={form.firstName}
+                    onChange={handleInputChange} />
+                  {validationErrors.firstName && <div className="invalid-feedback">{validationErrors.firstName}</div>}
+                </div>
+                <div className="col-md-6 mb-3">
+                  <label>Last Name</label> <span className="text-danger ms-1">*</span>
+                  <input type="text" name="lastName" className={`form-control ${validationErrors.lastName ? 'is-invalid' : ''}`} value={form.lastName}
+                    onChange={handleInputChange} />
+                  {validationErrors.lastName && <div className="invalid-feedback">{validationErrors.lastName}</div>}
+                </div>
+                <div className="col-md-6 mb-3">
+                  <label>Company Name</label>  <span className="text-danger ms-1">*</span>
+                  <input type="text" name="companyName" className={`form-control ${validationErrors.companyName ? 'is-invalid' : ''}`} value={form.companyName}
+                    onChange={handleInputChange} />
+                  {validationErrors.companyName && <div className="invalid-feedback">{validationErrors.companyName}</div>}
+                </div>
+                <div className="col-md-6 mb-3">
+                  <label>Company Website</label>  <span className="text-danger ms-1">*</span>
+                  <input type="text" name="companyWebsite" className={`form-control ${validationErrors.companyWebsite ? 'is-invalid' : ''}`} value={form.companyWebsite}
+                    onChange={handleInputChange} />
+                  {validationErrors.companyWebsite && <div className="invalid-feedback">{validationErrors.companyWebsite}</div>}
+                </div>
 
-             <div className="col-md-6 mb-3">
-               <label>Business Type</label>  <span className="text-danger ms-1">*</span>
-               <Select options={businessTypeOptions} value={businessTypeOptions.find(opt=> opt.value ===
-                 form.businessType)}
-                 onChange={option => handleInputChange({ target: { name: 'businessType', value: option.value } })}
-                 placeholder="Select Type"
-                 />
-             </div>
-             <div className="col-md-6 mb-3">
-               <label>GSTIN</label>  <span className="text-danger ms-1">*</span>
-               <div className="d-flex gap-2">
-                 <input type="text" name="gstin" className={`form-control ${validationErrors.gstin ? 'is-invalid' : ''}`} value={form.gstin}
-                   onChange={handleInputChange} />
-                 <button type="button" className="btn btn-outline-primary" onClick={handleVerifyGSTIN}
-                   disabled={!form.gstin || gstLoading || validationErrors.gstin}>
-                   {gstLoading ? 'Verifying...' : 'Verify'}
-                 </button>
-               </div>
-               {validationErrors.gstin && <div className="invalid-feedback">{validationErrors.gstin}</div>}
-               {gstError && <small className="text-danger">{gstError}</small>}
-               {gstDetails?.valid && (
-               <div className="alert alert-success mt-2">
-                 <div><strong>Name:</strong> {gstDetails.name}</div>
-                 <div><strong>Address:</strong> {gstDetails.address}</div>
-                 <div><strong>State:</strong> {gstDetails.state}</div>
-                 <div><strong>Business Type:</strong> {gstDetails.businessType}</div>
-               </div>
-               )}
-             </div>
-             <div className="col-md-6 mb-3">
-               <label>Email</label>  <span className="text-danger ms-1">*</span>
-               <input type="email" name="email" className={`form-control ${validationErrors.email ? 'is-invalid' : ''}`} value={form.email}
-                 onChange={handleInputChange} />
-               {validationErrors.email && <div className="invalid-feedback">{validationErrors.email}</div>}
-             </div>
-             <div className="col-md-6 mb-3">
-               <label>Phone</label>  <span className="text-danger ms-1">*</span>
-               <input type="text" name="phone" className={`form-control ${validationErrors.phone ? 'is-invalid' : ''}`} value={form.phone}
-                 onChange={handleInputChange} />
-               {validationErrors.phone && <div className="invalid-feedback">{validationErrors.phone}</div>}
-             </div>
-             {/* Billing Address */}
-             <div className="border-top my-2">
-               <div className="row gx-5">
-                 <div className="col-md-6 ">
-                   <h6 className="mb-3 pt-4">Billing Address</h6>
-                   <div className="row">
-                     <div className="col-12">
-                       <div className="mb-3">
-                         <label className="form-label">Name</label><span className="text-danger ms-1">*</span>
-                         <input type="text" className="form-control" name="name" value={form.billing.name} onChange={e=>
-                         setForm(prev => ({ ...prev, billing: { ...prev.billing, name: e.target.value } }))} />
-                       </div>
-                     </div>
-                     <div className="col-12">
-                       <div className="mb-3">
-                         <label className="form-label">Address Line 1</label><span className="text-danger ms-1">*</span>
-                         <input type="text" className="form-control" name="address1" value={form.billing.address1}
-                           onChange={e=> setForm(prev => ({ ...prev, billing: { ...prev.billing, address1:
-                         e.target.value } }))} />
-                       </div>
-                     </div>
-                     <div className="col-12">
-                       <div className="mb-3">
-                         <label className="form-label">Address Line 2</label>
-                         <input type="text" className="form-control" name="address2" value={form.billing.address2}
-                           onChange={e=> setForm(prev => ({ ...prev, billing: { ...prev.billing, address2:
-                         e.target.value } }))} />
-                       </div>
-                     </div>
-                     <div className="mb-3">
-                       <div className="row">
-                         <div className="col-md-6 mb-3">
-                           <label className="form-label">Country</label><span className="text-danger ms-1">*</span>
-                           <Select options={countries} value={form.billing.country} onChange={option=>
-                             handleSelectChange('billing', 'country', option)} placeholder="Select Country" />
-                         </div>
-                         <div className="col-md-6 mb-3">
-                           <label className="form-label">State</label><span className="text-danger ms-1">*</span>
-                           <Select options={filteredStates} value={form.billing.state} onChange={option=>
-                             handleSelectChange('billing', 'state', option)} isDisabled={!form.billing.country}
-                             placeholder="Select State" />
-                         </div>
-                         <div className="col-md-6 mb-3">
-                           <label className="form-label">City</label><span className="text-danger ms-1">*</span>
-                           <Select options={filteredCities} value={form.billing.city} onChange={option=>
-                             handleSelectChange('billing', 'city', option)} isDisabled={!form.billing.state}
-                             placeholder="Select City" />
-                         </div>
-                         <div className="col-md-6 mb-3"><span className="text-danger ms-1">*</span>
-                           <label className="form-label">Postal Code</label>
-                           <input type="text" className={`form-control ${validationErrors.postalCode ? 'is-invalid' : ''}`} name="postalCode" value={form.billing.postalCode}
-                             onChange={e=> {
-                               const sanitizedValue = sanitizeInput(e.target.value);
-                               setForm(prev => ({ ...prev, billing: { ...prev.billing, postalCode: sanitizedValue } }));
-                               if (!validateField('postalCode', sanitizedValue)) {
-                                 setValidationErrors((prev) => ({ ...prev, postalCode: `Invalid postalCode format` }));
-                               } else {
-                                 setValidationErrors((prev) => ({ ...prev, postalCode: '' }));
-                               }
-                             }} />
-                           {validationErrors.postalCode && <div className="invalid-feedback">{validationErrors.postalCode}</div>}
-                         </div>
-                       </div>
-                     </div>
-                   </div>
-                 </div>
-                 {/* Shipping Address */}
-                 <div className="col-md-6">
-                   <div className="d-flex align-items-center justify-content-between mb-3 pt-4">
-                     <h6>Shipping Address</h6>
-                     <button type="button" onClick={handleCopyFromBilling}
-                       className="d-inline-flex align-items-center text-primary text-decoration-underline fs-13 btn btn-link p-0"
-                       style={{boxShadow:'none'}}>
-                       <TbCopy className="me-1" />Copy From Billing
-                     </button>
-                   </div>
-                   <div className="row">
-                     <div className="col-12">
-                       <div className="mb-3">
-                         <label className="form-label">Name</label><span className="text-danger ms-1">*</span>
-                         <input type="text" className="form-control" name="name" value={form.shipping.name}
-                           onChange={e=> setForm(prev => ({ ...prev, shipping: { ...prev.shipping, name: e.target.value
-                         } }))} />
-                       </div>
-                     </div>
-                     <div className="col-12">
-                       <div className="mb-3">
-                         <label className="form-label">Address Line 1</label><span className="text-danger ms-1">*</span>
-                         <input type="text" className="form-control" name="address1" value={form.shipping.address1}
-                           onChange={e=> setForm(prev => ({ ...prev, shipping: { ...prev.shipping, address1:
-                         e.target.value } }))} />
-                       </div>
-                     </div>
-                     <div className="col-12">
-                       <div className="mb-3">
-                         <label className="form-label">Address Line 2</label>
-                         <input type="text" className="form-control" name="address2" value={form.shipping.address2}
-                           onChange={e=> setForm(prev => ({ ...prev, shipping: { ...prev.shipping, address2:
-                         e.target.value } }))} />
-                       </div>
-                     </div>
-                     <div className="col-md-6 mb-3">
-                       <label className="form-label">Country</label><span className="text-danger ms-1">*</span>
-                       <Select options={countries} value={form.shipping.country} onChange={option=>
-                         handleSelectChange('shipping', 'country', option)} placeholder="Select Country" />
-                     </div>
-                     <div className="col-md-6 mb-3">
-                       <label className="form-label">State</label><span className="text-danger ms-1">*</span>
-                       <Select options={filteredShippingStates} value={form.shipping.state} onChange={option=>
-                         handleSelectChange('shipping', 'state', option)} isDisabled={!form.shipping.country}
-                         placeholder="Select State" />
-                     </div>
-                     <div className="col-md-6 mb-3">
-                       <label className="form-label">City</label><span className="text-danger ms-1">*</span>
-                       <Select options={filteredShippingCities} value={form.shipping.city} onChange={option=>
-                         handleSelectChange('shipping', 'city', option)} isDisabled={!form.shipping.state}
-                         placeholder="Select City" />
-                     </div>
-                     <div className="col-md-6">
-                       <div className="mb-3">
-                         <label className="form-label">Pincode</label><span className="text-danger ms-1">*</span>
-                         <input type="text" className={`form-control ${validationErrors.pincode ? 'is-invalid' : ''}`} name="pincode" value={form.shipping.pincode}
-                           onChange={e=> {
-                             const sanitizedValue = sanitizeInput(e.target.value);
-                             setForm(prev => ({ ...prev, shipping: { ...prev.shipping, pincode: sanitizedValue } }));
-                             if (!validateField('pincode', sanitizedValue)) {
-                               setValidationErrors((prev) => ({ ...prev, pincode: `Invalid pincode format` }));
-                             } else {
-                               setValidationErrors((prev) => ({ ...prev, pincode: '' }));
-                             }
-                           }} />
-                         {validationErrors.pincode && <div className="invalid-feedback">{validationErrors.pincode}</div>}
-                       </div>
-                     </div>
-                   </div>
-                 </div>
-               </div>
-             </div>
-             {/* Bank Details */}
-             <div className="col-12 border-top pt-3 mt-2">
-               <h6>Bank Details</h6>
-             </div>
-             <div className="col-md-4 mb-3">
-               <label>Bank Name</label>
-               <input type="text" name="bankName" className="form-control" value={form.bank.bankName}
-                 onChange={handleBankChange} />
-             </div>
-             <div className="col-md-4 mb-3">
-               <label>Branch</label>
-               <input type="text" name="branch" className="form-control" value={form.bank.branch}
-                 onChange={handleBankChange} />
-             </div>
-             <div className="col-md-4 mb-3">
-               <label>Account Holder</label>
-               <input type="text" name="accountHolder" className="form-control" value={form.bank.accountHolder}
-                 onChange={handleBankChange} />
-             </div>
-             <div className="col-md-6 mb-3">
-               <label>Account Number</label>
-               <input type="text" name="accountNumber" className={`form-control ${validationErrors.accountNumber ? 'is-invalid' : ''}`} value={form.bank.accountNumber}
-                 onChange={handleBankChange} />
-               {validationErrors.accountNumber && <div className="invalid-feedback">{validationErrors.accountNumber}</div>}
-             </div>
-             <div className="col-md-6 mb-3">
-               <label>IFSC</label>
-               <input type="text" name="ifsc" className={`form-control ${validationErrors.ifsc ? 'is-invalid' : ''}`} value={form.bank.ifsc}
-                 onChange={handleBankChange} />
-               {validationErrors.ifsc && <div className="invalid-feedback">{validationErrors.ifsc}</div>}
-             </div>
-           </div>
-           <div></div>
-           <div className="d-flex justify-content-start align-items-start mb-3 ">
-             <span>Status</span>
-             <div className="form-check form-switch ms-1">
-               <input className="form-check-input" type="checkbox" checked={form.status} onChange={()=> setForm((prev) =>
-               ({ ...prev, status: !prev.status }))} />
-             </div>
-           </div>
-         </div>
-         <div className="modal-footer" style={{display:'flex', gap:'5px'}}>
-           <button type="button" className="btn btn-secondary" onClick={onClose}>Cancel</button>
-           <button type="submit" className="btn btn-primary" disabled={loading}>
-             {loading ? 'Saving...' : (editSupplier ? 'Update Supplier' : 'Add Supplier')}
-           </button>
-         </div>
-       </form>
+                <div className="col-md-6 mb-3">
+                  <label>Business Type</label>  <span className="text-danger ms-1">*</span>
+                  <Select options={businessTypeOptions} value={businessTypeOptions.find(opt => opt.value ===
+                    form.businessType)}
+                    onChange={option => handleInputChange({ target: { name: 'businessType', value: option.value } })}
+                    placeholder="Select Type"
+                  />
+                </div>
+                <div className="col-md-6 mb-3">
+                  <label>GSTIN</label>  <span className="text-danger ms-1">*</span>
+                  <div className="d-flex gap-2">
+                    <input type="text" name="gstin" className={`form-control ${validationErrors.gstin ? 'is-invalid' : ''}`} value={form.gstin}
+                      onChange={handleInputChange} />
+                    <button type="button" className="btn btn-outline-primary" onClick={handleVerifyGSTIN}
+                      disabled={!form.gstin || gstLoading || validationErrors.gstin}>
+                      {gstLoading ? 'Verifying...' : 'Verify'}
+                    </button>
+                  </div>
+                  {validationErrors.gstin && <div className="invalid-feedback">{validationErrors.gstin}</div>}
+                  {gstError && <small className="text-danger">{gstError}</small>}
+                  {gstDetails?.valid && (
+                    <div className="alert alert-success mt-2">
+                      <div><strong>Name:</strong> {gstDetails.name}</div>
+                      <div><strong>Address:</strong> {gstDetails.address}</div>
+                      <div><strong>State:</strong> {gstDetails.state}</div>
+                      <div><strong>Business Type:</strong> {gstDetails.businessType}</div>
+                    </div>
+                  )}
+                </div>
+                <div className="col-md-6 mb-3">
+                  <label>Email</label>  <span className="text-danger ms-1">*</span>
+                  <input type="email" name="email" className={`form-control ${validationErrors.email ? 'is-invalid' : ''}`} value={form.email}
+                    onChange={handleInputChange} />
+                  {validationErrors.email && <div className="invalid-feedback">{validationErrors.email}</div>}
+                </div>
+                <div className="col-md-6 mb-3">
+                  <label>Phone</label>  <span className="text-danger ms-1">*</span>
+                  <input type="text" name="phone" className={`form-control ${validationErrors.phone ? 'is-invalid' : ''}`} value={form.phone}
+                    onChange={handleInputChange} />
+                  {validationErrors.phone && <div className="invalid-feedback">{validationErrors.phone}</div>}
+                </div>
+                {/* Billing Address */}
+                <div className="border-top my-2">
+                  <div className="row gx-5">
+                    <div className="col-md-6 ">
+                      <h6 className="mb-3 pt-4">Billing Address</h6>
+                      <div className="row">
+                        <div className="col-12">
+                          <div className="mb-3">
+                            <label className="form-label">Name</label><span className="text-danger ms-1">*</span>
+                            <input type="text" className="form-control" name="name" value={form.billing.name} onChange={e =>
+                              setForm(prev => ({ ...prev, billing: { ...prev.billing, name: e.target.value } }))} />
+                          </div>
+                        </div>
+                        <div className="col-12">
+                          <div className="mb-3">
+                            <label className="form-label">Address Line 1</label><span className="text-danger ms-1">*</span>
+                            <input type="text" className="form-control" name="address1" value={form.billing.address1}
+                              onChange={e => setForm(prev => ({
+                                ...prev, billing: {
+                                  ...prev.billing, address1:
+                                    e.target.value
+                                }
+                              }))} />
+                          </div>
+                        </div>
+                        <div className="col-12">
+                          <div className="mb-3">
+                            <label className="form-label">Address Line 2</label>
+                            <input type="text" className="form-control" name="address2" value={form.billing.address2}
+                              onChange={e => setForm(prev => ({
+                                ...prev, billing: {
+                                  ...prev.billing, address2:
+                                    e.target.value
+                                }
+                              }))} />
+                          </div>
+                        </div>
+                        <div className="mb-3">
+                          <div className="row">
+                            <div className="col-md-6 mb-3">
+                              <label className="form-label">Country</label><span className="text-danger ms-1">*</span>
+                              <Select options={countries} value={form.billing.country} onChange={option =>
+                                handleSelectChange('billing', 'country', option)} placeholder="Select Country" />
+                            </div>
+                            <div className="col-md-6 mb-3">
+                              <label className="form-label">State</label><span className="text-danger ms-1">*</span>
+                              <Select options={filteredStates} value={form.billing.state} onChange={option =>
+                                handleSelectChange('billing', 'state', option)} isDisabled={!form.billing.country}
+                                placeholder="Select State" />
+                            </div>
+                            <div className="col-md-6 mb-3">
+                              <label className="form-label">City</label><span className="text-danger ms-1">*</span>
+                              <Select options={filteredCities} value={form.billing.city} onChange={option =>
+                                handleSelectChange('billing', 'city', option)} isDisabled={!form.billing.state}
+                                placeholder="Select City" />
+                            </div>
+                            <div className="col-md-6 mb-3"><span className="text-danger ms-1">*</span>
+                              <label className="form-label">Postal Code</label>
+                              <input type="text" className={`form-control ${validationErrors.postalCode ? 'is-invalid' : ''}`} name="postalCode" value={form.billing.postalCode}
+                                onChange={e => {
+                                  const sanitizedValue = sanitizeInput(e.target.value);
+                                  setForm(prev => ({ ...prev, billing: { ...prev.billing, postalCode: sanitizedValue } }));
+                                  if (!validateField('postalCode', sanitizedValue)) {
+                                    setValidationErrors((prev) => ({ ...prev, postalCode: `Invalid postalCode format` }));
+                                  } else {
+                                    setValidationErrors((prev) => ({ ...prev, postalCode: '' }));
+                                  }
+                                }} />
+                              {validationErrors.postalCode && <div className="invalid-feedback">{validationErrors.postalCode}</div>}
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                    {/* Shipping Address */}
+                    <div className="col-md-6">
+                      <div className="d-flex align-items-center justify-content-between mb-3 pt-4">
+                        <h6>Shipping Address</h6>
+                        <button type="button" onClick={handleCopyFromBilling}
+                          className="d-inline-flex align-items-center text-primary text-decoration-underline fs-13 btn btn-link p-0"
+                          style={{ boxShadow: 'none' }}>
+                          <TbCopy className="me-1" />Copy From Billing
+                        </button>
+                      </div>
+                      <div className="row">
+                        <div className="col-12">
+                          <div className="mb-3">
+                            <label className="form-label">Name</label><span className="text-danger ms-1">*</span>
+                            <input type="text" className="form-control" name="name" value={form.shipping.name}
+                              onChange={e => setForm(prev => ({
+                                ...prev, shipping: {
+                                  ...prev.shipping, name: e.target.value
+                                }
+                              }))} />
+                          </div>
+                        </div>
+                        <div className="col-12">
+                          <div className="mb-3">
+                            <label className="form-label">Address Line 1</label><span className="text-danger ms-1">*</span>
+                            <input type="text" className="form-control" name="address1" value={form.shipping.address1}
+                              onChange={e => setForm(prev => ({
+                                ...prev, shipping: {
+                                  ...prev.shipping, address1:
+                                    e.target.value
+                                }
+                              }))} />
+                          </div>
+                        </div>
+                        <div className="col-12">
+                          <div className="mb-3">
+                            <label className="form-label">Address Line 2</label>
+                            <input type="text" className="form-control" name="address2" value={form.shipping.address2}
+                              onChange={e => setForm(prev => ({
+                                ...prev, shipping: {
+                                  ...prev.shipping, address2:
+                                    e.target.value
+                                }
+                              }))} />
+                          </div>
+                        </div>
+                        <div className="col-md-6 mb-3">
+                          <label className="form-label">Country</label><span className="text-danger ms-1">*</span>
+                          <Select options={countries} value={form.shipping.country} onChange={option =>
+                            handleSelectChange('shipping', 'country', option)} placeholder="Select Country" />
+                        </div>
+                        <div className="col-md-6 mb-3">
+                          <label className="form-label">State</label><span className="text-danger ms-1">*</span>
+                          <Select options={filteredShippingStates} value={form.shipping.state} onChange={option =>
+                            handleSelectChange('shipping', 'state', option)} isDisabled={!form.shipping.country}
+                            placeholder="Select State" />
+                        </div>
+                        <div className="col-md-6 mb-3">
+                          <label className="form-label">City</label><span className="text-danger ms-1">*</span>
+                          <Select options={filteredShippingCities} value={form.shipping.city} onChange={option =>
+                            handleSelectChange('shipping', 'city', option)} isDisabled={!form.shipping.state}
+                            placeholder="Select City" />
+                        </div>
+                        <div className="col-md-6">
+                          <div className="mb-3">
+                            <label className="form-label">Pincode</label><span className="text-danger ms-1">*</span>
+                            <input type="text" className={`form-control ${validationErrors.pincode ? 'is-invalid' : ''}`} name="pincode" value={form.shipping.pincode}
+                              onChange={e => {
+                                const sanitizedValue = sanitizeInput(e.target.value);
+                                setForm(prev => ({ ...prev, shipping: { ...prev.shipping, pincode: sanitizedValue } }));
+                                if (!validateField('pincode', sanitizedValue)) {
+                                  setValidationErrors((prev) => ({ ...prev, pincode: `Invalid pincode format` }));
+                                } else {
+                                  setValidationErrors((prev) => ({ ...prev, pincode: '' }));
+                                }
+                              }} />
+                            {validationErrors.pincode && <div className="invalid-feedback">{validationErrors.pincode}</div>}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                {/* Bank Details */}
+                <div className="col-12 border-top pt-3 mt-2">
+                  <h6>Bank Details</h6>
+                </div>
+                <div className="col-md-4 mb-3">
+                  <label>Bank Name</label>
+                  <input type="text" name="bankName" className="form-control" value={form.bank.bankName}
+                    onChange={handleBankChange} />
+                </div>
+                <div className="col-md-4 mb-3">
+                  <label>Branch</label>
+                  <input type="text" name="branch" className="form-control" value={form.bank.branch}
+                    onChange={handleBankChange} />
+                </div>
+                <div className="col-md-4 mb-3">
+                  <label>Account Holder</label>
+                  <input type="text" name="accountHolder" className="form-control" value={form.bank.accountHolder}
+                    onChange={handleBankChange} />
+                </div>
+                <div className="col-md-6 mb-3">
+                  <label>Account Number</label>
+                  <input type="text" name="accountNumber" className={`form-control ${validationErrors.accountNumber ? 'is-invalid' : ''}`} value={form.bank.accountNumber}
+                    onChange={handleBankChange} />
+                  {validationErrors.accountNumber && <div className="invalid-feedback">{validationErrors.accountNumber}</div>}
+                </div>
+                <div className="col-md-6 mb-3">
+                  <label>IFSC</label>
+                  <input type="text" name="ifsc" className={`form-control ${validationErrors.ifsc ? 'is-invalid' : ''}`} value={form.bank.ifsc}
+                    onChange={handleBankChange} />
+                  {validationErrors.ifsc && <div className="invalid-feedback">{validationErrors.ifsc}</div>}
+                </div>
+              </div>
+              <div></div>
+              <div className="d-flex justify-content-start align-items-start mb-3 ">
+                <span>Status</span>
+                <div className="form-check form-switch ms-1">
+                  <input className="form-check-input" type="checkbox" checked={form.status} onChange={() => setForm((prev) =>
+                    ({ ...prev, status: !prev.status }))} />
+                </div>
+              </div>
+            </div>
+            <div className="modal-footer" style={{ display: 'flex', gap: '5px' }}>
+              <button type="button" className="btn btn-secondary" onClick={onClose}>Cancel</button>
+              <button type="submit" className="btn btn-primary" disabled={loading}>
+                {loading ? 'Saving...' : (editSupplier ? 'Update Supplier' : 'Add Supplier')}
+              </button>
+            </div>
+          </form>
 
-     </div>
-   </div>
- </div>
+        </div>
+      </div>
+    </div>
   );
 };
 
