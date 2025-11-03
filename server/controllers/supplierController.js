@@ -1,6 +1,7 @@
-const Supplier = require('../models/supplierModel');
+const Supplier = require("../models/supplierModel");
 const cloudinary = require("../utils/cloudinary/cloudinary");
-const axios = require('axios');
+const axios = require("axios");
+const { getAccessToken } = require("../utils/mastersindia");
 
 // Create supplier
 exports.createSupplier = async (req, res) => {
@@ -8,13 +9,13 @@ exports.createSupplier = async (req, res) => {
     let supplierData = req.body;
 
     // Parse nested fields if sent as string
-    if (typeof supplierData.billing === 'string') {
+    if (typeof supplierData.billing === "string") {
       supplierData.billing = JSON.parse(supplierData.billing);
     }
-    if (typeof supplierData.shipping === 'string') {
+    if (typeof supplierData.shipping === "string") {
       supplierData.shipping = JSON.parse(supplierData.shipping);
     }
-    if (typeof supplierData.bank === 'string') {
+    if (typeof supplierData.bank === "string") {
       supplierData.bank = JSON.parse(supplierData.bank);
     }
 
@@ -24,10 +25,10 @@ exports.createSupplier = async (req, res) => {
       { supplierCode: 1 },
       { sort: { supplierCode: -1 } }
     );
-    let supplierCode = 'SUP001';
+    let supplierCode = "SUP001";
     if (maxSupplier && maxSupplier.supplierCode) {
-      const maxNum = parseInt(maxSupplier.supplierCode.replace('SUP', '')) || 0;
-      supplierCode = 'SUP' + String(maxNum + 1).padStart(3, '0');
+      const maxNum = parseInt(maxSupplier.supplierCode.replace("SUP", "")) || 0;
+      supplierCode = "SUP" + String(maxNum + 1).padStart(3, "0");
     }
     supplierData.supplierCode = supplierCode;
 
@@ -41,7 +42,11 @@ exports.createSupplier = async (req, res) => {
           )
         )
       : req.file
-      ? [await cloudinary.uploader.upload(req.file.path, { folder: "suppliers" })]
+      ? [
+          await cloudinary.uploader.upload(req.file.path, {
+            folder: "suppliers",
+          }),
+        ]
       : [];
 
     supplierData.images = uploadedImages.map((img) => ({
@@ -52,9 +57,9 @@ exports.createSupplier = async (req, res) => {
     const supplier = await Supplier.create(supplierData);
     res.status(201).json(supplier);
   } catch (err) {
-    console.error('Create supplier error:', err);
+    console.error("Create supplier error:", err);
     res.status(500).json({
-      error: 'Failed to create supplier',
+      error: "Failed to create supplier",
       details: err.message,
     });
   }
@@ -64,15 +69,17 @@ exports.createSupplier = async (req, res) => {
 exports.getAllSuppliers = async (req, res) => {
   try {
     const suppliers = await Supplier.find()
-      .populate('billing.country', 'name' )
-      .populate('billing.state', 'stateName' )
-      .populate('billing.city', 'cityName' )
-      .populate('shipping.country', 'name' )
-      .populate('shipping.state', 'stateName' )
-      .populate('shipping.city', 'cityName' );
+      .populate("billing.country", "name")
+      .populate("billing.state", "stateName")
+      .populate("billing.city", "cityName")
+      .populate("shipping.country", "name")
+      .populate("shipping.state", "stateName")
+      .populate("shipping.city", "cityName");
     res.json(suppliers);
   } catch (err) {
-    res.status(500).json({ error: 'Failed to fetch suppliers', details: err.message });
+    res
+      .status(500)
+      .json({ error: "Failed to fetch suppliers", details: err.message });
   }
 };
 
@@ -80,19 +87,20 @@ exports.getAllSuppliers = async (req, res) => {
 exports.getSupplierById = async (req, res) => {
   try {
     const supplier = await Supplier.findById(req.params.id)
-      .populate('billing.country')
-      .populate('billing.state')
-      .populate('billing.city')
-      .populate('shipping.country')
-      .populate('shipping.state')
-      .populate('shipping.city');
-    if (!supplier) return res.status(404).json({ error: 'Supplier not found' });
+      .populate("billing.country")
+      .populate("billing.state")
+      .populate("billing.city")
+      .populate("shipping.country")
+      .populate("shipping.state")
+      .populate("shipping.city");
+    if (!supplier) return res.status(404).json({ error: "Supplier not found" });
     res.json(supplier);
   } catch (err) {
-    res.status(500).json({ error: 'Failed to fetch supplier', details: err.message });
+    res
+      .status(500)
+      .json({ error: "Failed to fetch supplier", details: err.message });
   }
 };
-
 
 // GET ACTIVE USERS
 // Get only active suppliers for dropdown/modal
@@ -100,7 +108,7 @@ exports.getActiveSuppliers = async (req, res) => {
   try {
     // Only fetch suppliers with status: true, and only needed fields
     const activeSuppliers = await Supplier.find({ status: true })
-      .populate('_id firstName lastName supplierCode companyName') // add more fields if needed
+      .populate("_id firstName lastName supplierCode companyName") // add more fields if needed
       .sort({ companyName: 1 }); // or sort as you wish
 
     res.status(200).json({
@@ -118,13 +126,13 @@ exports.getActiveSuppliers = async (req, res) => {
 exports.updateSupplier = async (req, res) => {
   try {
     let updateData = req.body;
-    if (typeof updateData.billing === 'string') {
+    if (typeof updateData.billing === "string") {
       updateData.billing = JSON.parse(updateData.billing);
     }
-    if (typeof updateData.shipping === 'string') {
+    if (typeof updateData.shipping === "string") {
       updateData.shipping = JSON.parse(updateData.shipping);
     }
-    if (typeof updateData.bank === 'string') {
+    if (typeof updateData.bank === "string") {
       updateData.bank = JSON.parse(updateData.bank);
     }
 
@@ -139,7 +147,11 @@ exports.updateSupplier = async (req, res) => {
         )
       );
     } else if (req.file) {
-      uploadedImages = [await cloudinary.uploader.upload(req.file.path, { folder: "suppliers" })];
+      uploadedImages = [
+        await cloudinary.uploader.upload(req.file.path, {
+          folder: "suppliers",
+        }),
+      ];
     }
 
     if (uploadedImages.length > 0) {
@@ -149,17 +161,23 @@ exports.updateSupplier = async (req, res) => {
       }));
     }
 
-    const supplier = await Supplier.findByIdAndUpdate(req.params.id, updateData, { new: true })
-      .populate('billing.country')
-      .populate('billing.state')
-      .populate('billing.city')
-      .populate('shipping.country')
-      .populate('shipping.state')
-      .populate('shipping.city');
-    if (!supplier) return res.status(404).json({ error: 'Supplier not found' });
+    const supplier = await Supplier.findByIdAndUpdate(
+      req.params.id,
+      updateData,
+      { new: true }
+    )
+      .populate("billing.country")
+      .populate("billing.state")
+      .populate("billing.city")
+      .populate("shipping.country")
+      .populate("shipping.state")
+      .populate("shipping.city");
+    if (!supplier) return res.status(404).json({ error: "Supplier not found" });
     res.json(supplier);
   } catch (err) {
-    res.status(500).json({ error: 'Failed to update supplier', details: err.message });
+    res
+      .status(500)
+      .json({ error: "Failed to update supplier", details: err.message });
   }
 };
 
@@ -167,10 +185,12 @@ exports.updateSupplier = async (req, res) => {
 exports.deleteSupplier = async (req, res) => {
   try {
     const supplier = await Supplier.findByIdAndDelete(req.params.id);
-    if (!supplier) return res.status(404).json({ error: 'Supplier not found' });
-    res.json({ message: 'Supplier deleted' });
+    if (!supplier) return res.status(404).json({ error: "Supplier not found" });
+    res.json({ message: "Supplier deleted" });
   } catch (err) {
-    res.status(500).json({ error: 'Failed to delete supplier', details: err.message });
+    res
+      .status(500)
+      .json({ error: "Failed to delete supplier", details: err.message });
   }
 };
 
@@ -179,24 +199,66 @@ exports.verifyGSTIN = async (req, res) => {
   const { gstin } = req.body;
   try {
     // Basic GSTIN format check
-    if (!/^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}Z[0-9A-Z]{1}$/.test(gstin)) {
-      return res.status(400).json({ error: 'Invalid GSTIN format' });
+    if (
+      !/^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}Z[0-9A-Z]{1}$/.test(gstin)
+    ) {
+      return res.status(400).json({ error: "Invalid GSTIN format" });
     }
+    // Get access token dynamically
+    const accessToken = await getAccessToken();
+    //call MastersIndia API
+    const apiResponse = await axios.get(
+      `https://commonapi.mastersindia.co/commonapis/searchgstin?gstin=${gstin}`,
+      {
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${accessToken}`,
+          client_id: process.env.MASTERSINDIA_CLIENT_ID,
+        },
+      }
+    );
+    console.log("MastersIndia response:", apiResponse.data);
+    console.log("Username:", process.env.MASTERSINDIA_USERNAME);
+console.log("Client ID:", process.env.MASTERSINDIA_CLIENT_ID);
+
+    if (apiResponse.data.error) {
+      return res.status(400).json({ error: "Invalid GSTIN or not found" });
+    }
+    // MastersIndia returns stringified JSON inside `data`
+    const parsedData = JSON.parse(apiResponse.data.data);
+
     // Replace with your GST API logic
-    // For demo, return valid
+    //Prepare formatted response
+    const result = {
+      gstin: parsedData.gstin,
+      name: parsedData.lgnm || "N/A",
+      address: parsedData.stj || "N/A",
+      state: parsedData.ctj || "N/A",
+      businessType: parsedData.ctb || "N/A",
+      status: parsedData.sts || "N/A",
+      registrationDate: parsedData.rgdt || "N/A",
+      taxpayerType: parsedData.dty || "N/A",
+    };
     res.json({
-      gstin,
+      // gstin,
       valid: true,
-      name: 'Demo Supplier',
-      address: 'Demo Address',
-      state: 'Demo State',
-      businessType: 'Demo Type'
+      data: result,
+      // name: 'Demo Supplier',
+      // address: 'Demo Address',
+      // state: 'Demo State',
+      // businessType: 'Demo Type'
     });
   } catch (err) {
-    res.status(500).json({ error: 'Failed to verify GSTIN', details: err.message });
+    console.error(
+      "GSTIN verification error:",
+      err.response?.data || err.message
+    );
+    res.status(500).json({
+      error: "Failed to verify GSTIN",
+      details: err.response?.data || err.message,
+    });
   }
 };
-
 
 // const Supplier = require('../models/supplierModel');
 // const axios = require('axios');
@@ -285,7 +347,7 @@ exports.verifyGSTIN = async (req, res) => {
 //     //     });
 //     //   }
 //     // }
-    
+
 //     // Cloudinary Image Upload (Single or Multiple Files)
 //     const uploadedImages = req.files?.length
 //       ? await Promise.all(
@@ -420,8 +482,6 @@ exports.verifyGSTIN = async (req, res) => {
 // //     res.status(500).json({ error: 'Failed to create supplier', details: err.message });
 // //   }
 
-
-
 // exports.verifyGSTIN = async (req, res) => {
 //   const { gstin } = req.body;
 
@@ -533,8 +593,6 @@ exports.verifyGSTIN = async (req, res) => {
 //     });
 //   }
 // };
-
-
 
 // // GSTIN verify and fetch real data
 // // exports.verifyGSTIN = async (req, res) => {

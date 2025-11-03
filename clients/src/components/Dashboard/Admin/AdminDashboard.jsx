@@ -76,6 +76,10 @@ const AdminDashboard = () => {
   const [topSellingFilter, setTopSellingFilter] = useState("weekly");
   const [recentTransactionsFilter, setRecentTransactionsFilter] = useState("weekly");
 
+  console.log(recentSales, "recentSales before filtering");
+  console.log(recentSales.map(s => s.createdAt), "createdAt values");
+  console.log(recentSalesFilter, "recentSalesFilter value");
+
 
   const filteredSales = recentSales.filter((sale) => {
     if (!sale.createdAt) return false;
@@ -860,8 +864,8 @@ const AdminDashboard = () => {
                   <Link
                     to="/purchase-list"
                     className="link-orange text-decoration-underline fw-semibold"
-                    // data-bs-toggle="modal"
-                    // data-bs-target="#add-stock"
+                  // data-bs-toggle="modal"
+                  // data-bs-target="#add-stock"
                   >
                     {t("Add Stock")}
                   </Link>
@@ -1852,7 +1856,7 @@ const AdminDashboard = () => {
                 <a
                   href="/low-stocks"
                   // className="fs-13 fw-medium text-decoration-underline"
-                    className="fs-13 fw-medium"
+                  className="fs-13 fw-medium"
                 >
                   {t("View All")}
                 </a>
@@ -2012,7 +2016,7 @@ const AdminDashboard = () => {
                   }}
 
                   // className="fs-13 fw-medium text-decoration-underline"
-                    className="fs-13 fw-medium"
+                  className="fs-13 fw-medium"
                 >
                   {t("View All")}
                 </a>
@@ -2188,10 +2192,10 @@ const AdminDashboard = () => {
                                 <td>
                                   <span
                                     className={`badge badge-xs d-inline-flex align-items-center ${sale.status === "Completed"
-                                        ? "badge-success"
-                                        : sale.status === "Draft"
-                                          ? "badge-pink"
-                                          : "badge-success"
+                                      ? "badge-success"
+                                      : sale.status === "Draft"
+                                        ? "badge-pink"
+                                        : "badge-success"
                                       }`}
                                   >
                                     <i className="ti ti-circle-filled fs-5" />
@@ -2273,7 +2277,6 @@ const AdminDashboard = () => {
 
                                                                         <a href="#" className="avatar avatar-md">
                                                                             <img
-                                                                             
                                                                                 src={
                                                                                     purchase.supplier?.image
                                                                                         ? purchase.supplier.image

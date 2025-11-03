@@ -23,7 +23,6 @@ import axios from "axios";
 import BASE_URL from "../../../../pages/config/config";
 
 
-
 const InboxContext = createContext();
 
 export const InboxProvider = ({ children }) => {

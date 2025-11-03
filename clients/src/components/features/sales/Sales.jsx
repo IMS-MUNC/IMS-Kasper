@@ -757,7 +757,7 @@ const Sales = () => {
                               <li>
                                 <a className="dropdown-item" data-bs-toggle="modal" data-bs-target="#add-sales-edits" onClick={() => handleEdit(sale)}><TbEdit className="info-img" />Edit Sale</a>
                               </li>
-                              {sale.status === "Complete" && (() => {
+                              {/* {sale.status === "Complete" && (() => {
                                 {
                                   !sale.invoiceId && (
                                     <li>
@@ -766,6 +766,17 @@ const Sales = () => {
                                   )
                                 }
                               })}
+
+                              {sale.invoiceId && (
+                                <li>
+                                  <a className="dropdown-item" onClick={() => navigate(`/invoice/${sale.invoiceId}`)}><TbDownload className="info-img" />View Invoice</a>
+                                </li>
+                              )} */}
+                              {sale.status === "Complete" && !sale.invoiceId && (
+                                <li>
+                                  <a className="dropdown-item" onClick={() => handleConvertToInvoice(sale)}><TbDownload className="info-img" />Convert to Invoice</a>
+                                </li>
+                              )}
 
                               {sale.invoiceId && (
                                 <li>
