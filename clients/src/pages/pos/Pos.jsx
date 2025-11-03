@@ -632,6 +632,10 @@ const [selectedPaymentMethod, setSelectedPaymentMethod] = useState(null);
   // Global keyboard scanner buffer (for hardware scanners that act like keyboards)
   const scannerBufferRef = React.useRef([]); // array of {char, time}
   const scannerClearTimerRef = React.useRef(null);
+  // Per-code cooldown map to avoid repeated requests for same normalized barcode
+  const lastScanMapRef = React.useRef(new Map());
+  // Track in-flight lookups to avoid concurrent network requests for the same code
+  const inFlightRef = React.useRef(new Set());
 
   useEffect(() => {
     const onKeyDown = (e) => {
@@ -691,10 +695,24 @@ const [selectedPaymentMethod, setSelectedPaymentMethod] = useState(null);
   const detectorRef = React.useRef(null);
 
   const lookupBarcodeAndAdd = async (code, opts = { showToast: true }) => {
-    if (!code) return;
+    if (!code) return false;
+    // normalize code so small variations don't cause duplicate requests
+    const normalize = (c) => String(c || '').replace(/\s+/g, ' ').trim().toUpperCase();
+    const normCode = normalize(code);
+    const COOLDOWN_MS = 1500;
+    // per-code cooldown: ignore repeated quick scans for same normalized code
+    const lastMap = lastScanMapRef.current;
+    const lastTime = lastMap.get(normCode) || 0;
+    if (Date.now() - lastTime < COOLDOWN_MS) {
+      barcodeInputRef.current?.focus();
+      return false;
+    }
+    // prevent concurrent lookups for the same normalized code
+    if (inFlightRef.current.has(normCode)) return false;
+    inFlightRef.current.add(normCode);
     try {
       const token = localStorage.getItem('token');
-      const res = await axios.get(`${BASE_URL}/api/products/barcode/${encodeURIComponent(code)}`, {
+      const res = await axios.get(`${BASE_URL}/api/products/barcode/${encodeURIComponent(normCode)}`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       if (res && res.data) {
@@ -729,13 +747,17 @@ const [selectedPaymentMethod, setSelectedPaymentMethod] = useState(null);
         // clear barcode input and keep focus so next scan/input is ready
         setBarcodeInput('');
         barcodeInputRef.current?.focus();
+        // record last successful scan time for this normalized code
+        lastMap.set(normCode, Date.now());
         return true;
       }
     } catch (err) {
       console.error('Barcode lookup failed', err);
       toast.error('Product not found for scanned barcode');
-      // keep input focused for retry
       barcodeInputRef.current?.focus();
+      return false;
+    } finally {
+      inFlightRef.current.delete(normCode);
     }
   };
 
@@ -876,30 +898,14 @@ const [selectedPaymentMethod, setSelectedPaymentMethod] = useState(null);
     const code = (barcodeInput || '').trim();
     if (!code) return;
     try {
-      const token = localStorage.getItem('token');
-      const res = await axios.get(`${BASE_URL}/api/products/barcode/${encodeURIComponent(code)}`, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      if (res && res.data) {
-        const prod = res.data;
-        // Map server product to frontend product shape expected by handleProductClick
-        const frontendProduct = {
-          _id: prod._id,
-          productName: prod.productName,
-          sellingPrice: Number(prod.sellingPrice) || 0,
-          discountValue: Number(prod.discountValue) || 0,
-          tax: Number(prod.tax) || 0,
-          images: prod.images || [],
-          quantity: Number(prod.availableQty || prod.quantity) || 0,
-          unit: prod.unit || 'pcs'
-        };
-        handleProductClick(frontendProduct);
-        setBarcodeInput('');
-        // keep focus on barcode input for next scan
-        barcodeInputRef.current?.focus();
-      }
+      // Use centralized lookup to avoid duplicate add logic and respect cooldown
+      const ok = await lookupBarcodeAndAdd(code);
+      // clear input and keep focus regardless of success so scanner can continue
+      setBarcodeInput('');
+      barcodeInputRef.current?.focus();
+      return ok;
     } catch (err) {
-      console.error('Barcode lookup failed', err);
+      console.error('Barcode submit failed', err);
       setBarcodeInput('');
       barcodeInputRef.current?.focus();
     }
@@ -1073,27 +1079,40 @@ const [selectedPaymentMethod, setSelectedPaymentMethod] = useState(null);
   }, [selectedItems]); // The dependency array ensures this runs only when needed
 
   const handleProductClick = (product) => {
-    const existingItemIndex = selectedItems.findIndex(item => item._id === product._id);
-    
-    if (existingItemIndex !== -1) {
-      // Product already exists, increment quantity
-      const updatedItems = [...selectedItems];
-      updatedItems[existingItemIndex].quantity += 1;
-      updatedItems[existingItemIndex].totalPrice = updatedItems[existingItemIndex].quantity * updatedItems[existingItemIndex].sellingPrice;
-      updatedItems[existingItemIndex].totalDiscount = updatedItems[existingItemIndex].quantity * updatedItems[existingItemIndex].discountValue;
-      updatedItems[existingItemIndex].totalTax = (updatedItems[existingItemIndex].sellingPrice * updatedItems[existingItemIndex].tax * updatedItems[existingItemIndex].quantity) / 100;
-      setSelectedItems(updatedItems);
-    } else {
+    // Use functional updater to avoid stale-state/race conditions when scan and manual add happen together
+    setSelectedItems(prevItems => {
+      const existingIndex = prevItems.findIndex(item => item._id === product._id);
+      if (existingIndex !== -1) {
+        const updated = prevItems.map((it, idx) => {
+          if (idx !== existingIndex) return it;
+          const newQty = (it.quantity || 0) + 1;
+          const sellingPrice = Number(it.sellingPrice || 0);
+          const discountValue = Number(it.discountValue || 0);
+          const tax = Number(it.tax || 0);
+          return {
+            ...it,
+            quantity: newQty,
+            totalPrice: newQty * sellingPrice,
+            totalDiscount: newQty * discountValue,
+            totalTax: (sellingPrice * tax * newQty) / 100,
+          };
+        });
+        return updated;
+      }
+
       // Add new product to cart
+      const sellingPrice = Number(product.sellingPrice || 0);
+      const discountValue = Number(product.discountValue || 0);
+      const tax = Number(product.tax || 0);
       const newItem = {
         ...product,
         quantity: 1,
-        totalPrice: product.sellingPrice,
-        totalDiscount: product.discountValue,
-        totalTax: (product.sellingPrice * product.tax) / 100,
+        totalPrice: sellingPrice,
+        totalDiscount: discountValue,
+        totalTax: (sellingPrice * tax) / 100,
       };
-      setSelectedItems([...selectedItems, newItem]);
-    }
+      return [...prevItems, newItem];
+    });
   };
 
   // NEW handleBagSelection function

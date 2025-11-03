@@ -41,6 +41,7 @@ function Barcode() {
   const [isLookupOpen, setIsLookupOpen] = useState(false);
   const lookupDetectorRef = useRef(null);
   const lookupVideoRef = useRef(null);
+  const lookupDetectionLockRef = useRef(false);
 
   const formRef = useRef(null);
   const searchRef = useRef(null);
@@ -484,15 +485,7 @@ function Barcode() {
             window.dispatchEvent(new CustomEvent('barcode:found', { detail: prod }));
           }
         } catch (e) { /* ignore */ }
-        // stop any running detector after successful lookup (also stops camera tracks via detector.stop)
-        try {
-          if (lookupDetectorRef.current && typeof lookupDetectorRef.current.stop === 'function') {
-            lookupDetectorRef.current.stop();
-            lookupDetectorRef.current = null;
-          }
-        } catch (e) {
-          // ignore
-        }
+        // Keep the detector running so the camera remains open; modal close will stop it.
       } else {
         toast.error('Product not found for this barcode');
       }
@@ -512,27 +505,22 @@ function Barcode() {
 
       const onDetected = async (code) => {
         if (!code) return;
-        // pause detection to avoid duplicates
+        // prevent rapid duplicate handling
+        if (lookupDetectionLockRef.current) return;
+        lookupDetectionLockRef.current = true;
         try {
-          if (lookupDetectorRef.current && typeof lookupDetectorRef.current.stop === 'function') {
-            lookupDetectorRef.current.stop();
-          }
-        } catch (e) {
-          // ignore
-        }
-        try {
-          // Use the same lookup logic to populate product info. handleLookupByCode
-          // will show the product-specific success toast (name & price).
           await handleLookupByCode(code);
-          // give a small haptic feedback if available
           if (navigator && navigator.vibrate) navigator.vibrate(80);
         } catch (err) {
-          // already handled in handleLookupByCode
+          // handled by lookup
         }
+        // release lock after short cooldown so scanning can continue
+        setTimeout(() => { lookupDetectionLockRef.current = false; }, 1500);
       };
 
       try {
-        lookupDetectorRef.current = await barcodeDetector.startVideoDetector(videoEl, onDetected, { formats: ['ean_13', 'code_128'] });
+        // keep camera open after detection in this modal (autoStopOnDetect: false)
+        lookupDetectorRef.current = await barcodeDetector.startVideoDetector(videoEl, onDetected, { formats: ['ean_13', 'code_128'], autoStopOnDetect: false, cooldownMs: 1500 });
       } catch (err) {
         console.error('Failed to start lookup video detector', err);
       }
