@@ -12,18 +12,9 @@ exports.authMiddleware = async (req, res, next) => {
 
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
 
-    const user = await User.findById(decoded.id).select("firstName lastName email passwordChangedAt");
+    const user = await User.findById(decoded.id).select("firstName lastName email");
     if (!user) {
       return res.status(401).json({ message: "User not found" });
-    }
-    // If password changed after token was issued -> invalidate token
-    if(user.passwordChangedAt) {
-      const passwordChangedTimestamp = parseInt(user.passwordChangedAt.getTime() / 1000, 10);
-      if(decoded.iat < passwordChangedTimestamp) {
-        return res.status(401).json({
-          message:"Password recently changed. Please log in again.",
-        })
-      }
     }
 
     req.user = user;

@@ -1197,9 +1197,9 @@ const validateForm = () => {
                           <th>Hsn Code</th>
                           <th>Quantity</th>
                           <th>Rate</th>
-                          <th>Amount</th>
                           <th>Discount</th>    
                           <th>Discount Amount</th>
+                          <th>Amount</th>
                           <th>Tax %</th>
                           <th>Tax Amount</th>                    
                           <th />
@@ -1223,11 +1223,11 @@ const validateForm = () => {
                                 <td>{product.hsnCode}</td>
                                 <td>
                                   <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "8px" }}>
-                                    <input type="number" className="form-control form-control-sm"
+                                    <input type="tex" className="form-control form-control-sm"
                                       style={{ width: "70px", textAlign: "center" }} min="1" max={d.availableQty || 9999}
                                       value={d.qty} onChange={(e) => {
                                         let val = parseInt(e.target.value, 10);
-                                        if (isNaN(val)) val = 1;
+                                        // if (isNaN(val)) val = 1;
                                         if (val < 1) val = 1; if (val > (d.availableQty || 9999)) val = d.availableQty || 9999;
                                         setSelectedProducts((prev) =>
                                           prev.map((item, i) =>
@@ -1254,7 +1254,6 @@ const validateForm = () => {
                                   />
                                 </td>
                                
-                                   <td>₹{d.subTotal}</td>
                                 <td>
                                   <div style={{ display: "flex", alignItems: "center" }}>
                                     <span className="" >
@@ -1268,6 +1267,7 @@ const validateForm = () => {
 
                              
                                 <td>₹{d.discountAmount.toFixed(2)}</td>
+                                   <td>₹{d.subTotal}</td>
                                 <td>{d.tax} %   </td>
 
                                 <td>₹{d.taxAmount.toFixed(2)}</td>

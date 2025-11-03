@@ -9,13 +9,13 @@ import {
   TbDotsVertical,
   TbFileText,
   TbLanguage,
-  TbListDetails,
   TbLogout,
   TbMail,
   TbMaximize,
   TbSearch,
   TbSettings,
   TbUserCircle,
+  TbListDetails,
 } from "react-icons/tb";
 import { GoPackage } from "react-icons/go";
 import UsFlag from "../../../assets/img/flags/us-flag.svg";
@@ -580,7 +580,6 @@ function Navbar() {
                 <a
                   className="nav-link dropdown-toggle"
                   data-bs-toggle="dropdown"
-                  title="Language"
                 >
                   <img
                     src={langObj.flag}
@@ -636,7 +635,6 @@ function Navbar() {
                   id="btnFullscreen"
                   style={{ cursor: "pointer" }}
                   onClick={handleFullscreen}
-                  title="Fullscreen"
                 >
                   <TbMaximize />
                 </a>
@@ -644,7 +642,7 @@ function Navbar() {
 
               {/* Email */}
               <li className="nav-item nav-item-box">
-                <Link to="/mail/inbox" className="position-relative" title="Email Inbox">
+                <Link to="/mail/inbox" className="position-relative">
                   <TbMail />
                   {inboxCount > 0 && (
                     <span className="badge rounded-pill">{inboxCount}</span>
@@ -658,7 +656,6 @@ function Navbar() {
                   className="dropdown-toggle nav-link"
                   data-bs-toggle="dropdown"
                   onClick={(e) => e.preventDefault()}
-                  title="Notifications"
                 >
                   <TbBell style={{ position: "absolute", left: "7px" }} />
                   {notificationCount > 0 && (
@@ -694,7 +691,7 @@ function Navbar() {
               </li>
               {/* Settings */}
               <li className="nav-item nav-item-box">
-                <Link to={`profile/${id}`} title="Settings">
+                <Link to={`profile/${id}`}>
                   <TbSettings className="ti" />
                 </Link>
               </li>
@@ -890,6 +887,18 @@ function Navbar() {
             </Link>
           </div>
         </div>
+      {/* Navbar Add Category Modal */}
+      <CategoryModal
+        modalId="navbarCategoryModal"
+        title={t("Add Category")}
+        categoryName={navCategoryName}
+        categorySlug={navCategorySlug}
+        onCategoryChange={handleNavCategoryNameChange}
+        onSlugChange={handleNavSlugChange}
+        onSubmit={submitNavbarCategory}
+        submitLabel={t("Add Category")}
+        errors={navCatErrors}
+      />
       </div>
     </div>
   );

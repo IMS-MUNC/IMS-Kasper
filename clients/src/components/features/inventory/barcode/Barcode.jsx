@@ -4,6 +4,7 @@ import { IoIosSearch } from "react-icons/io";
 import { AiFillProduct } from "react-icons/ai";
 import { FaFilePdf } from "react-icons/fa6";
 import axios from 'axios';
+import barcodeDetector from '../../../../utils/barcodeDetector';
 import BASE_URL from '../../../../pages/config/config';
 import { toast } from 'react-toastify';
 import jsPDF from 'jspdf';
@@ -36,6 +37,10 @@ function Barcode() {
   const [selectedProduct, setSelectedProduct] = useState(null);
   const [labelFormat, setLabelFormat] = useState('');
   const [pageSize, setPageSize] = useState('');
+  const [lookupCode, setLookupCode] = useState('');
+  const [isLookupOpen, setIsLookupOpen] = useState(false);
+  const lookupDetectorRef = useRef(null);
+  const lookupVideoRef = useRef(null);
 
   const formRef = useRef(null);
   const searchRef = useRef(null);
@@ -71,6 +76,67 @@ function Barcode() {
       setLoading(false);
     }
   };
+
+  // Fetch latest product from server and open preview modal
+  const handlePreview = async (productId) => {
+    try {
+      if (!productId) return;
+      const token = localStorage.getItem('token');
+      const res = await axios.get(`${BASE_URL}/api/products/preview/${productId}`, { headers: { Authorization: `Bearer ${token}` } });
+      if (res && res.data) {
+        const prod = res.data;
+        // update selectedProduct and product preview state
+        // res.data returns a barcode-centric preview object
+        // normalize and prefer the DB-stored itemBarcode
+        const barcodeVal = prod.itemBarcode ? String(prod.itemBarcode).trim() : '';
+        setSelectedProduct((prev) => ({
+          ...prev,
+          _id: prod._id,
+          productName: prod.productName,
+          sellingPrice: prod.sellingPrice || prod.sellingPrice,
+          unit: prod.unit,
+          itemBarcode: barcodeVal || null,
+          availableQty: prod.availableQty,
+          images: prod.images || prev.images,
+        }));
+        setProduct((prev) => ({ ...prev, productName: prod.productName || prev.productName, price: prod.sellingPrice || prev.price, unit: prod.unit || prev.unit, barcode: barcodeVal, uniqueBarcodes: barcodeVal ? [barcodeVal] : [] }));
+        // render into svg
+        setTimeout(() => {
+          const svg = document.getElementById('barcode-svg-0');
+          if (svg && barcodeVal) {
+            const format = /^\d{12,13}$/.test(barcodeVal) ? 'EAN13' : 'CODE128';
+            JsBarcode(svg, barcodeVal, { format, lineColor: '#000', width: 2, height: 100, margin: 10, displayValue: true, fontSize: 16, textMargin: 6 });
+          }
+        }, 50);
+        setIsFormOpen(true);
+      } else {
+        toast.error('Unable to fetch product for preview');
+      }
+    } catch (err) {
+      console.error('handlePreview error', err);
+      toast.error('Unable to fetch product for preview');
+    }
+  };
+
+  // When a product is selected, auto-generate or display existing barcode in realtime
+  // useEffect(() => {
+  //   const autoGenerate = async () => {
+  //     if (!selectedProduct) return;
+  //     // Only render an existing barcode from the selected product — do NOT auto-generate.
+  //     const existing = selectedProduct.itemBarcode || selectedProduct.barcode;
+  //     if (existing) {
+  //       setProduct((prev) => ({ ...prev, barcode: existing, uniqueBarcodes: [existing] }));
+  //       setTimeout(() => {
+  //         const svg = document.getElementById('barcode-svg-0');
+  //         if (svg) {
+  //           const format = /^\d{12,13}$/.test(existing) ? 'EAN13' : 'CODE128';
+  //           JsBarcode(svg, existing, { format, lineColor: '#000', width: 2, height: 100, margin: 10, displayValue: true, fontSize: 16, textMargin: 6 });
+  //         }
+  //       }, 50);
+  //     }
+  //   };
+  //   autoGenerate();
+  // }, [selectedProduct]);
 
   // Handle search input change with debouncing
   useEffect(() => {
@@ -165,6 +231,15 @@ function Barcode() {
   const generateBarcode = () => {
     if (!selectedProduct) {
       toast.error('Please select a product first');
+      return;
+    }
+
+    // If the product already has a barcode attached, warn and show preview instead
+    const existingBarcode = selectedProduct.itemBarcode || product.barcode;
+    if (existingBarcode) {
+      toast.warn('This product already has a barcode. Showing preview.');
+      // open preview modal with DB data
+      handlePreview(selectedProduct._id);
       return;
     }
 
@@ -287,41 +362,192 @@ function Barcode() {
       }
     }
 
-    // const barcodeValue =  barcodeNaming(product, selectedProduct);
-    // Generate unique barcodes for each barcode to be printed
-    const barcodeCount = numberOfBarcodes || 1;
-    const uniqueBarcodes = [];
-
-    for (let i = 0; i < barcodeCount; i++) {
-      uniqueBarcodes.push(Math.floor(100000000000 + Math.random() * 900000000000).toString());
-    }
-
-    // Use the first barcode for the product state (for display purposes)
-    const primaryBarcode = uniqueBarcodes[0];
-
-    setProduct((prev) => ({
-      ...prev,
-      barcode: primaryBarcode,
-      barcodeImg: primaryBarcode,
-      uniqueBarcodes: uniqueBarcodes, // Store all unique barcodes
-    }));
-
-    setTimeout(() => {
-      for (let i = 0; i < barcodeCount; i++) {
-        const barcodeId = `barcode-svg-${i}`;
-        const barcodeElement = document.getElementById(barcodeId);
-        if (barcodeElement) {
-          JsBarcode(barcodeElement, uniqueBarcodes[i], {
-            format: "CODE128",
-            lineColor: "#000",
-            width: 1,
-            height: 60,
-            displayValue: true,
-          });
+    // Call backend to generate barcode(s) so server-side values are used
+    const barcodeCount = parseInt(numberOfBarcodes, 10) || 1;
+    const token = localStorage.getItem('token');
+    setLoading(true);
+    (async () => {
+      try {
+        const requests = [];
+        for (let i = 0; i < barcodeCount; i++) {
+          // Attach productId only for the first call so product.itemBarcode is set once
+          const body = i === 0 ? { productId: selectedProduct._id } : {};
+          requests.push(
+            axios.post(`${BASE_URL}/api/products/generate-barcode`, body, {
+              headers: { Authorization: `Bearer ${token}` },
+            })
+          );
         }
+
+        const responses = await Promise.all(requests);
+        const uniqueBarcodes = responses.map((r) => (r && r.data && r.data.barcode) || '');
+
+        // If any response returned an updated product, pick it (usually the first)
+        const updatedProduct = responses.find((r) => r && r.data && r.data.product && r.data.product._id);
+        if (updatedProduct && updatedProduct.data.product) {
+          const prod = updatedProduct.data.product;
+          setSelectedProduct(prod);
+          setProduct((prev) => ({
+            ...prev,
+            productName: prod.productName || prev.productName,
+            sku: prod.sku || prev.sku,
+            price: prod.sellingPrice || prev.price,
+            quantity: prod.quantity || prev.quantity,
+            barcode: prod.itemBarcode || uniqueBarcodes[0] || prev.barcode,
+            barcodeImg: prod.itemBarcode || uniqueBarcodes[0] || prev.barcodeImg,
+            uniqueBarcodes,
+          }));
+        } else {
+          setProduct((prev) => ({
+            ...prev,
+            barcode: uniqueBarcodes[0] || prev.barcode,
+            barcodeImg: uniqueBarcodes[0] || prev.barcode,
+            uniqueBarcodes,
+          }));
+        }
+
+        // Render barcode svgs immediately with improved visual parameters for camera decoding
+        const renderBarcodeFor = (idx, codeValue) => {
+          const barcodeId = `barcode-svg-${idx}`;
+          const barcodeElement = document.getElementById(barcodeId);
+          if (!barcodeElement) return;
+          let format = 'CODE128';
+          if (/^\d{12,13}$/.test(codeValue)) format = 'EAN13';
+          JsBarcode(barcodeElement, codeValue, {
+            format,
+            lineColor: '#000',
+            width: 2,
+            height: 100,
+            margin: 10,
+            displayValue: true,
+            fontSize: 16,
+            textMargin: 6,
+          });
+        };
+
+        for (let i = 0; i < barcodeCount; i++) {
+          const codeValue = uniqueBarcodes[i] || uniqueBarcodes[0] || '';
+          renderBarcodeFor(i, codeValue);
+        }
+      } catch (err) {
+        console.error('generateBarcode API error', err);
+        toast.error('Failed to generate barcode from server');
+      } finally {
+        setLoading(false);
       }
-    }, 100);
+    })();
   };
+
+  // Lookup a product by barcode value and open a dedicated modal showing DB barcode
+  const handleLookupByCode = async (code) => {
+    try {
+      const trimmed = String(code || '').trim();
+      if (!trimmed) {
+        toast.error('Please enter a barcode to lookup');
+        return;
+      }
+      const token = localStorage.getItem('token');
+      const res = await axios.get(`${BASE_URL}/api/products/barcode/${encodeURIComponent(trimmed)}`, { headers: { Authorization: `Bearer ${token}` } });
+      if (res && res.data) {
+        const prod = res.data;
+        // normalize barcode value from DB and set into local state
+        const barcodeVal = prod.itemBarcode ? String(prod.itemBarcode).trim() : '';
+        setSelectedProduct((prev) => ({
+          ...prev,
+          _id: prod._id,
+          productName: prod.productName || prev.productName,
+          sellingPrice: prod.sellingPrice || prev.sellingPrice,
+          unit: prod.unit || prev.unit,
+          itemBarcode: barcodeVal || null,
+          availableQty: prod.availableQty || prev.availableQty,
+          images: prod.images || prev.images,
+        }));
+        setProduct((prev) => ({ ...prev, productName: prod.productName || prev.productName, price: prod.sellingPrice || prev.price, unit: prod.unit || prev.unit, barcode: barcodeVal, uniqueBarcodes: barcodeVal ? [barcodeVal] : [] }));
+        // render into svg after modal opens
+        setTimeout(() => {
+          const svg = document.getElementById('barcode-lookup-svg');
+          if (svg && barcodeVal) {
+            const format = /^\d{12,13}$/.test(barcodeVal) ? 'EAN13' : 'CODE128';
+            JsBarcode(svg, barcodeVal, { format, lineColor: '#000', width: 2, height: 100, margin: 10, displayValue: true, fontSize: 16, textMargin: 6 });
+          }
+        }, 150);
+        setIsLookupOpen(true);
+        // show single success toast with product name and price
+        try {
+          const label = prod.productName ? `${prod.productName}` : 'Product found';
+          const priceLabel = prod.sellingPrice != null ? ` - ₹${Number(prod.sellingPrice).toFixed(2)}` : '';
+          toast.success(`${label}${priceLabel}`);
+        } catch (e) { /* ignore toast errors */ }
+        // Dispatch a global event so other parts of the app (POS) can react and add the product to cart if desired
+        try {
+          if (typeof window !== 'undefined' && window.CustomEvent) {
+            window.dispatchEvent(new CustomEvent('barcode:found', { detail: prod }));
+          }
+        } catch (e) { /* ignore */ }
+        // stop any running detector after successful lookup (also stops camera tracks via detector.stop)
+        try {
+          if (lookupDetectorRef.current && typeof lookupDetectorRef.current.stop === 'function') {
+            lookupDetectorRef.current.stop();
+            lookupDetectorRef.current = null;
+          }
+        } catch (e) {
+          // ignore
+        }
+      } else {
+        toast.error('Product not found for this barcode');
+      }
+    } catch (err) {
+      console.error('lookupByCode error', err);
+      toast.error(err.response?.data?.message || 'Failed to lookup barcode');
+    }
+  };
+
+  // Start/stop camera detector when lookup modal opens/closes
+  useEffect(() => {
+    let mounted = true;
+    const startDetector = async () => {
+      if (!isLookupOpen) return;
+      const videoEl = lookupVideoRef.current || document.getElementById('barcode-lookup-video');
+      if (!videoEl) return;
+
+      const onDetected = async (code) => {
+        if (!code) return;
+        // pause detection to avoid duplicates
+        try {
+          if (lookupDetectorRef.current && typeof lookupDetectorRef.current.stop === 'function') {
+            lookupDetectorRef.current.stop();
+          }
+        } catch (e) {
+          // ignore
+        }
+        try {
+          // Use the same lookup logic to populate product info. handleLookupByCode
+          // will show the product-specific success toast (name & price).
+          await handleLookupByCode(code);
+          // give a small haptic feedback if available
+          if (navigator && navigator.vibrate) navigator.vibrate(80);
+        } catch (err) {
+          // already handled in handleLookupByCode
+        }
+      };
+
+      try {
+        lookupDetectorRef.current = await barcodeDetector.startVideoDetector(videoEl, onDetected, { formats: ['ean_13', 'code_128'] });
+      } catch (err) {
+        console.error('Failed to start lookup video detector', err);
+      }
+    };
+
+    if (isLookupOpen && mounted) startDetector();
+
+    return () => {
+      mounted = false;
+      if (lookupDetectorRef.current && typeof lookupDetectorRef.current.stop === 'function') {
+        try { lookupDetectorRef.current.stop(); } catch (e) {}
+        lookupDetectorRef.current = null;
+      }
+    };
+  }, [isLookupOpen]);
 
   const handlePrint = () => {
     if (!selectedProduct) {
@@ -480,237 +706,7 @@ function Barcode() {
   }, []);
 
   return (
-    // <div className="page-wrapper notes-page-wrapper">
-    // 	<div className="content">
-    // 		<div className="page-header">
-    // 			<div className="add-item d-flex">
-    // 				<div className="page-title">
-    // 					<h4 className="fw-bold">Print Barcode</h4>
-    // 					<h6>Manage your barcodes</h6>
-    // 				</div>
-    // 			</div>
-    // 			<div className="d-flex align-items-center">
-    // 				<ul className="table-top-head">
-    // 					<li>
-    // 						<a data-bs-toggle="tooltip" data-bs-placement="top" title="Refresh"><i
-    // 								className="ti ti-refresh" /></a>
-    // 					</li>
-    // 					<li>
-    // 						<a data-bs-toggle="tooltip" data-bs-placement="top" title="Collapse" id="collapse-header"><i
-    // 								className="ti ti-chevron-up" /></a>
-    // 					</li>
-    // 				</ul>
-    // 			</div>
-    // 		</div>
-    // 		<div className="barcode-content-list">
-    // 			<form>
-    // 				{/* <div className="row">
-    // 					<div className="col-lg-6 col-12">
-    // 						<div className="row seacrh-barcode-item mb-1">
-    // 							<div className="col-sm-6 mb-3 seacrh-barcode-item-one">
-    // 								<label className="form-label">Warehouse<span
-    // 										className="text-danger ms-1">*</span></label>
-    // 								<select className="select">
-    // 									<option>Select</option>
-    // 									<option>Lavish Warehouse</option>
-    // 									<option>Quaint Warehouse</option>
-    // 									<option>Traditional Warehouse</option>
-    // 									<option>Cool Warehouse</option>
-    // 									<option>Overflow Warehouse</option>
-    // 									<option>Nova Storage Hub</option>
-    // 									<option>Retail Supply Hub</option>
-    // 									<option>EdgeWare Solutions</option>
-    // 								</select>
-    // 							</div>
-    // 							<div className="col-sm-6 mb-3 seacrh-barcode-item-one">
-    // 								<label className="form-label">Store<span className="text-danger ms-1">*</span></label>
-    // 								<select className="select">
-    // 									<option>Select</option>
-    // 									<option>Electro Mart</option>
-    // 									<option>Quantum Gadgets</option>
-    // 									<option>Prime Bazaar</option>
-    // 									<option>Gadget World</option>
-    // 									<option>Volt Vault</option>
-    // 								</select>
-    // 							</div>
-    // 						</div>
-    // 					</div>
-    // 				</div> */}
-    // 				<div className="row">
-    // 					<div className="col-lg-6">
-    // 						<div className="mb-3 search-form seacrh-barcode-item">
-    // 							<div className="search-form">
-    // 								<label className="form-label">Product<span className="text-danger ms-1">*</span></label>
-    // 								<div className="position-relative">
-    // 									<input type="text" name="searchQuery" value={searchQuery} onChange={handleChange} className="form-control"
-    // 				  placeholder="Search Product by Code" />
-    // 									<i data-feather="search" className="feather-search" />
 
-
-    // 								</div>
-    // 								<div className="dropdown-menu search-dropdown w-100 h-auto rounded-1 mt-2"
-    // 									aria-labelledby="dropdownsearchClickable">
-    // 									<ul>
-    // 										<li className="fs-14 text-gray-9 mb-2">Amazon Echo Dot</li>
-    // 										<li className="fs-14 text-gray-9 mb-2">Armani Belt</li>
-    // 										<li className="fs-14 text-gray-9 mb-2">Apple Watch</li>
-    // 										<li className="fs-14 text-gray-9">Apple Iphone 14 Pro</li>
-    // 									</ul>
-    // 								</div>
-    // 							</div>
-    // 						</div>
-    // 					</div>
-    // 				</div>
-    // 			</form>
-    // 			<div className="col-lg-12">
-    // 				<div className="p-3 bg-light rounded border mb-3">
-    // 					<div className="table-responsive rounded border">
-    // 						<table className="table">
-    // 							<thead>
-    // 								<tr>
-    // 									<th>Product</th>
-    // 									<th>SKU</th>
-    // 									<th>Code</th>
-    // 									<th>Qty</th>
-    // 									<th className="text-center no-sort bg-secondary-transparent" />
-    // 								</tr>
-    // 							</thead>
-    // 							<tbody>
-    // 								<tr>
-    // 									<td>
-    // 										<div className="d-flex align-items-center">
-    // 											<a products className="avatar avatar-md me-2">
-    // 												<img src="assets/img/products/stock-img-02.png" alt="product" />
-    // 											</a>
-    // 											<a products>Nike Jordan</a>
-    // 										</div>
-    // 									</td>
-    // 									<td>PT002</td>
-    // 									<td>HG3FK</td>
-    // 									<td>
-    // 										<div className="product-quantity border-secondary-transparent">
-    // 											<span className="quantity-btn"><i data-feather="minus-circle"
-    // 													className="feather-search" /></span>
-    // 											<input type="text" className="quntity-input" defaultValue={4} />
-    // 											<span className="quantity-btn">+<i data-feather="plus-circle"
-    // 													className="plus-circle" /></span>
-    // 										</div>
-    // 									</td>
-    // 									<td className="action-table-data">
-    // 										<div className="edit-delete-action">
-    // 											<a data-bs-toggle="modal" data-bs-target="#delete-modal"
-    // 												className="barcode-delete-icon" products>
-    // 												<i data-feather="trash-2" className="feather-trash-2" />
-    // 											</a>
-    // 										</div>
-    // 									</td>
-    // 								</tr>
-    // 								<tr>
-    // 									<td>
-    // 										<div className="d-flex align-items-center">
-    // 											<a products className="avatar avatar-md me-2">
-    // 												<img src="assets/img/products/stock-img-03.png" alt="product" />
-    // 											</a>
-    // 											<a products>Apple Series 5 Watch</a>
-    // 										</div>
-    // 									</td>
-    // 									<td>PT003</td>
-    // 									<td>TEUIU7</td>
-    // 									<td>
-    // 										<div className="product-quantity border-secondary-transparent">
-    // 											<span className="quantity-btn"><i data-feather="minus-circle"
-    // 													className="feather-search" /></span>
-    // 											<input type="text" className="quntity-input" defaultValue={4} />
-    // 											<span className="quantity-btn">+<i data-feather="plus-circle"
-    // 													className="plus-circle" /></span>
-    // 										</div>
-    // 									</td>
-    // 									<td className="action-table-data">
-    // 										<div className="edit-delete-action">
-    // 											<a data-bs-toggle="modal" data-bs-target="#delete-modal"
-    // 												className="barcode-delete-icon" products>
-    // 												<i data-feather="trash-2" className="feather-trash-2" />
-    // 											</a>
-    // 										</div>
-    // 									</td>
-    // 								</tr>
-    // 							</tbody>
-    // 						</table>
-    // 					</div>
-    // 				</div>
-    // 			</div>
-    // 			<div className="paper-search-size">
-    // 				<div className="row align-items-center">
-    // 					<div className="col-lg-6">
-    // 						<form className="mb-0">
-    // 							<label className="form-label">Paper Size<span className="text-danger ms-1">*</span></label>
-    // 							<select className="select">
-    // 								<option>Select</option>
-    // 								<option>A3</option>
-    // 								<option>A4</option>
-    // 								<option>A5</option>
-    // 								<option>A6</option>
-    // 							</select>
-    // 						</form>
-    // 					</div>
-    // 					<div className="col-lg-6 pt-3">
-    // 						<div className="row">
-    // 							<div className="col-sm-4">
-    // 								<div className="search-toggle-list">
-    // 									<p>Show Store Name</p>
-    // 									<div className="m-0">
-    // 										<div
-    // 											className="status-toggle modal-status d-flex justify-content-between align-items-center">
-    // 											<input type="checkbox" id="user7" className="check" defaultChecked />
-    // 											<label htmlFor="user7" className="checktoggle mb-0" />
-    // 										</div>
-    // 									</div>
-    // 								</div>
-    // 							</div>
-    // 							<div className="col-sm-4">
-    // 								<div className="search-toggle-list">
-    // 									<p>Show Product Name</p>
-    // 									<div className="m-0">
-    // 										<div
-    // 											className="status-toggle modal-status d-flex justify-content-between align-items-center">
-    // 											<input type="checkbox" id="user8" className="check" defaultChecked />
-    // 											<label htmlFor="user8" className="checktoggle mb-0" />
-    // 										</div>
-    // 									</div>
-    // 								</div>
-    // 							</div>
-    // 							<div className="col-sm-4">
-    // 								<div className="search-toggle-list">
-    // 									<p>Show Price</p>
-    // 									<div className="m-0">
-    // 										<div
-    // 											className="status-toggle modal-status d-flex justify-content-between align-items-center">
-    // 											<input type="checkbox" id="user9" className="check" defaultChecked />
-    // 											<label htmlFor="user9" className="checktoggle mb-0"> </label>
-    // 										</div>
-    // 									</div>
-    // 								</div>
-    // 							</div>
-    // 						</div>
-    // 					</div>
-    // 				</div>
-    // 			</div>
-    // 			<div className="search-barcode-button">
-    // 				<a products className="btn btn-submit btn-primary me-2 mt-0" data-bs-toggle="modal"
-    // 					data-bs-target="#prints-barcode">
-    // 					<span><i className="fas fa-eye me-1" /></span>Generate Barcode
-    // 				</a>
-    // 				<a products className="btn btn-cancel btn-secondary fs-13 me-2">
-    // 					<span><i className="fas fa-power-off me-1" /></span>Reset Barcode
-    // 				</a>
-    // 				<a products className="btn btn-cancel btn-danger close-btn">
-    // 					<span><i className="fas fa-print me-1" /></span>Print Barcode
-    // 				</a>
-    // 			</div>
-    // 		</div>
-    // 	</div>
-
-    // </div>
     <div className="page-wrapper notes-page-wrapper">
       <div className="content">
         {/* Add CSS for loading animation */}
@@ -740,10 +736,7 @@ function Barcode() {
                 <a data-bs-toggle="tooltip" data-bs-placement="top" title="Refresh" onClick={() => location.reload()}><TbRefresh
                   className="ti ti-refresh" /></a>
               </li>
-              {/* <li>
-									<a data-bs-toggle="tooltip" data-bs-placement="top" title="Collapse" id="collapse-header"><i
-											className="ti ti-chevron-up" /></a>
-								</li> */}
+
             </ul>
           </div>
         </div>
@@ -811,69 +804,6 @@ function Barcode() {
                     </div>
                   )}
                 </div>
-
-                {/* <div ref={searchRef} style={{ position: 'relative' }}>
-              <div style={{ border: '1px solid #ccc', color: "#999797ff", backgroundColor: "#FBFBFB", padding: '6px', borderRadius: '8px', display: 'flex', alignItems: 'center' }}>
-                <IoIosSearch style={{ fontSize: '25px', marginRight: '8px' }} />
-                <input
-                  type="text"
-                  name="searchQuery"
-                  value={searchQuery}
-                  onChange={handleChange}
-                  placeholder="Search for products..."
-                  style={{ border: 'none', outline: 'none', color: "#999797ff", backgroundColor: "#FBFBFB", flex: 1 }} />
-                {loading && (
-                  <div style={{ width: '20px', height: '20px', border: '2px solid #f3f3f3', borderTop: '2px solid #3498db', borderRadius: '50%', animation: 'spin 1s linear infinite' }}></div>
-                )}
-              </div>
-
-              {showDropdown && (
-                <div style={{
-                  position: 'absolute',
-                  top: '100%',
-                  left: 0,
-                  right: 0,
-                  backgroundColor: 'white',
-                  border: '1px solid #ccc',
-                  borderRadius: '8px',
-                  maxHeight: '200px',
-                  overflowY: 'auto',
-                  zIndex: 1000,
-                  boxShadow: '0 4px 6px rgba(0,0,0,0.1)'
-                }}>
-                  {products.length > 0 ? (
-                    products.map((productItem) => (
-                      <div
-                        key={productItem._id}
-                        onClick={() => handleProductSelect(productItem)}
-                        style={{
-                          padding: '10px 15px',
-                          cursor: 'pointer',
-                          borderBottom: '1px solid #f0f0f0',
-                          display: 'flex',
-                          justifyContent: 'space-between',
-                          alignItems: 'center'
-                        }}
-                        onMouseEnter={(e) => {
-                          e.target.style.backgroundColor = '#f8f9fa';
-                        }}
-                        onMouseLeave={(e) => {
-                          e.target.style.backgroundColor = 'white';
-                        }}
-                      >
-                        <div>
-                          <div style={{ fontWeight: '500', color: '#333' }}>{productItem.productName}</div>
-                        </div>
-                      </div>
-                    ))
-                  ) : (
-                    <div style={{ padding: '15px', textAlign: 'center', color: '#666', fontStyle: 'italic' }}>
-                      {loading ? 'Searching...' : 'No products found'}
-                    </div>
-                  )}
-                </div>
-              )}
-            </div> */}
               </div>
             </div>
 
@@ -913,15 +843,7 @@ function Barcode() {
                           <td>{selectedProduct.quantity || '0'}</td>
                           <td>₹{selectedProduct.sellingPrice || '0'}.00</td>
                           <td>{selectedProduct.sku}</td>
-                          {/* <td>HG3FK</td> */}
 
-                          {/* <td>
-                    <div className="product-quantity border-secondary-transparent">
-                      <span className="quantity-btn"><i data-feather="minus-circle" className="feather-search" /></span>                                                        
-                      <input type="text" className="quntity-input" defaultValue={4} />
-                      <span className="quantity-btn">+<i data-feather="plus-circle" className="plus-circle" /></span>
-                    </div>
-                  </td> */}
                           <td className="action-table-data">
                             <div className="edit-delete-action">
                               <a onClick={clearSearch} data-bs-toggle="modal" data-bs-target="#delete-modal" className="barcode-delete-icon" products>
@@ -936,52 +858,6 @@ function Barcode() {
                   </div>
                 </div>
               </div>
-              // <div sclassName="p-3 bg-light rounded border mb-3">
-              //   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
-              //     <div style={{ fontWeight: '600', color: '#495057' }}>Selected Product Details :</div>
-              //     <button
-              //       onClick={clearSearch}
-              //       style={{
-              //         background: '#dc3545',
-              //         color: 'white',
-              //         border: 'none',
-              //         padding: '4px 8px',
-              //         borderRadius: '4px',
-              //         fontSize: '12px',
-              //         cursor: 'pointer'
-              //       }}
-              //     >
-              //       Clear
-              //     </button>
-              //   </div>
-              //   <div style={{ fontSize: '14px' }}>
-              //     <div style={{ fontSize: '16px', fontWeight: '500' }}>SKU</div>
-              //     <div style={{ border: '1px solid #ccc', color: "#999797ff", backgroundColor: "#FBFBFB", padding: '8px', borderRadius: '8px', display: 'flex', alignItems: 'center' }}>{selectedProduct.sku}</div>
-              //     <div style={{ border: '1px solid #ccc', marginTop: '10px', borderRadius: '8px' }}>
-              //       <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-              //         <thead style={{ backgroundColor: '#E6E6E6' }}>
-              //           <tr style={{ color: "#676767", }}>
-              //             <th style={{ padding: '8px', borderTopLeftRadius: '8px' }}> Variant</th>
-              //             <th>Price</th>
-              //             <th style={{ borderTopRightRadius: '8px' }}>Quantity</th>
-              //           </tr>
-              //         </thead>
-              //         <tbody>
-              //           <tr>
-              //             <td style={{ padding: '8px' }}>
-              //               {selectedProduct.images && selectedProduct.images[0] && (
-              //                 <img src={selectedProduct.images[0].url} style={{ width: '30px', height: '30px', borderRadius: '6px' }} />
-              //               )}
-              //               {selectedProduct.productName}
-              //             </td>
-              //             <td>₹{selectedProduct.sellingPrice || '0'}.00</td>
-              //             <td>{selectedProduct.quantity || '0'}</td>
-              //           </tr>
-              //         </tbody>
-              //       </table>
-              //     </div>
-              //   </div>
-              // </div>
             )}
 
             {!selectedProduct && (
@@ -1009,18 +885,7 @@ function Barcode() {
                     className="form-control"
                   // style={{ border: '1px solid #ccc', color: "#999797ff", backgroundColor: "#FBFBFB", padding: '6px', borderRadius: '8px', width: '100%' }}
                   />
-                  {/* <select
-                                className="form-select"
-                                name="status"
-                                value={status}
-                                onChange={(e) => setStatus(e.target.value)}
-                              >
-                                <option value="">Select Status</option>
-                                <option value="Pending">Pending</option>
-                                <option value="Complete">Complete</option>
-                                <option value="In Progress">In Progress</option>
-                                <option value="On Hold">On Hold</option>
-                              </select> */}
+
                 </div>
               </div>
               <div className="col-md-4">
@@ -1050,93 +915,12 @@ function Barcode() {
                   >
                     <option>--select Page Size--</option>
                     <option value="a4">A4</option>
-
                   </select>
                 </div>
               </div>
-
             </div>
-
-            {/* <div style={{ marginTop: '16px' }}>
-
-            <div style={{ display: 'flex', justifyContent: 'space-between', gap: '16px' }}>
-              <div style={{ width: '100%' }}>
-                <div>Number of Barcode to print</div>
-                <input
-                  type="number"
-                  name="numberOfBarcodes"
-                  value={numberOfBarcodes}
-                  onChange={handleChange}
-                  min="1"
-                  placeholder='01'
-                  style={{ border: '1px solid #ccc', color: "#999797ff", backgroundColor: "#FBFBFB", padding: '6px', borderRadius: '8px', width: '100%' }} />
-              </div>
-
-              <div style={{ width: '100%' }}>
-                <div>Lable Formate</div>
-                <select type="text" style={{ border: '1px solid #ccc', color: "#999797ff", backgroundColor: "#FBFBFB", padding: '6px', borderRadius: '8px', width: '100%' }}>
-                  <option>Large</option>
-                  <option>Mediam</option>
-                  <option>Small</option>
-                </select>
-              </div>
-
-              <div style={{ width: '100%' }}>
-                <div>Page Type & Size</div>
-                <select type="text" style={{ border: '1px solid #ccc', color: "#999797ff", backgroundColor: "#FBFBFB", padding: '6px', borderRadius: '8px', width: '100%' }}>
-                  <option>A4</option>
-                </select>
-              </div>
-            </div>
-          </div> */}
-            {/* 
-          <div style={{ marginTop: '16px' }}>
-            <div>Barcode Content Options</div>
-            <div style={{ display: 'flex', justifyContent: 'space-between', gap: '16px' }}>
-              <div style={{ display: 'flex', gap: '6px' }}>
-                <input type='checkbox'
-                  name="showProductName"
-                  checked={product.showProductName}
-                  onChange={handleChange} />
-                <span>Product Name</span>
-              </div>
-              <div style={{ display: 'flex', gap: '6px' }}>
-                <input type='checkbox'
-                  name="showSku"
-                  checked={product.showSku}
-                  onChange={handleChange} />
-                <span>SKU</span>
-              </div>
-              <div style={{ display: 'flex', gap: '6px' }}>
-                <input type='checkbox'
-                  name="showPrice"
-                  checked={product.showPrice}
-                  onChange={handleChange} />
-                <span>Price</span>
-              </div>
-              <div style={{ display: 'flex', gap: '6px' }}>
-                <input type='checkbox'
-                  name="showExpiryDate"
-                  checked={product.showExpiryDate}
-                  onChange={handleChange} />
-                <span>Expiry Date</span>
-              </div>
-
-              <div style={{ display: 'flex', gap: '6px' }}>
-                <input type='checkbox'
-                  name="showQuantity"
-                  checked={product.showQuantity}
-                  onChange={handleChange} />
-                <span>Quantity</span>
-              </div>
-            </div>
-          </div> */}
-
             <div className="paper-search-size">
               <div className="row align-items-center">
-
-                {/* <div className="col-lg-6 pt-3"> */}
-
                 <div className="row mt-3 " >
                   <div className="col-4 col-sm-2">
                     <div className="search-toggle-list">
@@ -1194,87 +978,51 @@ function Barcode() {
                     </div>
                   </div>
                 </div>
-
-                {/* </div> */}
-
               </div>
             </div>
-            {/* <div className="search-barcode-button">                            
-        <a className="btn btn-submit btn-primary me-2 mt-0" data-bs-toggle="modal" data-bs-target="#prints-barcode">
-          <span><i className="fas fa-eye me-1" /></span>Generate Barcode
-        </a>
-        <a className="btn btn-cancel btn-secondary fs-13 me-2">
-          <span><i className="fas fa-power-off me-1" /></span>Reset Barcode
-        </a>
-        <a className="btn btn-cancel btn-danger close-btn">
-          <span><i className="fas fa-print me-1" /></span>Print Barcode
-        </a>
-      </div> */}
+
             <div className="barcode-content-list border-top pt-3 mt-3">
               <div className="search-barcode-button">
-                <a onClick={() => {
-                  setIsFormOpen(true);
-                  generateBarcode();
-                }}
-                  disabled={!selectedProduct} className="btn btn-submit btn-primary me-2 mt-0" data-bs-toggle="modal" data-bs-target="#prints-barcode">
-                  <span><TbEye className="fas fa-eye me-1" /></span>Generate Barcode
-                </a>
+                {/* <div style={{ display: 'flex', gap: '8px', marginBottom: '12px', alignItems: 'center' }}>
+                  <input
+                    type="text"
+                    placeholder="Enter barcode to lookup"
+                    className="form-control"
+                    style={{ maxWidth: '280px' }}
+                    value={lookupCode}
+                    onChange={(e) => setLookupCode(e.target.value)}
+                  />
+                  <a onClick={() => handleLookupByCode(lookupCode)}
+                    className="btn btn-outline-primary me-2 mt-0"
+                    data-bs-toggle="modal" data-bs-target="#prints-barcode-by-code">
+                    Lookup Barcode
+                  </a>
+                </div> */}
+
+                {selectedProduct && (selectedProduct.itemBarcode || product.barcode) ? (
+                  <a onClick={() => handlePreview(selectedProduct._id)}
+                    className="btn btn-submit btn-primary me-2 mt-0" data-bs-toggle="modal" data-bs-target="#prints-barcode">
+                    <span><TbEye className="fas fa-eye me-1" /></span>Preview Barcode
+                  </a>
+                ) : (
+                  <a onClick={() => {
+                    setIsFormOpen(true);
+                    generateBarcode();
+                  }}
+                    disabled={!selectedProduct} className="btn btn-submit btn-primary me-2 mt-0" data-bs-toggle="modal" data-bs-target="#prints-barcode">
+                    <span><TbEye className="fas fa-eye me-1" /></span>Generate Barcode
+                  </a>
+                )}
                 <a onClick={closeForm} className="btn btn-cancel btn-secondary fs-13 me-2">
                   <span><i className="fas fa-power-off me-1" /></span>Clear
                 </a>
-
               </div>
             </div>
-
           </div>
-
-          {/* <div
-          style={{
-            display: "flex",
-            justifyContent: "space-between",
-            gap: "10px",
-            maxWidth: "690px",
-            margin: "auto",
-            marginTop: "16px",
-          }}
-        >
-          <button
-            style={{
-              padding: "6px 12px",
-              borderRadius: "5px",
-              border: "1px solid #E6E6E6",
-              backgroundColor: "#FFFFFF",
-              color: "#333",
-              cursor: "pointer",
-              boxShadow: "0px 0px 5px rgba(0, 0, 0, 0.3)",
-            }}
-            onClick={closeForm}
-          >
-            Cancel
-          </button>
-          <button
-            onClick={() => {
-              setIsFormOpen(true);
-              generateBarcode();
-            }}
-            disabled={!selectedProduct}
-            style={{
-              padding: "6px 12px",
-              borderRadius: "5px",
-              border: "1px solid #E6E6E6",
-              backgroundColor: selectedProduct ? "#FFFFFF" : "#f5f5f5",
-              color: selectedProduct ? "#333" : "#999",
-              cursor: selectedProduct ? "pointer" : "not-allowed",
-              boxShadow: "0px 0px 5px rgba(0, 0, 0, 0.3)",
-            }}
-          >
-            Preview
-          </button>
-        </div> */}
 
           {/* Show Barcode SVG */}
           {isFormOpen && (
-            <div className="modal fade" id="prints-barcode" style={{backgroundColor: 'rgba(199, 197, 197, 0.4)',backdropFilter: 'blur(1px)',}}>
+            <div className="modal fade" id="prints-barcode" style={{ backgroundColor: 'rgba(199, 197, 197, 0.4)', backdropFilter: 'blur(1px)', }}>
               <div className="modal-dialog modal-dialog-centered stock-adjust-modal barcode-modal">
                 <div className="modal-content">
                   <div className="modal-header">
@@ -1296,6 +1044,18 @@ function Barcode() {
                     </div>
 
                     <div ref={printRef} className="row mt-3" style={{ display: 'flex', flexWrap: 'wrap', gap: '10px' }}>
+                      {/* Show fetched product details for preview: name, price, unit, available qty */}
+                      {product.productName && (
+                        <div style={{ width: '100%', marginBottom: '8px' }}>
+                          <strong>{product.productName}</strong>
+                          <div style={{ fontSize: '14px', color: '#444' }}>
+                            {product.price != null && <span style={{ marginRight: '12px' }}>Price: ₹{Number(product.price).toFixed(2)}</span>}
+                            {product.unit && <span style={{ marginRight: '12px' }}>Unit: {product.unit}</span>}
+                            {selectedProduct?.availableQty != null && <span>Available: {selectedProduct.availableQty}</span>}
+                            {selectedProduct?.itemBarcode != null && <span>barcode: {selectedProduct.itemBarcode}</span>}
+                          </div>
+                        </div>
+                      )}
                       {Array.from({ length: numberOfBarcodes || 1 }).map((_, index) => (
                         <div className="col-sm-4" style={{
                           width: 'calc(33.333% - 7px)',
@@ -1324,104 +1084,63 @@ function Barcode() {
                             {product.showExpiryDate && product.expiryDate && (
                               <p>Expiry: {new Date(product.expiryDate).toLocaleDateString()}</p>
                             )}
-
-
                             {product.barcode && (
                               <svg id={`barcode-svg-${index}`}></svg>
                             )}
                           </div>
                         </div>))}
-
-
                     </div>
-
                   </div>
                 </div>
               </div>
             </div>
+          )}
+          {/* Lookup-by-barcode modal (separate from prints-barcode) */}
+          {isLookupOpen && (
+            <div className="modal fade show" id="prints-barcode-by-code" style={{ display: 'block', backgroundColor: 'rgba(199, 197, 197, 0.4)', backdropFilter: 'blur(1px)' }}>
+              <div className="modal-dialog modal-dialog-centered stock-adjust-modal barcode-modal">
+                <div className="modal-content">
+                  <div className="modal-header">
+                    <div className="page-title">
+                      <h4>Lookup Barcode</h4>
+                    </div>
+                    <button type="button" className="close bg-danger text-white fs-16 shadow-none" onClick={() => { setIsLookupOpen(false); }} aria-label="Close">
+                      <span aria-hidden="true">×</span>
+                    </button>
+                  </div>
+                  <div className="modal-body pb-0">
+                    <div ref={printRef} className="row mt-3" style={{ display: 'flex', flexWrap: 'wrap', gap: '10px' }}>
+                      {product.productName && (
+                        <div style={{ width: '100%', marginBottom: '8px' }}>
+                          <strong>{product.productName}</strong>
+                          <div style={{ fontSize: '14px', color: '#444' }}>
+                            {product.price != null && <span style={{ marginRight: '12px' }}>Price: ₹{Number(product.price).toFixed(2)}</span>}
+                            {product.unit && <span style={{ marginRight: '12px' }}>Unit: {product.unit}</span>}
+                            {selectedProduct?.availableQty != null && <span>Available: {selectedProduct.availableQty}</span>}
+                            {selectedProduct?.itemBarcode != null && <span> Barcode: {selectedProduct.itemBarcode}</span>}
+                          </div>
+                        </div>
+                      )}
 
-            // <div style={{
-            //   position: 'fixed',
-            //   top: '0',
-            //   left: '0',
-            //   width: '100%',
-            //   height: '100%',
-            //   backgroundColor: 'rgba(199, 197, 197, 0.4)',
-            //   backdropFilter: 'blur(1px)',
-            //   display: 'flex',
-            //   justifyContent: 'center',
-            //   zIndex: '10',
-            //   overflowY: 'auto',
-            // }}>
-            //   <div ref={formRef} style={{ width: '760px', height: 'auto', margin: 'auto', marginTop: '80px', marginBottom: '80px', backgroundColor: 'white', border: '1px solid #E1E1E1', borderRadius: '8px', padding: '10px 16px', overflowY: 'auto' }}>
-            //     <div style={{ position: 'fixed', width: '725px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid #E1E1E1', backgroundColor: '#fff', zIndex: '100', marginTop: '-10px', padding: '10px 0px' }}>
-            //       <div style={{ display: 'flex', gap: '10px' }}>
-            //         <button
-            //           type="button"
-            //           className="icon-btn"
-            //           title="Pdf"
-            //           onClick={handleDownloadPDF}
-            //         >
-            //           <FaFilePdf style={{ color: "red" }} />
-            //         </button>
-            //         <button
-            //           type="button"
-            //           className="icon-btn"
-            //           title="Pdf"
-            //           onClick={handlePrint}
-            //         >
-            //           <IoPrint  style={{fontSize:'22px'}} /> Print
-            //         </button>
-            //       </div>
-            //       <div style={{}}>
-            //         <span style={{ backgroundColor: 'red', color: 'white', padding: '5px 11px', borderRadius: '50%', cursor: 'pointer', fontSize: '20px' }} onClick={handlePopupClose}>x</span>
-            //       </div>
-            //     </div>
-
-            //     <div ref={printRef} className='row' style={{ marginTop: '60px', marginLeft: '1px' }}>
-            //       {Array.from({ length: numberOfBarcodes || 1 }).map((_, index) => (
-            //         <div key={index} className='col-6' style={{ height: '300px', }}>
-            //           <div style={{ marginTop: "10px", border: '2px solid #E6E6E6', borderRadius: '8px', width: '320px', padding: '16px 24px', height: '280px', marginBottom: '10px' }}>
-            //             {product.showProductName && product.productName && (
-            //               <span style={{ fontWeight: '600', color: 'black' }}>{product.productName}</span>
-            //             )}
-            //             {product.showSku && product.sku && (
-            //               <>
-            //                 <br />
-            //                 <span style={{ color: 'black' }}>SKU: {product.sku}</span>
-            //               </>
-            //             )}
-            //             {product.showPrice && product.price && (
-            //               <>
-            //                 <br /><br />
-            //                 <span style={{ fontWeight: '500', color: 'black' }}>MRP: ₹{product.price}</span>
-            //               </>
-            //             )}
-            //             <br />
-            //             <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-            //               {product.showExpiryDate && product.expiryDate && (
-            //                 <span style={{ color: 'black' }}>Expiry: {new Date(product.expiryDate).toLocaleDateString()}</span>
-            //               )}
-            //               {product.showQuantity && product.quantity && (
-            //                 <span style={{ color: 'black' }}>QTY: {product.quantity}</span>
-            //               )}
-            //             </div>
-            //             <div style={{ marginTop: '10px', textAlign: 'center' }}>
-            //               {product.barcode && (
-            //                 <svg id={`barcode-svg-${index}`}></svg>
-            //               )}
-            //             </div>
-            //           </div>
-            //         </div>
-            //       ))}
-            //     </div>
-            //   </div>
-            // </div>
+                      <div className="col-sm-12" style={{ width: '100%', display: 'inline-block' }}>
+                        <div className="barcode-scanner-link text-center" style={{ padding: '15px', border: '1px solid #ddd', borderRadius: '5px', backgroundColor: '#fff', margin: '5px 0' }}>
+                          {/* small visible camera preview for scanning */}
+                          <div style={{ marginBottom: '8px' }}>
+                            <video id="barcode-lookup-video" ref={lookupVideoRef} style={{ width: 240, height: 160, borderRadius: 6, background: '#000' }} autoPlay muted playsInline />
+                          </div>
+                          {product.barcode && (
+                            <svg id={`barcode-lookup-svg`}></svg>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
           )}
         </div>
       </div>
-
-
     </div>
   );
 }

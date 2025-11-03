@@ -13,7 +13,6 @@ exports.createProduct = async (req, res) => {
       category,
       subCategory,
       // supplier,
-      // itemBarcode,
       store,
       warehouse,
       purchasePrice,
@@ -42,6 +41,7 @@ exports.createProduct = async (req, res) => {
       returnable,
       expirationDate,
       hsn,
+      itemBarcode,
     } = req.body;
 
     // Parse variants if provided and ensure it's a plain object
@@ -99,7 +99,6 @@ exports.createProduct = async (req, res) => {
       category,
       subcategory: subCatValue,
       // supplier: supplierValue,
-      // itemBarcode,
       store,
       warehouse,
       purchasePrice,
@@ -118,6 +117,7 @@ exports.createProduct = async (req, res) => {
       seoTitle,
       seoDescription,
       variants,
+      itemBarcode,
       itemType,
       isAdvanced,
       trackType,
@@ -512,6 +512,177 @@ exports.getProductById = async (req, res) => {
     if (!product) return res.status(404).json({ message: "Product not found" });
     res.status(200).json(product);
   } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+};
+
+// GET /api/products/preview/:id
+// Return barcode-centric product details used by the frontend preview modal
+exports.getProductBarcodeDetails = async (req, res) => {
+  try {
+    const product = await Product.findById(req.params.id)
+      .populate('brand')
+      .populate('category')
+      .populate('subcategory')
+      .populate('hsn')
+      .populate('warehouse');
+    if (!product) return res.status(404).json({ message: 'Product not found' });
+
+    const qty = Number(product.quantity) || 0;
+    let newQuantitySum = 0;
+    if (Array.isArray(product.newQuantity)) {
+      newQuantitySum = product.newQuantity.reduce((acc, n) => acc + (isNaN(Number(n)) ? 0 : Number(n)), 0);
+    } else if (typeof product.newQuantity === 'number') {
+      newQuantitySum = Number(product.newQuantity);
+    }
+    const availableQty = qty + newQuantitySum;
+
+    const result = {
+      _id: product._id,
+      productName: product.productName,
+      sellingPrice: Number(product.sellingPrice) || 0,
+      unit: product.unit || 'pcs',
+      itemBarcode: product.itemBarcode || null,
+      availableQty,
+      images: product.images || [],
+    };
+
+    res.status(200).json(result);
+  } catch (err) {
+    console.error('getProductBarcodeDetails error', err);
+    res.status(500).json({ message: err.message });
+  }
+};
+
+// GET /api/products/barcode/:code
+exports.getProductByBarcode = async (req, res) => {
+  try {
+    let code = req.params.code;
+    if (!code) return res.status(400).json({ message: 'Barcode is required' });
+
+    // Normalize: trim and try to be tolerant to common variations (whitespace, non-digits,
+    // 12 vs 13-digit EAN prefix differences). Many scanners/paste sources may include\n+    // newlines or stray chars.
+    code = String(code).trim();
+
+    const tryFind = async (candidate) => {
+      if (!candidate) return null;
+      return await Product.findOne({ itemBarcode: candidate })
+        .populate('brand')
+        .populate('category')
+        .populate('subcategory')
+        .populate('hsn')
+        .populate('warehouse');
+    };
+
+    // 1) direct match
+    let product = await tryFind(code);
+
+    // 2) strip non-digits and retry
+    if (!product) {
+      const digits = (code.match(/\d+/g) || []).join('');
+      if (digits && digits !== code) {
+        product = await tryFind(digits);
+      }
+    }
+
+    // 3) if still not found, try 12/13 digit variants (prefix or remove leading zero)
+    if (!product) {
+      const numeric = String(code).replace(/\D/g, '');
+      if (numeric.length === 12) {
+        // try as-is, then as 13-digit by adding leading zero
+        product = await tryFind(numeric);
+        if (!product) product = await tryFind('0' + numeric);
+      } else if (numeric.length === 13) {
+        // try as-is, and also try removing leading zero (some systems store 12-digit)
+        product = await tryFind(numeric);
+        if (!product && numeric.startsWith('0')) product = await tryFind(numeric.slice(1));
+      }
+    }
+
+    if (!product) return res.status(404).json({ message: 'Product not found for given barcode' });
+
+    // Calculate available stock similar to other endpoints
+    const qty = Number(product.quantity) || 0;
+    let newQuantitySum = 0;
+    if (Array.isArray(product.newQuantity)) {
+      newQuantitySum = product.newQuantity.reduce((acc, n) => acc + (isNaN(Number(n)) ? 0 : Number(n)), 0);
+    } else if (typeof product.newQuantity === 'number') {
+      newQuantitySum = Number(product.newQuantity);
+    }
+    const availableQty = qty + newQuantitySum;
+
+    res.status(200).json({ ...product._doc, availableQty });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+};
+
+// POST /api/products/generate-barcode
+// Body: { productId?: string }
+exports.generateBarcode = async (req, res) => {
+  try {
+    const { productId } = req.body || {};
+
+    // Generate an EAN-13 barcode and ensure uniqueness in DB.
+    // We'll generate a 12-digit payload and compute the 13th checksum digit.
+    const computeEan13Check = (base12) => {
+      // base12: string of 12 numeric chars
+      const digits = base12.split('').map(d => parseInt(d, 10));
+      if (digits.length !== 12 || digits.some(d => isNaN(d))) return null;
+      // sum of odd-positioned digits (1,3,5,.. from left)
+      let sumOdd = 0;
+      let sumEven = 0;
+      for (let i = 0; i < 12; i++) {
+        if ((i % 2) === 0) { // index 0 is position 1 (odd)
+          sumOdd += digits[i];
+        } else {
+          sumEven += digits[i];
+        }
+      }
+      const total = sumOdd + sumEven * 3;
+      const checksum = (10 - (total % 10)) % 10;
+      return String(checksum);
+    };
+
+    const generateBase12 = () => {
+      // ensure leading zeros are possible by formatting a random number
+      const n = Math.floor(Math.random() * 1e12); // 0 .. 999999999999
+      return String(n).padStart(12, '0');
+    };
+
+    let candidate;
+    let attempts = 0;
+    const maxAttempts = 50;
+    do {
+      const base12 = generateBase12();
+      const check = computeEan13Check(base12);
+      if (check === null) {
+        attempts += 1;
+        continue;
+      }
+      candidate = base12 + check; // 13-digit EAN
+      const exists = await Product.findOne({ itemBarcode: candidate }).select('_id');
+      if (!exists) break;
+      attempts += 1;
+    } while (attempts < maxAttempts);
+
+    if (attempts >= maxAttempts) {
+      return res.status(500).json({ message: 'Unable to generate unique barcode, try again' });
+    }
+
+    // If productId provided, save to product
+    let updatedProduct = null;
+    if (productId) {
+      updatedProduct = await Product.findByIdAndUpdate(
+        productId,
+        { itemBarcode: candidate },
+        { new: true }
+      );
+    }
+
+    return res.status(200).json({ barcode: candidate, product: updatedProduct });
+  } catch (err) {
+    console.error('generateBarcode error', err);
     res.status(500).json({ message: err.message });
   }
 };

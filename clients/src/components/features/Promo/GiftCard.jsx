@@ -47,6 +47,21 @@ const GiftCard = ({ show, handleClose }) => {
   const [selectedGiftCards, setSelectedGiftCards] = useState([]);
   const [selectAll, setSelectAll] = useState(false);
 
+  // Regex + sanitization helpers
+  const [formErrors, setFormErrors] = useState({});
+  const [editFormErrors, setEditFormErrors] = useState({});
+
+  const giftCardPattern = /^[A-Za-z0-9 _-]{3,40}$/;
+  // letters, numbers, spaces, underscores, hyphens, length 3–40
+
+  const amountPattern = /^(?:0|[1-9]\d{0,8})(?:\.\d{1,2})?$/;
+  // up to 9 digits + optional 2 decimal places
+
+  const sanitizeText = (s = "") =>
+    s.replace(/[<>`]/g, "")   // strip potentially dangerous characters
+      .replace(/\s+/g, " ")    // collapse multiple spaces
+      .trim();
+
   // Function to check and update expired gift cards
   const checkAndUpdateExpiredGiftCards = async (giftCards) => {
     const today = new Date();
@@ -336,42 +351,157 @@ const GiftCard = ({ show, handleClose }) => {
     status: false,
   });
 
+  const handleEditChange = (e) => {
+    const { name, value, type, checked } = e.target;
+    let v = type === "checkbox" ? checked : value;
 
+    if (name === "giftCard") {
+      v = sanitizeText(v).slice(0, 40); // enforce 3–40 chars, sanitized
+    }
+
+    if (name === "amount") {
+      // keep only digits and at most one dot; limit to 2 decimals
+      let s = String(v).replace(/[^\d.]/g, "");
+      const parts = s.split(".");
+      if (parts.length > 2) {
+        s = parts[0] + "." + parts.slice(1).join("");
+      } else {
+        s = parts.join(".");
+      }
+      const [i, d] = s.split(".");
+      v = d !== undefined ? `${i}.${d.slice(0, 2)}` : i;
+    }
+
+    setEditFormData((prev) => ({ ...prev, [name]: v }));
+    setEditFormErrors((prev) => ({ ...prev, [name]: undefined })); // clear the field error
+  };
+
+
+
+  // const handleChange = (e) => {
+  //   const { name, value, type, checked } = e.target;
+  //   setFormData((prev) => ({
+  //     ...prev,
+  //     [name]: type === "checkbox" ? checked : value,
+  //   }));
+  // };
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
-    setFormData((prev) => ({
-      ...prev,
-      [name]: type === "checkbox" ? checked : value,
-    }));
+    let v = type === "checkbox" ? checked : value;
+
+    if (name === "giftCard") {
+      v = sanitizeText(v).slice(0, 40); // enforce max length 40
+    }
+
+    if (name === "amount") {
+      // keep only digits and one dot, max 2 decimals
+      let s = String(v);
+      s = s.replace(/[^\d.]/g, "");
+      const parts = s.split(".");
+      if (parts.length > 2) {
+        s = parts[0] + "." + parts.slice(1).join(""); // merge extra dots
+      }
+      if (parts[1]) {
+        parts[1] = parts[1].slice(0, 2); // cap at 2 decimals
+        s = parts[0] + "." + parts[1];
+      }
+      v = s;
+    }
+
+    setFormData((prev) => ({ ...prev, [name]: v }));
+    setFormErrors((prev) => ({ ...prev, [name]: undefined })); // clear field error as user types
   };
+
+  // const handleSubmit = async (e) => {
+  //   e.preventDefault();
+
+  //   // Basic form validation to ensure all fields are filled
+  //   if (
+  //     !formData.giftCard ||
+  //     !formData.customer ||
+  //     !formData.issuedDate ||
+  //     !formData.expiryDate ||
+  //     !formData.amount
+  //   ) {
+  //     setError("All fields are required.");
+  //     console.error("Form data is missing required fields:", formData);
+  //     return;
+  //   }
+
+  //   // Date validation: Ensure issued date is before expiry date
+  //   const issuedDate = dayjs(formData.issuedDate);
+  //   const expiryDate = dayjs(formData.expiryDate);
+  //   const today = dayjs().startOf('day');
+
+  //   if (issuedDate.isAfter(expiryDate)) {
+  //     toast.error("Issued date must be before expiry date. Please select valid dates.");
+  //     setError("Issued date must be before expiry date.");
+  //     return;
+  //   }
+
+  //   if (expiryDate.isBefore(today)) {
+  //     toast.error("Expiry date must be a future date. Please select a valid expiry date.");
+  //     setError("Expiry date must be a future date.");
+  //     return;
+  //   }
+
+  //   try {
+  //     const token = localStorage.getItem("token");
+
+  //     const response = await fetch(`${BASE_URL}/api/giftcard/`, {
+  //       method: "POST", // Send a POST request
+  //       headers: {
+  //         "Content-Type": "application/json",
+  //         Authorization: `Bearer ${token}`,
+  //         // Indicate that we're sending JSON
+  //       },
+  //       body: JSON.stringify(formData), // Send the form data as a JSON string
+  //     });
+
+  //     // Check if the response is not OK (status 2xx)
+  //     if (!response.ok) {
+  //       const errorData = await response.json();
+  //       console.error("API error:", errorData);
+  //       throw new Error(errorData.message || "Failed to add gift card"); // Display error from the server if available
+  //     }
+
+  //     const data = await response.json(); // Parse the response data
+  //     // console.log("New Gift Card Added:", data); // Log the response (the added gift card)
+
+  //     toast.success("Gift card added successfully!"); // Show success toast
+
+  //     // Optionally, you can update your state here to show the new gift card in the UI
+  //     setGiftCardDatas((prevData) => [...prevData, data]); // Add the new gift card to the list
+
+  //     // Close the modal after submission
+  //     handleCloses();
+  //   } catch (err) {
+  //     setError(err.message); // Set error state if something goes wrong
+  //     console.error("Error:", err.message);
+  //   }
+  // };
+
 
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    // Basic form validation to ensure all fields are filled
-    if (
-      !formData.giftCard ||
-      !formData.customer ||
-      !formData.issuedDate ||
-      !formData.expiryDate ||
-      !formData.amount
-    ) {
-      setError("All fields are required.");
-      console.error("Form data is missing required fields:", formData);
+    const errors = validateAddForm();
+    if (Object.keys(errors).length) {
+      setFormErrors(errors);
+      toast.error("Please fix the highlighted fields.");
       return;
     }
 
-    // Date validation: Ensure issued date is before expiry date
+    // Date validation you already had
     const issuedDate = dayjs(formData.issuedDate);
     const expiryDate = dayjs(formData.expiryDate);
-    const today = dayjs().startOf('day');
+    const today = dayjs().startOf("day");
 
     if (issuedDate.isAfter(expiryDate)) {
       toast.error("Issued date must be before expiry date. Please select valid dates.");
       setError("Issued date must be before expiry date.");
       return;
     }
-
     if (expiryDate.isBefore(today)) {
       toast.error("Expiry date must be a future date. Please select a valid expiry date.");
       setError("Expiry date must be a future date.");
@@ -381,39 +511,35 @@ const GiftCard = ({ show, handleClose }) => {
     try {
       const token = localStorage.getItem("token");
 
+      const payload = {
+        ...formData,
+        giftCard: sanitizeText(formData.giftCard),
+        amount: Number(parseFloat(formData.amount).toFixed(2)),
+      };
+
       const response = await fetch(`${BASE_URL}/api/giftcard/`, {
-        method: "POST", // Send a POST request
+        method: "POST",
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
-          // Indicate that we're sending JSON
         },
-        body: JSON.stringify(formData), // Send the form data as a JSON string
+        body: JSON.stringify(payload),
       });
 
-      // Check if the response is not OK (status 2xx)
       if (!response.ok) {
         const errorData = await response.json();
-        console.error("API error:", errorData);
-        throw new Error(errorData.message || "Failed to add gift card"); // Display error from the server if available
+        throw new Error(errorData.message || "Failed to add gift card");
       }
 
-      const data = await response.json(); // Parse the response data
-      // console.log("New Gift Card Added:", data); // Log the response (the added gift card)
-
-      toast.success("Gift card added successfully!"); // Show success toast
-
-      // Optionally, you can update your state here to show the new gift card in the UI
-      setGiftCardDatas((prevData) => [...prevData, data]); // Add the new gift card to the list
-
-      // Close the modal after submission
+      const data = await response.json();
+      toast.success("Gift card added successfully!");
+      setGiftCardDatas((prevData) => [...prevData, data]);
       handleCloses();
     } catch (err) {
-      setError(err.message); // Set error state if something goes wrong
+      setError(err.message);
       console.error("Error:", err.message);
     }
   };
-
 
   const handleEditOpen = (card) => {
     // console.log("Selected Gift Card:", card);
@@ -452,10 +578,83 @@ const GiftCard = ({ show, handleClose }) => {
     return `${y}-${m}-${d.padStart(2, "0")}`;
   };
 
+  // const handleEditSubmit = async (e) => {
+  //   e.preventDefault();
+
+  //   // Date validation: Ensure issued date is before expiry date
+  //   const issuedDate = dayjs(editFormData.issuedDate);
+  //   const expiryDate = dayjs(editFormData.expiryDate);
+  //   const today = dayjs().startOf('day');
+
+  //   if (issuedDate.isAfter(expiryDate)) {
+  //     toast.error("Issued date must be before expiry date. Please select valid dates.");
+  //     setError("Issued date must be before expiry date.");
+  //     return;
+  //   }
+
+  //   if (expiryDate.isBefore(today)) {
+  //     toast.error("Expiry date must be a future date. Please select a valid expiry date.");
+  //     setError("Expiry date must be a future date.");
+  //     return;
+  //   }
+
+  //   const updatedGiftCardData = {
+  //     ...editFormData,
+  //     issuedDate: dayjs(editFormData.issuedDate).format("YYYY-MM-DD"),
+  //     expiryDate: dayjs(editFormData.expiryDate).format("YYYY-MM-DD"),
+  //     amount: Number(editFormData.amount), // Ensure amount is a number
+  //   };
+
+  //   try {
+  //     const token = localStorage.getItem("token");
+  //     const response = await fetch(
+  //       `${BASE_URL}/api/giftcard/${editFormData.id}`,
+  //       {
+  //         method: "PUT",
+  //         headers: {
+  //           "Content-Type": "application/json",
+  //           Authorization: `Bearer ${token}`,
+  //         },
+  //         body: JSON.stringify(updatedGiftCardData),
+  //       }
+  //     );
+
+  //     if (!response.ok) {
+  //       const errorData = await response.json();
+  //       throw new Error(errorData.error || "Failed to update gift card");
+  //     }
+
+  //     const result = await response.json();
+  //     // console.log("Updated Gift Card:", result);
+
+  //     // Update the state with the updated gift card data
+  //     setGiftCardDatas((prevData) =>
+  //       prevData.map((card) =>
+  //         card._id === editFormData.id ? { ...card, ...result.data } : card
+  //       )
+  //     );
+
+  //     toast.success(result.message || "Gift card updated successfully");
+  //     handleEditClose();
+  //   } catch (err) {
+  //     console.error("Error updating gift card:", err);
+  //     toast.error(err.message || "Failed to update gift card. Please try again.");
+  //     setError("Failed to update gift card. Please try again.");
+  //   }
+  // };
+
   const handleEditSubmit = async (e) => {
     e.preventDefault();
 
-    // Date validation: Ensure issued date is before expiry date
+    // regex validations
+    const errors = validateEditForm();
+    if (Object.keys(errors).length) {
+      setEditFormErrors(errors);
+      toast.error("Please fix the highlighted fields.");
+      return;
+    }
+
+    // your existing date validation
     const issuedDate = dayjs(editFormData.issuedDate);
     const expiryDate = dayjs(editFormData.expiryDate);
     const today = dayjs().startOf('day');
@@ -474,9 +673,10 @@ const GiftCard = ({ show, handleClose }) => {
 
     const updatedGiftCardData = {
       ...editFormData,
+      giftCard: sanitizeText(editFormData.giftCard),
       issuedDate: dayjs(editFormData.issuedDate).format("YYYY-MM-DD"),
       expiryDate: dayjs(editFormData.expiryDate).format("YYYY-MM-DD"),
-      amount: Number(editFormData.amount), // Ensure amount is a number
+      amount: Number(parseFloat(editFormData.amount).toFixed(2)),
     };
 
     try {
@@ -499,9 +699,7 @@ const GiftCard = ({ show, handleClose }) => {
       }
 
       const result = await response.json();
-      // console.log("Updated Gift Card:", result);
 
-      // Update the state with the updated gift card data
       setGiftCardDatas((prevData) =>
         prevData.map((card) =>
           card._id === editFormData.id ? { ...card, ...result.data } : card
@@ -652,20 +850,20 @@ const GiftCard = ({ show, handleClose }) => {
       );
     })
     .sort((a, b) => {
-  // Sorting Logic
-  switch (sortOrder) {
-    case "Latest": // LIFO - Last-In, First-Out
-      return new Date(b.createdAt) - new Date(a.createdAt);
-    case "Oldest": // FIFO - First-In, First-Out
-      return new Date(a.createdAt) - new Date(b.createdAt);
-    case "Ascending":
-      return a.giftCard.localeCompare(b.giftCard);
-    case "Descending":
-      return b.giftCard.localeCompare(a.giftCard);
-    default:
-      return 0;
-  }
-});
+      // Sorting Logic
+      switch (sortOrder) {
+        case "Latest": // LIFO - Last-In, First-Out
+          return new Date(b.createdAt) - new Date(a.createdAt);
+        case "Oldest": // FIFO - First-In, First-Out
+          return new Date(a.createdAt) - new Date(b.createdAt);
+        case "Ascending":
+          return a.giftCard.localeCompare(b.giftCard);
+        case "Descending":
+          return b.giftCard.localeCompare(a.giftCard);
+        default:
+          return 0;
+      }
+    });
 
   const totalPages = Math.ceil(filteredGiftCards.length / itemsPerPage);
   const paginatedGiftCards = filteredGiftCards.slice(
@@ -703,6 +901,53 @@ const GiftCard = ({ show, handleClose }) => {
     Oldest: 'Oldest',
     Ascending: 'A-Z',
     Descending: 'Z-A'
+  };
+
+  const validateEditForm = () => {
+    const errors = {};
+
+    if (!giftCardPattern.test(editFormData.giftCard)) {
+      errors.giftCard = "3–40 chars. Only letters, numbers, spaces, hyphen (-), underscore (_)";
+    }
+    if (!editFormData.customer) {
+      errors.customer = "Please select a customer";
+    }
+    if (!editFormData.issuedDate) {
+      errors.issuedDate = "Issued date is required";
+    }
+    if (!editFormData.expiryDate) {
+      errors.expiryDate = "Expiry date is required";
+    }
+    if (
+      !amountPattern.test(String(editFormData.amount)) ||
+      Number(editFormData.amount) <= 0
+    ) {
+      errors.amount = "Amount must be a positive number with up to 2 decimals";
+    }
+
+    return errors;
+  };
+
+  const validateAddForm = () => {
+    const errors = {};
+
+    if (!giftCardPattern.test(formData.giftCard)) {
+      errors.giftCard = "3–40 chars. Only letters, numbers, spaces, hyphen (-), underscore (_)";
+    }
+    if (!formData.customer) {
+      errors.customer = "Please select a customer";
+    }
+    if (!formData.issuedDate) {
+      errors.issuedDate = "Issued date is required";
+    }
+    if (!formData.expiryDate) {
+      errors.expiryDate = "Expiry date is required";
+    }
+    if (!amountPattern.test(String(formData.amount)) || Number(formData.amount) <= 0) {
+      errors.amount = "Amount must be a positive number with up to 2 decimals";
+    }
+
+    return errors;
   };
 
   return (
@@ -898,56 +1143,56 @@ const GiftCard = ({ show, handleClose }) => {
               </thead>
 
               <tbody>
-    {paginatedGiftCards.length > 0 ? (
-        paginatedGiftCards.map((item, idx) => (
-            <tr key={idx}>
-                <td>
-                    <input
-                        type="checkbox"
-                        checked={selectedGiftCards.includes(item._id)}
-                        onChange={() => handleCheckboxChange(item._id)}
-                    />
-                </td>
-                <td>{item.giftCard}</td>
-                <td>{getCustomerName(item.customer)}</td>
-                <td>{dayjs(item.issuedDate).format("YYYY-MM-DD")}</td>
-                <td>{dayjs(item.expiryDate).format("YYYY-MM-DD")}</td>
-                <td>{item.amount}</td>
-                <td>
-                    <span
-                    
-                        className={`badge table-badge fw-medium fs-10 ${item.status ? "badge-success" : "badge-danger"}`}
-                    >
-                        {item.status ? "Active" : "Inactive"}
-                    </span>
-                </td>
-                <td className="action-table-data">
-                    <div className="iconsms" style={{ display: 'flex', justifyContent: 'center', gap: '10px' }}>
-                        <button
+                {paginatedGiftCards.length > 0 ? (
+                  paginatedGiftCards.map((item, idx) => (
+                    <tr key={idx}>
+                      <td>
+                        <input
+                          type="checkbox"
+                          checked={selectedGiftCards.includes(item._id)}
+                          onChange={() => handleCheckboxChange(item._id)}
+                        />
+                      </td>
+                      <td>{item.giftCard}</td>
+                      <td>{getCustomerName(item.customer)}</td>
+                      <td>{dayjs(item.issuedDate).format("YYYY-MM-DD")}</td>
+                      <td>{dayjs(item.expiryDate).format("YYYY-MM-DD")}</td>
+                      <td>{item.amount}</td>
+                      <td>
+                        <span
+
+                          className={`badge table-badge fw-medium fs-10 ${item.status ? "badge-success" : "badge-danger"}`}
+                        >
+                          {item.status ? "Active" : "Inactive"}
+                        </span>
+                      </td>
+                      <td className="action-table-data">
+                        <div className="iconsms" style={{ display: 'flex', justifyContent: 'center', gap: '10px' }}>
+                          <button
                             variant="warning text-white"
                             onClick={() => handleEditOpen(toEditForm(item))}
                             title="Edit"
-                        >
+                          >
                             <FiEdit />
-                        </button>
-                        <button 
+                          </button>
+                          <button
                             onClick={() => handleDelete(item._id)}
                             title="Delete"
-                        >
+                          >
                             <RiDeleteBinLine />
-                        </button>
-                    </div>
-                </td>
-            </tr>
-        ))
-    ) : (
-        <tr>
-            <td colSpan="8" className="text-center text-muted">
-                No matching gift card found.
-            </td>
-        </tr>
-    )}
-</tbody>
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))
+                ) : (
+                  <tr>
+                    <td colSpan="8" className="text-center text-muted">
+                      No matching gift card found.
+                    </td>
+                  </tr>
+                )}
+              </tbody>
             </table>
           </div>
 
@@ -1034,7 +1279,12 @@ const GiftCard = ({ show, handleClose }) => {
                 name="giftCard"
                 value={formData.giftCard}
                 onChange={handleChange}
+                maxLength={40}
+                isInvalid={!!formErrors.giftCard}
               />
+              <Form.Control.Feedback type="invalid">
+                {formErrors.giftCard}
+              </Form.Control.Feedback>
             </Form.Group>
 
             <Form.Group controlId="customer" className="mt-3">
@@ -1056,6 +1306,7 @@ const GiftCard = ({ show, handleClose }) => {
                 value={formData.customer}
                 onChange={handleChange}
                 className="mt-1"
+                isInvalid={!!formErrors.customer}
               >
                 <option value="">
                   {Customers.length === 0 ? "Loading customers..." : "Select Customer"}
@@ -1066,6 +1317,9 @@ const GiftCard = ({ show, handleClose }) => {
                   </option>
                 ))}
               </Form.Select>
+              <Form.Control.Feedback type="invalid">
+                {formErrors.customer}
+              </Form.Control.Feedback>
             </Form.Group>
 
             <Row className="mt-3">
@@ -1079,7 +1333,11 @@ const GiftCard = ({ show, handleClose }) => {
                     name="issuedDate"
                     value={dayjs(formData.issuedDate).format("YYYY-MM-DD")}
                     onChange={handleChange}
+                    isInvalid={!!formErrors.issuedDate}
                   />
+                  <Form.Control.Feedback type="invalid">
+                    {formErrors.issuedDate}
+                  </Form.Control.Feedback>
                 </Form.Group>
               </Col>
               <Col>
@@ -1092,7 +1350,11 @@ const GiftCard = ({ show, handleClose }) => {
                     name="expiryDate"
                     value={formData.expiryDate}
                     onChange={handleChange}
+                    isInvalid={!!formErrors.expiryDate}
                   />
+                  <Form.Control.Feedback type="invalid">
+                    {formErrors.expiryDate}
+                  </Form.Control.Feedback>
                 </Form.Group>
               </Col>
             </Row>
@@ -1109,7 +1371,12 @@ const GiftCard = ({ show, handleClose }) => {
                     value={formData.amount}
                     onChange={handleChange}
                     min={1}
+                    placeholder="e.g. 100 or 99.99"
+                    isInvalid={!!formErrors.amount}
                   />
+                  <Form.Control.Feedback type="invalid">
+                    {formErrors.amount}
+                  </Form.Control.Feedback>
                 </Form.Group>
               </Col>
               {/* <Col>
@@ -1167,10 +1434,16 @@ const GiftCard = ({ show, handleClose }) => {
                 type="text"
                 name="giftCard"
                 value={editFormData.giftCard}
-                onChange={(e) =>
-                  setEditFormData({ ...editFormData, giftCard: e.target.value })
-                }
+                // onChange={(e) =>
+                //   setEditFormData({ ...editFormData, giftCard: e.target.value })
+                // }
+                onChange={handleEditChange}
+                maxLength={40}
+                isInvalid={!!editFormErrors.giftCard}
               />
+              <Form.Control.Feedback type="invalid">
+                {editFormErrors.giftCard}
+              </Form.Control.Feedback>
             </Form.Group>
 
             <Form.Group controlId="editCustomer" className="mt-3">
@@ -1189,10 +1462,9 @@ const GiftCard = ({ show, handleClose }) => {
               <Form.Select
                 name="customer"
                 value={editFormData.customer}
-                onChange={(e) =>
-                  setEditFormData({ ...editFormData, customer: e.target.value })
-                }
+                onChange={handleEditChange}
                 className="mt-1"
+                isInvalid={!!editFormErrors.customer}
               >
                 <option value="">Select</option>
                 {Customers.map((c) => (
@@ -1201,6 +1473,9 @@ const GiftCard = ({ show, handleClose }) => {
                   </option>
                 ))}
               </Form.Select>
+              <Form.Control.Feedback type="invalid">
+                {editFormErrors.customer}
+              </Form.Control.Feedback>
             </Form.Group>
 
             <Row className="mt-3">
@@ -1213,13 +1488,12 @@ const GiftCard = ({ show, handleClose }) => {
                     type="date"
                     name="issuedDate"
                     value={editFormData.issuedDate}
-                    onChange={(e) =>
-                      setEditFormData({
-                        ...editFormData,
-                        issuedDate: e.target.value,
-                      })
-                    }
+                    onChange={handleEditChange}
+                    isInvalid={!!editFormErrors.issuedDate}
                   />
+                  <Form.Control.Feedback type="invalid">
+                    {editFormErrors.issuedDate}
+                  </Form.Control.Feedback>
                 </Form.Group>
               </Col>
               <Col>
@@ -1231,13 +1505,12 @@ const GiftCard = ({ show, handleClose }) => {
                     type="date"
                     name="expiryDate"
                     value={editFormData.expiryDate}
-                    onChange={(e) =>
-                      setEditFormData({
-                        ...editFormData,
-                        expiryDate: e.target.value,
-                      })
-                    }
+                    onChange={handleEditChange}
+                    isInvalid={!!editFormErrors.expiryDate}
                   />
+                  <Form.Control.Feedback type="invalid">
+                    {editFormErrors.expiryDate}
+                  </Form.Control.Feedback>
                 </Form.Group>
               </Col>
             </Row>
@@ -1252,13 +1525,13 @@ const GiftCard = ({ show, handleClose }) => {
                     type="number"
                     name="amount"
                     value={editFormData.amount}
-                    onChange={(e) =>
-                      setEditFormData({
-                        ...editFormData,
-                        amount: e.target.value,
-                      })
-                    }
+                    onChange={handleEditChange}
+                    placeholder="e.g. 100 or 99.99"
+                    isInvalid={!!editFormErrors.amount}
                   />
+                  <Form.Control.Feedback type="invalid">
+                    {editFormErrors.amount}
+                  </Form.Control.Feedback>
                 </Form.Group>
               </Col>
               {/* <Col>
@@ -1290,9 +1563,7 @@ const GiftCard = ({ show, handleClose }) => {
                 type="switch"
                 name="status"
                 checked={editFormData.status}
-                onChange={(e) =>
-                  setEditFormData({ ...editFormData, status: e.target.checked })
-                }
+                onChange={handleEditChange}
               />
             </Form.Group>
           </Form>
