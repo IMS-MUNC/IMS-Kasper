@@ -183,11 +183,15 @@ export function startVideoDetector(videoEl, onDetected, options = {}) {
     // options: { formats, intervalMs }
     const formats = options.formats || ['ean_13', 'ean_8', 'code_128', 'code_39', 'upc_a', 'upc_e', 'qr_code'];
     const intervalMs = options.intervalMs || 300;
+    const autoStopOnDetect = typeof options.autoStopOnDetect === 'boolean' ? options.autoStopOnDetect : true;
+    const cooldownMs = typeof options.cooldownMs === 'number' ? options.cooldownMs : 1500; // ignore duplicate callbacks within this window
     let running = true;
     let loopId = null;
     let zxingController = null;
     let fallbackTimer = null;
     let zxingStarted = false;
+    let lastDetectedAt = 0;
+    let lastDetectedValue = null;
 
     async function stop() {
         running = false;
@@ -249,9 +253,19 @@ export function startVideoDetector(videoEl, onDetected, options = {}) {
                         // found something — cancel fallback timer
                         if (fallbackTimer) { clearTimeout(fallbackTimer); fallbackTimer = null; }
                         const code = barcodes[0].rawValue || barcodes[0].raw_text || barcodes[0].raw;
-                        onDetected(code);
-                        await stop();
-                        return;
+                        const now = Date.now();
+                        // dedupe similar detections within cooldown window
+                        if (code && (now - lastDetectedAt > cooldownMs || code !== lastDetectedValue)) {
+                            lastDetectedAt = now;
+                            lastDetectedValue = code;
+                            try {
+                                onDetected(code);
+                            } catch (e) { /* ignore */ }
+                            if (autoStopOnDetect) {
+                                await stop();
+                                return;
+                            }
+                        }
                     }
                 } catch (err) {
                     console.warn('native detect error', err);
@@ -278,10 +292,16 @@ export function startVideoDetector(videoEl, onDetected, options = {}) {
             await codeReader.decodeFromVideoDevice(undefined, videoEl, (result, err) => {
                 if (result) {
                     const code = result.getText();
-                    onDetected(code);
-                    // stop reader
-                    try { codeReader.reset(); } catch (e) { /* ignore */ }
-                    running = false;
+                    const now = Date.now();
+                    if (code && (now - lastDetectedAt > cooldownMs || code !== lastDetectedValue)) {
+                        lastDetectedAt = now;
+                        lastDetectedValue = code;
+                        try { onDetected(code); } catch (e) { /* ignore */ }
+                        if (autoStopOnDetect) {
+                            try { codeReader.reset(); } catch (e) { /* ignore */ }
+                            running = false;
+                        }
+                    }
                 }
             });
         } catch (err) {
