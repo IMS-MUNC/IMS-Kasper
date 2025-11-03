@@ -32,6 +32,11 @@ const AddCustomerModal = ({ onClose, onSuccess }) => {
   const [gstLoading, setGstLoading] = useState(false);
   const [validationErrors, setValidationErrors] = useState({});
   const [isGstinVerified, setIsGstinVerified] = useState(false);
+  const [gstDetails, setGstDetails] = useState(null);
+
+  // Masters India API config (set in Vite env)
+  const MI_AUTH = import.meta.env.MI_AUTH || "3d80fd20d4540798919e48d7c872d09c8eb93036";
+  const MI_CLIENT_ID = import.meta.env.MI_CLIENT_ID || "242324v424244255545343";
 
   const [form, setForm] = useState({
     name: "",
@@ -642,8 +647,8 @@ const AddCustomerModal = ({ onClose, onSuccess }) => {
   }, [gstType]);
 
   const handleVerifyGstin = async () => {
-    if (!form.gstin || !selectedGstState) {
-      toast.error("Please enter GSTIN and select state");
+    if (!form.gstin) {
+      toast.error("Please enter GSTIN");
       return;
     }
     if (!validationPatterns.gstin.test(form.gstin)) {
@@ -653,22 +658,44 @@ const AddCustomerModal = ({ onClose, onSuccess }) => {
     }
     setGstLoading(true);
     try {
-      const gstinPrefix = form.gstin.substring(0, 2);
-      if (gstinPrefix === selectedGstState.value) {
+      const token = localStorage.getItem("token");
+      const res = await axios.get(`${BASE_URL}/api/gst/verify`, {
+        params: { gstin: form.gstin },
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      const payload = res.data;
+      if (payload && payload.error === false && payload.data) {
+        const info = payload.data;
+        setGstDetails({
+          name: info.name,
+          stateJurisdiction: info.stateJurisdiction,
+          centerJurisdiction: info.centerJurisdiction,
+          status: info.status,
+          registrationDate: info.registrationDate,
+          type: info.type,
+          gstin: info.gstin,
+        });
         setValidationErrors((prev) => ({ ...prev, gstin: "" }));
         setIsGstinVerified(true);
-        toast.success("GSTIN verified successfully");
+        if (selectedGstState && form.gstin.substring(0, 2) !== selectedGstState.value) {
+          toast.warn("GST state code does not match selected state");
+        } else {
+          toast.success("GSTIN verified successfully");
+        }
       } else {
-        setValidationErrors((prev) => ({
-          ...prev,
-          gstin: "GSTIN does not match the selected state",
-        }));
+        const message = payload?.message || "GSTIN verification failed";
+        setGstDetails(null);
         setIsGstinVerified(false);
-        toast.error("GSTIN verification failed");
+        setValidationErrors((prev) => ({ ...prev, gstin: message }));
+        toast.error(message);
       }
     } catch (err) {
-      setValidationErrors((prev) => ({ ...prev, gstin: "Verification failed" }));
+      setGstDetails(null);
       setIsGstinVerified(false);
+      setValidationErrors((prev) => ({ ...prev, gstin: "Verification failed" }));
       toast.error("Verification failed");
     } finally {
       setGstLoading(false);
@@ -914,7 +941,7 @@ const AddCustomerModal = ({ onClose, onSuccess }) => {
                                 type="button"
                                 className="btn btn-outline-primary"
                                 onClick={handleVerifyGstin}
-                                disabled={!form.gstin || gstLoading || !selectedGstState}
+                                disabled={!form.gstin || gstLoading}
                               >
                                 {gstLoading ? "Verifying..." : "Verify"}
                               </button>
@@ -924,14 +951,17 @@ const AddCustomerModal = ({ onClose, onSuccess }) => {
                                 {errors.gstin || validationErrors.gstin}
                               </span>
                             )}
-                            {isGstinVerified && (
+                            {isGstinVerified && gstDetails && (
                               <div className="alert alert-success mt-2">
-                                <div><strong>Name:</strong> </div>
-                                <div><strong>Address:</strong> </div>
-                                <div><strong>State:</strong> </div>
-                                <div><strong>Business Type:</strong> </div>
+                                <div><strong>Name:</strong> {gstDetails.name}</div>
+                                <div><strong>GSTIN:</strong> {gstDetails.gstin}</div>
+                                <div><strong>Status:</strong> {gstDetails.status}</div>
+                                <div><strong>Type:</strong> {gstDetails.type}</div>
+                                <div><strong>Registration Date:</strong> {gstDetails.registrationDate}</div>
+                                <div><strong>State Jurisdiction:</strong> {gstDetails.stateJurisdiction}</div>
+                                <div><strong>Center Jurisdiction:</strong> {gstDetails.centerJurisdiction}</div>
                               </div>
-                              )}
+                            )}
                           </div>
                         </div>
                       </>
