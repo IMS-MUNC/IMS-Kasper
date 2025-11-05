@@ -142,6 +142,7 @@ import Quotation from "../components/features/quotation/Quotation.jsx";
 import NewPos from "../pages/pos/NewPos.jsx";
 import Trash from "../pages/Delete/Trash.jsx";
 import AddSalesModal from "../pages/Modal/SalesModal/AddSalesModal.jsx";
+import ActivityLog from "../pages/AuditLog/ActivityLog.jsx"
 // import {Pos} from "../pages/pos/Pos.jsx";
 
 
@@ -319,6 +320,7 @@ const AppRoutes = () => {
  <Route path="/selectpage" element={<SelectPage />} />
  <Route path="/stock-movement-log" element={<StockMovementLog />} />
  <Route path="/delete" element={<Trash />} />
+ <Route path="/activity" element={<ActivityLog/>}/>
 
  {/* customer */}
  <Route path="/customers" element={<AllCustomer />} />
