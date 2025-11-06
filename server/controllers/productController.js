@@ -2,6 +2,7 @@ const Product = require("../models/productModels");
 const cloudinary = require("../utils/cloudinary/cloudinary");
 const multer = require("multer");
 const upload = multer({ dest: "uploads/" }); // Configure storage as needed
+const {createAuditLog } = require("../utils/auditLogger")
 
 
 exports.createProduct = async (req, res) => {
@@ -133,6 +134,15 @@ exports.createProduct = async (req, res) => {
     });
 
     const savedProduct = await newProduct.save();
+    //Add this block
+    await createAuditLog({
+      user:req.user,
+      module:"Product",
+      action:"CREATE",
+      description:`Created product: ${savedProduct.productName}`,
+      newData: savedProduct,
+      req
+    })
     res.status(201).json(savedProduct);
   } catch (err) {
     res.status(400).json({ message: err.message });
@@ -818,7 +828,7 @@ exports.updateProduct = async (req, res) => {
 
     const allImages = [...existingImages, ...newImages];
 
-
+    const oldProduct = await Product.findById(req.params.id);
     const updatedProduct = await Product.findByIdAndUpdate(
       req.params.id,
       {
@@ -831,6 +841,16 @@ exports.updateProduct = async (req, res) => {
 
     if (!updatedProduct)
       return res.status(404).json({ message: "Product not found" });
+    // Log the update
+    await createAuditLog({
+      user:req.user,
+      module:"Product",
+      action:"UPDATE",
+      description:`Updated product: ${updatedProduct.productName}`,
+      oldData:oldProduct,
+      newData:updatedProduct,
+      req
+    })
 
     res.status(200).json(updatedProduct);
   } catch (err) {
@@ -864,6 +884,15 @@ exports.deleteProduct = async (req, res) => {
   try {
     const deleted = await Product.findByIdAndDelete(req.params.id);
     if (!deleted) return res.status(404).json({ message: "Product not found" });
+    // Log the deletion
+    await createAuditLog({
+      user:req.user,
+      module:"Product",
+      action:"DELETE",
+      description:`Deleted product: ${deleted.productName}`,
+      oldData: deleted,
+      req
+    })
     res.status(200).json({ message: "Product deleted successfully" });
   } catch (err) {
     res.status(500).json({ message: err.message });

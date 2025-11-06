@@ -42,6 +42,7 @@ import { FaStackOverflow } from "react-icons/fa6";
 import { GiExpense } from "react-icons/gi";
 import { IoLogoWebComponent } from "react-icons/io5";
 import { useAuth } from "../../auth/AuthContext";
+import { BsActivity } from "react-icons/bs";
 
 export const getMenuData = (user, t) => {
   if(!user) return [];
@@ -402,6 +403,17 @@ const canAccess = (module, action = "read") => {
           label: t("Trash"),
           path: "/delete",
           icon: <TbTrash className="icons" />,
+        },
+      ],
+    },
+    {
+      section: t("Activity"),
+      key: "auditlog",
+      items: [
+        {
+          label: t("Activity"),
+          path: "/activity",
+          icon: <BsActivity className="icons" />,
         },
       ],
     },

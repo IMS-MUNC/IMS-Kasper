@@ -54,6 +54,8 @@ const expenseRoutes = require('./routes/expenseRoutes.js')
 const GstRoutes = require("./routes/gstRoutes.js")
 const stockRoutes = require('./routes/stockRoutes');
 
+const auditrouter = require('./routes/auditRoutes.js')
+
 
 
 const http = require('http');
@@ -172,6 +174,8 @@ app.use('/api/stock', stockRoutes);
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use("/category", express.static(path.join(__dirname, "category")));
+
+app.use("/api/audit-logs", auditrouter);
 
 
 

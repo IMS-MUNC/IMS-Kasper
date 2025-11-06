@@ -151,30 +151,30 @@ const Login = () => {
     }
   }
 
-useEffect(() => {
-  const check2FA = async () => {
-    const twoFAToken = localStorage.getItem("twoFAToken");
-    if(twoFAToken) {
-      try {
-        const decoded = jwtDecode(twoFAToken);
-        if(decoded.exp > Date.now() / 1000) {
-          //still valid -> skip login and OTP
-          toast.success("2FA still valid. Redirecting...");
-          navigate("/dashboard");
-          return;
-        }else {
-           // expired → remove it
-          localStorage.removeItem("twoFAToken");
-        }
-      }
-      catch (error) {
-        console.error("Invalid 2FA token", error);
-        localStorage.removeItem("twoFAToken");
-      }
-    }
-  };
-  check2FA();
-}, [navigate]);
+// useEffect(() => {
+//   const check2FA = async () => {
+//     const twoFAToken = localStorage.getItem("twoFAToken");
+//     if(twoFAToken) {
+//       try {
+//         const decoded = jwtDecode(twoFAToken);
+//         if(decoded.exp > Date.now() / 1000) {
+//           //still valid -> skip login and OTP
+//           toast.success("2FA still valid. Redirecting...");
+//           navigate("/dashboard");
+//           return;
+//         }else {
+//            // expired → remove it
+//           localStorage.removeItem("twoFAToken");
+//         }
+//       }
+//       catch (error) {
+//         console.error("Invalid 2FA token", error);
+//         localStorage.removeItem("twoFAToken");
+//       }
+//     }
+//   };
+//   check2FA();
+// }, [navigate]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -183,24 +183,33 @@ useEffect(() => {
 
     try {
       // step 1: Check if twoFAToken already valid before login
-      const saved2FAToken = localStorage.getItem("twoFAToken");
-      if(saved2FAToken) {
-          try {
-            const decoded = jwtDecode(saved2FAToken);
-            if(decoded.exp > Date.now() / 1000){
-              toast.success("2FA still valid. Logging you in...");
-              navigate("/dashboard");
-              return;
-            }
-          }catch(error) {
-            console.error("Invalid 2FA token", error)
-          }
-        }
+      // const saved2FAToken = localStorage.getItem("twoFAToken");
+      // if(saved2FAToken) {
+      //     try {
+      //       const decoded = jwtDecode(saved2FAToken);
+      //       if(decoded.exp > Date.now() / 1000){
+      //         toast.success("2FA still valid. Logging you in...");
+      //         navigate("/dashboard");
+      //         return;
+      //       }
+      //     }catch(error) {
+      //       console.error("Invalid 2FA token", error)
+      //     }
+      //   }
 
         //ste 2: Proceed with normal login
+        let deviceId = localStorage.getItem("deviceId");
+        if(!deviceId) {
+          deviceId = crypto.randomUUID();
+          localStorage.setItem("deviceId", deviceId);
+        }
+        const deviceInfo = navigator.userAgent;
+
       const res = await axios.post(`${BASE_URL}/api/auth/login`, {
         email: formData.email,
         password: formData.password,
+        deviceId,
+        deviceInfo
       });
       let normalizedUser = null;
 

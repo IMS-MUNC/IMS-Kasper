@@ -20,27 +20,27 @@ const OtpVerification = () => {
   const inputRefs = useRef([]);
 
 
-  useEffect(() => {
-  const check2FA = async () => {
-    const twoFAToken = localStorage.getItem("twoFAToken");
-    if (twoFAToken) {
-      try {
-        const decoded = jwtDecode(twoFAToken);
-        if (decoded.exp > Date.now() / 1000) {
-          toast.success("2FA already verified. Redirecting...");
-          navigate("/dashboard");
-          return;
-        } else {
-          localStorage.removeItem("twoFAToken");
-        }
-      } catch (error) {
-        console.error("Invalid 2FA token", error);
-        localStorage.removeItem("twoFAToken");
-      }
-    }
-  };
-  check2FA();
-}, [navigate]);
+//   useEffect(() => {
+//   const check2FA = async () => {
+//     const twoFAToken = localStorage.getItem("twoFAToken");
+//     if (twoFAToken) {
+//       try {
+//         const decoded = jwtDecode(twoFAToken);
+//         if (decoded.exp > Date.now() / 1000) {
+//           toast.success("2FA already verified. Redirecting...");
+//           navigate("/dashboard");
+//           return;
+//         } else {
+//           localStorage.removeItem("twoFAToken");
+//         }
+//       } catch (error) {
+//         console.error("Invalid 2FA token", error);
+//         localStorage.removeItem("twoFAToken");
+//       }
+//     }
+//   };
+//   check2FA();
+// }, [navigate]);
 
 
   useEffect(() => {
@@ -93,6 +93,8 @@ const OtpVerification = () => {
       const res = await axios.post(`${BASE_URL}/api/auth/verify-otp`, {
         email,
         otp: otpCode,
+        deviceId: localStorage.getItem("deviceId"),
+        deviceInfo: navigator.userAgent
       });
 
       if (res?.data?.token && res?.data?.user) {
@@ -101,9 +103,9 @@ const OtpVerification = () => {
         localStorage.setItem("userId", res.data?.user?._id);
 
           // ✅ Store the 2FA token
-  if (res?.data?.twoFAToken) {
-    localStorage.setItem("twoFAToken", res.data.twoFAToken);
-  }
+  // if (res?.data?.twoFAToken) {
+  //   localStorage.setItem("twoFAToken", res.data.twoFAToken);
+  // }
 
         toast.success("OTP Verified Successfully", {
           position: 'top-center',
