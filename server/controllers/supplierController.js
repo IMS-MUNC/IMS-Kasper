@@ -1,7 +1,6 @@
 const Supplier = require("../models/supplierModel");
 const cloudinary = require("../utils/cloudinary/cloudinary");
 const axios = require("axios");
-const { getAccessToken } = require("../utils/mastersindia");
 
 // Create supplier
 exports.createSupplier = async (req, res) => {
@@ -194,71 +193,6 @@ exports.deleteSupplier = async (req, res) => {
   }
 };
 
-// GSTIN verification (example, adjust to your API)
-exports.verifyGSTIN = async (req, res) => {
-  const { gstin } = req.body;
-  try {
-    // Basic GSTIN format check
-    if (
-      !/^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}Z[0-9A-Z]{1}$/.test(gstin)
-    ) {
-      return res.status(400).json({ error: "Invalid GSTIN format" });
-    }
-    // Get access token dynamically
-    const accessToken = await getAccessToken();
-    //call MastersIndia API
-    const apiResponse = await axios.get(
-      `https://commonapi.mastersindia.co/commonapis/searchgstin?gstin=${gstin}`,
-      {
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${accessToken}`,
-          client_id: process.env.MASTERSINDIA_CLIENT_ID,
-        },
-      }
-    );
-    console.log("MastersIndia response:", apiResponse.data);
-    console.log("Username:", process.env.MASTERSINDIA_USERNAME);
-console.log("Client ID:", process.env.MASTERSINDIA_CLIENT_ID);
-
-    if (apiResponse.data.error) {
-      return res.status(400).json({ error: "Invalid GSTIN or not found" });
-    }
-    // MastersIndia returns stringified JSON inside `data`
-    const parsedData = JSON.parse(apiResponse.data.data);
-
-    // Replace with your GST API logic
-    //Prepare formatted response
-    const result = {
-      gstin: parsedData.gstin,
-      name: parsedData.lgnm || "N/A",
-      address: parsedData.stj || "N/A",
-      state: parsedData.ctj || "N/A",
-      businessType: parsedData.ctb || "N/A",
-      status: parsedData.sts || "N/A",
-      registrationDate: parsedData.rgdt || "N/A",
-      taxpayerType: parsedData.dty || "N/A",
-    };
-    res.json({
-      // gstin,
-      valid: true,
-      data: result,
-      // name: 'Demo Supplier',
-      // address: 'Demo Address',
-      // state: 'Demo State',
-      // businessType: 'Demo Type'
-    });
-  } catch (err) {
-    console.error(
-      "GSTIN verification error:",
-      err.response?.data || err.message
-    );
-    res.status(500).json({
-      error: "Failed to verify GSTIN",
-      details: err.response?.data || err.message,
-    });
-  }
-};
 
 // const Supplier = require('../models/supplierModel');
 // const axios = require('axios');

@@ -9,8 +9,6 @@ const  {authMiddleware}=require("../middleware/auth.js")
 // Create supplier
 router.post('/', upload.array('images'), authMiddleware,supplierController.createSupplier);
 
-// GSTIN verify and fetch real data
-router.post('/verify-gstin', authMiddleware,supplierController.verifyGSTIN);
 
 // Fetch all suppliers
 router.get('/', authMiddleware,supplierController.getAllSuppliers);

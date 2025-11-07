@@ -30,6 +30,7 @@ import {
   TbBrandAppleArcade,
   TbFileInvoice,
   TbTrash,
+  TbFileDescription,
 } from "react-icons/tb";
 import { GoPackage } from "react-icons/go";
 import { CiBarcode } from "react-icons/ci";
@@ -268,11 +269,19 @@ const canAccess = (module, action = "read") => {
           path: "/pos",
           icon: <MdOutlinePointOfSale className="icons" />,
         },
+
           canAccess("Invoices", "read") &&  {
           label: t("invoices"),
           path: "/invoice",
           icon: <TbFileInvoice className="icons" />,
         },
+
+            canAccess("Quotation", "read") &&    {
+          label: t("quotation"),
+          path: "/quotation-list",
+          icon: <TbFileDescription className="icons" />,
+        },
+
       ].filter(Boolean),
     },
 
@@ -786,11 +795,11 @@ const canAccess = (module, action = "read") => {
 //     //       path: "/sales-returns",
 //     //       icon: <TbReceiptRefund className="icons" />,
 //     //     },
-//     //     // {
-//     //     //   label: t("quotation"),
-//     //     //   path: "/quotation-list",
-//     //     //   icon: <TbFileDescription className="icons" />,
-//     //     // },
+    //     // {
+    //     //   label: t("quotation"),
+    //     //   path: "/quotation-list",
+    //     //   icon: <TbFileDescription className="icons" />,
+    //     // },
 //     //     {
 //     //       label: t("pos"),
 //     //       path: "/pos",
