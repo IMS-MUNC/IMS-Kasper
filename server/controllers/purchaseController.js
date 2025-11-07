@@ -5,6 +5,7 @@ const StockHistory = require("../models/stockHistoryModels");
 const cloudinary = require("../utils/cloudinary/cloudinary");
 const Supplier = require('../models/supplierModel');
 const DebitNote  = require('../models/debitNoteModel');
+const {createAuditLog } = require("../utils/auditLogger")
 
 function parseDDMMYYYY(dateStr) {
     const [day, month, year] = dateStr.split('/');
@@ -212,7 +213,22 @@ exports.createPurchase = async (req, res) => {
             }
           );
         }
-
+        // populate supplier and products for logging
+        try {
+        const populatedPurchase = await Purchase.findById(purchase._id).populate("supplier", "name").populate("products.product", products).lean();
+        // create audit log
+        await createAuditLog({
+          user:req.user,
+          module:"Purchase",
+          action:"CREATE",
+          description: `Created purchase for supplier: ${populatedPurchase?.supplier?.name || "-"} with ${populatedPurchase?.products?.length || 0} product(s)`,
+          newData: populatedPurchase,
+          req,
+        });
+         console.log("✅ Audit log created for purchase:", populatedPurchase._id);
+} catch (err) {
+  console.error("⚠️ Failed to create audit log for purchase:", err);
+}
         res.status(201).json({ success: true, purchase });
     } catch (error) {
         console.error('Purchase creation failed:', error);

@@ -12,6 +12,8 @@ const Product = require("../models/productModels");
 const StockHistory = require("../models/soldStockHistoryModel");
 const PaymentHistory = require("../models/salesPaymentHistoryModel"); // ✅ New Model
 const Invoice = require("../models/invoiceModel");
+const {createAuditLog } = require("../utils/auditLogger");
+
 // Sales and Return Stock Aggregation for Dashboard
 exports.getSalesReturnStats = async (req, res) => {
   try {
@@ -252,6 +254,20 @@ exports.addPaymentToSale = async (req, res) => {
     }
 
     await sale.save();
+    await createAuditLog({
+      user:req.user,
+      module:"Sales Payment",
+      action:"CREATE",
+      description:`Added payment of ₹${paidAmount} to sale ID: ${saleId}`,
+      newData:{
+        saleId,
+        paidAmount,
+        paymentMethod,
+        transactionId,
+        transactionDate,
+      },
+      req,
+    })
 
     // ✅ Log into Payment History
     await PaymentHistory.create({
@@ -471,6 +487,28 @@ exports.createSale = async (req, res) => {
     });
 
     await sale.save();
+    await createAuditLog({
+      user:req.user,
+      module:"Sales",
+      action:"CREATE",
+      description:`Created sale for customer ID: ${customer} with ${products.length} product(s)`,
+      newData: {
+        saleId:sale._id,
+        referenceNumber:sale.referenceNumber,
+        saleDate:sale.saleDate,
+        totalAmount:sale.totalAmount,
+        grandTotal:sale.grandTotals || sale.billSummary?.grandTotal,
+        paymentType:sale.paymentType,
+        customer,
+        products: sale.products.map((p) => ({
+          productId:p.productId,
+          productName:p.productName,
+          saleQty:p.saleQty,
+          sellingPrice:p.sellingPrice,
+        }))
+      },
+      req,
+    })
     // ✅ Payment History Log
     if (paymentType === "Full" || paymentType === "Partial") {
       await PaymentHistory.create({
@@ -908,6 +946,15 @@ exports.updateSale = async (req, res) => {
       }
       sale.invoiceId = invoiceId;
       await sale.save();
+      // const updatedSale = await Sales.findById(id).populate("customer", "name").populate("products.productId", "productName").lean();
+      // await createAuditLog({
+      //   user:req.user,
+      //   module:"Sales",
+      //   action:"UPDATE",
+      //   description: `Updated sale for customer: ${updatedSale?.customer?.name || "-"} (Sale ID: ${id})`,
+      //   newData:updateData,
+      //   req,
+      // })
     } else {
       sale = await Sales.findByIdAndUpdate(id, { ...updateData, updatedBy: req.user?._id }, { new: true });
     }
@@ -925,6 +972,14 @@ exports.deleteSale = async (req, res) => {
     if (!sale) {
       return res.status(404).json({ message: "Sale not found" });
     }
+    // await createAuditLog({
+    //   user:req.user,
+    //   module:"Sales",
+    //   action:"DELETE",
+    //   description:`Deleted sale ID:${id}`,
+    //   oldData:sale,
+    //   req,
+    // })
     res.status(200).json({ message: "Sale deleted successfully" });
   } catch (err) {
     res.status(500).json({ message: err.message });
@@ -1031,6 +1086,14 @@ exports.saleReturn = async (req, res) => {
     sale.returns = sale.returns || [];
     sale.returns.push({ products, reason, returnDate: returnDate || new Date() });
     await sale.save();
+    await createAuditLog({
+      user:req.user,
+      module:"Sales Return",
+      action:"CREATE",
+      description:`Created sale return for sale ID: ${saleId}`,
+      newData:{saleId, products, reason, returnDate},
+      req,
+    })
     res.status(200).json({ message: "Sale return processed", sale });
   } catch (err) {
     res.status(500).json({ message: err.message });
