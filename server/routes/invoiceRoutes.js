@@ -2,6 +2,8 @@ const express = require('express');
 const router = express.Router();
 const invoiceController = require('../controllers/invoiceController');
 const  {authMiddleware}=require("../middleware/auth.js")
+const invoiceEmailController = require('../controllers/invoiceEmailcontroller');
+const invoiceWhatsappController = require('../controllers/invoiceWhatsappController.js');
 
 // Create invoice
 router.post('/', authMiddleware,invoiceController.createInvoice);
@@ -21,6 +23,17 @@ router.get('/print/:invoiceId',authMiddleware, invoiceController.printSalesInvoi
 // Download PDF
 router.get('/pdf/:invoiceId', authMiddleware,invoiceController.downloadSalesInvoicePDF);
 router.post("/bulk-delete", authMiddleware, invoiceController.bulkDeleteInvoice);
+
+// Share invoice via email
+router.post('/email/:id', authMiddleware,invoiceEmailController.shareInvoiceEmail);
+
+// WhatsApp share
+router.post('/whatsapp/:id', authMiddleware, invoiceWhatsappController.shareInvoiceWhatsapp);
+
+router.post('/sms/:id', authMiddleware, invoiceWhatsappController.shareInvoiceSMS);
+
+// Public PDF (no auth) — only for sandbox/testing
+router.get('/public/pdf/:id', invoiceWhatsappController.publicInvoicePdf);
 
 
 module.exports = router;
