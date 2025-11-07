@@ -39,6 +39,15 @@ const usersSchema = new mongoose.Schema(
     otp: { type: String },
     otpExpires: { type: Date },
 
+    // ✅ Add this new field
+trustedDevices: [
+  {
+    deviceId: { type: String },
+    deviceInfo: { type: String },
+    addedAt: { type: Date, default: Date.now },
+  },
+],
+
     // sessions or refresh tokens - for multi device logout
   refreshTokens: [
     {

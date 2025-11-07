@@ -3,7 +3,7 @@ import axios from "axios";
 import { TbEye, TbTrash } from "react-icons/tb";
 import { useNavigate } from "react-router-dom";
 import { MdNavigateNext } from "react-icons/md";
-import { GrFormPrevious } from "react-icons/gr";
+import { GrFormPrevious, GrShareOption } from "react-icons/gr";
 import DeleteAlert from "../../utils/sweetAlert/DeleteAlert";
 import BASE_URL from "../config/config";
 import { toast } from "react-toastify";
@@ -21,6 +21,7 @@ const Invoice = () => {
   const [loading, setLoading] = useState(false);
   const [selectedInvoices, setSelectedInvoices] = useState([]);
   const navigate = useNavigate();
+  const [shareLoadingId, setShareLoadingId] = useState(null);
 
   const token = localStorage.getItem("token");
   // Fetch invoices from backend
@@ -182,6 +183,42 @@ const Invoice = () => {
     }
   };
 
+  // share invoice via email (matches backend: POST /api/invoice/email/:id)
+  const shareInvoice = async (invoiceMongoId, customerEmail, customerPhone) => {
+    try {
+      setShareLoadingId(invoiceMongoId);
+
+      // Send Email
+      await axios.post(
+        `${BASE_URL}/api/invoice/email/${encodeURIComponent(invoiceMongoId)}`,
+        { email: customerEmail || undefined },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+
+      // Send WhatsApp
+      await axios.post(
+        `${BASE_URL}/api/invoice/whatsapp/${encodeURIComponent(invoiceMongoId)}`,
+        { phone: customerPhone || undefined },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+
+      // Send SMS
+      await axios.post(
+      `${BASE_URL}/api/invoice/sms/${invoiceMongoId}`,
+      { phone: customerPhone },
+      { headers: { Authorization: `Bearer ${token}` } }
+    );
+
+      toast.success("Invoice shared.");
+    } catch (e) {
+      console.error(e);
+      toast.error(e?.response?.data?.message || "Failed to share invoice.");
+    } finally {
+      setShareLoadingId(null);
+    }
+  };
+
+
   return (
     <div className="page-wrapper">
       <div className="content">
@@ -194,7 +231,7 @@ const Invoice = () => {
           </div>
           {/* ...existing code... */}
         </div>
-       
+
         <div className="card">
           <div className="card-header d-flex align-items-center justify-content-between flex-wrap row-gap-3">
             <div className="search-set">
@@ -212,14 +249,14 @@ const Invoice = () => {
               </div>
             </div>
             <div className="d-flex table-dropdown my-xl-auto right-content align-items-center flex-wrap row-gap-3">
-                
-                 {selectedInvoices.length > 0 && (
-          <div className="" style={{marginRight:'10px'}}>
-            <div className="btn btn-danger" onClick={handleBulkDelete}>
-              Delete Selected({selectedInvoices.length})
-            </div>
-          </div>
-        )}
+
+              {selectedInvoices.length > 0 && (
+                <div className="" style={{ marginRight: '10px' }}>
+                  <div className="btn btn-danger" onClick={handleBulkDelete}>
+                    Delete Selected({selectedInvoices.length})
+                  </div>
+                </div>
+              )}
               <input
                 type="text"
                 placeholder="Customer ID"
@@ -266,9 +303,9 @@ const Invoice = () => {
                           checked={
                             invoices.length > 0 &&
                             selectedInvoices.length ===
-                              invoices
-                                .map((i) => i.invoice?._id)
-                                .filter(Boolean).length
+                            invoices
+                              .map((i) => i.invoice?._id)
+                              .filter(Boolean).length
                           }
                           onChange={(e) => {
                             if (e.target.checked) {
@@ -319,7 +356,7 @@ const Invoice = () => {
                         return inv.products.map((item, pidx) => {
                           const d = getProductRowCalculation(item);
                           return (
-                            <tr key={`${inv._id || idx}-${pidx}`} style={{textAlign:'center'}}>
+                            <tr key={`${inv._id || idx}-${pidx}`} style={{ textAlign: 'center' }}>
                               <td>
                                 <label className="checkboxs">
                                   <input
@@ -356,7 +393,7 @@ const Invoice = () => {
                                 <div className="">
                                   <span>
                                     {inv.customer?.name ||
-                                      sale.customer?.name ||
+                                      sale.customer?.email ||
                                       inv.customer?._id ||
                                       sale.customer?._id ||
                                       "-"}
@@ -367,8 +404,8 @@ const Invoice = () => {
                                 {inv.dueDate
                                   ? new Date(inv.dueDate).toLocaleDateString()
                                   : sale.dueDate
-                                  ? new Date(sale.dueDate).toLocaleDateString()
-                                  : "-"}
+                                    ? new Date(sale.dueDate).toLocaleDateString()
+                                    : "-"}
                               </td>
                               <td className="fw-semibold text-success">
                                 ₹{d.lineTotal}
@@ -391,12 +428,11 @@ const Invoice = () => {
                               </td>
                               <td>
                                 <span
-                                  className={`badge badge-soft-${
-                                    (inv.paymentStatus ||
+                                  className={`badge badge-soft-${(inv.paymentStatus ||
                                       sale.paymentStatus) === "Paid"
                                       ? "success"
                                       : "danger"
-                                  } badge-xs shadow-none`}
+                                    } badge-xs shadow-none`}
                                 >
                                   <i className="ti ti-point-filled me-1" />
                                   {inv.paymentStatus ||
@@ -420,9 +456,9 @@ const Invoice = () => {
                                                             <td>{inv.dueAmount || sale.dueAmount || "-"}</td>
                                                             <td><span className={`badge badge-soft-${(inv.paymentStatus || sale.paymentStatus) === "Paid" ? "success" : "danger"} badge-xs shadow-none`}><i className="ti ti-point-filled me-1" />{inv.paymentStatus || sale.paymentStatus || "-"}</span></td> */}
                               <td className="">
-                                <div className="edit-delete-action d-flex align-items-center justify-content-center">
+                                <div className="edit-delete-action d-flex align-items-center justify-content-center gap-2">
                                   <a
-                                    className="me-2 p-2 d-flex align-items-center justify-content-between border rounded"
+                                    className="p-2 d-flex align-items-center justify-content-between border rounded"
                                     onClick={() =>
                                       navigate(`/invoice/${sale.invoiceId}`)
                                     }
@@ -435,6 +471,23 @@ const Invoice = () => {
                                     data-bs-target="#delete"
                                   >
                                     <TbTrash className="feather-trash-2" />
+                                  </a>
+                                  <a
+                                    className="p-2 d-flex align-items-center justify-content-between border rounded"
+                                    onClick={() =>
+                                      shareInvoice(
+                                        inv._id,
+                                        inv.customer?.email || sale.customer?.email,
+                                        inv.customer?.phone || sale.customer?.phone
+                                      )
+                                    }
+                                    style={{
+                                      opacity: shareLoadingId === inv._id ? 0.6 : 1,
+                                      pointerEvents: shareLoadingId === inv._id ? "none" : "auto"
+                                    }}
+                                    title="Share via Email & WhatsApp"
+                                  >
+                                    <GrShareOption />
                                   </a>
                                 </div>
                               </td>
@@ -504,9 +557,9 @@ const Invoice = () => {
                 {invoices.length === 0
                   ? "0 of 0"
                   : `${(page - 1) * limit + 1}-${Math.min(
-                      page * limit,
-                      total
-                    )} of ${total}`}
+                    page * limit,
+                    total
+                  )} of ${total}`}
 
                 <button
                   style={{

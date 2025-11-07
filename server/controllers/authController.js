@@ -8,7 +8,7 @@ const axios = require("axios");
 const DeviceSession = require("../models/settings/DeviceManagementmodal");
 
 exports.loginUser = async (req, res) => {
-  const { email, password } = req.body;
+  const { email, password, deviceId, deviceInfo } = req.body;
 
   try {
     const user = await User.findOne({ email: email.toLowerCase() }).populate(
@@ -26,6 +26,10 @@ exports.loginUser = async (req, res) => {
     }
     const match = await bcrypt.compare(password, user.password);
     if (!match) return res.status(400).json({ message: "Invalid credentials" });
+
+    // check if device is trusted
+    const isTrustedDevice = user.trustedDevices.some((d) => d.deviceId === deviceId);
+
     const roleData = user.role
       ? {
           roleName: user.role.roleName,
@@ -44,17 +48,36 @@ exports.loginUser = async (req, res) => {
     const token = jwt.sign(tokenPayload, process.env.JWT_SECRET, {
       expiresIn: "1d",
     });
-
-    // Generate OTP
-    if (user.twoFactorEnabled) {
-      const now = Date.now();
-      if (user.otpExpires && user.otpExpires > now && user.otpExpires - now > 4.5 * 60 * 1000) {
-        return res.status(429).json({
-          message: "OTP already sent. Please wait 30 seconds before requesting again.",
-          twoFactor: true,
+   
+    if(!user.twoFactorEnabled || isTrustedDevice) {
+      return res.status(200).json({
+        message:"Login successful(trusted device)",
+        token,
+        user:{
+          id: user._id,
+          firstName: user.firstName,
+          lastName: user.lastName,
           email: user.email,
-        });
-      }
+          phone: user.phone,
+          profileImage: user.profileImage,
+          status: user.status,
+          role: roleData,
+        }
+      })
+    }
+
+
+    // // Generate OTP
+    // if (user.twoFactorEnabled) {
+    //   const now = Date.now();
+    //   if (user.otpExpires && user.otpExpires > now && user.otpExpires - now > 4.5 * 60 * 1000) {
+    //     return res.status(429).json({
+    //       message: "OTP already sent. Please wait 30 seconds before requesting again.",
+    //       twoFactor: true,
+    //       email: user.email,
+    //     });
+    //   }
+      const now = Date.now();
       const otp = Math.floor(100000 + Math.random() * 900000);
       const expiry = now + 5 * 60 * 1000;
       user.otp = otp;
@@ -67,22 +90,21 @@ exports.loginUser = async (req, res) => {
         twoFactor: true,
         email: user.email,
       });
-    }
 
-    res.status(200).json({
-      message: "Login successful",
-      token,
-      user: {
-        id: user._id,
-        firstName: user.firstName,
-        lastName: user.lastName,
-        email: user.email,
-        phone: user.phone,
-        profileImage: user.profileImage,
-        status: user.status,
-        // role: roleData,
-      },
-    });
+    // res.status(200).json({
+    //   message: "Login successful",
+    //   token,
+    //   user: {
+    //     id: user._id,
+    //     firstName: user.firstName,
+    //     lastName: user.lastName,
+    //     email: user.email,
+    //     phone: user.phone,
+    //     profileImage: user.profileImage,
+    //     status: user.status,
+    //     // role: roleData,
+    //   },
+    // });
   } catch (err) {
     console.error("Login error:", err.message); // Print error message
     console.error(err.stack); // Print stack trace
@@ -198,7 +220,7 @@ exports.verifyOtpAndReset = async (req, res) => {
 
 exports.verifyotp = async (req, res) => {
   try {
-    const { email, otp } = req.body;
+    const { email, otp, deviceId, deviceInfo } = req.body;
     const user = await User.findOne({ email: email.toLowerCase() }).populate(
       "role"
     );
@@ -213,6 +235,10 @@ exports.verifyotp = async (req, res) => {
     // Clear OTP after verification
     user.otp = null;
     user.otpExpires = null;
+    // Add device to trusted list
+    if(deviceId && !user.trustedDevices.some((d) => d.deviceId === deviceId)) {
+      user.trustedDevices.push({deviceId, deviceInfo})
+    }
     await user.save();
 
     const roleData = user.role
