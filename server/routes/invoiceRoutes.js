@@ -2,7 +2,6 @@ const express = require('express');
 const router = express.Router();
 const invoiceController = require('../controllers/invoiceController');
 const  {authMiddleware}=require("../middleware/auth.js")
-const invoiceEmailController = require('../controllers/invoiceEmailcontroller');
 const invoiceWhatsappController = require('../controllers/invoiceWhatsappController.js');
 
 // Create invoice
@@ -25,7 +24,7 @@ router.get('/pdf/:invoiceId', authMiddleware,invoiceController.downloadSalesInvo
 router.post("/bulk-delete", authMiddleware, invoiceController.bulkDeleteInvoice);
 
 // Share invoice via email
-router.post('/email/:id', authMiddleware,invoiceEmailController.shareInvoiceEmail);
+router.post('/email/:id', authMiddleware,invoiceWhatsappController.shareInvoiceEmail);
 
 // WhatsApp share
 router.post('/whatsapp/:id', authMiddleware, invoiceWhatsappController.shareInvoiceWhatsapp);
