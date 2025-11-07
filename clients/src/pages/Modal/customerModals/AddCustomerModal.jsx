@@ -659,14 +659,15 @@ const AddCustomerModal = ({ onClose, onSuccess }) => {
     setGstLoading(true);
     try {
       const token = localStorage.getItem("token");
-      const res = await axios.get(`${BASE_URL}/api/gst/verify`, {
-        params: { gstin: form.gstin },
+      // Use POST /api/gst/search which accepts { gstin } in body
+      const res = await axios.post(`${BASE_URL}/api/gst/search`, { gstin: form.gstin }, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
       });
 
       const payload = res.data;
+      // Successful proxy response from server -> payload may already be parsed
       if (payload && payload.error === false && payload.data) {
         const info = payload.data;
         setGstDetails({
@@ -686,21 +687,71 @@ const AddCustomerModal = ({ onClose, onSuccess }) => {
           toast.success("GSTIN verified successfully");
         }
       } else {
-        const message = payload?.message || "GSTIN verification failed";
-        setGstDetails(null);
-        setIsGstinVerified(false);
-        setValidationErrors((prev) => ({ ...prev, gstin: message }));
-        toast.error(message);
+        // Handle known failure modes from the server / MastersIndia
+        const messageFromServer = payload?.message || payload?.error_description || "GSTIN verification failed";
+        // If the MastersIndia token is invalid, show a clear actionable message
+        if (typeof messageFromServer === "string" && messageFromServer.toLowerCase().includes("access token")) {
+          const friendly = "MastersIndia access token invalid on the server. Please set MI_ACCESS_TOKEN and MI_CLIENT_PUBLIC_ID in server env and restart the server.";
+          setGstDetails(null);
+          setIsGstinVerified(false);
+          setValidationErrors((prev) => ({ ...prev, gstin: friendly }));
+          toast.error(friendly);
+        } else {
+          setGstDetails(null);
+          setIsGstinVerified(false);
+          setValidationErrors((prev) => ({ ...prev, gstin: messageFromServer }));
+          toast.error(messageFromServer);
+        }
       }
     } catch (err) {
+      // Try to show the most useful error message available
+      const serverMsg = err.response?.data?.message || err.response?.data?.error || err.response?.data || err.message;
+      const isTokenError = typeof serverMsg === "string" && serverMsg.toLowerCase().includes("access token");
+      if (isTokenError) {
+        const friendly = "MastersIndia access token invalid on the server. Please set MI_ACCESS_TOKEN and MI_CLIENT_PUBLIC_ID in server env and restart the server.";
+        setValidationErrors((prev) => ({ ...prev, gstin: friendly }));
+        toast.error(friendly);
+      } else {
+        setValidationErrors((prev) => ({ ...prev, gstin: "Verification failed" }));
+        toast.error(typeof serverMsg === "string" ? serverMsg : "Verification failed");
+      }
       setGstDetails(null);
       setIsGstinVerified(false);
-      setValidationErrors((prev) => ({ ...prev, gstin: "Verification failed" }));
-      toast.error("Verification failed");
     } finally {
       setGstLoading(false);
     }
   };
+
+
+  // Remove stray test token functions and unused state variables.
+  // Use the application JWT from localStorage (consistent with other pages) when calling server APIs.
+
+const searchGSTIN = async () => {
+  console.log("Token before request:", token); // 👈 Confirm it’s set
+  const res = await axios.get(`http://localhost:5000/api/gstin/${gstin}`, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+  console.log("GSTIN data:", res.data);
+};
+
+
+//   const searchGSTIN = async () => {
+   
+//     console.log("Forwarding headers:", {
+//   Authorization: token,
+//   client_id: process.env.MI_CLIENT_PUBLIC_ID
+// });
+
+//     const res = await axios.get(`http://localhost:5000/api/gstin/${gstin}`, {
+//   headers: {
+//     Authorization: `Bearer ${token}`, // <— must include Bearer
+//   },
+// });
+
+//     setResult(res.data);
+//   };
 
   return (
     <div
@@ -909,6 +960,25 @@ const AddCustomerModal = ({ onClose, onSuccess }) => {
                         )}
                       </div>
                     </div>
+                    {/* <div className="col-lg-4">
+                                          <div style={{ padding: "2rem" }}>
+      <h2>GST Verification App</h2>
+      <button onClick={getToken}>Get Access Token</button>
+      <br /><br />
+      <input
+        type="text"
+        placeholder="Enter GSTIN"
+        value={gstin}
+        onChange={(e) => setGstin(e.target.value)}
+      />
+      <button onClick={searchGSTIN}>Verify GST</button>
+      {result && (
+        <pre style={{ background: "#eee", padding: "1rem" }}>
+          {JSON.stringify(result, null, 2)}
+        </pre>
+      )}
+    </div>
+                    </div> */}
                     {gstType === "register" && (
                       <>
                         <div className="col-lg-4 col-md-6">
@@ -964,6 +1034,8 @@ const AddCustomerModal = ({ onClose, onSuccess }) => {
                             )}
                           </div>
                         </div>
+
+     
                       </>
                     )}
                   </div>

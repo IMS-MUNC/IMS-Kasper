@@ -162,24 +162,24 @@ exports.getAllInvoice = async (req, res) => {
         //     ];
         // }
         if (search) {
-  // Find customer IDs that match the search term
-  const matchingCustomers = await Customer.find({
-    name: { $regex: search, $options: "i" }, // ✅ fixed
-  }).distinct("_id");
+            // Find customer IDs that match the search term
+            const matchingCustomers = await Customer.find({
+                name: { $regex: search, $options: "i" }, // ✅ fixed
+            }).distinct("_id");
 
-  // Find matching sales by referenceNumber (Sale No)
-  const matchingSales = await Sales.find({
-    referenceNumber: { $regex: search, $options: "i" }, // ✅ fixed
-  }).distinct("invoiceId");
+            // Find matching sales by referenceNumber (Sale No)
+            const matchingSales = await Sales.find({
+                referenceNumber: { $regex: search, $options: "i" }, // ✅ fixed
+            }).distinct("invoiceId");
 
-  query.$or = [
-    { invoiceId: { $regex: search, $options: "i" } },
-    { description: { $regex: search, $options: "i" } },
-    { notes: { $regex: search, $options: "i" } },
-    { customer: { $in: matchingCustomers } },
-    { invoiceId: { $in: matchingSales } },
-  ];
-}
+            query.$or = [
+                { invoiceId: { $regex: search, $options: "i" } },
+                { description: { $regex: search, $options: "i" } },
+                { notes: { $regex: search, $options: "i" } },
+                { customer: { $in: matchingCustomers } },
+                { invoiceId: { $in: matchingSales } },
+            ];
+        }
 
 
         // Count total
@@ -273,8 +273,11 @@ exports.getAllInvoice = async (req, res) => {
 
         res.json({ invoices: merged, total, page, pages: Math.ceil(total / limit) });
     } catch (err) {
-        // console.error('getAllInvoice error:', err);
-        res.status(500).json({ message: err.message });
+        // Improved error logging for debugging
+        console.error('getAllInvoice error:', err && err.stack ? err.stack : err);
+        // Include stack in response during development to aid debugging (remove in prod)
+        const safeMessage = err && err.message ? err.message : 'Internal Server Error';
+        return res.status(500).json({ message: safeMessage, error: err && err.stack ? String(err.stack) : String(err) });
     }
 };
 // Get all invoices (with search, pagination, filter)
@@ -351,19 +354,21 @@ exports.deleteInvoice = async (req, res) => {
 };
 
 exports.bulkDeleteInvoice = async (req, res) => {
-  try {
-    const { ids } = req.body;
-    if (!ids || !Array.isArray(ids)) {
-      return res
-        .status(400)
-        .json({ message: "Invalid or missing 'ids', array in request body" });
+    try {
+        const { ids } = req.body;
+        if (!ids || !Array.isArray(ids)) {
+            return res
+                .status(400)
+                .json({ message: "Invalid or missing 'ids', array in request body" });
+        }
+        const result = await Invoice.deleteMany({ _id: { $in: ids } });
+        return res.status(200).json({
+            message: `${result.deletedCount} invoices deleted successfully`,
+            deletedCount: result.deletedCount,
+        })
+    } catch (error) {
+        res
+            .status(500)
+            .json({ message: "Bulk delete failed", error: error.message });
     }
-  const result =  await Invoice.deleteMany({ _id: { $in: ids } });
-    return res.status(200).json({message: `${result.deletedCount} invoices deleted successfully`,
-      deletedCount: result.deletedCount,})
-  } catch (error) {
-    res
-      .status(500)
-      .json({ message: "Bulk delete failed", error: error.message });
-  }
 };

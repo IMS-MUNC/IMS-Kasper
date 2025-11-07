@@ -288,45 +288,45 @@ const AddSupplierModals = ({ onClose, onSuccess, editSupplier }) => {
   };
 
   // GSTIN verification
-  const handleVerifyGSTIN = async () => {
-    const token = localStorage.getItem("token")
-    setGstLoading(true);
-    setGstError('');
-    try {
-      const res = await axios.post(`${BASE_URL}/api/suppliers/verify-gstin`, {
-        gstin: form.gstin,
-      },
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        });
-      const data = res.data;
-      if (data.valid) {
-        setForm(prev => ({
-          ...prev,
-          businessType: data.businessType || prev.businessType,
-          billing: {
-            ...prev.billing,
-            address1: data.address || prev.billing.address1,
-            state: states.find(s => s.stateName.toLowerCase() === data.state?.toLowerCase()) ? { value: states.find(s => s.stateName.toLowerCase() === data.state?.toLowerCase())._id, label: data.state } : prev.billing.state,
-          }
-        }));
-        setGstDetails({
-          name: data.name,
-          address: data.address,
-          state: data.state,
-          businessType: data.businessType,
-          valid: true
-        });
-      }
-    } catch (err) {
-      setGstError('GSTIN verification failed');
-      setGstDetails(null);
-    } finally {
-      setGstLoading(false);
-    }
-  };
+  // const handleVerifyGSTIN = async () => {
+  //   const token = localStorage.getItem("token")
+  //   setGstLoading(true);
+  //   setGstError('');
+  //   try {
+  //     const res = await axios.post(`${BASE_URL}/api/suppliers/verify-gstin`, {
+  //       gstin: form.gstin,
+  //     },
+  //       {
+  //         headers: {
+  //           Authorization: `Bearer ${token}`,
+  //         },
+  //       });
+  //     const data = res.data;
+  //     if (data.valid) {
+  //       setForm(prev => ({
+  //         ...prev,
+  //         businessType: data.businessType || prev.businessType,
+  //         billing: {
+  //           ...prev.billing,
+  //           address1: data.address || prev.billing.address1,
+  //           state: states.find(s => s.stateName.toLowerCase() === data.state?.toLowerCase()) ? { value: states.find(s => s.stateName.toLowerCase() === data.state?.toLowerCase())._id, label: data.state } : prev.billing.state,
+  //         }
+  //       }));
+  //       setGstDetails({
+  //         name: data.name,
+  //         address: data.address,
+  //         state: data.state,
+  //         businessType: data.businessType,
+  //         valid: true
+  //       });
+  //     }
+  //   } catch (err) {
+  //     setGstError('GSTIN verification failed');
+  //     setGstDetails(null);
+  //   } finally {
+  //     setGstLoading(false);
+  //   }
+  // };
 
   // File upload handlers
   const handleUploadClick = () => {
@@ -499,6 +499,36 @@ const AddSupplierModals = ({ onClose, onSuccess, editSupplier }) => {
     }
   };
 
+// gst api integration
+  const [gstin, setGstin] = useState('27AAGCB1286Q1Z4'); // default sample
+  // const [loading, setLoading] = useState(false);
+  const [response, setResponse] = useState(null);
+  const [error, setError] = useState(null);
+
+
+    const handleSearch = async () => {
+      if (!gstin.trim()) {
+        setError('Please enter a GSTIN.');
+        return;
+      }
+  
+      setLoading(true);
+      setError(null);
+      setResponse(null);
+  
+      try {
+        const res = await axios.get(
+          `${BASE_URL}/api/gst/${encodeURIComponent(gstin)}`
+        );
+        setResponse(res.data); // same as backend/WhiteBooks response
+      } catch (err) {
+        setError(err?.response?.data || err.message);
+      } finally {
+        setLoading(false);
+      }
+    };
+  
+
   return (
     <div className="modal fade show" id="add-supplier" tabIndex="-1"
       style={{ display: "block", backgroundColor: "rgba(0, 0, 0, 0.5)" }} aria-modal="true" role="dialog">
@@ -514,43 +544,7 @@ const AddSupplierModals = ({ onClose, onSuccess, editSupplier }) => {
           {/* Main Form */}
           <form onSubmit={handleSubmit}>
             <div className="modal-body">
-              {/* Image Upload */}
-              {/* <div className="mb-3">
-             <label className="form-label">Profile Images</label>
-             <input type="file" ref={fileInputRef} multiple style={{ display: 'none' }} onChange={handleFileChange}
-               accept="image/*" />
-             <div className="image-uploads" onClick={handleUploadClick}
-               style={{ cursor: 'pointer', border: '1px dashed gray', padding: '20px', textAlign: 'center' }}>
-               <h5>Click to Upload</h5>
-             </div>
-             <div className="mt-3 d-flex flex-wrap gap-3">
-               {selectedImages.map((img, index) => (
-               <div key={index} className="position-relative">
-                 <img src={img.preview} alt="Preview"
-                   style={{ width: '100px', height: '100px', objectFit: 'cover', borderRadius: '8px' }} />
-                 {img.file && (
-                 <button type="button" onClick={()=> removeImage(index)}
-                   style={{
-                            position: 'absolute',
-                            top: '-8px',
-                            right: '-8px',
-                            background: 'red',
-                            color: 'white',
-                            border: 'none',
-                            borderRadius: '50%',
-                            width: '20px',
-                            height: '20px',
-                            fontSize: '12px',
-                            cursor: 'pointer'
-                          }}
-                   >
-                   &times;
-                 </button>
-                 )}
-               </div>
-               ))}
-             </div>
-           </div> */}
+             
 
               <div className="col-lg-12">
                 <div className="new-employee-field">
@@ -641,27 +635,61 @@ const AddSupplierModals = ({ onClose, onSuccess, editSupplier }) => {
                     placeholder="Select Type"
                   />
                 </div>
+                {/* gst */}
                 <div className="col-md-6 mb-3">
                   <label>GSTIN</label>  <span className="text-danger ms-1">*</span>
                   <div className="d-flex gap-2">
-                    <input type="text" name="gstin" className={`form-control ${validationErrors.gstin ? 'is-invalid' : ''}`} value={form.gstin}
-                      onChange={handleInputChange} />
-                    <button type="button" className="btn btn-outline-primary" onClick={handleVerifyGSTIN}
+                    <input type="text" name="gstin" className={`form-control ${validationErrors.gstin ? 'is-invalid' : ''}`} value={gstin}
+                      onChange={(e) => setGstin(e.target.value)}
+                    />
+                    {/* <button type="button" className="btn btn-outline-primary" onClick={handleVerifyGSTIN}
                       disabled={!form.gstin || gstLoading || validationErrors.gstin}>
                       {gstLoading ? 'Verifying...' : 'Verify'}
+                    </button> */}
+                    <button type="button" className="btn btn-outline-primary" onClick={handleSearch} disabled={loading} style={{ padding: '6px 12px' }}>
+                      {loading ? 'Verifying...' : 'Verify'}
                     </button>
                   </div>
+
+
                   {validationErrors.gstin && <div className="invalid-feedback">{validationErrors.gstin}</div>}
-                  {gstError && <small className="text-danger">{gstError}</small>}
-                  {gstDetails?.valid && (
+                  {error && (
+                    <pre style={{ color: 'red', marginTop: 12 }}>
+                      {JSON.stringify(error, null, 2)}
+                    </pre>
+                  )}
+                  {response && (
+                    <>
+                      {/* <h4 style={{ marginTop: 20 }}>Raw response (exact)</h4>
+                      <pre style={{ maxHeight: 400, overflow: 'auto', background: '#f5f5f5', padding: 10 }}>
+                        {JSON.stringify(response, null, 2)}
+                      </pre> */}
+
+                      <h4>Parsed fields</h4>
+                      <div>
+                        <strong>Legal name:</strong> {response?.data?.lgnm || '—'} <br />
+                        <strong>Trade name:</strong> {response?.data?.tradeNam || '—'} <br />
+                        <strong>GSTIN:</strong> {response?.data?.gstin || '—'} <br />
+                        <strong>Status:</strong> {response?.data?.sts || response?.status_desc || '—'} <br />
+                        <strong>State:</strong> {response?.data?.stj || '—'} <br />
+                        <strong>Pincode:</strong> {response?.data?.pradr?.addr?.pncd || '—'} <br />
+                        <strong>Address line:</strong>{' '}
+                        {response?.data?.pradr?.addr?.bnm
+                          ? `${response.data.pradr.addr.bno || ''} ${response.data.pradr.addr.bnm}, ${response.data.pradr.addr.loc}`
+                          : '—'}
+                      </div>
+                    </>
+                  )}
+                  {/* {gstDetails?.valid && (
                     <div className="alert alert-success mt-2">
                       <div><strong>Name:</strong> {gstDetails.name}</div>
                       <div><strong>Address:</strong> {gstDetails.address}</div>
                       <div><strong>State:</strong> {gstDetails.state}</div>
                       <div><strong>Business Type:</strong> {gstDetails.businessType}</div>
                     </div>
-                  )}
+                  )} */}
                 </div>
+
                 <div className="col-md-6 mb-3">
                   <label>Email</label>  <span className="text-danger ms-1">*</span>
                   <input type="email" name="email" className={`form-control ${validationErrors.email ? 'is-invalid' : ''}`} value={form.email}

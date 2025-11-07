@@ -1,3 +1,4 @@
+const axios = require("axios");
 
 const express = require('express');
 const cors = require('cors');
@@ -104,6 +105,7 @@ app.use(cors(corsOptions));
 
 // Routes
 app.use("/api/gst", GstRoutes);
+// Public health endpoints (MastersIndia diagnostics)
 app.use("/api/role", roleRoutes);
 app.use("/api/user", usersRoutes);
 app.use("/api/auth", authRoutes);
@@ -252,9 +254,76 @@ io.on("connection", (socket) => {
 });
 
 
+
+
+// 🔎 Step 2: Search GSTIN
+// app.get("/api/gstin/:id", async (req, res) => {
+//   const { id } = req.params;
+//   const token = req.headers.authorization;
+//   try {
+//     const response = await axios.get(`https://commonapi.mastersindia.co/commonapis/searchgstin?gstin=${id}`, {
+//       headers: {
+//         "Content-Type": "application/json",
+//         "Authorization": token,
+//         "client_id": process.env.MI_CLIENT_PUBLIC_ID
+//       }
+//     });
+//     res.json(response.data);
+//   } catch (error) {
+//     res.status(400).json({ error: error.response?.data || error.message });
+//   }
+// });
+// 🔎 Step 2: Search GSTIN
+// app.get("/api/gstin/:id", async (req, res) => {
+//   const { id } = req.params;
+//   const token = req.headers.authorization; // 🧠 this is what frontend sends
+
+//   console.log("Received Authorization header:", token); // 👈 Debug log
+
+//   try {
+//     const response = await axios.get(
+//       `https://commonapi.mastersindia.co/commonapis/searchgstin?gstin=${id}`,
+//       {
+//         headers: {
+//           "Content-Type": "application/json",
+//           "Authorization": token, // ✅ forwards Bearer token to Masters India
+//           "client_id": process.env.MI_CLIENT_PUBLIC_ID
+//         },
+//       }
+//     );
+//     res.json(response.data);
+//   } catch (error) {
+//     console.error("Error fetching GSTIN:", error.response?.data || error.message);
+//     res.status(400).json({ error: error.response?.data || error.message });
+//   }
+// });
+// ------------------------
+// app.get("/api/gstin/:id", async (req, res) => {
+//   const { id } = req.params;
+//   const token = req.headers.authorization; // "Bearer <token>"
+//   try {
+//     const response = await axios.get(
+//       `https://commonapi.mastersindia.co/commonapis/searchgstin?gstin=${id}`,
+//       {
+//         headers: {
+//           "Content-Type": "application/json",
+//           "Authorization": token,
+//           "client_id": process.env.MI_CLIENT_PUBLIC_ID
+//         }
+//       }
+//     );
+//     res.json(response.data);
+//   } catch (error) {
+//     console.error("Error fetching GSTIN:", error.response?.data || error.message);
+//     res.status(400).json({ error: error.response?.data || error.message });
+//   }
+// });
+
+
+
 // Start server with Socket.IO
 const PORT = process.env.PORT || 5000;
-server.listen(PORT, "0.0.0.0", () =>
-  console.log(`🚀 Server running with Socket.IO on port ${PORT}`)
-  // console.log(`🚀 Server running on http://192.168.1.34:${PORT}`)
-);
+// Run startup checks then listen
+
+
+  server.listen(PORT, '0.0.0.0', () => console.log(`🚀 Server running with Socket.IO on port ${PORT}`));

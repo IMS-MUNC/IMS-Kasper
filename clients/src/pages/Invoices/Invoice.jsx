@@ -40,7 +40,7 @@ const Invoice = () => {
       Object.keys(params).forEach((key) => {
         if (!params[key]) delete params[key];
       });
-      const res = await axios.get("/api/invoice/allinvoice", {
+      const res = await axios.get(`${BASE_URL}/api/invoice/allinvoice`, {
         params,
         headers: { Authorization: `Bearer ${token}` },
       });

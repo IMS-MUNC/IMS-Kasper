@@ -44,184 +44,336 @@
 //   );
 // }
 
-import React, { useEffect, useState } from "react";
-import axios from "axios";
+import React, { useState } from 'react';
+import axios from 'axios';
+import BASE_URL from '../../../pages/config/config';
 
-import {
-  ResponsiveContainer,
-  BarChart,
-  Bar,
-  XAxis,
-  YAxis,
-  Tooltip,
-  Legend,
-} from "recharts";
-// import DatePicker from "react-datepicker";
-// import "react-datepicker/dist/react-datepicker.css";
+export default function GstLookup() {
+  const [gstin, setGstin] = useState('27AAGCB1286Q1Z4'); // default sample
+  const [loading, setLoading] = useState(false);
+  const [response, setResponse] = useState(null);
+  const [error, setError] = useState(null);
 
-const BASE_URL = "http://localhost:5000"; // 🔧 apna API base URL daalna
-
-export default function ProductStatsWithFilter() {
-  const [sales, setSales] = useState([]);
-  const [purchases, setPurchases] = useState([]);
-  const [data, setData] = useState([]);
-
-  const [filterType, setFilterType] = useState("month"); // "week" | "month" | "custom"
-  const [startDate, setStartDate] = useState(null);
-  const [endDate, setEndDate] = useState(null);
-
-  // ✅ Calculate date range based on filter
-  const getDateRange = () => {
-    const now = new Date();
-    let start = null;
-    let end = now;
-
-    if (filterType === "week") {
-      const firstDay = new Date(now.setDate(now.getDate() - now.getDay())); // Sunday
-      start = firstDay;
-    } else if (filterType === "month") {
-      start = new Date(now.getFullYear(), now.getMonth(), 1); // 1st of month
-    } else if (filterType === "custom") {
-      start = startDate;
-      end = endDate;
+  const handleSearch = async () => {
+    if (!gstin.trim()) {
+      setError('Please enter a GSTIN.');
+      return;
     }
 
-    return {
-      startDate: start ? start.toISOString().slice(0, 10) : "",
-      endDate: end ? end.toISOString().slice(0, 10) : "",
-    };
-  };
+    setLoading(true);
+    setError(null);
+    setResponse(null);
 
-  // ✅ Fetch Sales
-  const fetchSales = async () => {
     try {
-      const { startDate, endDate } = getDateRange();
-      const res = await axios.get(`${BASE_URL}/api/sales`, {
-        params: { startDate, endDate, limit: 1000 },
-      });
-      setSales(res.data.sales || []);
+      const res = await axios.get(
+        `${BASE_URL}/api/gst/${encodeURIComponent(gstin)}`
+      );
+      setResponse(res.data); // same as backend/WhiteBooks response
     } catch (err) {
-      console.error("Error fetching sales:", err);
+      setError(err?.response?.data || err.message);
+    } finally {
+      setLoading(false);
     }
   };
-
-  // ✅ Fetch Purchases
-  const fetchPurchases = async () => {
-    try {
-      const { startDate, endDate } = getDateRange();
-      const res = await axios.get(`${BASE_URL}/api/purchases`, {
-        params: { startDate, endDate, limit: 1000 },
-      });
-      setPurchases(res.data.purchases || []);
-    } catch (err) {
-      console.error("Error fetching purchases:", err);
-    }
-  };
-
-  // ✅ Aggregate Data Product-wise
-  useEffect(() => {
-    const productMap = {};
-
-    sales.forEach((sale) => {
-      (sale.products || []).forEach((pr) => {
-        const name = pr.productName || pr.name || "N/A";
-        if (!productMap[name]) {
-          productMap[name] = {
-            name,
-            salesQty: 0,
-            salesAmount: 0,
-            purchaseQty: 0,
-            purchaseAmount: 0,
-          };
-        }
-        productMap[name].salesQty += pr.saleQty || 0;
-        productMap[name].salesAmount += (pr.saleQty || 0) * (pr.sellingPrice || 0);
-      });
-    });
-
-    purchases.forEach((purchase) => {
-      (purchase.products || []).forEach((pr) => {
-        const name = pr.productName || pr.name || "N/A";
-        if (!productMap[name]) {
-          productMap[name] = {
-            name,
-            salesQty: 0,
-            salesAmount: 0,
-            purchaseQty: 0,
-            purchaseAmount: 0,
-          };
-        }
-        productMap[name].purchaseQty += pr.quantity || 0;
-        productMap[name].purchaseAmount += (pr.quantity || 0) * (pr.purchasePrice || 0);
-      });
-    });
-
-    setData(Object.values(productMap));
-  }, [sales, purchases]);
-
-  // ✅ Refetch when filter changes
-  useEffect(() => {
-    fetchSales();
-    fetchPurchases();
-  }, [filterType, startDate, endDate]);
 
   return (
-    <div className="shadow-md rounded-2xl">
-      <div className="flex flex-col md:flex-row md:justify-between md:items-center">
-        <div>📊 Product-wise Sales vs Purchases</div>
+    <div style={{ padding: 200 }}>
+      <h3>GST Search (WhiteBooks Sandbox)</h3>
 
-        {/* 🔹 Filters */}
-        <div className="flex gap-2 items-center">
-          <select
-            value={filterType}
-            onChange={(e) => setFilterType(e.target.value)}
-            className="border px-3 py-2 rounded"
-          >
-            <option value="week">This Week</option>
-            <option value="month">This Month</option>
-            <option value="custom">Custom</option>
-          </select>
-
-          {filterType === "custom" && (
-            <div className="flex gap-2">
-              <DatePicker
-                selected={startDate}
-                onChange={(date) => setStartDate(date)}
-                placeholderText="Start Date"
-                className="border px-2 py-1 rounded"
-              />
-              <DatePicker
-                selected={endDate}
-                onChange={(date) => setEndDate(date)}
-                placeholderText="End Date"
-                className="border px-2 py-1 rounded"
-              />
-            </div>
-          )}
-        </div>
+      <div style={{ marginBottom: 10 }}>
+        <label>GSTIN:&nbsp;</label>
+        <input
+          type="text"
+          value={gstin}
+          onChange={(e) => setGstin(e.target.value)}
+          placeholder="Enter GSTIN (e.g. 27AAGCB1286Q1Z4)"
+          style={{ padding: 5, width: 250 }}
+        />
       </div>
 
-      <div>
-        {data.length === 0 ? (
-          <p className="text-muted">No data available</p>
-        ) : (
-          <ResponsiveContainer width="100%" height={450}>
-            <BarChart data={data}>
-              <XAxis dataKey="name" />
-              <YAxis />
-              <Tooltip />
-              <Legend />
-              <Bar dataKey="salesQty" fill="#1368EC" name="Sales Qty" />
-              <Bar dataKey="purchaseQty" fill="#10b981" name="Purchase Qty" />
-              <Bar dataKey="salesAmount" fill="#f59e0b" name="Sales Amount" />
-              <Bar dataKey="purchaseAmount" fill="#ef4444" name="Purchase Amount" />
-            </BarChart>
-          </ResponsiveContainer>
-        )}
-      </div>
+      <button onClick={handleSearch} disabled={loading} style={{ padding: '6px 12px' }}>
+        {loading ? 'Searching...' : 'Search'}
+      </button>
+
+      {error && (
+        <pre style={{ color: 'red', marginTop: 12 }}>
+          {JSON.stringify(error, null, 2)}
+        </pre>
+      )}
+
+      {response && (
+        <>
+          <h4 style={{ marginTop: 20 }}>Raw response (exact)</h4>
+          <pre style={{ maxHeight: 400, overflow: 'auto', background: '#f5f5f5', padding: 10 }}>
+            {JSON.stringify(response, null, 2)}
+          </pre>
+
+          <h4>Parsed fields</h4>
+          <div>
+            <strong>Legal name:</strong> {response?.data?.lgnm || '—'} <br />
+            <strong>Trade name:</strong> {response?.data?.tradeNam || '—'} <br />
+            <strong>GSTIN:</strong> {response?.data?.gstin || '—'} <br />
+            <strong>Status:</strong> {response?.data?.sts || response?.status_desc || '—'} <br />
+            <strong>State:</strong> {response?.data?.stj || '—'} <br />
+            <strong>Pincode:</strong> {response?.data?.pradr?.addr?.pncd || '—'} <br />
+            <strong>Address line:</strong>{' '}
+            {response?.data?.pradr?.addr?.bnm
+              ? `${response.data.pradr.addr.bno || ''} ${response.data.pradr.addr.bnm}, ${response.data.pradr.addr.loc}`
+              : '—'}
+          </div>
+        </>
+      )}
     </div>
   );
 }
+
+
+// start of GstLookup.jsx
+// import React, { useState } from 'react';
+// import axios from 'axios';
+// import BASE_URL from '../../../pages/config/config';
+
+// export default function GstLookup() {
+//   const [gstin, setGstin] = useState('27AAGCB1286Q1Z4'); // default from your sample
+//   const [email, setEmail] = useState('khanmushtfa123@gmail.com');
+//   const [loading, setLoading] = useState(false);
+//   const [response, setResponse] = useState(null);
+//   const [error, setError] = useState(null);
+
+//   const handleSearch = async () => {
+//     setLoading(true); setError(null); setResponse(null);
+//     try {
+//       const res = await axios.get(`${BASE_URL}/api/gst/${encodeURIComponent(gstin)}`, {
+//         params: { email }
+//       });
+//       setResponse(res.data); // this will be exactly the WhiteBooks response shape
+//     } catch (err) {
+//       setError(err?.response?.data || err.message);
+//     } finally {
+//       setLoading(false);
+//     }
+//   };
+
+//   return (
+//    <div className="page-wrapper">
+//      <div className='' style={{ padding: 20 }}>
+//       <h3>GST Search </h3>
+//       <div>
+//         <label>GSTIN: </label>
+//         <input value={gstin} onChange={e => setGstin(e.target.value)} />
+//       </div>
+//       {/* <div>
+//         <label>Registered Email (optional): </label>
+//         <input value={email} onChange={e => setEmail(e.target.value)} />
+//       </div> */}
+//       <button onClick={handleSearch} disabled={loading}>{loading ? 'Searching...' : 'Search'}</button>
+
+//       {error && <pre style={{ color: 'red' }}>{JSON.stringify(error, null, 2)}</pre>}
+
+//       {response && (
+//         <>
+//           <h4>Raw response (exact)</h4>
+//           <pre style={{ maxHeight: 400, overflow: 'auto', background: '#f5f5f5', padding: 10 }}>
+//             {JSON.stringify(response, null, 2)}
+//           </pre>
+
+//           <h4>Parsed fields</h4>
+//           <div>
+//             <strong>Legal name:</strong> {response?.data?.lgnm || '—'} <br/>
+//             <strong>Trade name:</strong> {response?.data?.tradeNam || '—'} <br/>
+//             <strong>GSTIN:</strong> {response?.data?.gstin || '—'} <br/>
+//             <strong>Status:</strong> {response?.data?.sts || response?.status_desc || '—'} <br/>
+//             <strong>State:</strong> {response?.data?.stj || '—'} <br/>
+//             <strong>Pincode:</strong> {response?.data?.pradr?.addr?.pncd || '—'} <br/>
+//             <strong>Address line:</strong> {response?.data?.pradr?.addr?.bnm ? `${response.data.pradr.addr.bno || ''} ${response.data.pradr.addr.bnm}, ${response.data.pradr.addr.loc}` : '—'}
+//           </div>
+//         </>
+//       )}
+//     </div>
+//    </div>
+//   );
+// }
+// end of GstLookup.jsx
+
+
+// import React, { useEffect, useState } from "react";
+// import axios from "axios";
+
+// import {
+//   ResponsiveContainer,
+//   BarChart,
+//   Bar,
+//   XAxis,
+//   YAxis,
+//   Tooltip,
+//   Legend,
+// } from "recharts";
+// // import DatePicker from "react-datepicker";
+// // import "react-datepicker/dist/react-datepicker.css";
+
+// const BASE_URL = "http://localhost:5000"; // 🔧 apna API base URL daalna
+
+// export default function ProductStatsWithFilter() {
+//   const [sales, setSales] = useState([]);
+//   const [purchases, setPurchases] = useState([]);
+//   const [data, setData] = useState([]);
+
+//   const [filterType, setFilterType] = useState("month"); // "week" | "month" | "custom"
+//   const [startDate, setStartDate] = useState(null);
+//   const [endDate, setEndDate] = useState(null);
+
+//   // ✅ Calculate date range based on filter
+//   const getDateRange = () => {
+//     const now = new Date();
+//     let start = null;
+//     let end = now;
+
+//     if (filterType === "week") {
+//       const firstDay = new Date(now.setDate(now.getDate() - now.getDay())); // Sunday
+//       start = firstDay;
+//     } else if (filterType === "month") {
+//       start = new Date(now.getFullYear(), now.getMonth(), 1); // 1st of month
+//     } else if (filterType === "custom") {
+//       start = startDate;
+//       end = endDate;
+//     }
+
+//     return {
+//       startDate: start ? start.toISOString().slice(0, 10) : "",
+//       endDate: end ? end.toISOString().slice(0, 10) : "",
+//     };
+//   };
+
+//   // ✅ Fetch Sales
+//   const fetchSales = async () => {
+//     try {
+//       const { startDate, endDate } = getDateRange();
+//       const res = await axios.get(`${BASE_URL}/api/sales`, {
+//         params: { startDate, endDate, limit: 1000 },
+//       });
+//       setSales(res.data.sales || []);
+//     } catch (err) {
+//       console.error("Error fetching sales:", err);
+//     }
+//   };
+
+//   // ✅ Fetch Purchases
+//   const fetchPurchases = async () => {
+//     try {
+//       const { startDate, endDate } = getDateRange();
+//       const res = await axios.get(`${BASE_URL}/api/purchases`, {
+//         params: { startDate, endDate, limit: 1000 },
+//       });
+//       setPurchases(res.data.purchases || []);
+//     } catch (err) {
+//       console.error("Error fetching purchases:", err);
+//     }
+//   };
+
+//   // ✅ Aggregate Data Product-wise
+//   useEffect(() => {
+//     const productMap = {};
+
+//     sales.forEach((sale) => {
+//       (sale.products || []).forEach((pr) => {
+//         const name = pr.productName || pr.name || "N/A";
+//         if (!productMap[name]) {
+//           productMap[name] = {
+//             name,
+//             salesQty: 0,
+//             salesAmount: 0,
+//             purchaseQty: 0,
+//             purchaseAmount: 0,
+//           };
+//         }
+//         productMap[name].salesQty += pr.saleQty || 0;
+//         productMap[name].salesAmount += (pr.saleQty || 0) * (pr.sellingPrice || 0);
+//       });
+//     });
+
+//     purchases.forEach((purchase) => {
+//       (purchase.products || []).forEach((pr) => {
+//         const name = pr.productName || pr.name || "N/A";
+//         if (!productMap[name]) {
+//           productMap[name] = {
+//             name,
+//             salesQty: 0,
+//             salesAmount: 0,
+//             purchaseQty: 0,
+//             purchaseAmount: 0,
+//           };
+//         }
+//         productMap[name].purchaseQty += pr.quantity || 0;
+//         productMap[name].purchaseAmount += (pr.quantity || 0) * (pr.purchasePrice || 0);
+//       });
+//     });
+
+//     setData(Object.values(productMap));
+//   }, [sales, purchases]);
+
+//   // ✅ Refetch when filter changes
+//   useEffect(() => {
+//     fetchSales();
+//     fetchPurchases();
+//   }, [filterType, startDate, endDate]);
+
+//   return (
+//     <div className="page-wrapper shadow-md rounded-2xl">
+//       <div className="flex flex-col md:flex-row md:justify-between md:items-center">
+//         <div>📊 Product-wise Sales vs Purchases</div>
+
+//         {/* 🔹 Filters */}
+//         <div className="flex gap-2 items-center">
+//           <select
+//             value={filterType}
+//             onChange={(e) => setFilterType(e.target.value)}
+//             className="border px-3 py-2 rounded"
+//           >
+//             <option value="week">This Week</option>
+//             <option value="month">This Month</option>
+//             <option value="custom">Custom</option>
+//           </select>
+
+//           {filterType === "custom" && (
+//             <div className="flex gap-2">
+//               <DatePicker
+//                 selected={startDate}
+//                 onChange={(date) => setStartDate(date)}
+//                 placeholderText="Start Date"
+//                 className="border px-2 py-1 rounded"
+//               />
+//               <DatePicker
+//                 selected={endDate}
+//                 onChange={(date) => setEndDate(date)}
+//                 placeholderText="End Date"
+//                 className="border px-2 py-1 rounded"
+//               />
+//             </div>
+//           )}
+//         </div>
+//       </div>
+
+//       <div>
+//         {data.length === 0 ? (
+//           <p className="text-muted">No data available</p>
+//         ) : (
+//           <ResponsiveContainer width="100%" height={450}>
+//             <BarChart data={data}>
+//               <XAxis dataKey="name" />
+//               <YAxis />
+//               <Tooltip />
+//               <Legend />
+//               <Bar dataKey="salesQty" fill="#1368EC" name="Sales Qty" />
+//               <Bar dataKey="purchaseQty" fill="#10b981" name="Purchase Qty" />
+//               <Bar dataKey="salesAmount" fill="#f59e0b" name="Sales Amount" />
+//               <Bar dataKey="purchaseAmount" fill="#ef4444" name="Purchase Amount" />
+//             </BarChart>
+//           </ResponsiveContainer>
+//         )}
+//       </div>
+//     </div>
+//   );
+// }
 
 
 // 3rd
