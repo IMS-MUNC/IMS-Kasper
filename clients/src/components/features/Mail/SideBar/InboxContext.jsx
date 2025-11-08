@@ -38,7 +38,7 @@ export const InboxProvider = ({ children }) => {
       // if (res.data?.count !== undefined) {
       // console.log("📊 Fetched inboxCount from backend:", res.data.count);
       if (res.data?.success && res.data?.count !== undefined) {
-        console.log("📊 Server count updated:", res.data.count);
+        // console.log("📊 Server count updated:", res.data.count);
         setInboxCount(res.data.count);
       }
     } catch (error) {
