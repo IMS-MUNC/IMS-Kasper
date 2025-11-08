@@ -146,7 +146,7 @@ const sendEmail = async (req, res) => {
 
     res.status(201).json({ success: true, message: "Email sent" });
   } catch (error) {
-  console.error("❌ sendEmail Error (full):", JSON.stringify(error, Object.getOwnPropertyNames(error), 2));
+  // console.error("❌ sendEmail Error (full):", JSON.stringify(error, Object.getOwnPropertyNames(error), 2));
   res.status(500).json({
     error: error.message || "Unknown error occurred",
   });
@@ -627,7 +627,7 @@ const getInboxCount = async (req, res) => {
 
     res.status(200).json({ success: true, count });
   } catch (error) {
-    console.log("Error fetching inbox count:", error);
+    // console.log("Error fetching inbox count:", error);
     res.status(500).json({
       success: false,
       message: "Failed to fetch inbox count",
@@ -643,7 +643,7 @@ const readInboxEmails = async (req, res) => {
     const emailId = req.params.id;
     const userEmail = req.user.email.toLowerCase();
 
-    console.log("🔹 readInboxEmails called for emailId:", emailId, "by user:", userEmail);
+    // console.log("🔹 readInboxEmails called for emailId:", emailId, "by user:", userEmail);
 
     const email = await EmailModal.findOneAndUpdate(
       { _id: emailId, to: { $in: [userEmail] } },  // simpler and safer than regex
@@ -651,20 +651,20 @@ const readInboxEmails = async (req, res) => {
       { new: true }
     );
 
-    console.log("Email isRead status:", email.isRead);
+    // console.log("Email isRead status:", email.isRead);
 
     if (!email) {
-       console.log("Email not found or not for this user");
+      //  console.log("Email not found or not for this user");
       return res.status(404).json({ success: false, message: "Email not found" });
     }
 
-    console.log("✅ Email marked as read:", email._id, "isRead:", email.isRead);
+    // console.log("✅ Email marked as read:", email._id, "isRead:", email.isRead);
 
-     console.log("Email after marking as read:", email);
+    //  console.log("Email after marking as read:", email);
 
     res.status(200).json({ success: true, data: email });
   } catch (error) {
-    console.log(error);
+    // console.log(error);
     res.status(500).json({ success: false, message: error.message });
   }
 };

@@ -1,6 +1,6 @@
 // controllers/invoiceWhatsappController.js
 const { Types } = require("mongoose");
-const { sendMail, verifyTransporter } = require("../utils/sendEmail");
+const { sendMail, verifyTransporter } = require("../utils/shareInvoice.js");
 const { Twilio } = require("twilio");
 const Invoice = require("../models/invoiceModel.js");
 const Sale = require("../models/salesModel.js");
@@ -31,7 +31,7 @@ exports.shareInvoiceEmail = async (req, res) => {
     try {
       await verifyTransporter();
     } catch (e) {
-      console.error("SMTP verification failed:", e);
+      // console.error("SMTP verification failed:", e);
       return res.status(500).json({
         message: "Email transport not configured correctly",
         ...(isDev ? { error: String(e?.message || e) } : {}),
@@ -86,7 +86,7 @@ exports.shareInvoiceEmail = async (req, res) => {
         throw new Error("PDF builder did not return a Buffer");
       }
     } catch (e) {
-      console.error("PDF build error:", e);
+      // console.error("PDF build error:", e);
       return res.status(500).json({
         message: "Failed to generate invoice PDF",
         ...(isDev ? { error: String(e?.message || e) } : {}),
@@ -107,7 +107,7 @@ exports.shareInvoiceEmail = async (req, res) => {
         ],
       });
     } catch (e) {
-      console.error("sendMail error:", e);
+      // console.error("sendMail error:", e);
       return res.status(500).json({
         message: "Failed to send email",
         ...(isDev ? { error: String(e?.message || e) } : {}),
@@ -116,7 +116,7 @@ exports.shareInvoiceEmail = async (req, res) => {
 
     return res.json({ ok: true, emailed: true, emailSentTo: email });
   } catch (err) {
-    console.error("shareInvoiceEmail fatal:", err);
+    // console.error("shareInvoiceEmail fatal:", err);
     return res.status(500).json({
       message: "Failed to email invoice",
       ...(isDev ? { error: String(err?.message || err) } : {}),
@@ -179,7 +179,7 @@ exports.shareInvoiceWhatsapp = async (req, res) => {
 
     return res.json({ ok: true, whatsapped: true, sid: msg.sid, to: toWhatsApp });
   } catch (err) {
-    console.error("shareInvoiceWhatsapp error:", err);
+    // console.error("shareInvoiceWhatsapp error:", err);
     return res.status(500).json({ message: "Failed to send on WhatsApp" });
   }
 };
@@ -211,7 +211,7 @@ exports.publicInvoicePdf = async (req, res) => {
     res.setHeader("Cache-Control", "public, max-age=300"); // cache 5 minutes
     return res.send(pdfBuffer);
   } catch (e) {
-    console.error("publicInvoicePdf error:", e);
+    // console.error("publicInvoicePdf error:", e);
     return res.status(500).end();
   }
 };
@@ -266,7 +266,7 @@ exports.shareInvoiceSMS = async (req, res) => {
 
     return res.json({ ok: true, sms: true, to: toSMS });
   } catch (err) {
-    console.error("SMS Error:", err);
+    // console.error("SMS Error:", err);
     return res.status(500).json({ message: "Failed to send SMS" });
   }
 };

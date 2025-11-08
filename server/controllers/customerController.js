@@ -64,7 +64,7 @@ exports.createCustomer = async (req, res) => {
         const uploaded = await Promise.all(uploadPromises);
         imageUrls = uploaded.map(img => img.secure_url);
       } catch (uploadErr) {
-        console.error("Image upload failed:", uploadErr);
+        // console.error("Image upload failed:", uploadErr);
         // Proceed without images if upload fails
         imageUrls = [];
       }
@@ -74,6 +74,9 @@ exports.createCustomer = async (req, res) => {
     const data = {
       ...parsedBody,
       images: imageUrls,
+      // Preserve gstState and gstin from the frontend payload
+      gstState: parsedBody.gstState || "N/A",
+      gstin: parsedBody.gstin || "",
       billing: {
         ...parsedBody.billing,
         country: prepareRef(parsedBody.billing?.country),
@@ -108,7 +111,7 @@ exports.createCustomer = async (req, res) => {
 
     res.status(201).json(populated);
   } catch (err) {
-    console.error("Create Customer Error:", err);
+    // console.error("Create Customer Error:", err);
     res.status(400).json({ error: err.message });
   }
 };
@@ -132,6 +135,9 @@ exports.updateCustomer = async (req, res) => {
 
     const data = {
       ...parsedBody,
+      // Preserve gstState and gstin from the frontend payload
+      gstState: parsedBody.gstState || "N/A",
+      gstin: parsedBody.gstin || "",
       billing: {
         ...parsedBody.billing,
         country: prepareRef(parsedBody.billing?.country),
@@ -203,39 +209,6 @@ exports.getActiveCustomers = async (req, res) => {
     res.status(500).json({ error: err.message });
   }
 };
-// Update customer
-exports.updateCustomer = async (req, res) => {
-  try {
-    const prepareRef = (field) => (typeof field === 'object' && field?.value) ? field.value : field;
-
-    const data = {
-      ...req.body,
-      billing: {
-        ...req.body.billing,
-        country: prepareRef(req.body.billing?.country),
-        state: prepareRef(req.body.billing?.state),
-        city: prepareRef(req.body.billing?.city),
-      },
-      shipping: {
-        ...req.body.shipping,
-        country: prepareRef(req.body.shipping?.country),
-        state: prepareRef(req.body.shipping?.state),
-        city: prepareRef(req.body.shipping?.city),
-      },
-    };
-
-    const customer = await Customer.findByIdAndUpdate(req.params.id, data, { new: true });
-
-    if (!customer) return res.status(404).json({ error: 'Customer not found' });
-
-    const populated = await Customer.findById(customer._id)
-      .populate('billing.country billing.state billing.city shipping.country shipping.state shipping.city');
-
-    res.json(populated);
-  } catch (err) {
-    res.status(400).json({ error: err.message });
-  }
-};
 
 // Upload customer image
 exports.uploadCustomerImage = async (req, res) => {
@@ -256,7 +229,7 @@ exports.uploadCustomerImage = async (req, res) => {
 
     res.json({ message: 'Image uploaded successfully', imageUrl });
   } catch (err) {
-    console.error("Upload Image Error:", err);
+    // console.error("Upload Image Error:", err);
     res.status(500).json({ error: err.message });
   }
 };
