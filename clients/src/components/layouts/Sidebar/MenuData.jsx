@@ -420,7 +420,7 @@ const canAccess = (module, action = "read") => {
       key: "auditlog",
       items: [
         {
-          label: t("Audit Log"),
+          label: t("Audit Trail"),
           path: "/activity",
           icon: <BsActivity className="icons" />,
         },
