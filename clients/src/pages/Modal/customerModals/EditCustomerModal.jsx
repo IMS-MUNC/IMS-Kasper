@@ -173,37 +173,37 @@ const EditCustomerModal = ({ customer, onClose, onSuccess }) => {
     }
   }, [customer]);
 
-useEffect(() => {
-  if (gstType === "register") {
-    axios
-      .get(`${BASE_URL}/api/gst`)
-      .then((res) => {
-        // Log the response to debug the API data structure
-        console.log("GST States API Response:", res.data);
-        const stateOptions = res.data.map((s) => ({ value: s.gstinCode, label: s.gstinCode }));
-        setGstStates(stateOptions);
-        // Ensure prefilled gstState is selected if it exists
-        if (customer?.gstState && customer.gstState !== "N/A") {
-          const matchedState = stateOptions.find(
-            (option) => option.value === customer.gstState
-          );
-          if (matchedState) {
-            setSelectedGstState(matchedState);
-          } else {
-            console.warn("Prefilled GST state not found in options:", customer.gstState);
-          }
-        }
-      })
-      .catch((err) => {
-        console.error("Failed to fetch GST states:", err.response || err.message);
-        setGstStates([]);
-        toast.error("Failed to fetch GST states. Please try again.");
-      });
-  } else {
-    setGstStates([]);
-    setSelectedGstState({ value: "N/A", label: "N/A" });
-  }
-}, [gstType, customer]);
+// useEffect(() => {
+//   if (gstType === "register") {
+//     axios
+//       .get(`${BASE_URL}/api/gst`)
+//       .then((res) => {
+//         // Log the response to debug the API data structure
+//         console.log("GST States API Response:", res.data);
+//         const stateOptions = res.data.map((s) => ({ value: s.gstinCode, label: s.gstinCode }));
+//         setGstStates(stateOptions);
+//         // Ensure prefilled gstState is selected if it exists
+//         if (customer?.gstState && customer.gstState !== "N/A") {
+//           const matchedState = stateOptions.find(
+//             (option) => option.value === customer.gstState
+//           );
+//           if (matchedState) {
+//             setSelectedGstState(matchedState);
+//           } else {
+//             console.warn("Prefilled GST state not found in options:", customer.gstState);
+//           }
+//         }
+//       })
+//       .catch((err) => {
+//         console.error("Failed to fetch GST states:", err.response || err.message);
+//         setGstStates([]);
+//         toast.error("Failed to fetch GST states. Please try again.");
+//       });
+//   } else {
+//     setGstStates([]);
+//     setSelectedGstState({ value: "N/A", label: "N/A" });
+//   }
+// }, [gstType, customer]);
 
   // Clean up image preview URL to prevent memory leaks
   useEffect(() => {
@@ -601,37 +601,39 @@ useEffect(() => {
     }
   };
 
+const [gstin, setGstin] = useState("27AAGCB1286Q1Z4"); // default sample
+  const [response, setResponse] = useState(null);
+  const [error, setError] = useState(null);
+
   const handleVerifyGstin = async () => {
-    if (!form.gstin || !selectedGstState) {
-      toast.error("Please enter GSTIN and select state");
+    if (!form.gstin.trim()) {
+      toast.error("Please enter GSTIN");
       return;
     }
-    if (!validationPatterns.gstin.test(form.gstin)) {
-      setValidationErrors((prev) => ({ ...prev, gstin: "Invalid GSTIN format" }));
-      toast.error("Invalid GSTIN format");
-      return;
-    }
-    setGstLoading(true);
+
+    setLoading(true);
+    setError(null);
+    setResponse(null);
     try {
-      const gstinPrefix = form.gstin.substring(0, 2);
-      if (gstinPrefix === selectedGstState.value) {
-        setValidationErrors((prev) => ({ ...prev, gstin: "" }));
+      const res = await axios.get(
+        `${BASE_URL}/api/gst/${encodeURIComponent(form.gstin)}`
+      );
+      setResponse(res.data); // same as backend/WhiteBooks response
+      
+      // Set verification status to true on successful response
+      if (res.data && res.data.data && res.data.data.sts.trim() === "Active") {
         setIsGstinVerified(true);
-        toast.success("GSTIN verified successfully");
+        toast.success("GSTIN verified successfully!");
       } else {
-        setValidationErrors((prev) => ({
-          ...prev,
-          gstin: "GSTIN does not match the selected state",
-        }));
         setIsGstinVerified(false);
-        toast.error("GSTIN verification failed");
+        toast.error("GSTIN verification failed. Please check the GSTIN.");
       }
     } catch (err) {
-      setValidationErrors((prev) => ({ ...prev, gstin: "Verification failed" }));
+      setError(err?.response?.data || err.message);
       setIsGstinVerified(false);
-      toast.error("Verification failed");
+      toast.error("GSTIN verification failed. Please try again.");
     } finally {
-      setGstLoading(false);
+      setLoading(false);
     }
   };
 
@@ -675,13 +677,26 @@ useEffect(() => {
     newErrors.gstType = gstType ? "" : "GST Type is required.";
     if (gstType === "register") {
       newErrors.gstState = selectedGstState ? "" : "GST State is required.";
-      newErrors.gstin = validateField("gstin", form.gstin);
-      if (newErrors.gstin === "" && !isGstinVerified) {
-        newErrors.gstin = "Please verify GSTIN.";
+      newErrors.gstin = !form.gstin.trim()
+        ? "GSTIN is required."
+        : validateField("gstin", form.gstin);
+      
+      // Additional validation: if GSTIN is required but not verified, prevent submission
+      if (form.gstin.trim() && !isGstinVerified) {
+        newErrors.gstin = "Please verify GSTIN before submitting.";
       }
     } else {
       newErrors.gstState = "";
       newErrors.gstin = "";
+    }
+
+    // Additional validation: If customer status is active, GSTIN must be provided and verified
+    if (form.status === true && gstType === "register") {
+      if (!form.gstin.trim()) {
+        newErrors.gstin = "GSTIN is required for active customers.";
+      } else if (!isGstinVerified) {
+        newErrors.gstin = "GSTIN must be verified for active customers.";
+      }
     }
     newErrors["billing.name"] = validateField("name", form.billing.name);
     newErrors["billing.address1"] = validateField("address1", form.billing.address1);
@@ -799,7 +814,7 @@ useEffect(() => {
       const errorMessage =
         err.response?.data?.message || err.response?.data?.error || "Failed to update customer";
       toast.error(errorMessage);
-      console.error("Error response:", err.response?.data); // Log for debugging
+      // console.error("Error response:", err.response?.data); // Log for debugging
     } finally {
       setLoading(false);
     }
@@ -1052,7 +1067,7 @@ useEffect(() => {
                     </div>
                     {gstType === "register" && (
                       <>
-                        <div className="col-lg-4 col-md-6">
+                        {/* <div className="col-lg-4 col-md-6">
                           <div className="mb-3">
                             <label className="form-label">State Code </label>
                             <Select
@@ -1065,7 +1080,7 @@ useEffect(() => {
                               <span className="text-danger fs-12">{errors.gstState}</span>
                             )}
                           </div>
-                        </div>
+                        </div> */}
                         <div className="col-lg-4 col-md-4">
                           <div className="mb-3">
                             <label className="form-label">GSTIN</label>
@@ -1083,7 +1098,7 @@ useEffect(() => {
                                 type="button"
                                 className="btn btn-outline-primary"
                                 onClick={handleVerifyGstin}
-                                disabled={!form.gstin || gstLoading || !selectedGstState}
+                                disabled={loading}
                               >
                                 {gstLoading ? "Verifying..." : "Verify"}
                               </button>
@@ -1092,6 +1107,44 @@ useEffect(() => {
                               <span className="text-danger fs-12">
                                 {errors.gstin || validationErrors.gstin}
                               </span>
+                            )}
+                            {response && (
+                              <div className="alert alert-success mt-2">
+                                <div>
+                                  <strong>Legal Name:</strong>{" "}
+                                  {response?.data?.lgnm || "—"}
+                                </div>
+                                <div>
+                                  <strong>Trade Name:</strong>{" "}
+                                  {response?.data?.tradeNam || "—"}
+                                </div>
+                                <div>
+                                  <strong>GSTIN:</strong>{" "}
+                                  {response?.data?.gstin || "—"}
+                                </div>
+                                <div>
+                                  <strong>Status:</strong>{" "}
+                                  {response?.data?.sts ||
+                                    response?.status_desc ||
+                                    "—"}
+                                </div>
+                                <div>
+                                  <strong>State:</strong>{" "}
+                                  {response?.data?.stj || "—"}
+                                </div>
+                                <div>
+                                  <strong>PIN Code:</strong>{" "}
+                                  {response?.data?.pradr?.addr?.pncd || "—"}
+                                </div>
+                                <div>
+                                  <strong>Address:</strong>{" "}
+                                  {response?.data?.pradr?.addr?.bnm
+                                    ? `${response.data.pradr.addr.bno || ""} ${
+                                        response.data.pradr.addr.bnm
+                                      }, ${response.data.pradr.addr.loc}`
+                                    : "—"}
+                                </div>
+                              </div>
                             )}
                           </div>
                         </div>

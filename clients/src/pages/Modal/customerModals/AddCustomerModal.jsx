@@ -35,7 +35,8 @@ const AddCustomerModal = ({ onClose, onSuccess }) => {
   const [gstDetails, setGstDetails] = useState(null);
 
   // Masters India API config (set in Vite env)
-  const MI_AUTH = import.meta.env.MI_AUTH || "3d80fd20d4540798919e48d7c872d09c8eb93036";
+  const MI_AUTH =
+    import.meta.env.MI_AUTH || "3d80fd20d4540798919e48d7c872d09c8eb93036";
   const MI_CLIENT_ID = import.meta.env.MI_CLIENT_ID || "242324v424244255545343";
 
   const [form, setForm] = useState({
@@ -83,7 +84,7 @@ const AddCustomerModal = ({ onClose, onSuccess }) => {
       phone: "Phone Number",
       currency: "Currency",
       gstType: "GST Type",
-      address1: "Address Line 1"
+      address1: "Address Line 1",
     };
     return labels[name] || name;
   };
@@ -249,7 +250,7 @@ const AddCustomerModal = ({ onClose, onSuccess }) => {
     const { name, value } = e.target;
     const sanitizedValue = sanitizeInput(value, name === "name");
     let error = validateField(name, sanitizedValue);
-    
+
     // REAL-TIME REQUIRED for name & address1
     if ((name === "name" || name === "address1") && !sanitizedValue.trim()) {
       error = `${getFieldLabel(name)} is required.`;
@@ -266,7 +267,7 @@ const AddCustomerModal = ({ onClose, onSuccess }) => {
     const { name, value } = e.target;
     const sanitizedValue = sanitizeInput(value, name === "name");
     let error = validateField(name, sanitizedValue);
-    
+
     // REAL-TIME REQUIRED for name & address1
     if ((name === "name" || name === "address1") && !sanitizedValue.trim()) {
       error = `${getFieldLabel(name)} is required.`;
@@ -301,7 +302,12 @@ const AddCustomerModal = ({ onClose, onSuccess }) => {
     setSelectedCity(null);
     setForm((prev) => ({
       ...prev,
-      billing: { ...prev.billing, country: option ? option.value : "", state: "", city: "" },
+      billing: {
+        ...prev.billing,
+        country: option ? option.value : "",
+        state: "",
+        city: "",
+      },
     }));
     setErrors((prev) => ({
       ...prev,
@@ -343,7 +349,12 @@ const AddCustomerModal = ({ onClose, onSuccess }) => {
     setSelectedShippingCity(null);
     setForm((prev) => ({
       ...prev,
-      shipping: { ...prev.shipping, country: option ? option.value : "", state: "", city: "" },
+      shipping: {
+        ...prev.shipping,
+        country: option ? option.value : "",
+        state: "",
+        city: "",
+      },
     }));
     setErrors((prev) => ({
       ...prev,
@@ -358,7 +369,11 @@ const AddCustomerModal = ({ onClose, onSuccess }) => {
     setSelectedShippingCity(null);
     setForm((prev) => ({
       ...prev,
-      shipping: { ...prev.shipping, state: option ? option.value : "", city: "" },
+      shipping: {
+        ...prev.shipping,
+        state: option ? option.value : "",
+        city: "",
+      },
     }));
     setErrors((prev) => ({
       ...prev,
@@ -440,53 +455,100 @@ const AddCustomerModal = ({ onClose, onSuccess }) => {
   // FIXED: Complete validateForm with PROPER REQUIRED LOGIC
   const validateForm = () => {
     const newErrors = {};
-    
+
     // Basic required fields - IMMEDIATE VALIDATION
     const requiredBasic = [
       { key: "name", label: "Name", value: form.name },
       { key: "email", label: "Email", value: form.email },
       { key: "phone", label: "Phone Number", value: form.phone },
       { key: "currency", label: "Currency", value: form.currency },
-      { key: "gstType", label: "GST Type", value: gstType }
+      { key: "gstType", label: "GST Type", value: gstType },
     ];
 
     requiredBasic.forEach(({ key, label, value }) => {
-      newErrors[key] = !value.trim() ? `${label} is required.` : validateField(key, value);
+      newErrors[key] = !value.trim()
+        ? `${label} is required.`
+        : validateField(key, value);
     });
 
     // GST fields
     if (gstType === "register") {
-      newErrors.gstState = !selectedGstState ? "GST State is required." : "";
-      newErrors.gstin = !form.gstin ? "GSTIN is required." : 
-                       validateField("gstin", form.gstin) || 
-                       (!isGstinVerified ? "Please verify GSTIN." : "");
+      newErrors.gstin = !form.gstin.trim()
+        ? "GSTIN is required."
+        : validateField("gstin", form.gstin);
+      
+      // Additional validation: if GSTIN is required but not verified, prevent submission
+      if (form.gstin.trim() && !isGstinVerified) {
+        newErrors.gstin = "Please verify GSTIN before submitting.";
+      }
+    }
+
+    // Additional validation: If customer status is active, GSTIN must be provided and verified
+    if (form.status === true && gstType === "register") {
+      if (!form.gstin.trim()) {
+        newErrors.gstin = "GSTIN is required for active customers.";
+      } else if (!isGstinVerified) {
+        newErrors.gstin = "GSTIN must be verified for active customers.";
+      }
     }
 
     // Billing required fields
-    newErrors["billing.name"] = !form.billing.name.trim() ? "Name is required." : validateField("name", form.billing.name);
-    newErrors["billing.address1"] = !form.billing.address1.trim() ? "Address Line 1 is required." : validateField("address1", form.billing.address1);
-    newErrors["billing.country"] = !selectedCountry ? "Billing Country is required." : "";
-    newErrors["billing.state"] = !selectedState ? "Billing State is required." : "";
-    newErrors["billing.city"] = !selectedCity ? "Billing City is required." : "";
+    newErrors["billing.name"] = !form.billing.name.trim()
+      ? "Name is required."
+      : validateField("name", form.billing.name);
+    newErrors["billing.address1"] = !form.billing.address1.trim()
+      ? "Address Line 1 is required."
+      : validateField("address1", form.billing.address1);
+    newErrors["billing.country"] = !selectedCountry
+      ? "Billing Country is required."
+      : "";
+    newErrors["billing.state"] = !selectedState
+      ? "Billing State is required."
+      : "";
+    newErrors["billing.city"] = !selectedCity
+      ? "Billing City is required."
+      : "";
 
-    // Shipping required fields  
-    newErrors["shipping.name"] = !form.shipping.name.trim() ? "Name is required." : validateField("name", form.shipping.name);
-    newErrors["shipping.address1"] = !form.shipping.address1.trim() ? "Address Line 1 is required." : validateField("address1", form.shipping.address1);
-    newErrors["shipping.country"] = !selectedShippingCountry ? "Shipping Country is required." : "";
-    newErrors["shipping.state"] = !selectedShippingState ? "Shipping State is required." : "";
-    newErrors["shipping.city"] = !selectedShippingCity ? "Shipping City is required." : "";
+    // Shipping required fields
+    newErrors["shipping.name"] = !form.shipping.name.trim()
+      ? "Name is required."
+      : validateField("name", form.shipping.name);
+    newErrors["shipping.address1"] = !form.shipping.address1.trim()
+      ? "Address Line 1 is required."
+      : validateField("address1", form.shipping.address1);
+    newErrors["shipping.country"] = !selectedShippingCountry
+      ? "Shipping Country is required."
+      : "";
+    newErrors["shipping.state"] = !selectedShippingState
+      ? "Shipping State is required."
+      : "";
+    newErrors["shipping.city"] = !selectedShippingCity
+      ? "Shipping City is required."
+      : "";
 
     // Optional fields (only regex validation)
-    const optionalFields = ["website", "notes", "billing.address2", "billing.postalCode", "shipping.address2", "shipping.pincode"];
-    optionalFields.forEach(field => {
+    const optionalFields = [
+      "website",
+      "notes",
+      "billing.address2",
+      "billing.postalCode",
+      "shipping.address2",
+      "shipping.pincode",
+    ];
+    optionalFields.forEach((field) => {
       const [section, subfield] = field.split(".");
-      const value = section === "billing" || section === "shipping" ? form[section][subfield] : form[field];
+      const value =
+        section === "billing" || section === "shipping"
+          ? form[section][subfield]
+          : form[field];
       newErrors[field] = value ? validateField(subfield || field, value) : "";
     });
 
     // Bank fields (all optional)
-    Object.keys(form.bank).forEach(key => {
-      newErrors[`bank.${key}`] = form.bank[key] ? validateField(key, form.bank[key]) : "";
+    Object.keys(form.bank).forEach((key) => {
+      newErrors[`bank.${key}`] = form.bank[key]
+        ? validateField(key, form.bank[key])
+        : "";
     });
 
     setErrors(newErrors);
@@ -499,14 +561,16 @@ const AddCustomerModal = ({ onClose, onSuccess }) => {
     setGstType(value);
     setForm((prev) => ({ ...prev, gstin: "" }));
     setIsGstinVerified(false);
-    setSelectedGstState(value === "unregister" ? { value: "N/A", label: "N/A" } : null);
-    
+    setSelectedGstState(
+      value === "unregister" ? { value: "N/A", label: "N/A" } : null
+    );
+
     // CLEAR GST ERRORS IMMEDIATELY
-    setErrors(prev => ({
+    setErrors((prev) => ({
       ...prev,
       gstType: "",
       gstState: "",
-      gstin: ""
+      gstin: "",
     }));
   };
 
@@ -619,7 +683,8 @@ const AddCustomerModal = ({ onClose, onSuccess }) => {
       if (onSuccess) onSuccess();
       if (onClose) onClose();
     } catch (err) {
-      const errorMessage = err.response?.data?.error || "Failed to create customer";
+      const errorMessage =
+        err.response?.data?.error || "Failed to create customer";
       toast.error(errorMessage);
     } finally {
       setLoading(false);
@@ -627,131 +692,88 @@ const AddCustomerModal = ({ onClose, onSuccess }) => {
   };
 
   // GST States fetch
-  useEffect(() => {
-    if (gstType === "register") {
-      axios
-        .get(`${BASE_URL}/api/gst`)
-        .then((res) => {
-          const stateOptions = res.data.map((s) => ({ value: s.gstinCode, label: `${s.gstinCode} - ${s.name}` }));
-          setGstStates(stateOptions);
-        })
-        .catch((err) => {
-          console.error("Failed to fetch GST states", err);
-          setGstStates([]);
-          toast.error("Failed to fetch GST states");
-        });
-    } else {
-      setGstStates([]);
-      setSelectedGstState(null);
-    }
-  }, [gstType]);
+  // useEffect(() => {
+  //   if (gstType === "register") {
+  //     axios
+  //       .get(`${BASE_URL}/api/gst`)
+  //       .then((res) => {
+  //         const stateOptions = res.data.map((s) => ({ value: s.gstinCode, label: `${s.gstinCode} - ${s.name}` }));
+  //         setGstStates(stateOptions);
+  //       })
+  //       .catch((err) => {
+  //         console.error("Failed to fetch GST states", err);
+  //         setGstStates([]);
+  //         toast.error("Failed to fetch GST states");
+  //       });
+  //   } else {
+  //     setGstStates([]);
+  //     setSelectedGstState(null);
+  //   }
+  // }, [gstType]);
+
+  const [gstin, setGstin] = useState("27AAGCB1286Q1Z4"); // default sample
+  const [response, setResponse] = useState(null);
+  const [error, setError] = useState(null);
 
   const handleVerifyGstin = async () => {
-    if (!form.gstin) {
+    if (!form.gstin.trim()) {
       toast.error("Please enter GSTIN");
       return;
     }
-    if (!validationPatterns.gstin.test(form.gstin)) {
-      setValidationErrors((prev) => ({ ...prev, gstin: "Invalid GSTIN format" }));
-      toast.error("Invalid GSTIN format");
-      return;
-    }
-    setGstLoading(true);
-    try {
-      const token = localStorage.getItem("token");
-      // Use POST /api/gst/search which accepts { gstin } in body
-      const res = await axios.post(`${BASE_URL}/api/gst/search`, { gstin: form.gstin }, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
 
-      const payload = res.data;
-      // Successful proxy response from server -> payload may already be parsed
-      if (payload && payload.error === false && payload.data) {
-        const info = payload.data;
-        setGstDetails({
-          name: info.name,
-          stateJurisdiction: info.stateJurisdiction,
-          centerJurisdiction: info.centerJurisdiction,
-          status: info.status,
-          registrationDate: info.registrationDate,
-          type: info.type,
-          gstin: info.gstin,
-        });
-        setValidationErrors((prev) => ({ ...prev, gstin: "" }));
+    setLoading(true);
+    setError(null);
+    setResponse(null);
+    try {
+      const res = await axios.get(
+        `${BASE_URL}/api/gst/${encodeURIComponent(form.gstin)}`
+      );
+      setResponse(res.data); // same as backend/WhiteBooks response
+      
+      // Set verification status to true on successful response
+      if (res.data && res.data.data && res.data.data.sts.trim() === "Active") {
         setIsGstinVerified(true);
-        if (selectedGstState && form.gstin.substring(0, 2) !== selectedGstState.value) {
-          toast.warn("GST state code does not match selected state");
-        } else {
-          toast.success("GSTIN verified successfully");
-        }
+        toast.success("GSTIN verified successfully!");
       } else {
-        // Handle known failure modes from the server / MastersIndia
-        const messageFromServer = payload?.message || payload?.error_description || "GSTIN verification failed";
-        // If the MastersIndia token is invalid, show a clear actionable message
-        if (typeof messageFromServer === "string" && messageFromServer.toLowerCase().includes("access token")) {
-          const friendly = "MastersIndia access token invalid on the server. Please set MI_ACCESS_TOKEN and MI_CLIENT_PUBLIC_ID in server env and restart the server.";
-          setGstDetails(null);
-          setIsGstinVerified(false);
-          setValidationErrors((prev) => ({ ...prev, gstin: friendly }));
-          toast.error(friendly);
-        } else {
-          setGstDetails(null);
-          setIsGstinVerified(false);
-          setValidationErrors((prev) => ({ ...prev, gstin: messageFromServer }));
-          toast.error(messageFromServer);
-        }
+        setIsGstinVerified(false);
+        toast.error("GSTIN verification failed. Please check the GSTIN.");
       }
     } catch (err) {
-      // Try to show the most useful error message available
-      const serverMsg = err.response?.data?.message || err.response?.data?.error || err.response?.data || err.message;
-      const isTokenError = typeof serverMsg === "string" && serverMsg.toLowerCase().includes("access token");
-      if (isTokenError) {
-        const friendly = "MastersIndia access token invalid on the server. Please set MI_ACCESS_TOKEN and MI_CLIENT_PUBLIC_ID in server env and restart the server.";
-        setValidationErrors((prev) => ({ ...prev, gstin: friendly }));
-        toast.error(friendly);
-      } else {
-        setValidationErrors((prev) => ({ ...prev, gstin: "Verification failed" }));
-        toast.error(typeof serverMsg === "string" ? serverMsg : "Verification failed");
-      }
-      setGstDetails(null);
+      setError(err?.response?.data || err.message);
       setIsGstinVerified(false);
+      toast.error("GSTIN verification failed. Please try again.");
     } finally {
-      setGstLoading(false);
+      setLoading(false);
     }
   };
-
-
   // Remove stray test token functions and unused state variables.
   // Use the application JWT from localStorage (consistent with other pages) when calling server APIs.
 
-const searchGSTIN = async () => {
-  console.log("Token before request:", token); // 👈 Confirm it’s set
-  const res = await axios.get(`http://localhost:5000/api/gstin/${gstin}`, {
-    headers: {
-      Authorization: `Bearer ${token}`,
-    },
-  });
-  console.log("GSTIN data:", res.data);
-};
+  const searchGSTIN = async () => {
+    // console.log("Token before request:", token); // 👈 Confirm it's set
+    const res = await axios.get(`http://localhost:5000/api/gstin/${form.gstin}`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+    // console.log("GSTIN data:", res.data);
+  };
 
+  //   const searchGSTIN = async () => {
 
-//   const searchGSTIN = async () => {
-   
-//     console.log("Forwarding headers:", {
-//   Authorization: token,
-//   client_id: process.env.MI_CLIENT_PUBLIC_ID
-// });
+  //     console.log("Forwarding headers:", {
+  //   Authorization: token,
+  //   client_id: process.env.MI_CLIENT_PUBLIC_ID
+  // });
 
-//     const res = await axios.get(`http://localhost:5000/api/gstin/${gstin}`, {
-//   headers: {
-//     Authorization: `Bearer ${token}`, // <— must include Bearer
-//   },
-// });
+  //     const res = await axios.get(`http://localhost:5000/api/gstin/${gstin}`, {
+  //   headers: {
+  //     Authorization: `Bearer ${token}`, // <— must include Bearer
+  //   },
+  // });
 
-//     setResult(res.data);
-//   };
+  //     setResult(res.data);
+  //   };
 
   return (
     <div
@@ -763,7 +785,10 @@ const searchGSTIN = async () => {
       role="dialog"
     >
       <div className="modal-dialog modal-dialog-centered modal-xl">
-        <div className="modal-content" style={{ maxHeight: "100vh", overflowY: "auto" }}>
+        <div
+          className="modal-content"
+          style={{ maxHeight: "100vh", overflowY: "auto" }}
+        >
           <div className="modal-header">
             <div className="page-title">
               <h4>Add Customer</h4>
@@ -783,7 +808,9 @@ const searchGSTIN = async () => {
                 <h5 className="mb-3">Add Customer</h5>
                 <form onSubmit={handleSubmit}>
                   <div className="mb-3">
-                    <h6 className="text-gray-9 fw-bold mb-2 d-flex">Basic Details</h6>
+                    <h6 className="text-gray-9 fw-bold mb-2 d-flex">
+                      Basic Details
+                    </h6>
                     <div className="d-flex align-items-center">
                       <div
                         className="avatar avatar-xxl border border-dashed bg-light me-3 flex-shrink-0"
@@ -816,7 +843,8 @@ const searchGSTIN = async () => {
                           onClick={handleUploadClick}
                           type="button"
                         >
-                          <i className="isax isax-image me-1" />Upload Image
+                          <i className="isax isax-image me-1" />
+                          Upload Image
                         </button>
                         <input
                           type="file"
@@ -826,12 +854,18 @@ const searchGSTIN = async () => {
                           onChange={handleFileChange}
                         />
                         {selectedImage && (
-                          <span className="text-gray-9">Selected: {selectedImage.name}</span>
+                          <span className="text-gray-9">
+                            Selected: {selectedImage.name}
+                          </span>
                         )}
                         {errors.image && (
-                          <span className="text-danger fs-12">{errors.image}</span>
+                          <span className="text-danger fs-12">
+                            {errors.image}
+                          </span>
                         )}
-                        <span className="text-gray-9">JPG or PNG format, not exceeding 1MB.</span>
+                        <span className="text-gray-9">
+                          JPG or PNG format, not exceeding 1MB.
+                        </span>
                       </div>
                     </div>
                   </div>
@@ -850,7 +884,9 @@ const searchGSTIN = async () => {
                           // required
                         />
                         {errors.name && (
-                          <span className="text-danger fs-12">{errors.name}</span>
+                          <span className="text-danger fs-12">
+                            {errors.name}
+                          </span>
                         )}
                       </div>
                     </div>
@@ -868,14 +904,17 @@ const searchGSTIN = async () => {
                           // required
                         />
                         {errors.email && (
-                          <span className="text-danger fs-12">{errors.email}</span>
+                          <span className="text-danger fs-12">
+                            {errors.email}
+                          </span>
                         )}
                       </div>
                     </div>
                     <div className="col-lg-4 col-md-6">
                       <div className="mb-3">
                         <label className="form-label">
-                          Phone Number <span className="text-danger ms-1">*</span>
+                          Phone Number{" "}
+                          <span className="text-danger ms-1">*</span>
                         </label>
                         <input
                           type="text"
@@ -886,13 +925,17 @@ const searchGSTIN = async () => {
                           // required
                         />
                         {errors.phone && (
-                          <span className="text-danger fs-12">{errors.phone}</span>
+                          <span className="text-danger fs-12">
+                            {errors.phone}
+                          </span>
                         )}
                       </div>
                     </div>
                     <div className="col-lg-4 col-md-6">
                       <div className="mb-3">
-                        <label className="form-label">Currency <span className="text-danger ms-1">*</span></label>
+                        <label className="form-label">
+                          Currency <span className="text-danger ms-1">*</span>
+                        </label>
                         <select
                           className="form-select"
                           name="currency"
@@ -908,7 +951,9 @@ const searchGSTIN = async () => {
                           <option value="Rupee">Rupee</option>
                         </select>
                         {errors.currency && (
-                          <span className="text-danger fs-12">{errors.currency}</span>
+                          <span className="text-danger fs-12">
+                            {errors.currency}
+                          </span>
                         )}
                       </div>
                     </div>
@@ -923,7 +968,9 @@ const searchGSTIN = async () => {
                           onChange={handleInputChange}
                         />
                         {errors.website && (
-                          <span className="text-danger fs-12">{errors.website}</span>
+                          <span className="text-danger fs-12">
+                            {errors.website}
+                          </span>
                         )}
                       </div>
                     </div>
@@ -938,13 +985,17 @@ const searchGSTIN = async () => {
                           onChange={handleInputChange}
                         />
                         {errors.notes && (
-                          <span className="text-danger fs-12">{errors.notes}</span>
+                          <span className="text-danger fs-12">
+                            {errors.notes}
+                          </span>
                         )}
                       </div>
                     </div>
                     <div className="col-lg-4 col-md-6">
                       <div className="mb-3">
-                        <label className="form-label">GST Type <span className="text-danger ms-1">*</span></label>
+                        <label className="form-label">
+                          GST Type <span className="text-danger ms-1">*</span>
+                        </label>
                         <select
                           className="form-select"
                           value={gstType}
@@ -956,7 +1007,9 @@ const searchGSTIN = async () => {
                           <option value="unregister">Unregister</option>
                         </select>
                         {errors.gstType && (
-                          <span className="text-danger fs-12">{errors.gstType}</span>
+                          <span className="text-danger fs-12">
+                            {errors.gstType}
+                          </span>
                         )}
                       </div>
                     </div>
@@ -981,7 +1034,7 @@ const searchGSTIN = async () => {
                     </div> */}
                     {gstType === "register" && (
                       <>
-                        <div className="col-lg-4 col-md-6">
+                        {/* <div className="col-lg-4 col-md-6">
                           <div className="mb-3">
                             <label className="form-label">State <span className="text-danger ms-1">*</span></label>
                             <Select
@@ -994,26 +1047,28 @@ const searchGSTIN = async () => {
                               <span className="text-danger fs-12">{errors.gstState}</span>
                             )}
                           </div>
-                        </div>
+                        </div> */}
                         <div className="col-lg-4 col-md-4">
                           <div className="mb-3">
-                            <label className="form-label">GSTIN <span className="text-danger ms-1">*</span></label>
+                            <label className="form-label">
+                              GSTIN <span className="text-danger ms-1">*</span>
+                            </label>
                             <div className="d-flex gap-2">
                               <input
                                 type="text"
-                                placeholder="Enter GSTIN"
                                 className="form-control"
                                 name="gstin"
                                 value={form.gstin}
                                 onChange={handleInputChange}
+                                placeholder="Enter GSTIN (e.g. 27AAGCB1286Q1Z4)"
                               />
                               <button
                                 type="button"
                                 className="btn btn-outline-primary"
                                 onClick={handleVerifyGstin}
-                                disabled={!form.gstin || gstLoading}
+                                disabled={loading}
                               >
-                                {gstLoading ? "Verifying..." : "Verify"}
+                                {loading ? "Verifying..." : "Verify"}
                               </button>
                             </div>
                             {(errors.gstin || validationErrors.gstin) && (
@@ -1021,21 +1076,45 @@ const searchGSTIN = async () => {
                                 {errors.gstin || validationErrors.gstin}
                               </span>
                             )}
-                            {isGstinVerified && gstDetails && (
+                            {response && (
                               <div className="alert alert-success mt-2">
-                                <div><strong>Name:</strong> {gstDetails.name}</div>
-                                <div><strong>GSTIN:</strong> {gstDetails.gstin}</div>
-                                <div><strong>Status:</strong> {gstDetails.status}</div>
-                                <div><strong>Type:</strong> {gstDetails.type}</div>
-                                <div><strong>Registration Date:</strong> {gstDetails.registrationDate}</div>
-                                <div><strong>State Jurisdiction:</strong> {gstDetails.stateJurisdiction}</div>
-                                <div><strong>Center Jurisdiction:</strong> {gstDetails.centerJurisdiction}</div>
+                                <div>
+                                  <strong>Legal Name:</strong>{" "}
+                                  {response?.data?.lgnm || "—"}
+                                </div>
+                                <div>
+                                  <strong>Trade Name:</strong>{" "}
+                                  {response?.data?.tradeNam || "—"}
+                                </div>
+                                <div>
+                                  <strong>GSTIN:</strong>{" "}
+                                  {response?.data?.gstin || "—"}
+                                </div>
+                                <div>
+                                  <strong>Status:</strong>{" "}
+                                  {response?.data?.sts || response?.status_desc ||
+                                    "—"}
+                                </div>
+                                <div>
+                                  <strong>State:</strong>{" "}
+                                  {response?.data?.stj || "—"}
+                                </div>
+                                <div>
+                                  <strong>PIN Code:</strong>{" "}
+                                  {response?.data?.pradr?.addr?.pncd || "—"}
+                                </div>
+                                <div>
+                                  <strong>Address:</strong>{" "}
+                                  {response?.data?.pradr?.addr?.bnm
+                                    ? `${response.data.pradr.addr.bno || ""} ${
+                                        response.data.pradr.addr.bnm
+                                      }, ${response.data.pradr.addr.loc}`
+                                    : "—"}
+                                </div>
                               </div>
                             )}
                           </div>
                         </div>
-
-     
                       </>
                     )}
                   </div>
@@ -1047,7 +1126,9 @@ const searchGSTIN = async () => {
                         <div className="row">
                           <div className="col-12">
                             <div className="mb-3">
-                              <label className="form-label">Name <span className="text-danger ms-1">*</span></label>
+                              <label className="form-label">
+                                Name <span className="text-danger ms-1">*</span>
+                              </label>
                               <input
                                 type="text"
                                 className="form-control"
@@ -1056,13 +1137,18 @@ const searchGSTIN = async () => {
                                 onChange={handleBillingChange}
                               />
                               {errors["billing.name"] && (
-                                <span className="text-danger fs-12">{errors["billing.name"]}</span>
+                                <span className="text-danger fs-12">
+                                  {errors["billing.name"]}
+                                </span>
                               )}
                             </div>
                           </div>
                           <div className="col-12">
                             <div className="mb-3">
-                              <label className="form-label">Address Line 1 <span className="text-danger ms-1">*</span></label>
+                              <label className="form-label">
+                                Address Line 1{" "}
+                                <span className="text-danger ms-1">*</span>
+                              </label>
                               <input
                                 type="text"
                                 className="form-control"
@@ -1071,13 +1157,17 @@ const searchGSTIN = async () => {
                                 onChange={handleBillingChange}
                               />
                               {errors["billing.address1"] && (
-                                <span className="text-danger fs-12">{errors["billing.address1"]}</span>
+                                <span className="text-danger fs-12">
+                                  {errors["billing.address1"]}
+                                </span>
                               )}
                             </div>
                           </div>
                           <div className="col-12">
                             <div className="mb-3">
-                              <label className="form-label">Address Line 2</label>
+                              <label className="form-label">
+                                Address Line 2
+                              </label>
                               <input
                                 type="text"
                                 className="form-control"
@@ -1086,14 +1176,19 @@ const searchGSTIN = async () => {
                                 onChange={handleBillingChange}
                               />
                               {errors["billing.address2"] && (
-                                <span className="text-danger fs-12">{errors["billing.address2"]}</span>
+                                <span className="text-danger fs-12">
+                                  {errors["billing.address2"]}
+                                </span>
                               )}
                             </div>
                           </div>
                           <div className="mb-3">
                             <div className="row">
                               <div className="col-md-6 mb-3">
-                                <label className="form-label">Country <span className="text-danger ms-1">*</span></label>
+                                <label className="form-label">
+                                  Country{" "}
+                                  <span className="text-danger ms-1">*</span>
+                                </label>
                                 <Select
                                   options={countryOptions}
                                   value={selectedCountry}
@@ -1101,11 +1196,16 @@ const searchGSTIN = async () => {
                                   placeholder="Select Country"
                                 />
                                 {errors["billing.country"] && (
-                                  <span className="text-danger fs-12">{errors["billing.country"]}</span>
+                                  <span className="text-danger fs-12">
+                                    {errors["billing.country"]}
+                                  </span>
                                 )}
                               </div>
                               <div className="col-md-6 mb-3">
-                                <label className="form-label">State <span className="text-danger ms-1">*</span></label>
+                                <label className="form-label">
+                                  State{" "}
+                                  <span className="text-danger ms-1">*</span>
+                                </label>
                                 <Select
                                   options={stateOptions}
                                   value={selectedState}
@@ -1114,11 +1214,16 @@ const searchGSTIN = async () => {
                                   isDisabled={!selectedCountry}
                                 />
                                 {errors["billing.state"] && (
-                                  <span className="text-danger fs-12">{errors["billing.state"]}</span>
+                                  <span className="text-danger fs-12">
+                                    {errors["billing.state"]}
+                                  </span>
                                 )}
                               </div>
                               <div className="col-md-6 mb-3">
-                                <label className="form-label">City <span className="text-danger ms-1">*</span></label>
+                                <label className="form-label">
+                                  City{" "}
+                                  <span className="text-danger ms-1">*</span>
+                                </label>
                                 <Select
                                   options={cityOptions}
                                   value={selectedCity}
@@ -1127,11 +1232,15 @@ const searchGSTIN = async () => {
                                   isDisabled={!selectedState}
                                 />
                                 {errors["billing.city"] && (
-                                  <span className="text-danger fs-12">{errors["billing.city"]}</span>
+                                  <span className="text-danger fs-12">
+                                    {errors["billing.city"]}
+                                  </span>
                                 )}
                               </div>
                               <div className="col-md-6 mb-3">
-                                <label className="form-label">Postal Code</label>
+                                <label className="form-label">
+                                  Postal Code
+                                </label>
                                 <input
                                   type="text"
                                   className="form-control"
@@ -1141,7 +1250,9 @@ const searchGSTIN = async () => {
                                   onChange={handleBillingChange}
                                 />
                                 {errors["billing.postalCode"] && (
-                                  <span className="text-danger fs-12">{errors["billing.postalCode"]}</span>
+                                  <span className="text-danger fs-12">
+                                    {errors["billing.postalCode"]}
+                                  </span>
                                 )}
                               </div>
                             </div>
@@ -1157,13 +1268,16 @@ const searchGSTIN = async () => {
                             className="d-inline-flex align-items-center text-primary text-decoration-underline fs-13 btn btn-link p-0"
                             style={{ boxShadow: "none" }}
                           >
-                            <TbCopy className="me-1" />Copy From Billing
+                            <TbCopy className="me-1" />
+                            Copy From Billing
                           </button>
                         </div>
                         <div className="row">
                           <div className="col-12">
                             <div className="mb-3">
-                              <label className="form-label">Name <span className="text-danger ms-1">*</span></label>
+                              <label className="form-label">
+                                Name <span className="text-danger ms-1">*</span>
+                              </label>
                               <input
                                 type="text"
                                 className="form-control"
@@ -1172,13 +1286,18 @@ const searchGSTIN = async () => {
                                 onChange={handleShippingChange}
                               />
                               {errors["shipping.name"] && (
-                                <span className="text-danger fs-12">{errors["shipping.name"]}</span>
+                                <span className="text-danger fs-12">
+                                  {errors["shipping.name"]}
+                                </span>
                               )}
                             </div>
                           </div>
                           <div className="col-12">
                             <div className="mb-3">
-                              <label className="form-label">Address Line 1 <span className="text-danger ms-1">*</span></label>
+                              <label className="form-label">
+                                Address Line 1{" "}
+                                <span className="text-danger ms-1">*</span>
+                              </label>
                               <input
                                 type="text"
                                 className="form-control"
@@ -1187,13 +1306,17 @@ const searchGSTIN = async () => {
                                 onChange={handleShippingChange}
                               />
                               {errors["shipping.address1"] && (
-                                <span className="text-danger fs-12">{errors["shipping.address1"]}</span>
+                                <span className="text-danger fs-12">
+                                  {errors["shipping.address1"]}
+                                </span>
                               )}
                             </div>
                           </div>
                           <div className="col-12">
                             <div className="mb-3">
-                              <label className="form-label">Address Line 2</label>
+                              <label className="form-label">
+                                Address Line 2
+                              </label>
                               <input
                                 type="text"
                                 className="form-control"
@@ -1202,12 +1325,17 @@ const searchGSTIN = async () => {
                                 onChange={handleShippingChange}
                               />
                               {errors["shipping.address2"] && (
-                                <span className="text-danger fs-12">{errors["shipping.address2"]}</span>
+                                <span className="text-danger fs-12">
+                                  {errors["shipping.address2"]}
+                                </span>
                               )}
                             </div>
                           </div>
                           <div className="col-md-6 mb-3">
-                            <label className="form-label">Country <span className="text-danger ms-1">*</span></label>
+                            <label className="form-label">
+                              Country{" "}
+                              <span className="text-danger ms-1">*</span>
+                            </label>
                             <Select
                               options={countryOptions}
                               value={selectedShippingCountry}
@@ -1215,11 +1343,15 @@ const searchGSTIN = async () => {
                               placeholder="Select Country"
                             />
                             {errors["shipping.country"] && (
-                              <span className="text-danger fs-12">{errors["shipping.country"]}</span>
+                              <span className="text-danger fs-12">
+                                {errors["shipping.country"]}
+                              </span>
                             )}
                           </div>
                           <div className="col-md-6 mb-3">
-                            <label className="form-label">State <span className="text-danger ms-1">*</span></label>
+                            <label className="form-label">
+                              State <span className="text-danger ms-1">*</span>
+                            </label>
                             <Select
                               options={shippingStateOptions}
                               value={selectedShippingState}
@@ -1228,11 +1360,15 @@ const searchGSTIN = async () => {
                               isDisabled={!selectedShippingCountry}
                             />
                             {errors["shipping.state"] && (
-                              <span className="text-danger fs-12">{errors["shipping.state"]}</span>
+                              <span className="text-danger fs-12">
+                                {errors["shipping.state"]}
+                              </span>
                             )}
                           </div>
                           <div className="col-md-6 mb-3">
-                            <label className="form-label">City <span className="text-danger ms-1">*</span></label>
+                            <label className="form-label">
+                              City <span className="text-danger ms-1">*</span>
+                            </label>
                             <Select
                               options={shippingCityOptions}
                               value={selectedShippingCity}
@@ -1241,7 +1377,9 @@ const searchGSTIN = async () => {
                               isDisabled={!selectedShippingState}
                             />
                             {errors["shipping.city"] && (
-                              <span className="text-danger fs-12">{errors["shipping.city"]}</span>
+                              <span className="text-danger fs-12">
+                                {errors["shipping.city"]}
+                              </span>
                             )}
                           </div>
                           <div className="col-md-6">
@@ -1256,7 +1394,9 @@ const searchGSTIN = async () => {
                                 onChange={handleShippingChange}
                               />
                               {errors["shipping.pincode"] && (
-                                <span className="text-danger fs-12">{errors["shipping.pincode"]}</span>
+                                <span className="text-danger fs-12">
+                                  {errors["shipping.pincode"]}
+                                </span>
                               )}
                             </div>
                           </div>
@@ -1278,7 +1418,9 @@ const searchGSTIN = async () => {
                             onChange={handleBankChange}
                           />
                           {errors["bank.bankName"] && (
-                            <span className="text-danger fs-12">{errors["bank.bankName"]}</span>
+                            <span className="text-danger fs-12">
+                              {errors["bank.bankName"]}
+                            </span>
                           )}
                         </div>
                       </div>
@@ -1293,7 +1435,9 @@ const searchGSTIN = async () => {
                             onChange={handleBankChange}
                           />
                           {errors["bank.branch"] && (
-                            <span className="text-danger fs-12">{errors["bank.branch"]}</span>
+                            <span className="text-danger fs-12">
+                              {errors["bank.branch"]}
+                            </span>
                           )}
                         </div>
                       </div>
@@ -1308,7 +1452,9 @@ const searchGSTIN = async () => {
                             onChange={handleBankChange}
                           />
                           {errors["bank.accountHolder"] && (
-                            <span className="text-danger fs-12">{errors["bank.accountHolder"]}</span>
+                            <span className="text-danger fs-12">
+                              {errors["bank.accountHolder"]}
+                            </span>
                           )}
                         </div>
                       </div>
@@ -1323,7 +1469,9 @@ const searchGSTIN = async () => {
                             onChange={handleBankChange}
                           />
                           {errors["bank.accountNumber"] && (
-                            <span className="text-danger fs-12">{errors["bank.accountNumber"]}</span>
+                            <span className="text-danger fs-12">
+                              {errors["bank.accountNumber"]}
+                            </span>
                           )}
                         </div>
                       </div>
@@ -1338,11 +1486,20 @@ const searchGSTIN = async () => {
                             onChange={handleBankChange}
                           />
                           {errors["bank.ifsc"] && (
-                            <span className="text-danger fs-12">{errors["bank.ifsc"]}</span>
+                            <span className="text-danger fs-12">
+                              {errors["bank.ifsc"]}
+                            </span>
                           )}
                         </div>
                       </div>
-                      <div className="col-lg-4 col-md-6" style={{ display: "flex", gap: "5px", marginTop: "35px" }}>
+                      <div
+                        className="col-lg-4 col-md-6"
+                        style={{
+                          display: "flex",
+                          gap: "5px",
+                          marginTop: "35px",
+                        }}
+                      >
                         <label className="">Status</label>
                         <div className="form-check form-switch mb-3">
                           <input
@@ -1364,7 +1521,11 @@ const searchGSTIN = async () => {
                     >
                       Cancel
                     </button>
-                    <button type="submit" className="btn btn-primary" disabled={loading}>
+                    <button
+                      type="submit"
+                      className="btn btn-primary"
+                      disabled={loading}
+                    >
                       {loading ? "Saving..." : "Create New"}
                     </button>
                   </div>
