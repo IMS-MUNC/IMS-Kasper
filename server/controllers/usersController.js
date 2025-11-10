@@ -2,6 +2,7 @@ const User = require("../models/usersModels");
 const Role = require("../models/roleModels");
 const cloudinary = require("../utils/cloudinary/cloudinary");
 const bcrypt = require("bcryptjs");
+const { createAuditLog } = require("../utils/auditLogger");
 
 // CREATE USER
 exports.createUser = async (req, res) => {
@@ -61,11 +62,18 @@ exports.createUser = async (req, res) => {
       passwordChangedAt: new Date(),
       profileImage,
       role,
-      status:"Active",
+      status: "Active",
     });
 
     await newUser.save();
-
+    await createAuditLog({
+      user: req.user,
+      module: "User",
+      action: "CREATE",
+      description: `Created User: ${newUser.userName}`,
+      newData: newUser,
+      req,
+    });
     res
       .status(201)
       .json({ message: "User created successfully", user: newUser });
@@ -78,7 +86,7 @@ exports.createUser = async (req, res) => {
 // GET ALL USERS
 exports.getAllUsers = async (req, res) => {
   try {
-    const users = await User.find().populate("role").sort({createdAt:-1});
+    const users = await User.find().populate("role").sort({ createdAt: -1 });
     res.status(200).json(users);
   } catch (error) {
     console.error("Error fetching users:", error);
@@ -138,6 +146,8 @@ exports.updateUser = async (req, res) => {
     } = req.body;
     const user = await User.findById(req.params.id);
     if (!user) return res.status(404).json({ message: "User not found" });
+    // store the old data before update
+    const oldData = JSON.parse(JSON.stringify(user.toObject()));
     //verify current password before making changes
     if (newpassword || confirmpassword) {
       if (!currentpassword) {
@@ -190,7 +200,16 @@ exports.updateUser = async (req, res) => {
     //   user.password = hashedPassword;
     // }
 
-    await user.save();
+    const updatedUser = await user.save();
+    await createAuditLog({
+      user: req.user,
+      module: "USER",
+      action: "UPDATE",
+      description: `Updated user:${updatedUser.firstName} ${updatedUser.lastName}`,
+      oldData,
+      newData: updatedUser,
+      req,
+    });
     res.status(200).json({ message: "User updated successfully", user });
   } catch (error) {
     console.error("Error updating user:", error);
@@ -208,6 +227,14 @@ exports.deleteUser = async (req, res) => {
       await cloudinary.uploader.destroy(user.profileImage.public_id);
     }
     await user.deleteOne();
+    await createAuditLog({
+      user: req.user,
+      module: "User",
+      action: "DELETE",
+      description: `Deleted user:${user.firstName}`,
+      oldData: user,
+      req,
+    });
     res.status(200).json({ message: "User deleted successfully" });
   } catch (error) {
     console.error("Error deleting user:", error);
@@ -350,21 +377,20 @@ exports.bulkDeleteUsers = async (req, res) => {
       if (user.profileImage && user.profileImage.public_id) {
         try {
           await cloudinary.uploader.destroy(user.profileImage.public_id);
-        }
-        catch (error) {
-          console.warn(`Cloudinary delete failed for user ${user._id}:${error.message}`);
+        } catch (error) {
+          console.warn(
+            `Cloudinary delete failed for user ${user._id}:${error.message}`
+          );
         }
       }
     }
     await User.deleteMany({ _id: { $in: ids } });
-    res
-      .status(200)
-      .json({ message: "Users deleted successfully", deletedCount: users.length });
+    res.status(200).json({
+      message: "Users deleted successfully",
+      deletedCount: users.length,
+    });
   } catch (error) {
     console.error("Bulk Delete Error:", error);
     res.status(500).json({ message: "Server error", error });
   }
-}
-
-
-
+};
