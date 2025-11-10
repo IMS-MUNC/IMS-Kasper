@@ -7,6 +7,7 @@ const ActivityLog = () => {
   const [loading, setLoading] = useState(false);
   const token = localStorage.getItem("token");
   const [users, setUsers] = useState([]);
+  const [allUsers, setAllUsers] = useState([]);
   const [logs, setLogs] = useState([]);
   const [saleLogs, setSaleLogs] = useState([]);
   const [expandedRow, setExpandedRow] = useState(null);
@@ -25,6 +26,7 @@ const ActivityLog = () => {
       });
       const userLogs = res.data.filter((user) => user.module?.toLowerCase() === "user");
       setUsers(userLogs);
+      setAllUsers(userLogs);
       console.log('ussesss', userLogs)
     } catch (error) {
       console.error("failed to fetch user audit data", error)
@@ -35,7 +37,7 @@ const ActivityLog = () => {
   }, []);
   // handle search and filter
   useEffect(() => {
-    let filtered = logs;
+    let filtered = allUsers;
     if (filterAction !== "ALL") {
       filtered = filtered.filter((log) => log.action === filterAction);
     }
@@ -43,7 +45,7 @@ const ActivityLog = () => {
       filtered = filtered.filter((log) => log.userId?.firstName?.toLowerCase().includes(searchTerm.toLowerCase()))
     }
     setUsers(filtered);
-  }, [searchTerm, filterAction, logs, setUsers]);
+  }, [searchTerm, filterAction, allUsers]);
 
   // download CSV
   const handleDownloadCSV = () => {
@@ -176,7 +178,7 @@ const ActivityLog = () => {
             )}
           </div>
           <button onClick={handleDownloadCSV} style={{ padding: "8px 14px", border: "none", borderRadius: "5px", background: "#007cff", color: "white", fontSize: '14px', fontWeight: "500", cursor: "pointer" }}>Download CSV</button></div>
-        <h4 className="fw-bold mb-3">User</h4>
+        <h4 className="fw-bold mb-2 mt-2">User</h4>
         <div className="card">
           <div className="card-body p-0">
             <div style={{ display: 'flex', flexDirection: 'column', gap: '100px' }}>
@@ -273,8 +275,8 @@ const ActivityLog = () => {
 
         </div>
         {/* product */}
-        <h4 className="fw-bold mb-3">Activity </h4>
-        <div className="card">
+        {/* <h4 className="fw-bold mb-3">Product </h4> */}
+        {/* <div className="card">
           <div className="card-body p-0">
             <div style={{ display: 'flex', flexDirection: 'column', gap: '100px' }}>
               <div className="table-responsive">
@@ -295,7 +297,6 @@ const ActivityLog = () => {
                         <td>{log.userId.firstName}</td>
                         <td>{log.userId.role.roleName}</td>
                         <td>{log.module}</td>
-                        {/* <td>{log.newData.productName}</td> */}
                         <td>
                           {log.newData?.productName ||
                             log.oldData?.productName ||
@@ -321,9 +322,9 @@ const ActivityLog = () => {
               </div>
             </div>
           </div>
-        </div>
-        <h4 className="fw-bold mb-3">Sale</h4>
-        <div className="card">
+        </div> */}
+        {/* <h4 className="fw-bold mb-3">Sale</h4> */}
+        {/* <div className="card">
           <div className="card-body p-0">
             <div style={{ display: 'flex', flexDirection: 'column', gap: '100px' }}>
               <div className="table-responsive">
@@ -381,10 +382,10 @@ const ActivityLog = () => {
               </div>
             </div>
           </div>
-        </div>
+        </div> */}
         {/* purchase */}
-        <h4 className="fw-bold mb-3">Purchase</h4>
-        <div className="card">
+        {/* <h4 className="fw-bold mb-3">Purchase</h4> */}
+        {/* <div className="card">
           <div className="card-body p-0">
             <div style={{ display: 'flex', flexDirection: 'column', gap: '100px' }}>
               <div className="table-responsive">
@@ -442,7 +443,7 @@ const ActivityLog = () => {
               </div>
             </div>
           </div>
-        </div>
+        </div> */}
       </div>
     </div>
   );

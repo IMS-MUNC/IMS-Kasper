@@ -476,6 +476,7 @@ const Brand = () => {
             </li> */}
           </div>
           <div className="page-btn">
+            {hasPermission("Brand", "create") && (
             <a
               href="#"
               className="btn btn-primary"
@@ -485,6 +486,7 @@ const Brand = () => {
               <CiCirclePlus className=" me-1" />
               {t("Add Brand")}
             </a>
+            )}
           </div>
         </div>
         {/* /product list */}
@@ -646,6 +648,7 @@ const Brand = () => {
                       </td>
                       <td className="action-table-data">
                         <div className="edit-delete-action">
+                          {hasPermission("Brand", "update") && (
                           <a
                             className="me-2 p-2"
                             data-bs-toggle="modal"
@@ -654,7 +657,8 @@ const Brand = () => {
                           >
                             <TbEdit />
                           </a>
-
+                          )}
+                        {hasPermission("Brand", "delete") && (
                           <a
                             className="p-2"
                             onClick={() =>
@@ -663,6 +667,7 @@ const Brand = () => {
                           >
                             <TbTrash />
                           </a>
+                          )}
                         </div>
                       </td>
                     </tr>

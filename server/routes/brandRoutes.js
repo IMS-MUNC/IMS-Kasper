@@ -10,7 +10,8 @@ const { authMiddleware } = require("../middleware/auth.js")
 // ✅ Create brand (requires 'Brand' → 'create')
 router.post(
   "/addBrands",
-
+  verifyToken,
+  checkPermission("Brand", "write"),
   upload.array("image", 5),
   brandController.addBrand
 );
@@ -18,7 +19,8 @@ router.post(
 // ✅ Update brand (requires 'Brand' → 'update')
 router.put(
   "/editBrands/:id",
-
+  verifyToken,
+  checkPermission("Brand", "update"),
   upload.array("image", 5),
   brandController.updateBrand
 );
@@ -26,7 +28,8 @@ router.put(
 // ✅ View all brands (requires 'Brand' → 'read')
 router.get(
   "/getBrands",
-
+   verifyToken,
+  checkPermission("Brand", "read"),
   brandController.getBrands
 );
 
@@ -40,7 +43,8 @@ router.get(
 // ✅ Delete brand (requires 'Brand' → 'delete')
 router.delete(
   "/deleteBrand/:id",
-
+   verifyToken,
+  checkPermission("Brand", "delete"),
   brandController.deleteBrand
 );
 
