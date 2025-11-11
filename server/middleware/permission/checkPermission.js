@@ -6,7 +6,15 @@ exports.checkPermission = (module, action) => {
         return res.status(403).json({ message: "Access denied: No role permissions found" });
       }
 
-      const perms = role.modulePermissions[module];
+      // const perms = role.modulePermissions[module];
+      let perms;
+
+if (role.modulePermissions instanceof Map) {
+  perms = role.modulePermissions.get(module) || role.modulePermissions.get(module.toLowerCase());
+} else {
+  perms = role.modulePermissions[module] || role.modulePermissions[module.toLowerCase()];
+}
+
       if (!perms) {
         return res.status(403).json({ message: `Access denied: No permission for '${module}'` });
       }

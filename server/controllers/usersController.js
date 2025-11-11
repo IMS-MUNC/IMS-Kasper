@@ -68,9 +68,9 @@ exports.createUser = async (req, res) => {
     await newUser.save();
     await createAuditLog({
       user: req.user,
-      module: "User",
+      module: "USER",
       action: "CREATE",
-      description: `Created User: ${newUser.userName}`,
+      description: `Created User: ${newUser.firstName}`,
       newData: newUser,
       req,
     });
@@ -229,7 +229,7 @@ exports.deleteUser = async (req, res) => {
     await user.deleteOne();
     await createAuditLog({
       user: req.user,
-      module: "User",
+      module: "USER",
       action: "DELETE",
       description: `Deleted user:${user.firstName}`,
       oldData: user,
