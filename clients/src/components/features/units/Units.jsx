@@ -15,6 +15,7 @@ import { GrFormPrevious } from "react-icons/gr";
 import { MdNavigateNext } from "react-icons/md";
 import "../../features/units/Units.css"
 import { useTranslation } from 'react-i18next';
+import { hasPermission } from "../../../utils/permission/hasPermission.jsx";
 
 
 
@@ -344,6 +345,7 @@ const Units = () => {
                 </button>
               )}
             </li>
+            {hasPermission("Unit", "export") && (
             <li style={{ display: "flex", alignItems: "center", gap: '5px' }} className="icon-btn">
               <label className="" title="">{t("Export :")} </label>
               <button onClick={exportToPDF} title={t("Download PDF")} style={{
@@ -359,6 +361,8 @@ const Units = () => {
                 border: "none",
               }}><FaFileExcel className="fs-20" style={{ color: "orange" }} /></button>
             </li>
+            )}
+            {hasPermission("Unit", "import") && (
             <li style={{ display: "flex", alignItems: "center", gap: '5px' }} className="icon-btn">
               <label className="" title="">{t("Import :")} </label>
               <label className="" title={t("Import Excel")}>
@@ -366,6 +370,7 @@ const Units = () => {
                 <FaFileExcel style={{ color: "green" }} />
               </label>
             </li>
+            )}
             {/* <li>
               <button
                 type="button"
@@ -378,6 +383,7 @@ const Units = () => {
             </li> */}
           </div>
           <div className="page-btn">
+            {hasPermission("Unit", "write") && (
             <a
               href="#"
               className="btn btn-primary"
@@ -387,6 +393,7 @@ const Units = () => {
               <i className="ti ti-circle-plus me-1" />
               {t("Add Unit")}
             </a>
+            )}
           </div>
         </div>
         <div className="card">
@@ -506,6 +513,7 @@ const Units = () => {
                         </td>
                         <td className="action-table-data">
                           <div className="edit-delete-action">
+                            {hasPermission("Unit", "update") && (
                             <a
                               className="me-2 p-2"
                               data-bs-toggle="modal"
@@ -514,13 +522,15 @@ const Units = () => {
                             >
                               <TbEdit />
                             </a>
-
+                              )}
+                              {hasPermission("Unit", "delete") && (
                             <a
                               className="p-2"
                               onClick={() => handleDeleteUnit(unit._id)}
                             >
                               <TbTrash />
                             </a>
+                            )}
                           </div>
                         </td>
                       </tr>

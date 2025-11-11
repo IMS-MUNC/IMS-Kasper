@@ -421,6 +421,11 @@ const Brand = () => {
   }, 50);
 };
 
+useEffect(() => {
+  console.log("Write:", hasPermission("Brand", "write"));
+  console.log("Delete:", hasPermission("Brand", "delete"));
+}, []);
+
   return (
     <div className="page-wrapper">
       <div className="content">
@@ -442,6 +447,7 @@ const Brand = () => {
                 </button>
               )}
             </li>
+            {hasPermission("Brand", "export") && (
             <li style={{ display: "flex", alignItems: "center", gap: '5px' }} className="icon-btn">
               <label className="" title="">{t("Export :")} </label>
               <button onClick={exportToPDF} title={t("Download PDF")} style={{
@@ -457,6 +463,8 @@ const Brand = () => {
                 border: "none",
               }}><FaFileExcel className="fs-20" style={{ color: "orange" }} /></button>
             </li>
+            )}
+            {hasPermission("Brand", "import") && (
             <li style={{ display: "flex", alignItems: "center", gap: '5px' }} className="icon-btn">
               <label className="" title="">{t("Import :")} </label>
               <label className="" title={t("Import Excel")}>
@@ -464,6 +472,7 @@ const Brand = () => {
                 <FaFileExcel style={{ color: "green" }} />
               </label>
             </li>
+            )}
             {/* <li>
               <button 
                 type="button" 
@@ -476,7 +485,7 @@ const Brand = () => {
             </li> */}
           </div>
           <div className="page-btn">
-            {hasPermission("Brand", "create") && (
+            {hasPermission("Brand", "write") && (
             <a
               href="#"
               className="btn btn-primary"

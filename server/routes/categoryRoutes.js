@@ -12,13 +12,15 @@ const {
   //   getNextCategoryCode
 } = require("../controllers/categoryController");
 const { authMiddleware } = require("../middleware/auth.js")
+const { verifyToken } = require("../middleware/Authentication/verifyToken");
+const { checkPermission } = require("../middleware/permission/checkPermission");
 
 
-router.post("/categories", authMiddleware, createCategory);        // CREATE
-router.get("/categories", authMiddleware, getAllCategories);       // READ ALL
+router.post("/categories", verifyToken, checkPermission("Category", "write"), authMiddleware, createCategory);        // CREATE
+router.get("/categories", verifyToken, checkPermission("Category", "read"), authMiddleware, getAllCategories);       // READ ALL
 router.get("/categories/:id", authMiddleware, getCategoryById);    // READ ONE
-router.put("/categories/:id", authMiddleware, updateCategory);     // UPDATE
-router.delete("/categories/:id", authMiddleware, deleteCategory);  // DELETE
+router.put("/categories/:id", verifyToken, checkPermission("Category", "update"), authMiddleware, updateCategory);     // UPDATE
+router.delete("/categories/:id", verifyToken, checkPermission("Category", "delete"), authMiddleware, deleteCategory);  // DELETE
 // router.get("/next-category-code", getNextCategoryCode);
 router.post("/bulk-assign-codes", authMiddleware, bulkAssignCategoryCodes);
 router.post("/categories/bulk-delete", authMiddleware, bulkDeleteCategories);

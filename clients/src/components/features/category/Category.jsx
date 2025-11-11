@@ -15,6 +15,7 @@ import autoTable from "jspdf-autotable";
 import Papa from "papaparse";
 import * as XLSX from "xlsx";
 import { useTranslation } from 'react-i18next';
+import { hasPermission } from "../../../utils/permission/hasPermission";
 
 const Category = () => {
   const { t } = useTranslation();
@@ -379,6 +380,8 @@ const Category = () => {
               style={{ display: "flex", alignItems: "center", gap: "5px" }}
               className="icon-btn"
             >
+              {hasPermission("Category", "export") && (
+                <>
               <label title="">{t("Export :")} </label>
               <button
                 onClick={handlePdf}
@@ -404,11 +407,15 @@ const Category = () => {
               >
                 <FaFileExcel className="fs-20" style={{ color: "orange" }} />
               </button>
+              </>
+              )}
             </div>
             <div
               style={{ display: "flex", alignItems: "center", gap: "5px" }}
               className="icon-btn"
             >
+              {hasPermission("Category", "export") && (
+                <>
               <label title="">{t("Import :")}</label>
               <label title={t("Import Excel")}>
                 <button
@@ -431,9 +438,12 @@ const Category = () => {
                   onChange={handleFileChange}
                 />
               </label>
+              </>
+              )}
             </div>
           </div>
           <div className="page-btn">
+            {hasPermission("Category", "write") && (
             <a
               href="#"
               className="btn btn-primary"
@@ -449,6 +459,7 @@ const Category = () => {
               <i className="ti ti-circle-plus me-1" />
               {t("Add Category")}
             </a>
+            )}
           </div>
         </div>
 
@@ -557,6 +568,7 @@ const Category = () => {
                         </td>
                         <td className="action-table-data">
                           <div className="edit-delete-action">
+                            {hasPermission("Category", "update") && (
                             <a
                               className="me-2 p-2"
                               data-bs-toggle="modal"
@@ -571,6 +583,8 @@ const Category = () => {
                             >
                               <TbEdit />
                             </a>
+                            )}
+                            {hasPermission("Category", "delete") && (
                             <a
                               className="p-2"
                               onClick={() =>
@@ -582,6 +596,7 @@ const Category = () => {
                             >
                               <TbTrash />
                             </a>
+                            )}
                           </div>
                         </td>
                       </tr>

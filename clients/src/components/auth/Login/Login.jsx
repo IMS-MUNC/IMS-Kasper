@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import "../../../styles/login.css";
 import { MdOutlineEmail } from "react-icons/md";
 import { FaRegEyeSlash, FaRegEye } from "react-icons/fa";
@@ -13,6 +13,15 @@ import { jwtDecode } from "jwt-decode";
 
 
 const Login = () => {
+  const location = useLocation();
+  const inactiveMessage = location.state?.inactive;
+
+  useEffect(() => {
+    if(inactiveMessage) {
+      toast.error("You are set Inactive by admin. Please first contact him")
+    }
+  },[inactiveMessage]);
+  
   const navigate = useNavigate();
 
   const [formData, setFormData] = useState({
