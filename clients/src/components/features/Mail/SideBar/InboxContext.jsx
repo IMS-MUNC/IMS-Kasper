@@ -43,7 +43,7 @@ export const InboxProvider = ({ children }) => {
       }
     } catch (error) {
       // console.log("Error fetching inbox count:", error);
-      console.error("❌ fetchInboxCount error:", error.response?.status || error.message);
+      // console.error("❌ fetchInboxCount error:", error.response?.status || error.message);
     }
   };
   useEffect(() => {
