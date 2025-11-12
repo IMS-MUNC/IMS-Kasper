@@ -13,6 +13,7 @@ import DeleteAlert from "../../../../utils/sweetAlert/DeleteAlert";
 import { sanitizeInput } from "../../../../utils/sanitize";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
+import { hasPermission } from '../../../../utils/permission/hasPermission';
 
 const HSNList = () => {
   const [data, setData] = useState([]);
@@ -344,6 +345,7 @@ const HSNList = () => {
               )}
 
             </li>
+            {hasPermission("HSN", "export") && (
             <li style={{ display: "flex", alignItems: "center", gap: '5px' }} className="icon-btn">
               <label className="" title="">Export : </label>
               <button onClick={handlePdf} title="Download PDF" style={{
@@ -359,6 +361,8 @@ const HSNList = () => {
                 border: "none",
               }}><FaFileExcel className="fs-20" style={{ color: "orange" }} /></button>
             </li>
+            )}
+            {hasPermission("HSN", "import") && (
             <li style={{ display: "flex", alignItems: "center", gap: '5px' }} className="icon-btn">
               <label className="" title="">Import : </label>
               <label className="" title="Import Excel">
@@ -372,6 +376,7 @@ const HSNList = () => {
                 <FaFileExcel style={{ color: 'green', cursor: 'pointer' }} />
               </label>
             </li>
+            )}
             {/* <li>
               <button type="button" className="icon-btn" title="Export Excel" onClick={handleExcel}>
                 <FaFileExcel />
@@ -379,6 +384,7 @@ const HSNList = () => {
             </li> */}
           </div>
           <div className="page-btn">
+            {hasPermission("HSN", "write") && (
             <a
               href="#"
               className="btn btn-primary"
@@ -388,6 +394,7 @@ const HSNList = () => {
               <CiCirclePlus className=" me-1" />
               Add Hsn
             </a>
+            )}
           </div>
         </div>
         {/* /product list */}
@@ -447,6 +454,7 @@ const HSNList = () => {
                         })}</td>
                         <td className="action-table-data">
                           <div className="edit-delete-action">
+                            {hasPermission("HSN", "update") && (
                             <a
                               className="me-2 p-2"
                               href="#"
@@ -457,12 +465,15 @@ const HSNList = () => {
                             >
                               <TbEdit />
                             </a>
+                            )}
+                            {hasPermission("HSN", "delete") && (
                             <a
                               className="p-2"
                               onClick={() => remove(hsn._id)}
                             >
                               <TbTrash />
                             </a>
+                            )}
                           </div>
                         </td>
                       </tr>

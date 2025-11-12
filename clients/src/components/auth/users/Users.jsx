@@ -19,6 +19,7 @@ import autoTable from 'jspdf-autotable';
 import Papa from 'papaparse';
 import * as XLSX from 'xlsx';
 import { saveAs } from "file-saver";
+import axiosInstance from "../../../utils/axiosInstance";
 
 const Users = () => {
   const [activeRoles, setActiveRoles] = useState([]);
@@ -123,7 +124,7 @@ const Users = () => {
     try {
       const token = localStorage.getItem("token"); // ⬅️ Get token from localStorage
 
-      const res = await axios.get(`${BASE_URL}/api/user/getuser`, {
+      const res = await axiosInstance.get(`${BASE_URL}/api/user/getuser`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
@@ -235,7 +236,7 @@ const Users = () => {
 
     try {
       const token = localStorage.getItem("token")
-      const res = await axios.post(`${BASE_URL}/api/user/add`, formData, {
+      const res = await axiosInstance.post(`${BASE_URL}/api/user/add`, formData, {
         headers: {
           "Content-Type": "multipart/form-data", Authorization: `Bearer ${token}`,
         },
@@ -272,7 +273,7 @@ const Users = () => {
   const fetchActiveRoles = async () => {
     try {
       const token = localStorage.getItem("token")
-      const res = await axios.get(`${BASE_URL}/api/role/getRole/active`, {
+      const res = await axiosInstance.get(`${BASE_URL}/api/role/getRole/active`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
@@ -295,7 +296,7 @@ const Users = () => {
     if (!window.confirm("Are you sure you want to delete this user?")) return;
     try {
       const token = localStorage.getItem("token")
-      await axios.delete(`${BASE_URL}/api/user/userDelete/${id}`, {
+      await axiosInstance.delete(`${BASE_URL}/api/user/userDelete/${id}`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
@@ -364,7 +365,7 @@ const Users = () => {
         formData.append("profileImage", editUserData.profileImage);
       }
 
-      await axios.put(`${BASE_URL}/api/user/update/${editUserId}`, formData, {
+      await axiosInstance.put(`${BASE_URL}/api/user/update/${editUserId}`, formData, {
         headers: {
           "Content-Type": "multipart/form-data", Authorization: `Bearer ${token}`,
         },
@@ -494,7 +495,7 @@ const Users = () => {
 
     try {
       const token = localStorage.getItem("token");
-      await axios.delete(`${BASE_URL}/api/user/bulk-delete`, {
+      await axiosInstance.delete(`${BASE_URL}/api/user/bulk-delete`, {
         data: { ids: selectedUsers },
         headers: { Authorization: `Bearer ${token}` }
       });

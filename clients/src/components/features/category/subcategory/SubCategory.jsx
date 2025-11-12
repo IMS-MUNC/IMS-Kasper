@@ -18,6 +18,7 @@ import autoTable from "jspdf-autotable";
 import Papa from "papaparse";
 import * as XLSX from "xlsx";
 import { t } from "i18next";
+import { hasPermission } from "../../../../utils/permission/hasPermission";
 
 const SubCategory = () => {
   const [categories, setCategories] = useState([]);
@@ -603,6 +604,7 @@ const SubCategory = () => {
                 </button>
               )}
             </li>
+            {hasPermission("Subcategory", "export") && (
             <li
               style={{ display: "flex", alignItems: "center", gap: "5px" }}
               className="icon-btn"
@@ -635,6 +637,8 @@ const SubCategory = () => {
                 <FaFileExcel className="fs-20" style={{ color: "orange" }} />
               </button>
             </li>
+            )}
+            {hasPermission("Subcategory", "import") && (
             <li
               style={{ display: "flex", alignItems: "center", gap: "5px" }}
               className="icon-btn"
@@ -647,6 +651,7 @@ const SubCategory = () => {
                 <FaFileExcel style={{ color: "green" }} />
               </label>
             </li>
+            )}
             {/* <li>
               <button type="button" className="icon-btn" title="Export Excel" onClick={handleExcel}>
                 <FaFileExcel />
@@ -654,6 +659,7 @@ const SubCategory = () => {
             </li> */}
           </div>
           <div className="page-btn d-flex gap-2">
+            {hasPermission("Subcategory", "write") && (
             <a
               href="#"
               className="btn btn-primary"
@@ -663,6 +669,7 @@ const SubCategory = () => {
               <i className="ti ti-circle-plus me-1" />
               {t("Add Sub Category")}
             </a>
+            )}
           </div>
         </div>
         {/* /product list */}
@@ -783,6 +790,7 @@ const SubCategory = () => {
                         </td> */}
                         <td className="action-table-data">
                           <div className="edit-delete-action">
+                            {hasPermission("Subcategory", "update") && (
                             <a
                               className={`me-2 p-2 ${isUpdating ? "disabled" : ""
                                 }`}
@@ -826,12 +834,15 @@ const SubCategory = () => {
                             >
                               <TbEdit />
                             </a>
+                            )}
+                            {hasPermission("Subcategory", "delete") && (
                             <a
                               className="p-2"
                               onClick={() => handleDelete(subcat._id)}
                             >
                               <TbTrash />
                             </a>
+                            )}
                           </div>
                         </td>
                       </tr>

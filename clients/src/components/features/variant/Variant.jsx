@@ -13,6 +13,7 @@ import dayjs from "dayjs";
 import BASE_URL from "../../../pages/config/config";
 import Pagination from "../../../utils/pagination/Pagination";
 import { toast, ToastContainer } from 'react-toastify';
+import { hasPermission } from "../../../utils/permission/hasPermission";
 
 const Variant = ({ show, handleClose }) => {
   const [showModal, setShowModal] = useState(false);
@@ -481,6 +482,7 @@ const Variant = ({ show, handleClose }) => {
             </div>
           </div>
           <ul className="table-top-head">
+            {hasPermission("VariantAttributes", "export") && (
             <li style={{ display: "flex", alignItems: "center", gap: '5px' }} className="icon-btn">
               <label className="" title="">Export : </label>
               <button onClick={handleExportPDF} title="Download PDF" style={{
@@ -496,11 +498,13 @@ const Variant = ({ show, handleClose }) => {
                 border: "none",
               }}><FaFileExcel className="fs-20" style={{ color: "orange" }} /></button>
             </li>
+            )}
             {/* <li>
               <a onClick={handleExportExcel} title="Download Excel">
                 <FaFileExcel className="fs-20" style={{ color: "green" }} />
               </a>
             </li> */}
+            {hasPermission("VariantAttributes", "import") && (
             <li>
               <button
                 title="Refresh"
@@ -519,8 +523,10 @@ const Variant = ({ show, handleClose }) => {
                 <TbRefresh className="ti ti-refresh" />
               </button>
             </li>
+            )}
           </ul>
           <div className="page-btn">
+            {hasPermission("VariantAttributes", "write") && (
             <a
               href="#"
               className="btn btn-primary"
@@ -531,6 +537,7 @@ const Variant = ({ show, handleClose }) => {
               <i className="ti ti-circle-plus me-1" />
               Add Variant
             </a>
+            )}
           </div>
         </div>
         {selectedVariants.length > 0 && (
